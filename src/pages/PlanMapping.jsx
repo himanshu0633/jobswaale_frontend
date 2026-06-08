@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BASE_API_URL } from '../context/AuthContext';
 import { 
-  Sparkles, 
-  Save, 
   AlertCircle, 
-  CheckCircle,
-  Loader
+  CheckCircle2,
+  Loader,
+  X
 } from 'lucide-react';
 
 export const PlanMapping = () => {
@@ -19,7 +18,9 @@ export const PlanMapping = () => {
 
   const showMessage = (type, text) => {
     setMessage({ type, text });
-    setTimeout(() => setMessage({ type: '', text: '' }), 4000);
+    if (type === 'success') {
+      setTimeout(() => setMessage({ type: '', text: '' }), 4000);
+    }
   };
 
   const fetchData = async () => {
@@ -29,8 +30,13 @@ export const PlanMapping = () => {
         axios.get(`${BASE_API_URL}/masters/features`),
         axios.get(`${BASE_API_URL}/masters/plan-mappings`)
       ]);
-      setPlans(resP.data);
-      setFeatures(resF.data);
+      // Sort plans by displayOrder to ensure consistent column ordering matching mockup
+      const sortedPlans = (resP.data || []).sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+      // Sort features by displayOrder to ensure consistent row ordering
+      const sortedFeatures = (resF.data || []).sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+      
+      setPlans(sortedPlans);
+      setFeatures(sortedFeatures);
 
       // Build key-value map for quick lookup
       const mapObj = {};
@@ -76,10 +82,10 @@ export const PlanMapping = () => {
       });
 
       await axios.post(`${BASE_API_URL}/masters/plan-mappings`, payload);
-      showMessage('success', 'Plan mappings saved successfully.');
+      showMessage('success', 'Success! Record added/updated successfully.');
     } catch (err) {
       console.error(err);
-      showMessage('error', err.response?.data?.message || 'Error saving mapping data.');
+      showMessage('error', err.response?.data?.message || 'Oops! Something went wrong. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -95,33 +101,20 @@ export const PlanMapping = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      
+      {/* Title & Breadcrumb header */}
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 md:text-3xl">
-            Plan Mapping Configuration
+          <h1 className="text-xl font-bold text-slate-800">
+            Plan Mapping
           </h1>
-          <p className="text-sm text-slate-500">
-            Map specific features and limits across your registered subscription plans.
-          </p>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={saving || plans.length === 0 || features.length === 0}
-          className="flex items-center justify-center gap-2 py-2 px-5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-md shadow-indigo-600/10 transition-colors text-sm disabled:bg-slate-300 disabled:shadow-none"
-        >
-          {saving ? <Loader className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          <span>{saving ? 'Saving...' : 'Save Configuration'}</span>
-        </button>
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+          <span>Dashboard</span>
+          <span>&gt;</span>
+          <span className="text-indigo-600">Plan Mapping</span>
+        </div>
       </div>
-
-      {message.text && (
-        <div className={`flex items-center gap-2.5 p-4 rounded-xl border text-sm font-medium transition-all ${
-          message.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-800' : 'bg-rose-50 border-rose-100 text-rose-800'
-        }`}>
-          {message.type === 'success' ? <CheckCircle className="w-5 h-5 shrink-0" /> : <AlertCircle className="w-5 h-5 shrink-0" />}
-          <span>{message.text}</span>
-        </div>
-      )}
 
       {plans.length === 0 || features.length === 0 ? (
         <div className="p-8 border border-dashed border-slate-200 bg-white rounded-2xl text-center text-slate-500">
@@ -129,64 +122,101 @@ export const PlanMapping = () => {
         </div>
       ) : (
         <div className="border border-slate-200 bg-white rounded-2xl shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-slate-100 bg-slate-50/50">
-            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-indigo-600" />
-              Plan Mapping Matrix
+          
+          {/* Card Header */}
+          <div className="p-5 border-b border-slate-100 bg-slate-50/50">
+            <h3 className="text-sm font-bold text-slate-800">
+              Create Plan Mapping
             </h3>
           </div>
           
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-100">
-                  <th className="px-6 py-4 font-bold text-slate-700 w-1/3 border-r border-slate-100">Feature Details</th>
-                  {plans.map(p => (
-                    <th key={p._id} className="px-6 py-4 font-bold text-slate-700 text-center border-r border-slate-100">
-                      <div>{p.planName}</div>
-                      <div className="text-xs font-normal text-slate-400 mt-0.5">
-                        {p.category} | Rs. {p.cost}
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {features.map(f => (
-                  <tr key={f._id} className="hover:bg-slate-50/30">
-                    <td className="px-6 py-4 font-semibold text-slate-800 border-r border-slate-100">
-                      {f.featureName}
-                      <span className="block text-[10px] text-slate-400 font-normal uppercase tracking-wider mt-0.5">
-                        Code: {f.id} | Order: {f.displayOrder}
-                      </span>
-                    </td>
-                    {plans.map(p => {
-                      const key = `${p._id}_${f._id}`;
-                      const currentVal = mappings[key] || 'No';
-                      return (
-                        <td key={p._id} className="px-6 py-4 border-r border-slate-100 text-center">
-                          <select
-                            value={currentVal}
-                            onChange={(e) => handleSelectChange(p._id, f._id, e.target.value)}
-                            className="mx-auto block px-3 py-1.5 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-xs font-semibold bg-white"
-                          >
-                            <option value="Yes">Yes</option>
-                            <option value="No">No</option>
-                            <option value="Limited">Limited</option>
-                            <option value="Unlimited">Unlimited</option>
-                            <option value="3 Months">3 Months</option>
-                          </select>
-                        </td>
-                      );
-                    })}
+          {/* Card Content */}
+          <div className="p-6">
+            
+            {/* Alert Boxes inside Card */}
+            {message.text && (
+              <div className="mb-5 relative animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className={`flex items-start gap-3 p-4 rounded-xl border text-sm font-semibold ${
+                  message.type === 'success' 
+                    ? 'bg-emerald-50 border-emerald-100 text-emerald-800' 
+                    : 'bg-rose-50 border-rose-100 text-rose-800'
+                }`}>
+                  {message.type === 'success' ? (
+                    <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-500" />
+                  ) : (
+                    <AlertCircle className="w-5 h-5 shrink-0 text-rose-500" />
+                  )}
+                  <div className="flex-grow">{message.text}</div>
+                  <button 
+                    onClick={() => setMessage({ type: '', text: '' })}
+                    className="p-0.5 rounded-lg hover:bg-slate-200/50 text-slate-400 hover:text-slate-600 transition-colors shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Matrix Table */}
+            <div className="overflow-x-auto border border-slate-150 rounded-xl">
+              <table className="w-full text-sm text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-100 text-xs text-slate-400 uppercase">
+                    <th className="px-6 py-3.5 font-bold text-slate-600 border-r border-slate-100">Feature</th>
+                    {plans.map(p => (
+                      <th key={p._id} className="px-6 py-3.5 font-bold text-slate-600 text-center border-r border-slate-100">
+                        {p.planName}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {features.map(f => (
+                    <tr key={f._id} className="hover:bg-slate-50/30">
+                      <td className="px-6 py-4 font-semibold text-slate-700 border-r border-slate-100">
+                        {f.featureName}
+                      </td>
+                      {plans.map(p => {
+                        const key = `${p._id}_${f._id}`;
+                        const currentVal = mappings[key] || 'No';
+                        return (
+                          <td key={p._id} className="px-6 py-4 border-r border-slate-100 text-center">
+                            <select
+                              value={currentVal}
+                              onChange={(e) => handleSelectChange(p._id, f._id, e.target.value)}
+                              className="mx-auto block px-3 py-1.5 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-xs font-semibold bg-white cursor-pointer"
+                            >
+                              <option value="Yes">Yes</option>
+                              <option value="No">No</option>
+                              <option value="Limited">Limited</option>
+                              <option value="Unlimited">Unlimited</option>
+                              <option value="3 Months">3 Months</option>
+                            </select>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Submit Button at Bottom Left */}
+            <div className="pt-6">
+              <button
+                onClick={handleSave}
+                disabled={saving || plans.length === 0 || features.length === 0}
+                className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg shadow-md shadow-indigo-600/10 transition-colors text-sm disabled:bg-slate-300 disabled:shadow-none"
+              >
+                {saving ? 'Saving...' : 'Submit'}
+              </button>
+            </div>
+
           </div>
         </div>
       )}
     </div>
   );
 };
+
 export default PlanMapping;

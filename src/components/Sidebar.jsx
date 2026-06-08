@@ -14,27 +14,11 @@ import {
   Handshake
 } from 'lucide-react';
 
-const LogoIcon = () => (
-  <svg viewBox="0 0 24 24" className="w-8 h-8 shrink-0" fill="none" xmlns="http://www.w3.org/2000/svg">
-    {/* Blue circle background */}
-    <circle cx="12" cy="12" r="11" fill="#2563eb"/>
-    {/* Central person (orange) */}
-    <circle cx="12" cy="9" r="2.2" fill="#f97316"/>
-    <path d="M8.5 16.5C8.5 14.5 10 13.2 12 13.2C14 13.2 15.5 14.5 15.5 16.5" stroke="#f97316" strokeWidth="1.6" strokeLinecap="round"/>
-    {/* Left person (light blue) */}
-    <circle cx="8" cy="10.5" r="1.3" fill="#93c5fd"/>
-    <path d="M6 16C6 14.7 6.8 13.8 8 13.8" stroke="#93c5fd" strokeWidth="1.2" strokeLinecap="round"/>
-    {/* Right person (light blue) */}
-    <circle cx="16" cy="10.5" r="1.3" fill="#93c5fd"/>
-    <path d="M18 16C18 14.7 17.2 13.8 16 13.8" stroke="#93c5fd" strokeWidth="1.2" strokeLinecap="round"/>
-  </svg>
-);
-
 export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
   const location = useLocation();
 
   const [openMenus, setOpenMenus] = useState({
-    locations: location.pathname.startsWith('/locations') || location.pathname.startsWith('/cities'),
+    locations: location.pathname.startsWith('/countries') || location.pathname.startsWith('/states') || location.pathname.startsWith('/districts') || location.pathname.startsWith('/cities'),
     packages: location.pathname.startsWith('/plans') || location.pathname.startsWith('/features') || location.pathname.startsWith('/plan-mappings')
   });
 
@@ -59,32 +43,11 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
       )}
 
       {/* Sidebar Container */}
-      <aside className={`fixed top-0 bottom-0 left-0 z-50 flex flex-col bg-white text-slate-700 border-r border-slate-200 transition-all duration-300 transform lg:translate-x-0 ${
+      <aside className={`fixed top-0 lg:top-16 bottom-0 left-0 z-50 lg:z-20 flex flex-col bg-white text-slate-700 border-r border-slate-200 transition-all duration-300 transform lg:translate-x-0 ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
       } ${
         isCollapsed ? 'w-16' : 'w-64'
       }`}>
-        
-        {/* Brand Logo */}
-        <div className={`flex items-center border-b border-slate-100 bg-white h-20 ${isCollapsed ? 'justify-center px-2' : 'justify-between px-6'}`}>
-          <Link to="/" className="flex items-center">
-            {isCollapsed ? (
-              <LogoIcon />
-            ) : (
-              <div className="flex flex-col">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-2xl font-extrabold tracking-tight">
-                    <span className="text-indigo-600">Jobs</span>
-                    <span className="text-orange-500">Waale</span>
-                  </span>
-                </div>
-                <span className="text-[8px] font-bold tracking-widest text-slate-400 mt-1 uppercase">
-                  WE CONNECT, YOU GROW
-                </span>
-              </div>
-            )}
-          </Link>
-        </div>
 
         {/* Navigation Menu */}
         <nav className={`flex-grow py-6 overflow-y-auto ${isCollapsed ? 'px-1 space-y-4' : 'px-4 space-y-1'}`}>
@@ -187,10 +150,10 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
           <div>
             {isCollapsed ? (
               <Link
-                to="/locations"
+                to="/countries"
                 title="Locations"
                 className={`flex items-center justify-center w-10 h-10 mx-auto rounded-lg transition-all duration-150 ${
-                  isGroupActive(['/locations', '/cities'])
+                  isGroupActive(['/countries', '/states', '/districts', '/cities'])
                     ? 'bg-indigo-50/70 text-indigo-600'
                     : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
                 }`}
@@ -202,7 +165,7 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
                 <button
                   onClick={() => toggleMenu('locations')}
                   className={`flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150 ${
-                    isGroupActive(['/locations', '/cities'])
+                    isGroupActive(['/countries', '/states', '/districts', '/cities'])
                       ? 'text-indigo-600 bg-indigo-50/30'
                       : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
                   }`}
@@ -217,14 +180,34 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
                 {openMenus.locations && (
                   <div className="pl-9 mt-1 space-y-1">
                     <Link
-                      to="/locations"
+                      to="/countries"
                       className={`block py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
-                        isActive('/locations')
+                        isActive('/countries')
                           ? 'text-indigo-600 bg-indigo-50/50'
                           : 'text-slate-500 hover:text-slate-950 hover:bg-slate-50'
                       }`}
                     >
-                      Country/State/District
+                      Country
+                    </Link>
+                    <Link
+                      to="/states"
+                      className={`block py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
+                        isActive('/states')
+                          ? 'text-indigo-600 bg-indigo-50/50'
+                          : 'text-slate-500 hover:text-slate-950 hover:bg-slate-50'
+                      }`}
+                    >
+                      State
+                    </Link>
+                    <Link
+                      to="/districts"
+                      className={`block py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
+                        isActive('/districts')
+                          ? 'text-indigo-600 bg-indigo-50/50'
+                          : 'text-slate-500 hover:text-slate-950 hover:bg-slate-50'
+                      }`}
+                    >
+                      District
                     </Link>
                     <Link
                       to="/cities"
@@ -234,7 +217,7 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
                           : 'text-slate-500 hover:text-slate-950 hover:bg-slate-50'
                       }`}
                     >
-                      City Master
+                      City
                     </Link>
                   </div>
                 )}

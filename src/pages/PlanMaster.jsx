@@ -2,414 +2,582 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BASE_API_URL } from '../context/AuthContext';
 import { 
-  CreditCard, 
   Plus, 
   Edit2, 
+  Trash2,
   X, 
-  Save, 
   AlertCircle, 
-  CheckCircle,
-  Loader
+  CheckCircle2,
+  Loader,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
 } from 'lucide-react';
 
 export const PlanMaster = () => {
-  const [plans, setPlans] = useState([]);
-  const [featuresList, setFeaturesList] = useState([]);
+  const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   
+  // Search & Pagination States
+  const [searchVal, setSearchVal] = useState('');
+  const [search, setSearch] = useState('');
+  const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
   // Form State
-  const [form, setForm] = useState({
-    category: 'Jobseeker',
-    planName: '',
-    cost: 0,
-    planValidity: 'Monthly',
-    startingDate: '',
-    endDate: '',
-    features: [], // array of feature ids
-    status: 'active'
+  const [form, setForm] = useState({ 
+    planName: '', 
+    planType: 'Free', 
+    cost: '', 
+    planValidity: 'One Time', 
+    displayOrder: '', 
+    status: 'active',
+    category: 'Jobseeker' 
   });
-
   const [editingId, setEditingId] = useState(null);
-  const [message, setMessage] = useState({ type: '', text: '' });
 
-  const showMessage = (type, text) => {
-    setMessage({ type, text });
-    setTimeout(() => setMessage({ type: '', text: '' }), 4000);
+  // Success / Error Alerts
+  const [alert, setAlert] = useState({ type: '', text: '' });
+
+  const showAlert = (type, text) => {
+    setAlert({ type, text });
+    if (type === 'success') {
+      setTimeout(() => setAlert({ type: '', text: '' }), 3000);
+    }
   };
 
-  const fetchData = async () => {
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchVal);
+      setCurrentPage(1); // Reset to page 1 on new search
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchVal]);
+
+  // Fetch paginated lists from backend
+  const fetchList = async () => {
+    setLoading(true);
     try {
-      const [resPlans, resFeats] = await Promise.all([
-        axios.get(`${BASE_API_URL}/masters/plans`),
-        axios.get(`${BASE_API_URL}/masters/features`)
-      ]);
-      setPlans(resPlans.data);
-      setFeaturesList(resFeats.data.filter(f => f.status === 'active'));
+      const response = await axios.get(
+        `${BASE_API_URL}/masters/plans?page=${currentPage}&limit=${entriesPerPage}&search=${search}&paginate=true`
+      );
+      setList(response.data.docs || []);
+      setTotal(response.data.total || 0);
+      setTotalPages(response.data.totalPages || 1);
     } catch (err) {
       console.error(err);
-      showMessage('error', 'Error retrieving plans or features database.');
+      showAlert('error', 'Error retrieving plans.');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
-
-  const handleCheckboxChange = (featureId) => {
-    const isChecked = form.features.includes(featureId);
-    if (isChecked) {
-      setForm({
-        ...form,
-        features: form.features.filter(id => id !== featureId)
-      });
-    } else {
-      setForm({
-        ...form,
-        features: [...form.features, featureId]
-      });
-    }
-  };
+    fetchList();
+  }, [currentPage, entriesPerPage, search]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.planName || form.cost === undefined) return;
+    const { planName, planType, cost, planValidity, displayOrder, status, category } = form;
+    
+    if (!planName) {
+      showAlert('error', 'Plan Name is required.');
+      return;
+    }
+    if (cost === undefined || cost === '') {
+      showAlert('error', 'Price is required.');
+      return;
+    }
+    if (!displayOrder) {
+      showAlert('error', 'Display Order is required.');
+      return;
+    }
 
     try {
       if (editingId) {
-        const response = await axios.put(`${BASE_API_URL}/masters/plans/${editingId}`, form);
-        setPlans(plans.map(item => item._id === editingId ? response.data : item));
-        showMessage('success', 'Plan updated successfully.');
-        setEditingId(null);
+        // Edit Mode
+        await axios.put(`${BASE_API_URL}/masters/plans/${editingId}`, {
+          category,
+          planName,
+          cost: Number(cost),
+          planValidity,
+          planType,
+          displayOrder: Number(displayOrder),
+          status
+        });
+        showAlert('success', 'Success! Record added/updated successfully.');
+        setTimeout(() => {
+          setEditingId(null);
+          setForm({ 
+            planName: '', 
+            planType: 'Free', 
+            cost: '', 
+            planValidity: 'One Time', 
+            displayOrder: '', 
+            status: 'active',
+            category: 'Jobseeker' 
+          });
+          fetchList(); // reload table
+        }, 1500);
       } else {
-        const response = await axios.post(`${BASE_API_URL}/masters/plans`, form);
-        setPlans([...plans, response.data]);
-        showMessage('success', 'Plan added successfully.');
+        // Add Mode
+        await axios.post(`${BASE_API_URL}/masters/plans`, {
+          category,
+          planName,
+          cost: Number(cost),
+          planValidity,
+          planType,
+          displayOrder: Number(displayOrder),
+          status
+        });
+        showAlert('success', 'Success! Record added/updated successfully.');
+        setForm({ 
+          planName: '', 
+          planType: 'Free', 
+          cost: '', 
+          planValidity: 'One Time', 
+          displayOrder: '', 
+          status: 'active',
+          category: 'Jobseeker' 
+        });
+        setTimeout(() => {
+          fetchList(); // reload table
+        }, 1500);
       }
-      setForm({
-        category: 'Jobseeker',
-        planName: '',
-        cost: 0,
-        planValidity: 'Monthly',
-        startingDate: '',
-        endDate: '',
-        features: [],
-        status: 'active'
-      });
     } catch (err) {
-      showMessage('error', err.response?.data?.message || 'Error processing plan action.');
+      showAlert('error', err.response?.data?.message || 'Oops! Something went wrong. Please try again.');
     }
   };
 
   const handleEdit = (item) => {
     setEditingId(item._id);
-    setForm({
-      category: item.category,
-      planName: item.planName,
-      cost: item.cost,
-      planValidity: item.planValidity,
-      startingDate: item.startingDate ? new Date(item.startingDate).toISOString().split('T')[0] : '',
-      endDate: item.endDate ? new Date(item.endDate).toISOString().split('T')[0] : '',
-      features: item.features.map(f => f._id || f),
-      status: item.status
+    setForm({ 
+      planName: item.planName, 
+      planType: item.planType || 'Free', 
+      cost: item.cost, 
+      planValidity: item.planValidity, 
+      displayOrder: item.displayOrder, 
+      status: item.status,
+      category: item.category || 'Jobseeker'
     });
+    setAlert({ type: '', text: '' });
   };
 
-  const handleDelete = async (uid) => {
-    if (!window.confirm('Delete this plan?')) return;
+  const handleDelete = async (item) => {
+    if (!window.confirm(`Are you sure you want to delete the plan "${item.planName}"?`)) return;
     try {
-      await axios.delete(`${BASE_API_URL}/masters/plans/${uid}`);
-      setPlans(plans.filter(item => item._id !== uid));
-      showMessage('success', 'Plan deleted successfully.');
+      await axios.delete(`${BASE_API_URL}/masters/plans/${item._id}`);
+      showAlert('success', 'Plan deleted successfully.');
+      fetchList();
     } catch (err) {
-      showMessage('error', 'Error deleting plan.');
+      showAlert('error', err.response?.data?.message || 'Error deleting plan.');
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader className="w-8 h-8 animate-spin text-indigo-600" />
-      </div>
-    );
-  }
+  // Pagination Indices
+  const startIndex = (currentPage - 1) * entriesPerPage;
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
+    let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let end = Math.min(totalPages, start + maxVisible - 1);
+
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 md:text-3xl">
-          Plan Master (Packages)
-        </h1>
-        <p className="text-sm text-slate-500">
-          Configure subscription packages for Jobseekers and Employers, mapping multiple active entitlements.
-        </p>
+      
+      {/* Title & Breadcrumb header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-slate-800">
+            Plan Master
+          </h1>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+          <span>Dashboard</span>
+          <span>&gt;</span>
+          <span className="text-indigo-600">Plan Master</span>
+        </div>
       </div>
 
-      {message.text && (
-        <div className={`flex items-center gap-2.5 p-4 rounded-xl border text-sm font-medium transition-all ${
-          message.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-800' : 'bg-rose-50 border-rose-100 text-rose-800'
-        }`}>
-          {message.type === 'success' ? <CheckCircle className="w-5 h-5 shrink-0" /> : <AlertCircle className="w-5 h-5 shrink-0" />}
-          <span>{message.text}</span>
+      {/* ============================================================== */}
+      {/* ADD / EDIT FORM SCREEN (STACKED AT TOP) */}
+      {/* ============================================================== */}
+      <div className="border border-slate-200 bg-white rounded-2xl shadow-sm overflow-hidden">
+        
+        {/* Card Header */}
+        <div className="p-5 border-b border-slate-100 bg-slate-50/50">
+          <h3 className="text-sm font-bold text-slate-800">
+            {editingId ? 'Edit Plan' : 'Add Plan'}
+          </h3>
         </div>
-      )}
 
-      {/* Grid: Form and Listings */}
-      <div className="grid gap-6 xl:grid-cols-3">
-        {/* Form Panel */}
-        <div className="xl:col-span-1 border border-slate-200 bg-white rounded-2xl shadow-sm h-fit">
-          <div className="p-6 border-b border-slate-100 bg-slate-50/50 rounded-t-2xl">
-            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-indigo-600" />
-              {editingId ? 'Edit Plan Package' : 'Create Plan Package'}
-            </h3>
-          </div>
+        {/* Form Content */}
+        <div className="p-6">
           
-          <div className="p-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
-                    Target Category
-                  </label>
-                  <select
-                    value={form.category}
-                    onChange={(e) => setForm({ ...form, category: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                  >
-                    <option value="Jobseeker">Jobseeker</option>
-                    <option value="Employer">Employer</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
-                    Plan Name
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Premium Pro"
-                    value={form.planName}
-                    onChange={(e) => setForm({ ...form, planName: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
-                    Cost (Rs.)
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    min="0"
-                    placeholder="0"
-                    value={form.cost}
-                    onChange={(e) => setForm({ ...form, cost: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
-                    Plan Validity
-                  </label>
-                  <select
-                    value={form.planValidity}
-                    onChange={(e) => setForm({ ...form, planValidity: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                  >
-                    <option value="One Time">One Time</option>
-                    <option value="Monthly">Monthly</option>
-                    <option value="Quarterly">Quarterly</option>
-                    <option value="Half-Yearly">Half-Yearly</option>
-                    <option value="Yearly">Yearly</option>
-                    <option value="Always Free">Always Free</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
-                    Starting Date
-                  </label>
-                  <input
-                    type="date"
-                    value={form.startingDate}
-                    onChange={(e) => setForm({ ...form, startingDate: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
-                    Ending Date
-                  </label>
-                  <input
-                    type="date"
-                    value={form.endDate}
-                    onChange={(e) => setForm({ ...form, endDate: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                  />
-                </div>
-              </div>
-
-              {/* Multi Select Features Checklist */}
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                  Multi-Select Features
-                </label>
-                {featuresList.length === 0 ? (
-                  <p className="text-xs text-slate-400 border border-dashed rounded-xl p-3 text-center">
-                    No active features available in Feature Master.
-                  </p>
+          {/* Alert Boxes */}
+          {alert.text && (
+            <div className="mb-5 relative animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className={`flex items-start gap-3 p-4 rounded-xl border text-sm font-semibold ${
+                alert.type === 'success' 
+                  ? 'bg-emerald-50 border-emerald-100 text-emerald-800' 
+                  : 'bg-rose-50 border-rose-100 text-rose-800'
+              }`}>
+                {alert.type === 'success' ? (
+                  <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-500" />
                 ) : (
-                  <div className="border border-slate-200 rounded-xl p-3 max-h-40 overflow-y-auto space-y-2.5 bg-slate-50/30">
-                    {featuresList.map((f) => (
-                      <label key={f._id} className="flex items-center gap-2.5 text-sm text-slate-700 font-medium cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={form.features.includes(f._id)}
-                          onChange={() => handleCheckboxChange(f._id)}
-                          className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 cursor-pointer"
-                        />
-                        <span>{f.featureName}</span>
-                      </label>
-                    ))}
-                  </div>
+                  <AlertCircle className="w-5 h-5 shrink-0 text-rose-500" />
                 )}
+                <div className="flex-grow">{alert.text}</div>
+                <button 
+                  onClick={() => setAlert({ type: '', text: '' })}
+                  className="p-0.5 rounded-lg hover:bg-slate-200/50 text-slate-400 hover:text-slate-600 transition-colors shrink-0"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
+            </div>
+          )}
 
+          <form onSubmit={handleSubmit} className="space-y-4">
+            
+            {/* Form Input Grid */}
+            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+              {/* Plan Name */}
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                  Status
+                  Plan Name <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g Free, Basic"
+                  value={form.planName}
+                  onChange={(e) => setForm({ ...form, planName: e.target.value })}
+                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white"
+                />
+              </div>
+
+              {/* Plan Type */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  Plan Type <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  value={form.planType}
+                  onChange={(e) => setForm({ ...form, planType: e.target.value })}
+                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white"
+                >
+                  <option value="Free">Free</option>
+                  <option value="Paid">Paid</option>
+                </select>
+              </div>
+
+              {/* Price */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  Price (Rs.) <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  required
+                  placeholder="Price of the Plan"
+                  value={form.cost}
+                  onChange={(e) => setForm({ ...form, cost: e.target.value })}
+                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white"
+                />
+              </div>
+
+              {/* Validity */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  Validity <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  value={form.planValidity}
+                  onChange={(e) => setForm({ ...form, planValidity: e.target.value })}
+                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white"
+                >
+                  <option value="One Time">One Time</option>
+                  <option value="Monthly">Monthly</option>
+                  <option value="Quarterly">Quarterly</option>
+                  <option value="Half-Yearly">Half-Yearly</option>
+                  <option value="Yearly">Yearly</option>
+                  <option value="Always Free">Always Free</option>
+                </select>
+              </div>
+
+              {/* Display Order */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  Display Order <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  required
+                  placeholder="e.g 1, 2"
+                  value={form.displayOrder}
+                  onChange={(e) => setForm({ ...form, displayOrder: e.target.value })}
+                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white"
+                />
+              </div>
+
+              {/* Status */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  Status <span className="text-rose-500">*</span>
                 </label>
                 <select
                   value={form.status}
                   onChange={(e) => setForm({ ...form, status: e.target.value })}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white"
                 >
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
                 </select>
               </div>
 
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="submit"
-                  className="flex-1 flex items-center justify-center gap-2 py-2 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-md shadow-indigo-600/10 transition-colors text-sm"
+              {/* Target Category */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  Category <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  value={form.category}
+                  onChange={(e) => setForm({ ...form, category: e.target.value })}
+                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white"
                 >
-                  {editingId ? <Save className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                  <span>{editingId ? 'Save Package' : 'Create Package'}</span>
-                </button>
-                {editingId && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingId(null);
-                      setForm({
-                        category: 'Jobseeker',
-                        planName: '',
-                        cost: 0,
-                        planValidity: 'Monthly',
-                        startingDate: '',
-                        endDate: '',
-                        features: [],
-                        status: 'active'
-                      });
-                    }}
-                    className="p-2 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-xl"
-                  >
-                    <X className="w-4.5 h-4.5" />
-                  </button>
-                )}
+                  <option value="Jobseeker">Jobseeker</option>
+                  <option value="Employer">Employer</option>
+                </select>
               </div>
-            </form>
+            </div>
+
+            {/* Submit & Cancel Buttons */}
+            <div className="pt-2 flex items-center gap-2">
+              <button
+                type="submit"
+                className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg shadow-md shadow-indigo-600/10 transition-colors text-sm"
+              >
+                Submit
+              </button>
+              {editingId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingId(null);
+                    setForm({ 
+                      planName: '', 
+                      planType: 'Free', 
+                      cost: '', 
+                      planValidity: 'One Time', 
+                      displayOrder: '', 
+                      status: 'active',
+                      category: 'Jobseeker' 
+                    });
+                  }}
+                  className="px-6 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg text-sm transition-colors"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
+
+          </form>
+        </div>
+
+      </div>
+
+      {/* ============================================================== */}
+      {/* LISTINGS SCREEN (STACKED AT BOTTOM) */}
+      {/* ============================================================== */}
+      <div className="border border-slate-200 bg-white rounded-2xl shadow-sm overflow-hidden">
+        
+        {/* Card Header */}
+        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+          <h3 className="text-sm font-bold text-slate-800">
+            Plan Listing
+          </h3>
+        </div>
+
+        {/* Table Controls (Search and Show Entries) */}
+        <div className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-50 bg-slate-50/30">
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+            <select
+              value={entriesPerPage}
+              onChange={(e) => {
+                setEntriesPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="px-2.5 py-1.5 border border-slate-200 rounded-lg text-slate-900 bg-white focus:outline-none"
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            <span>entries per page</span>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+            <span>Search:</span>
+            <input
+              type="text"
+              value={searchVal}
+              onChange={(e) => setSearchVal(e.target.value)}
+              className="px-3 py-1.5 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:border-indigo-500 bg-white w-48 font-normal"
+            />
           </div>
         </div>
 
-        {/* Listings Panel */}
-        <div className="xl:col-span-2 border border-slate-200 bg-white rounded-2xl shadow-sm">
-          <div className="p-6 border-b border-slate-100 bg-slate-50/50 rounded-t-2xl">
-            <h3 className="text-lg font-bold text-slate-800">Plan Packages Listings</h3>
-          </div>
+        {/* Listings Table */}
+        <div className="overflow-x-auto relative min-h-[200px]">
+          {loading ? (
+            <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-10">
+              <Loader className="w-6 h-6 animate-spin text-indigo-600" />
+            </div>
+          ) : null}
           
-          <div className="p-6 overflow-x-auto">
-            <table className="w-full text-sm text-left text-slate-500">
-              <thead className="text-xs uppercase bg-slate-50 text-slate-400">
+
+          <table className="w-full text-sm text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-100 text-xs text-slate-400 uppercase">
+                <th className="px-6 py-3.5 font-bold">ID</th>
+                <th className="px-6 py-3.5 font-bold">Plan Name</th>
+                <th className="px-6 py-3.5 font-bold">Plan Type</th>
+                <th className="px-6 py-3.5 font-bold">Price (Rs.)</th>
+                <th className="px-6 py-3.5 font-bold">Validity</th>
+                <th className="px-6 py-3.5 font-bold">Display Order</th>
+                <th className="px-6 py-3.5 font-bold">Status</th>
+                <th className="px-6 py-3.5 font-bold">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-slate-700">
+              {list.length === 0 ? (
                 <tr>
-                  <th className="px-4 py-3 font-semibold">Category</th>
-                  <th className="px-4 py-3 font-semibold">Plan Name</th>
-                  <th className="px-4 py-3 font-semibold">Price</th>
-                  <th className="px-4 py-3 font-semibold">Validity</th>
-                  <th className="px-4 py-3 font-semibold">Mapped Entitlements</th>
-                  <th className="px-4 py-3 font-semibold">Status</th>
-                  <th className="px-4 py-3 font-semibold text-right">Actions</th>
+                  <td colSpan="8" className="px-6 py-8 text-center text-slate-400">No matching records found.</td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {plans.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" className="px-4 py-8 text-center text-slate-400">No plan packages defined yet.</td>
+              ) : (
+                list.map((item, idx) => (
+                  <tr key={item._id} className="hover:bg-slate-50/30">
+                    <td className="px-6 py-4 font-bold text-slate-800 uppercase">
+                      {String(startIndex + idx + 1).padStart(3, '0')}
+                    </td>
+                    <td className="px-6 py-4 font-medium text-slate-700">{item.planName}</td>
+                    <td className="px-6 py-4 text-slate-500">{item.planType || 'Free'}</td>
+                    <td className="px-6 py-4 text-slate-500 font-semibold">{item.cost}</td>
+                    <td className="px-6 py-4 text-slate-500">{item.planValidity}</td>
+                    <td className="px-6 py-4 text-slate-500">{item.displayOrder}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                        item.status === 'active' 
+                          ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
+                          : 'bg-rose-50 text-rose-600 border border-rose-100'
+                      }`}>
+                        {item.status === 'active' ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => handleEdit(item)}
+                          className="w-7 h-7 bg-teal-500 hover:bg-teal-600 text-white rounded-full flex items-center justify-center transition-colors shadow-sm"
+                          title="Edit"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item)}
+                          className="w-7 h-7 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center transition-colors shadow-sm"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
-                ) : (
-                  plans.map((item) => (
-                    <tr key={item._id} className="hover:bg-slate-50/50">
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                          item.category === 'Jobseeker' ? 'bg-indigo-55 bg-indigo-50 text-indigo-600' : 'bg-amber-50 text-amber-600'
-                        }`}>
-                          {item.category}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 font-bold text-slate-800">{item.planName}</td>
-                      <td className="px-4 py-3 font-semibold text-slate-900">₹{item.cost}</td>
-                      <td className="px-4 py-3 text-slate-600 text-xs">{item.planValidity}</td>
-                      <td className="px-4 py-3 max-w-[200px]">
-                        <div className="flex flex-wrap gap-1">
-                          {item.features && item.features.length > 0 ? (
-                            item.features.map(f => (
-                              <span key={f._id || f} className="px-1.5 py-0.5 text-[9px] bg-slate-100 rounded text-slate-600">
-                                {f.featureName || 'Entitled'}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="text-[10px] text-slate-400">No features</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                          item.status === 'active' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'
-                        }`}>
-                          {item.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => handleEdit(item)}
-                            className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition-colors"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Table Footer (Pagination) */}
+        <div className="p-5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="text-xs font-semibold text-slate-400">
+            Showing {total === 0 ? 0 : startIndex + 1} to {Math.min(startIndex + entriesPerPage, total)} of {total} entries
+          </div>
+
+          <div className="flex items-center gap-1 self-end sm:self-auto">
+            {/* First Page */}
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(1)}
+              className="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg bg-white hover:bg-slate-50 text-slate-500 disabled:opacity-50 transition-colors"
+            >
+              <ChevronsLeft className="w-3.5 h-3.5" />
+            </button>
+            {/* Prev Page */}
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(currentPage - 1)}
+              className="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg bg-white hover:bg-slate-50 text-slate-500 disabled:opacity-50 transition-colors"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+            
+            {/* Individual Page Numbers */}
+            {getPageNumbers().map((p) => (
+              <button
+                key={p}
+                onClick={() => setCurrentPage(p)}
+                className={`w-8 h-8 flex items-center justify-center font-bold text-xs rounded-lg transition-colors shadow-sm ${
+                  currentPage === p
+                    ? 'bg-indigo-600 text-white font-bold'
+                    : 'border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+
+            {/* Next Page */}
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(currentPage + 1)}
+              className="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg bg-white hover:bg-slate-50 text-slate-500 disabled:opacity-50 transition-colors"
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+            {/* Last Page */}
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(totalPages)}
+              className="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg bg-white hover:bg-slate-50 text-slate-500 disabled:opacity-50 transition-colors"
+            >
+              <ChevronsRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
+
       </div>
+
     </div>
   );
 };
+
 export default PlanMaster;

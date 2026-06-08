@@ -8,7 +8,9 @@ import Header from './components/Header';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-import Locations from './pages/Locations';
+import Country from './pages/Country';
+import State from './pages/State';
+import District from './pages/District';
 import IndustryType from './pages/IndustryType';
 import JobType from './pages/JobType';
 import JobCategory from './pages/JobCategory';
@@ -70,45 +72,51 @@ const AppLayout = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
-      {/* Sidebar */}
-      <Sidebar 
-        isOpen={sidebarOpenMobile} 
+    <div className="flex flex-col min-h-screen bg-slate-50">
+      {/* Top Header spans full-width across top of screen */}
+      <Header 
+        toggleSidebar={handleToggleSidebar} 
         isCollapsed={sidebarCollapsed} 
-        toggleSidebar={() => setSidebarOpenMobile(false)} 
+        title="JobsWaale Admin Portal" 
       />
 
-      {/* Main Content Area */}
-      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
-        
-        {/* Top Header */}
-        <Header toggleSidebar={handleToggleSidebar} title="JobsWaale Admin Portal" />
+      <div className="flex flex-1 relative">
+        {/* Sidebar */}
+        <Sidebar 
+          isOpen={sidebarOpenMobile} 
+          isCollapsed={sidebarCollapsed} 
+          toggleSidebar={() => setSidebarOpenMobile(false)} 
+        />
 
-        {/* Dynamic Route Content */}
-        <main className="flex-grow p-4 md:p-6 lg:p-8 max-w-7xl w-full mx-auto">
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/locations" element={<Locations />} />
-            <Route path="/industry-types" element={<IndustryType />} />
-            <Route path="/job-types" element={<JobType />} />
-            <Route path="/job-categories" element={<JobCategory />} />
-            <Route path="/features" element={<FeatureMaster />} />
-            <Route path="/plans" element={<PlanMaster />} />
-            <Route path="/qualifications" element={<Qualification />} />
-            <Route path="/cities" element={<City />} />
-            <Route path="/plan-mappings" element={<PlanMapping />} />
-            <Route path="/employers" element={<Employers />} />
-            <Route path="/employers/add" element={<AddEmployer />} />
-            <Route path="/employers/edit/:id" element={<AddEmployer />} />
-            <Route path="/jobseekers" element={<Jobseekers />} />
-            <Route path="/jobseekers/add" element={<AddJobseeker />} />
-            <Route path="/jobseekers/edit/:id" element={<AddJobseeker />} />
-            <Route path="/jobs" element={<Jobs />} />
-            <Route path="/jobs/add" element={<PostJob />} />
-            <Route path="/jobs/edit/:id" element={<PostJob />} />
-          </Routes>
-        </main>
-        
+        {/* Main Content Area */}
+        <div className={`flex-grow flex flex-col transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
+          {/* Dynamic Route Content */}
+          <main className="flex-grow p-4 md:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/countries" element={<Country />} />
+              <Route path="/states" element={<State />} />
+              <Route path="/districts" element={<District />} />
+              <Route path="/industry-types" element={<IndustryType />} />
+              <Route path="/job-types" element={<JobType />} />
+              <Route path="/job-categories" element={<JobCategory />} />
+              <Route path="/features" element={<FeatureMaster />} />
+              <Route path="/plans" element={<PlanMaster />} />
+              <Route path="/qualifications" element={<Qualification />} />
+              <Route path="/cities" element={<City />} />
+              <Route path="/plan-mappings" element={<PlanMapping />} />
+              <Route path="/employers" element={<Employers />} />
+              <Route path="/employers/add" element={<AddEmployer />} />
+              <Route path="/employers/edit/:id" element={<AddEmployer />} />
+              <Route path="/jobseekers" element={<Jobseekers />} />
+              <Route path="/jobseekers/add" element={<AddJobseeker />} />
+              <Route path="/jobseekers/edit/:id" element={<AddJobseeker />} />
+              <Route path="/jobs" element={<Jobs />} />
+              <Route path="/jobs/add" element={<PostJob />} />
+              <Route path="/jobs/edit/:id" element={<PostJob />} />
+            </Routes>
+          </main>
+        </div>
       </div>
     </div>
   );

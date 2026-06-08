@@ -44,14 +44,29 @@ export const IndustryType = () => {
     }
   };
 
+  const getNextId = async () => {
+    try {
+      const response = await axios.get(`${BASE_API_URL}/masters/industry-types`);
+      const maxId = response.data.reduce((max, item) => {
+        const num = parseInt(item.id);
+        return !isNaN(num) && num > max ? num : max;
+      }, 0);
+      return String(maxId + 1);
+    } catch (err) {
+      console.error(err);
+      return '';
+    }
+  };
+
   // Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => {
       setSearch(searchVal);
       setCurrentPage(1); // Reset to page 1 on new search
-    }, 4000);
+    }, 300);
     return () => clearTimeout(timer);
   }, [searchVal]);
+
 
   // Fetch paginated lists from backend
   const fetchList = async () => {
@@ -77,6 +92,10 @@ export const IndustryType = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!form.id) {
+      showAlert('error', 'ID is required.');
+      return;
+    }
     if (!form.industryType) {
       showAlert('error', 'Industry Type Name is required.');
       return;
@@ -85,7 +104,7 @@ export const IndustryType = () => {
     try {
       if (editingId) {
         // Edit Mode
-        const response = await axios.put(`${BASE_API_URL}/masters/industry-types/${editingId}`, {
+        await axios.put(`${BASE_API_URL}/masters/industry-types/${editingId}`, {
           industryType: form.industryType,
           sortingNo: Number(form.sortingNo) || 0,
           status: form.status
@@ -98,23 +117,19 @@ export const IndustryType = () => {
           fetchList(); // reload table
         }, 1500);
       } else {
-        // Add Mode - Fetch all elements to compute next ID cleanly on client or simulate it
-        const allRes = await axios.get(`${BASE_API_URL}/masters/industry-types`);
-        const maxId = allRes.data.reduce((max, item) => {
-          const num = parseInt(item.id);
-          return !isNaN(num) && num > max ? num : max;
-        }, 0);
-        const nextId = String(maxId + 1);
-
+        // Add Mode
         await axios.post(`${BASE_API_URL}/masters/industry-types`, {
-          id: nextId,
+          id: form.id,
           industryType: form.industryType,
           sortingNo: Number(form.sortingNo) || 0,
           status: form.status
         });
         showAlert('success', 'Success! Record added/updated successfully.');
         setForm({ id: '', industryType: '', sortingNo: '', status: 'active' });
-        fetchList(); // reload table
+        setTimeout(() => {
+          setView('list');
+          fetchList(); // reload table
+        }, 1500);
       }
     } catch (err) {
       showAlert('error', err.response?.data?.message || 'Oops! Something went wrong. Please try again.');
@@ -135,6 +150,22 @@ export const IndustryType = () => {
 
   // Pagination Indices
   const startIndex = (currentPage - 1) * entriesPerPage;
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
+    let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let end = Math.min(totalPages, start + maxVisible - 1);
+
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
 
   return (
     <div className="space-y-6">
@@ -167,9 +198,10 @@ export const IndustryType = () => {
               Industry Type
             </h3>
             <button
-              onClick={() => {
+              onClick={async () => {
                 setEditingId(null);
-                setForm({ id: '', industryType: '', sortingNo: '', status: 'active' });
+                const nextId = await getNextId();
+                setForm({ id: nextId, industryType: '', sortingNo: '', status: 'active' });
                 setAlert({ type: '', text: '' });
                 setView('form');
               }}
@@ -290,10 +322,20 @@ export const IndustryType = () => {
                 <ChevronLeft className="w-3.5 h-3.5" />
               </button>
               
-              {/* Active Page Indicator */}
-              <button className="w-8 h-8 flex items-center justify-center bg-indigo-600 text-white font-bold text-xs rounded-lg shadow-sm">
-                {currentPage}
-              </button>
+              {/* Individual Page Numbers */}
+              {getPageNumbers().map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setCurrentPage(p)}
+                  className={`w-8 h-8 flex items-center justify-center font-bold text-xs rounded-lg transition-colors shadow-sm ${
+                    currentPage === p
+                      ? 'bg-indigo-600 text-white font-bold'
+                      : 'border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
 
               {/* Next Page */}
               <button
@@ -370,7 +412,23 @@ export const IndustryType = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               
               {/* Form Input Grid */}
-              <div className="grid gap-6 md:grid-cols-3">
+              <div className="grid gap-6 md:grid-cols-4">
+                {/* ID */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                    ID <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    disabled={!!editingId}
+                    placeholder="e.g. 1"
+                    value={form.id}
+                    onChange={(e) => setForm({ ...form, id: e.target.value })}
+                    className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white disabled:bg-slate-50"
+                  />
+                </div>
+
                 {/* Name */}
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">

@@ -2,35 +2,84 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BASE_API_URL } from '../context/AuthContext';
 import { 
-  Briefcase, 
   Plus, 
   Edit2, 
   X, 
-  Save, 
   AlertCircle, 
-  CheckCircle,
-  Loader
+  CheckCircle2,
+  Loader,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  List
 } from 'lucide-react';
 
 export const JobType = () => {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ id: '', jobType: '', sortingNo: 0, status: 'active' });
-  const [editingId, setEditingId] = useState(null);
-  const [message, setMessage] = useState({ type: '', text: '' });
+  
+  // Search & Pagination States
+  const [searchVal, setSearchVal] = useState('');
+  const [search, setSearch] = useState('');
+  const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const showMessage = (type, text) => {
-    setMessage({ type, text });
-    setTimeout(() => setMessage({ type: '', text: '' }), 4000);
+  // Toggle View State: 'list' or 'form'
+  const [view, setView] = useState('list');
+
+  // Form State
+  const [form, setForm] = useState({ id: '', jobType: '', sortingNo: '', status: 'active' });
+  const [editingId, setEditingId] = useState(null);
+
+  // Success / Error Alerts
+  const [alert, setAlert] = useState({ type: '', text: '' });
+
+  const showAlert = (type, text) => {
+    setAlert({ type, text });
+    if (type === 'success') {
+      setTimeout(() => setAlert({ type: '', text: '' }), 3000);
+    }
   };
 
-  const fetchList = async () => {
+  const getNextId = async () => {
     try {
       const response = await axios.get(`${BASE_API_URL}/masters/job-types`);
-      setList(response.data);
+      const maxId = response.data.reduce((max, item) => {
+        const num = parseInt(item.id);
+        return !isNaN(num) && num > max ? num : max;
+      }, 0);
+      return String(maxId + 1);
     } catch (err) {
       console.error(err);
-      showMessage('error', 'Error retrieving job types.');
+      return '';
+    }
+  };
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchVal);
+      setCurrentPage(1); // Reset to page 1 on new search
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchVal]);
+
+  // Fetch paginated lists from backend
+  const fetchList = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(
+        `${BASE_API_URL}/masters/job-types?page=${currentPage}&limit=${entriesPerPage}&search=${search}&paginate=true`
+      );
+      setList(response.data.docs || []);
+      setTotal(response.data.total || 0);
+      setTotalPages(response.data.totalPages || 1);
+    } catch (err) {
+      console.error(err);
+      showAlert('error', 'Error retrieving job types.');
     } finally {
       setLoading(false);
     }
@@ -38,210 +87,208 @@ export const JobType = () => {
 
   useEffect(() => {
     fetchList();
-  }, []);
+  }, [currentPage, entriesPerPage, search]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.id || !form.jobType) return;
+    if (!form.id) {
+      showAlert('error', 'ID is required.');
+      return;
+    }
+    if (!form.jobType) {
+      showAlert('error', 'Job Type Name is required.');
+      return;
+    }
 
     try {
       if (editingId) {
-        const response = await axios.put(`${BASE_API_URL}/masters/job-types/${editingId}`, form);
-        setList(list.map(item => item._id === editingId ? response.data : item));
-        showMessage('success', 'Job type updated successfully.');
-        setEditingId(null);
+        // Edit Mode
+        await axios.put(`${BASE_API_URL}/masters/job-types/${editingId}`, {
+          jobType: form.jobType,
+          sortingNo: Number(form.sortingNo) || 0,
+          status: form.status
+        });
+        showAlert('success', 'Success! Record added/updated successfully.');
+        setTimeout(() => {
+          setView('list');
+          setEditingId(null);
+          setForm({ id: '', jobType: '', sortingNo: '', status: 'active' });
+          fetchList(); // reload table
+        }, 1500);
       } else {
-        const response = await axios.post(`${BASE_API_URL}/masters/job-types`, form);
-        setList([...list, response.data]);
-        showMessage('success', 'Job type added successfully.');
+        // Add Mode
+        await axios.post(`${BASE_API_URL}/masters/job-types`, {
+          id: form.id,
+          jobType: form.jobType,
+          sortingNo: Number(form.sortingNo) || 0,
+          status: form.status
+        });
+        showAlert('success', 'Success! Record added/updated successfully.');
+        setForm({ id: '', jobType: '', sortingNo: '', status: 'active' });
+        setTimeout(() => {
+          setView('list');
+          fetchList(); // reload table
+        }, 1500);
       }
-      setForm({ id: '', jobType: '', sortingNo: 0, status: 'active' });
     } catch (err) {
-      showMessage('error', err.response?.data?.message || 'Error processing record.');
+      showAlert('error', err.response?.data?.message || 'Oops! Something went wrong. Please try again.');
     }
   };
 
   const handleEdit = (item) => {
     setEditingId(item._id);
-    setForm({ id: item.id, jobType: item.jobType, sortingNo: item.sortingNo, status: item.status });
+    setForm({ 
+      id: item.id, 
+      jobType: item.jobType, 
+      sortingNo: item.sortingNo, 
+      status: item.status 
+    });
+    setAlert({ type: '', text: '' });
+    setView('form');
   };
 
-  const handleDelete = async (uid) => {
-    if (!window.confirm('Delete this job type?')) return;
-    try {
-      await axios.delete(`${BASE_API_URL}/masters/job-types/${uid}`);
-      setList(list.filter(item => item._id !== uid));
-      showMessage('success', 'Job type deleted successfully.');
-    } catch (err) {
-      showMessage('error', 'Error deleting job type.');
+  // Pagination Indices
+  const startIndex = (currentPage - 1) * entriesPerPage;
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
+    let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let end = Math.min(totalPages, start + maxVisible - 1);
+
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
     }
-  };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader className="w-8 h-8 animate-spin text-indigo-600" />
-      </div>
-    );
-  }
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 md:text-3xl">
-          Job Type Master
-        </h1>
-        <p className="text-sm text-slate-500">
-          Configure default job types (e.g. Full Time, Part Time, Contract, Internship).
-        </p>
+      
+      {/* Title & Breadcrumb header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-slate-800">
+            Job Type
+          </h1>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+          <span>Dashboard</span>
+          <span>&gt;</span>
+          <span className="text-indigo-600">
+            {view === 'list' ? 'Manage Job Type' : editingId ? 'Edit Job Type' : 'Add Job Type'}
+          </span>
+        </div>
       </div>
 
-      {message.text && (
-        <div className={`flex items-center gap-2.5 p-4 rounded-xl border text-sm font-medium transition-all ${
-          message.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-800' : 'bg-rose-50 border-rose-100 text-rose-800'
-        }`}>
-          {message.type === 'success' ? <CheckCircle className="w-5 h-5 shrink-0" /> : <AlertCircle className="w-5 h-5 shrink-0" />}
-          <span>{message.text}</span>
-        </div>
-      )}
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Form Panel */}
-        <div className="lg:col-span-1 border border-slate-200 bg-white rounded-2xl shadow-sm h-fit">
-          <div className="p-6 border-b border-slate-100 bg-slate-50/50 rounded-t-2xl">
-            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-              <Briefcase className="w-5 h-5 text-indigo-600" />
-              {editingId ? 'Edit Job Type' : 'Add Job Type'}
+      {view === 'list' ? (
+        /* ============================================================== */
+        /* LISTINGS SCREEN */
+        /* ============================================================== */
+        <div className="border border-slate-200 bg-white rounded-2xl shadow-sm overflow-hidden">
+          
+          {/* Card Header */}
+          <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+            <h3 className="text-base font-bold text-slate-800">
+              Job Type
             </h3>
+            <button
+              onClick={async () => {
+                setEditingId(null);
+                const nextId = await getNextId();
+                setForm({ id: nextId, jobType: '', sortingNo: '', status: 'active' });
+                setAlert({ type: '', text: '' });
+                setView('form');
+              }}
+              className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Job Type</span>
+            </button>
           </div>
-          
-          <div className="p-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                  Job Type ID (Unique Code)
-                </label>
-                <input
-                  type="text"
-                  required
-                  disabled={!!editingId}
-                  placeholder="e.g. FT, PT, INT"
-                  value={form.id}
-                  onChange={(e) => setForm({ ...form, id: e.target.value })}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm disabled:bg-slate-50"
-                />
-              </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                  Job Type Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Full Time"
-                  value={form.jobType}
-                  onChange={(e) => setForm({ ...form, jobType: e.target.value })}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                />
-              </div>
+          {/* Table Controls (Search and Show Entries) */}
+          <div className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-50 bg-slate-50/30">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+              <select
+                value={entriesPerPage}
+                onChange={(e) => {
+                  setEntriesPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="px-2.5 py-1.5 border border-slate-200 rounded-lg text-slate-900 bg-white focus:outline-none"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+              <span>entries per page</span>
+            </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                  Sorting Number
-                </label>
-                <input
-                  type="number"
-                  placeholder="0"
-                  value={form.sortingNo}
-                  onChange={(e) => setForm({ ...form, sortingNo: parseInt(e.target.value) || 0 })}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                  Status
-                </label>
-                <select
-                  value={form.status}
-                  onChange={(e) => setForm({ ...form, status: e.target.value })}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
-
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="submit"
-                  className="flex-1 flex items-center justify-center gap-2 py-2 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-md shadow-indigo-600/10 transition-colors text-sm"
-                >
-                  {editingId ? <Save className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                  <span>{editingId ? 'Save Changes' : 'Add Record'}</span>
-                </button>
-                {editingId && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingId(null);
-                      setForm({ id: '', jobType: '', sortingNo: 0, status: 'active' });
-                    }}
-                    className="p-2 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-xl"
-                  >
-                    <X className="w-4.5 h-4.5" />
-                  </button>
-                )}
-              </div>
-            </form>
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+              <span>Search:</span>
+              <input
+                type="text"
+                value={searchVal}
+                onChange={(e) => setSearchVal(e.target.value)}
+                className="px-3 py-1.5 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:border-indigo-500 bg-white w-48 font-normal"
+              />
+            </div>
           </div>
-        </div>
 
-        {/* List Table Panel */}
-        <div className="lg:col-span-2 border border-slate-200 bg-white rounded-2xl shadow-sm">
-          <div className="p-6 border-b border-slate-100 bg-slate-50/50 rounded-t-2xl">
-            <h3 className="text-lg font-bold text-slate-800">Job Type Listings</h3>
-          </div>
-          
-          <div className="p-6 overflow-x-auto">
-            <table className="w-full text-sm text-left text-slate-500">
-              <thead className="text-xs uppercase bg-slate-50 text-slate-400">
-                <tr>
-                  <th className="px-4 py-3 font-semibold">Code ID</th>
-                  <th className="px-4 py-3 font-semibold">Job Type Name</th>
-                  <th className="px-4 py-3 font-semibold">Sort Order</th>
-                  <th className="px-4 py-3 font-semibold">Status</th>
-                  <th className="px-4 py-3 font-semibold text-right">Actions</th>
+          {/* Listings Table */}
+          <div className="overflow-x-auto relative min-h-[200px]">
+            {loading ? (
+              <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-10">
+                <Loader className="w-6 h-6 animate-spin text-indigo-600" />
+              </div>
+            ) : null}
+            
+            <table className="w-full text-sm text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-100 text-xs text-slate-400 uppercase">
+                  <th className="px-6 py-3.5 font-bold">ID</th>
+                  <th className="px-6 py-3.5 font-bold">Name</th>
+                  <th className="px-6 py-3.5 font-bold">Sort</th>
+                  <th className="px-6 py-3.5 font-bold">Status</th>
+                  <th className="px-6 py-3.5 font-bold">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 text-slate-700">
                 {list.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="px-4 py-8 text-center text-slate-400">No job types defined yet.</td>
+                    <td colSpan="5" className="px-6 py-8 text-center text-slate-400">No matching records found.</td>
                   </tr>
                 ) : (
                   list.map((item) => (
-                    <tr key={item._id} className="hover:bg-slate-50/50">
-                      <td className="px-4 py-3 font-bold text-slate-800 uppercase">{item.id}</td>
-                      <td className="px-4 py-3 font-medium text-slate-700">{item.jobType}</td>
-                      <td className="px-4 py-3 text-slate-500">{item.sortingNo}</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                          item.status === 'active' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'
+                    <tr key={item._id} className="hover:bg-slate-50/30">
+                      <td className="px-6 py-4 font-bold text-slate-800">
+                        {String(item.id).padStart(3, '0')}
+                      </td>
+                      <td className="px-6 py-4 font-medium text-slate-700">{item.jobType}</td>
+                      <td className="px-6 py-4 text-slate-500">{item.sortingNo}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                          item.status === 'active' 
+                            ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
+                            : 'bg-rose-50 text-rose-600 border border-rose-100'
                         }`}>
-                          {item.status}
+                          {item.status === 'active' ? 'Active' : 'Inactive'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => handleEdit(item)}
-                            className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition-colors"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                      <td className="px-6 py-4">
+                        <button
+                          onClick={() => handleEdit(item)}
+                          className="w-7 h-7 bg-teal-500 hover:bg-teal-600 text-white rounded-full flex items-center justify-center transition-colors"
+                          title="Edit"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
                       </td>
                     </tr>
                   ))
@@ -249,9 +296,201 @@ export const JobType = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Table Footer (Pagination) */}
+          <div className="p-5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="text-xs font-semibold text-slate-400">
+              Showing {total === 0 ? 0 : startIndex + 1} to {Math.min(startIndex + entriesPerPage, total)} of {total} entries
+            </div>
+
+            <div className="flex items-center gap-1 self-end sm:self-auto">
+              {/* First Page */}
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(1)}
+                className="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg bg-white hover:bg-slate-50 text-slate-500 disabled:opacity-50 transition-colors"
+              >
+                <ChevronsLeft className="w-3.5 h-3.5" />
+              </button>
+              {/* Prev Page */}
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(currentPage - 1)}
+                className="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg bg-white hover:bg-slate-50 text-slate-500 disabled:opacity-50 transition-colors"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+              
+              {/* Individual Page Numbers */}
+              {getPageNumbers().map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setCurrentPage(p)}
+                  className={`w-8 h-8 flex items-center justify-center font-bold text-xs rounded-lg transition-colors shadow-sm ${
+                    currentPage === p
+                      ? 'bg-indigo-600 text-white font-bold'
+                      : 'border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+
+              {/* Next Page */}
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(currentPage + 1)}
+                className="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg bg-white hover:bg-slate-50 text-slate-500 disabled:opacity-50 transition-colors"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+              {/* Last Page */}
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(totalPages)}
+                className="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg bg-white hover:bg-slate-50 text-slate-500 disabled:opacity-50 transition-colors"
+              >
+                <ChevronsRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
         </div>
-      </div>
+      ) : (
+        /* ============================================================== */
+        /* ADD / EDIT FORM SCREEN */
+        /* ============================================================== */
+        <div className="border border-slate-200 bg-white rounded-2xl shadow-sm overflow-hidden">
+          
+          {/* Card Header */}
+          <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+            <h3 className="text-base font-bold text-slate-800">
+              {editingId ? 'Edit Job Type' : 'Add Job Type'}
+            </h3>
+            <button
+              onClick={() => {
+                setView('list');
+                setEditingId(null);
+                setForm({ id: '', jobType: '', sortingNo: '', status: 'active' });
+                setAlert({ type: '', text: '' });
+              }}
+              className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
+            >
+              <List className="w-3.5 h-3.5" />
+              <span>View Listings</span>
+            </button>
+          </div>
+
+          {/* Form Content */}
+          <div className="p-6">
+            
+            {/* Alert Boxes */}
+            {alert.text && (
+              <div className="mb-5 relative animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className={`flex items-start gap-3 p-4 rounded-xl border text-sm font-semibold ${
+                  alert.type === 'success' 
+                    ? 'bg-emerald-50 border-emerald-100 text-emerald-800' 
+                    : 'bg-rose-50 border-rose-100 text-rose-800'
+                }`}>
+                  {alert.type === 'success' ? (
+                    <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-500" />
+                  ) : (
+                    <AlertCircle className="w-5 h-5 shrink-0 text-rose-500" />
+                  )}
+                  <div className="flex-grow">{alert.text}</div>
+                  <button 
+                    onClick={() => setAlert({ type: '', text: '' })}
+                    className="p-0.5 rounded-lg hover:bg-slate-200/50 text-slate-400 hover:text-slate-600 transition-colors shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              
+              {/* Form Input Grid */}
+              <div className="grid gap-6 md:grid-cols-4">
+                {/* ID */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                    ID <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    disabled={!!editingId}
+                    placeholder="e.g. 1"
+                    value={form.id}
+                    onChange={(e) => setForm({ ...form, id: e.target.value })}
+                    className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white disabled:bg-slate-50"
+                  />
+                </div>
+
+                {/* Name */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                    Name <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Name of Job Type"
+                    value={form.jobType}
+                    onChange={(e) => setForm({ ...form, jobType: e.target.value })}
+                    className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white"
+                  />
+                </div>
+
+                {/* Sorting No */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                    Sorting No.
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="Sort No."
+                    value={form.sortingNo}
+                    onChange={(e) => setForm({ ...form, sortingNo: e.target.value })}
+                    className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white"
+                  />
+                </div>
+
+                {/* Status */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                    Status <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    value={form.status}
+                    onChange={(e) => setForm({ ...form, status: e.target.value })}
+                    className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white"
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg shadow-md shadow-indigo-600/10 transition-colors text-sm"
+                >
+                  Submit
+                </button>
+              </div>
+
+            </form>
+          </div>
+
+        </div>
+      )}
+
     </div>
   );
 };
+
 export default JobType;

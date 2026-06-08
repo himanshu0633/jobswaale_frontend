@@ -15,7 +15,9 @@ import {
   List
 } from 'lucide-react';
 
-export const Qualification = () => {
+export const District = () => {
+  const [countries, setCountries] = useState([]);
+  const [states, setStates] = useState([]);
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -31,7 +33,7 @@ export const Qualification = () => {
   const [view, setView] = useState('list');
 
   // Form State
-  const [form, setForm] = useState({ id: '', name: '', sortingNo: '', status: 'active' });
+  const [form, setForm] = useState({ cid: '', sid: '', did: '', districtName: '', status: 'active' });
   const [editingId, setEditingId] = useState(null);
 
   // Success / Error Alerts
@@ -44,11 +46,26 @@ export const Qualification = () => {
     }
   };
 
+  // Fetch initial location dropdown lists
+  const fetchLocations = async () => {
+    try {
+      const [resC, resS] = await Promise.all([
+        axios.get(`${BASE_API_URL}/masters/countries`),
+        axios.get(`${BASE_API_URL}/masters/states`)
+      ]);
+      setCountries(resC.data);
+      setStates(resS.data);
+    } catch (err) {
+      console.error(err);
+      showAlert('error', 'Error retrieving locations.');
+    }
+  };
+
   const getNextId = async () => {
     try {
-      const response = await axios.get(`${BASE_API_URL}/masters/qualifications`);
+      const response = await axios.get(`${BASE_API_URL}/masters/districts`);
       const maxId = response.data.reduce((max, item) => {
-        const num = parseInt(item.id);
+        const num = parseInt(item.did);
         return !isNaN(num) && num > max ? num : max;
       }, 0);
       return String(maxId + 1);
@@ -72,18 +89,22 @@ export const Qualification = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `${BASE_API_URL}/masters/qualifications?page=${currentPage}&limit=${entriesPerPage}&search=${search}&paginate=true`
+        `${BASE_API_URL}/masters/districts?page=${currentPage}&limit=${entriesPerPage}&search=${search}&paginate=true`
       );
       setList(response.data.docs || []);
       setTotal(response.data.total || 0);
       setTotalPages(response.data.totalPages || 1);
     } catch (err) {
       console.error(err);
-      showAlert('error', 'Error retrieving qualifications.');
+      showAlert('error', 'Error retrieving districts.');
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchLocations();
+  }, []);
 
   useEffect(() => {
     fetchList();
@@ -91,40 +112,49 @@ export const Qualification = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.id) {
-      showAlert('error', 'Qualification ID is required.');
+    const { sid, did, districtName, status } = form;
+    if (!form.cid) {
+      showAlert('error', 'Country selection is required.');
       return;
     }
-    if (!form.name) {
-      showAlert('error', 'Qualification Name is required.');
+    if (!sid) {
+      showAlert('error', 'State selection is required.');
+      return;
+    }
+    if (!did) {
+      showAlert('error', 'District ID is required.');
+      return;
+    }
+    if (!districtName) {
+      showAlert('error', 'District Name is required.');
       return;
     }
 
     try {
       if (editingId) {
         // Edit Mode
-        await axios.put(`${BASE_API_URL}/masters/qualifications/${editingId}`, {
-          name: form.name,
-          sortingNo: Number(form.sortingNo) || 0,
-          status: form.status
+        await axios.put(`${BASE_API_URL}/masters/districts/${editingId}`, {
+          sid,
+          districtName,
+          status
         });
         showAlert('success', 'Success! Record added/updated successfully.');
         setTimeout(() => {
           setView('list');
           setEditingId(null);
-          setForm({ id: '', name: '', sortingNo: '', status: 'active' });
+          setForm({ cid: '', sid: '', did: '', districtName: '', status: 'active' });
           fetchList(); // reload table
         }, 1500);
       } else {
         // Add Mode
-        await axios.post(`${BASE_API_URL}/masters/qualifications`, {
-          id: form.id,
-          name: form.name,
-          sortingNo: Number(form.sortingNo) || 0,
-          status: form.status
+        await axios.post(`${BASE_API_URL}/masters/districts`, {
+          sid,
+          did,
+          districtName,
+          status
         });
         showAlert('success', 'Success! Record added/updated successfully.');
-        setForm({ id: '', name: '', sortingNo: '', status: 'active' });
+        setForm({ cid: '', sid: '', did: '', districtName: '', status: 'active' });
         setTimeout(() => {
           setView('list');
           fetchList(); // reload table
@@ -136,11 +166,16 @@ export const Qualification = () => {
   };
 
   const handleEdit = (item) => {
+    // We need to resolve the cid for the country dropdown since only sid is saved on District
+    const matchingState = states.find(s => s.sid === item.sid);
+    const resolvedCid = matchingState ? matchingState.cid : '';
+
     setEditingId(item._id);
     setForm({ 
-      id: item.id, 
-      name: item.name, 
-      sortingNo: item.sortingNo, 
+      cid: resolvedCid, 
+      sid: item.sid, 
+      did: item.did, 
+      districtName: item.districtName, 
       status: item.status 
     });
     setAlert({ type: '', text: '' });
@@ -166,6 +201,21 @@ export const Qualification = () => {
     return pages;
   };
 
+  const getCountryName = (sid) => {
+    const stateMatch = states.find(s => s.sid === sid);
+    if (!stateMatch) return '';
+    const countryMatch = countries.find(c => c.cid === stateMatch.cid);
+    return countryMatch ? countryMatch.countryName : stateMatch.cid;
+  };
+
+  const getStateName = (sid) => {
+    const match = states.find(s => s.sid === sid);
+    return match ? match.stateName : sid;
+  };
+
+  // Filter states based on selected country in form
+  const availableStates = form.cid ? states.filter(s => s.cid === form.cid) : [];
+
   return (
     <div className="space-y-6">
       
@@ -173,14 +223,14 @@ export const Qualification = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-slate-800">
-            Qualification
+            District
           </h1>
         </div>
         <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
           <span>Dashboard</span>
           <span>&gt;</span>
           <span className="text-indigo-600">
-            {view === 'list' ? 'Manage Qualification' : editingId ? 'Edit Qualification' : 'Add Qualification'}
+            {view === 'list' ? 'Manage District' : editingId ? 'Edit District' : 'Add District'}
           </span>
         </div>
       </div>
@@ -194,20 +244,20 @@ export const Qualification = () => {
           {/* Card Header */}
           <div className="p-6 border-b border-slate-100 flex items-center justify-between">
             <h3 className="text-base font-bold text-slate-800">
-              Qualification
+              District Listing
             </h3>
             <button
               onClick={async () => {
                 setEditingId(null);
                 const nextId = await getNextId();
-                setForm({ id: nextId, name: '', sortingNo: '', status: 'active' });
+                setForm({ cid: '', sid: '', did: nextId, districtName: '', status: 'active' });
                 setAlert({ type: '', text: '' });
                 setView('form');
               }}
               className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Add Qualification</span>
+              <span>Add District</span>
             </button>
           </div>
 
@@ -253,8 +303,9 @@ export const Qualification = () => {
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100 text-xs text-slate-400 uppercase">
                   <th className="px-6 py-3.5 font-bold">ID</th>
-                  <th className="px-6 py-3.5 font-bold">Name</th>
-                  <th className="px-6 py-3.5 font-bold">Sort</th>
+                  <th className="px-6 py-3.5 font-bold">Country</th>
+                  <th className="px-6 py-3.5 font-bold">State</th>
+                  <th className="px-6 py-3.5 font-bold">District</th>
                   <th className="px-6 py-3.5 font-bold">Status</th>
                   <th className="px-6 py-3.5 font-bold">Action</th>
                 </tr>
@@ -262,16 +313,21 @@ export const Qualification = () => {
               <tbody className="divide-y divide-slate-100 text-slate-700">
                 {list.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="px-6 py-8 text-center text-slate-400">No matching records found.</td>
+                    <td colSpan="6" className="px-6 py-8 text-center text-slate-400">No matching records found.</td>
                   </tr>
                 ) : (
                   list.map((item) => (
                     <tr key={item._id} className="hover:bg-slate-50/30">
                       <td className="px-6 py-4 font-bold text-slate-800 uppercase">
-                        {item.id}
+                        {item.did}
                       </td>
-                      <td className="px-6 py-4 font-medium text-slate-700">{item.name}</td>
-                      <td className="px-6 py-4 text-slate-500">{item.sortingNo}</td>
+                      <td className="px-6 py-4 text-slate-500">
+                        {getCountryName(item.sid)}
+                      </td>
+                      <td className="px-6 py-4 text-slate-500">
+                        {getStateName(item.sid)}
+                      </td>
+                      <td className="px-6 py-4 font-medium text-slate-700">{item.districtName}</td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
                           item.status === 'active' 
@@ -365,13 +421,13 @@ export const Qualification = () => {
           {/* Card Header */}
           <div className="p-6 border-b border-slate-100 flex items-center justify-between">
             <h3 className="text-base font-bold text-slate-800">
-              {editingId ? 'Edit Qualification' : 'Add Qualification'}
+              {editingId ? 'Edit District' : 'Add District'}
             </h3>
             <button
               onClick={() => {
                 setView('list');
                 setEditingId(null);
-                setForm({ id: '', name: '', sortingNo: '', status: 'active' });
+                setForm({ cid: '', sid: '', did: '', districtName: '', status: 'active' });
                 setAlert({ type: '', text: '' });
               }}
               className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
@@ -411,48 +467,69 @@ export const Qualification = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               
               {/* Form Input Grid */}
-              <div className="grid gap-6 md:grid-cols-4">
-                {/* ID */}
+              <div className="grid gap-6 md:grid-cols-5">
+                {/* Country Dropdown */}
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                    Qualification ID (Unique Code) <span className="text-rose-500">*</span>
+                    Country <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    value={form.cid}
+                    onChange={(e) => setForm({ ...form, cid: e.target.value, sid: '' })}
+                    className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white"
+                  >
+                    <option value="">-- Choose Country --</option>
+                    {countries.map(c => (
+                      <option key={c.cid} value={c.cid}>{c.countryName}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* State Dropdown */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                    State <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    disabled={!form.cid}
+                    value={form.sid}
+                    onChange={(e) => setForm({ ...form, sid: e.target.value })}
+                    className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white disabled:bg-slate-50"
+                  >
+                    <option value="">-- Choose State --</option>
+                    {availableStates.map(s => (
+                      <option key={s.sid} value={s.sid}>{s.stateName}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* District ID */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                    District ID <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     disabled={!!editingId}
-                    placeholder="e.g. BTECH, MBA"
-                    value={form.id}
-                    onChange={(e) => setForm({ ...form, id: e.target.value })}
+                    placeholder="e.g. 001"
+                    value={form.did}
+                    onChange={(e) => setForm({ ...form, did: e.target.value })}
                     className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white disabled:bg-slate-50"
                   />
                 </div>
 
-                {/* Name */}
+                {/* District Name */}
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                    Name <span className="text-rose-500">*</span>
+                    District Name <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. BE / B.Tech"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white"
-                  />
-                </div>
-
-                {/* Sorting No */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                    Sorting No.
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="Sort No."
-                    value={form.sortingNo}
-                    onChange={(e) => setForm({ ...form, sortingNo: e.target.value })}
+                    placeholder="Name of District"
+                    value={form.districtName}
+                    onChange={(e) => setForm({ ...form, districtName: e.target.value })}
                     className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white"
                   />
                 </div>
@@ -493,4 +570,4 @@ export const Qualification = () => {
   );
 };
 
-export default Qualification;
+export default District;
