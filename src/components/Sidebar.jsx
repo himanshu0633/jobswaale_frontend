@@ -1,0 +1,374 @@
+import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { 
+  Gauge, 
+  Factory, 
+  Briefcase, 
+  Layers, 
+  GraduationCap,
+  MapPin, 
+  Gift,
+  ChevronDown,
+  ChevronRight,
+  Users,
+  Handshake
+} from 'lucide-react';
+
+const LogoIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-8 h-8 shrink-0" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Blue circle background */}
+    <circle cx="12" cy="12" r="11" fill="#2563eb"/>
+    {/* Central person (orange) */}
+    <circle cx="12" cy="9" r="2.2" fill="#f97316"/>
+    <path d="M8.5 16.5C8.5 14.5 10 13.2 12 13.2C14 13.2 15.5 14.5 15.5 16.5" stroke="#f97316" strokeWidth="1.6" strokeLinecap="round"/>
+    {/* Left person (light blue) */}
+    <circle cx="8" cy="10.5" r="1.3" fill="#93c5fd"/>
+    <path d="M6 16C6 14.7 6.8 13.8 8 13.8" stroke="#93c5fd" strokeWidth="1.2" strokeLinecap="round"/>
+    {/* Right person (light blue) */}
+    <circle cx="16" cy="10.5" r="1.3" fill="#93c5fd"/>
+    <path d="M18 16C18 14.7 17.2 13.8 16 13.8" stroke="#93c5fd" strokeWidth="1.2" strokeLinecap="round"/>
+  </svg>
+);
+
+export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
+  const location = useLocation();
+
+  const [openMenus, setOpenMenus] = useState({
+    locations: location.pathname.startsWith('/locations') || location.pathname.startsWith('/cities'),
+    packages: location.pathname.startsWith('/plans') || location.pathname.startsWith('/features') || location.pathname.startsWith('/plan-mappings')
+  });
+
+  const toggleMenu = (menu) => {
+    setOpenMenus(prev => ({
+      ...prev,
+      [menu]: !prev[menu]
+    }));
+  };
+
+  const isActive = (path) => location.pathname === path;
+  const isGroupActive = (paths) => paths.some(path => location.pathname.startsWith(path));
+
+  return (
+    <>
+      {/* Mobile Backdrop */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm lg:hidden"
+          onClick={toggleSidebar}
+        />
+      )}
+
+      {/* Sidebar Container */}
+      <aside className={`fixed top-0 bottom-0 left-0 z-50 flex flex-col bg-white text-slate-700 border-r border-slate-200 transition-all duration-300 transform lg:translate-x-0 ${
+        isOpen ? 'translate-x-0' : '-translate-x-full'
+      } ${
+        isCollapsed ? 'w-16' : 'w-64'
+      }`}>
+        
+        {/* Brand Logo */}
+        <div className={`flex items-center border-b border-slate-100 bg-white h-20 ${isCollapsed ? 'justify-center px-2' : 'justify-between px-6'}`}>
+          <Link to="/" className="flex items-center">
+            {isCollapsed ? (
+              <LogoIcon />
+            ) : (
+              <div className="flex flex-col">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-2xl font-extrabold tracking-tight">
+                    <span className="text-indigo-600">Jobs</span>
+                    <span className="text-orange-500">Waale</span>
+                  </span>
+                </div>
+                <span className="text-[8px] font-bold tracking-widest text-slate-400 mt-1 uppercase">
+                  WE CONNECT, YOU GROW
+                </span>
+              </div>
+            )}
+          </Link>
+        </div>
+
+        {/* Navigation Menu */}
+        <nav className={`flex-grow py-6 overflow-y-auto ${isCollapsed ? 'px-1 space-y-4' : 'px-4 space-y-1'}`}>
+          
+          {/* NAVIGATION */}
+          {!isCollapsed && (
+            <div className="px-3 mb-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Navigation
+            </div>
+          )}
+
+          {/* Dashboard */}
+          <Link
+            to="/"
+            title={isCollapsed ? "Dashboard" : ""}
+            className={`flex items-center rounded-lg transition-all duration-150 ${
+              isCollapsed ? 'justify-center p-2.5 mx-auto w-10 h-10' : 'gap-3 px-3 py-2.5 text-sm font-semibold'
+            } ${
+              isActive('/') 
+                ? 'bg-indigo-50/70 text-indigo-600' 
+                : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
+            }`}
+          >
+            <Gauge className="w-4.5 h-4.5 shrink-0" />
+            {!isCollapsed && <span>Dashboard</span>}
+          </Link>
+
+          {/* MASTERS */}
+          {!isCollapsed && (
+            <div className="px-3 pt-5 mb-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Masters
+            </div>
+          )}
+
+          {/* Industry Type */}
+          <Link
+            to="/industry-types"
+            title={isCollapsed ? "Industry Type" : ""}
+            className={`flex items-center rounded-lg transition-all duration-150 ${
+              isCollapsed ? 'justify-center p-2.5 mx-auto w-10 h-10' : 'gap-3 px-3 py-2.5 text-sm font-semibold'
+            } ${
+              isActive('/industry-types') 
+                ? 'bg-indigo-50/70 text-indigo-600' 
+                : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
+            }`}
+          >
+            <Factory className="w-4.5 h-4.5 shrink-0" />
+            {!isCollapsed && <span>Industry Type</span>}
+          </Link>
+
+          {/* Job Type */}
+          <Link
+            to="/job-types"
+            title={isCollapsed ? "Job Type" : ""}
+            className={`flex items-center rounded-lg transition-all duration-150 ${
+              isCollapsed ? 'justify-center p-2.5 mx-auto w-10 h-10' : 'gap-3 px-3 py-2.5 text-sm font-semibold'
+            } ${
+              isActive('/job-types') 
+                ? 'bg-indigo-50/70 text-indigo-600' 
+                : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
+            }`}
+          >
+            <Briefcase className="w-4.5 h-4.5 shrink-0" />
+            {!isCollapsed && <span>Job Type</span>}
+          </Link>
+
+          {/* Job Category */}
+          <Link
+            to="/job-categories"
+            title={isCollapsed ? "Job Category" : ""}
+            className={`flex items-center rounded-lg transition-all duration-150 ${
+              isCollapsed ? 'justify-center p-2.5 mx-auto w-10 h-10' : 'gap-3 px-3 py-2.5 text-sm font-semibold'
+            } ${
+              isActive('/job-categories') 
+                ? 'bg-indigo-50/70 text-indigo-600' 
+                : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
+            }`}
+          >
+            <Layers className="w-4.5 h-4.5 shrink-0" />
+            {!isCollapsed && <span>Job Category</span>}
+          </Link>
+
+          {/* Qualification */}
+          <Link
+            to="/qualifications"
+            title={isCollapsed ? "Qualification" : ""}
+            className={`flex items-center rounded-lg transition-all duration-150 ${
+              isCollapsed ? 'justify-center p-2.5 mx-auto w-10 h-10' : 'gap-3 px-3 py-2.5 text-sm font-semibold'
+            } ${
+              isActive('/qualifications') 
+                ? 'bg-indigo-50/70 text-indigo-600' 
+                : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
+            }`}
+          >
+            <GraduationCap className="w-4.5 h-4.5 shrink-0" />
+            {!isCollapsed && <span>Qualification</span>}
+          </Link>
+
+          {/* Collapsible Locations */}
+          <div>
+            {isCollapsed ? (
+              <Link
+                to="/locations"
+                title="Locations"
+                className={`flex items-center justify-center w-10 h-10 mx-auto rounded-lg transition-all duration-150 ${
+                  isGroupActive(['/locations', '/cities'])
+                    ? 'bg-indigo-50/70 text-indigo-600'
+                    : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
+                }`}
+              >
+                <MapPin className="w-4.5 h-4.5 shrink-0" />
+              </Link>
+            ) : (
+              <>
+                <button
+                  onClick={() => toggleMenu('locations')}
+                  className={`flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150 ${
+                    isGroupActive(['/locations', '/cities'])
+                      ? 'text-indigo-600 bg-indigo-50/30'
+                      : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <MapPin className="w-4.5 h-4.5 shrink-0" />
+                    <span>Locations</span>
+                  </div>
+                  {openMenus.locations ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
+                </button>
+                
+                {openMenus.locations && (
+                  <div className="pl-9 mt-1 space-y-1">
+                    <Link
+                      to="/locations"
+                      className={`block py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
+                        isActive('/locations')
+                          ? 'text-indigo-600 bg-indigo-50/50'
+                          : 'text-slate-500 hover:text-slate-950 hover:bg-slate-50'
+                      }`}
+                    >
+                      Country/State/District
+                    </Link>
+                    <Link
+                      to="/cities"
+                      className={`block py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
+                        isActive('/cities')
+                          ? 'text-indigo-600 bg-indigo-50/50'
+                          : 'text-slate-500 hover:text-slate-950 hover:bg-slate-50'
+                      }`}
+                    >
+                      City Master
+                    </Link>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Collapsible Packages */}
+          <div>
+            {isCollapsed ? (
+              <Link
+                to="/plans"
+                title="Packages"
+                className={`flex items-center justify-center w-10 h-10 mx-auto rounded-lg transition-all duration-150 ${
+                  isGroupActive(['/plans', '/features', '/plan-mappings'])
+                    ? 'bg-indigo-50/70 text-indigo-600'
+                    : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
+                }`}
+              >
+                <Gift className="w-4.5 h-4.5 shrink-0" />
+              </Link>
+            ) : (
+              <>
+                <button
+                  onClick={() => toggleMenu('packages')}
+                  className={`flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150 ${
+                    isGroupActive(['/plans', '/features', '/plan-mappings'])
+                      ? 'text-indigo-600 bg-indigo-50/30'
+                      : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Gift className="w-4.5 h-4.5 shrink-0" />
+                    <span>Packages</span>
+                  </div>
+                  {openMenus.packages ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
+                </button>
+                
+                {openMenus.packages && (
+                  <div className="pl-9 mt-1 space-y-1">
+                    <Link
+                      to="/plans"
+                      className={`block py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
+                        isActive('/plans')
+                          ? 'text-indigo-600 bg-indigo-50/50'
+                          : 'text-slate-500 hover:text-slate-950 hover:bg-slate-50'
+                      }`}
+                    >
+                      Plan Master
+                    </Link>
+                    <Link
+                      to="/features"
+                      className={`block py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
+                        isActive('/features')
+                          ? 'text-indigo-600 bg-indigo-50/50'
+                          : 'text-slate-500 hover:text-slate-950 hover:bg-slate-50'
+                      }`}
+                    >
+                      Feature Master
+                    </Link>
+                    <Link
+                      to="/plan-mappings"
+                      className={`block py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
+                        isActive('/plan-mappings')
+                          ? 'text-indigo-600 bg-indigo-50/50'
+                          : 'text-slate-500 hover:text-slate-950 hover:bg-slate-50'
+                      }`}
+                    >
+                      Plan Mapping
+                    </Link>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* APPLICATION */}
+          {!isCollapsed && (
+            <div className="px-3 pt-5 mb-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Application
+            </div>
+          )}
+
+          {/* Employer */}
+          <Link
+            to="/employers"
+            title={isCollapsed ? "Employer" : ""}
+            className={`flex items-center rounded-lg transition-all duration-150 ${
+              isCollapsed ? 'justify-center p-2.5 mx-auto w-10 h-10' : 'gap-3 px-3 py-2.5 text-sm font-semibold'
+            } ${
+              location.pathname.startsWith('/employers')
+                ? 'bg-indigo-50/70 text-indigo-600'
+                : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
+            }`}
+          >
+            <Handshake className="w-4.5 h-4.5 shrink-0" />
+            {!isCollapsed && <span>Employer</span>}
+          </Link>
+
+          {/* Jobseeker */}
+          <Link
+            to="/jobseekers"
+            title={isCollapsed ? "Jobseeker" : ""}
+            className={`flex items-center rounded-lg transition-all duration-150 ${
+              isCollapsed ? 'justify-center p-2.5 mx-auto w-10 h-10' : 'gap-3 px-3 py-2.5 text-sm font-semibold'
+            } ${
+              location.pathname.startsWith('/jobseekers')
+                ? 'bg-indigo-50/70 text-indigo-600'
+                : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
+            }`}
+          >
+            <Users className="w-4.5 h-4.5 shrink-0" />
+            {!isCollapsed && <span>Jobseeker</span>}
+          </Link>
+
+          {/* Jobs Posting */}
+          <Link
+            to="/jobs"
+            title={isCollapsed ? "Jobs" : ""}
+            className={`flex items-center rounded-lg transition-all duration-150 ${
+              isCollapsed ? 'justify-center p-2.5 mx-auto w-10 h-10' : 'gap-3 px-3 py-2.5 text-sm font-semibold'
+            } ${
+              location.pathname.startsWith('/jobs')
+                ? 'bg-indigo-50/70 text-indigo-600'
+                : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
+            }`}
+          >
+            <Briefcase className="w-4.5 h-4.5 shrink-0" />
+            {!isCollapsed && <span>Jobs</span>}
+          </Link>
+        </nav>
+      </aside>
+    </>
+  );
+};
+
+export default Sidebar;
