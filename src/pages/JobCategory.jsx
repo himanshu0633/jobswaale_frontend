@@ -16,6 +16,7 @@ import {
   List,
   Trash2
 } from 'lucide-react';
+import ResponsiveCardList from '../components/ResponsiveCardList';
 
 export const JobCategory = () => {
   const [list, setList] = useState([]);
@@ -246,20 +247,52 @@ export const JobCategory = () => {
                 type="text"
                 value={searchVal}
                 onChange={(e) => setSearchVal(e.target.value)}
-                className="px-3 py-1.5 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:border-indigo-500 bg-white w-48 font-normal"
+                className="px-3 py-1.5 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:border-indigo-500 bg-white w-full sm:w-48 font-normal"
               />
             </div>
           </div>
 
+          {/* Mobile cards */}
+          <ResponsiveCardList
+            items={list}
+            emptyMessage="No matching records found."
+            renderCard={(item, index) => (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-bold text-slate-800">{item.categoryName}</div>
+                    <div className="text-xs text-slate-500">ID: {String(item.id).padStart(3, '0')}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`px-2 py-0.5 rounded text-[11px] font-bold ${item.status === 'active' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>
+                      {item.status === 'active' ? 'Active' : 'Inactive'}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="text-xs text-slate-500">Sort: {item.sortingNo}</div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => handleEdit(item)} className="w-8 h-8 bg-teal-500 hover:bg-teal-600 text-white rounded-full flex items-center justify-center">
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => handleDelete(item._id)} className="w-8 h-8 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          />
+
           {/* Listings Table */}
-          <div className="overflow-x-auto relative min-h-[200px]">
+          <div className="overflow-x-auto relative min-h-[200px] hidden md:block">
             {loading ? (
               <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-10">
                 <Loader className="w-6 h-6 animate-spin text-indigo-600" />
               </div>
             ) : null}
             
-            <table className="w-full text-sm text-left border-collapse">
+            <table className="w-full text-xs md:text-sm text-left border-collapse min-w-[640px]">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100 text-xs text-slate-400 uppercase">
                   <th className="px-6 py-3.5 font-bold">ID</th>

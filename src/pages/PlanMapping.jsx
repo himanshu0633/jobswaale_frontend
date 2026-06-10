@@ -159,7 +159,7 @@ export const PlanMapping = () => {
 
             {/* Matrix Table */}
             <div className="overflow-x-auto border border-slate-150 rounded-xl">
-              <table className="w-full text-sm text-left border-collapse">
+              <table className="w-full text-xs md:text-sm text-left border-collapse min-w-[640px]">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-100 text-xs text-slate-400 uppercase">
                     <th className="px-6 py-3.5 font-bold text-slate-600 border-r border-slate-100">Feature</th>
