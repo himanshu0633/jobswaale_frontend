@@ -71,7 +71,7 @@ export const Header = ({ toggleSidebar, isCollapsed, title = '' }) => {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex items-center justify-between h-16 bg-slate-900 text-slate-100 shadow-sm border-b border-slate-800 pr-6">
+      <header className="sticky top-0 z-30 flex items-center justify-between h-18 bg-slate-900 text-slate-100 shadow-sm border-b border-slate-800 pr-6 ">
         
         {/* Left: Brand Logo & Toggle Menu & Search */}
         <div className="flex items-center gap-4 flex-1 h-full">
@@ -105,24 +105,24 @@ export const Header = ({ toggleSidebar, isCollapsed, title = '' }) => {
         </div>
 
         {/* Right: Quick Tools & Profile Dropdown */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 h-[100%] ">
           
           {/* Quick Tools */}
-          <div className="hidden sm:flex items-center gap-2">
-            <button className="p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
-              <LayoutGrid className="w-4 h-4" />
+          <div className="hidden sm:flex items-center gap-2  ]">
+            <button className="p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors ">
+              <LayoutGrid className="w-5 h-5" />
             </button>
             <button className="p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
-              <Sun className="w-4 h-4" />
+              <Sun className="w-5 h-5" />
             </button>
             <button 
               onClick={toggleFullscreen}
               className="p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
             >
-              <Maximize className="w-4 h-4" />
+              <Maximize className="w-5 h-5" />
             </button>
             <button className="p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
-              <Palette className="w-4 h-4" />
+              <Palette className="w-5 h-5" />
             </button>
           </div>
 

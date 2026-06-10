@@ -2,20 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_API_URL } from '../context/AuthContext';
-import { 
-  Building, 
-  MapPin, 
-  CreditCard, 
-  FileText, 
-  ArrowLeft, 
-  Save, 
+import {
+  Briefcase,
+  MapPin,
+  CreditCard,
+  FileText,
+  Save,
   Loader,
   AlertCircle,
-  CheckCircle 
+  CheckCircle,
+  ClipboardList,
 } from 'lucide-react';
 
 export const AddEmployer = () => {
-  const { id } = useParams(); // Profile ID if editing
+  const { id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -81,17 +81,14 @@ export const AddEmployer = () => {
   };
 
   const fetchExisting = async () => {
-    if (!id) {
-      setLoading(false);
-      return;
-    }
+    if (!id) { setLoading(false); return; }
     try {
       const response = await axios.get(`${BASE_API_URL}/employers`);
       const emp = response.data.find(x => x._id === id);
       if (emp) {
         setForm({
           email: emp.userId?.email || '',
-          password: '', // Leave blank when editing
+          password: '',
           companyName: emp.companyName || '',
           contactPerson: emp.contactPerson || '',
           phone: emp.phone || '',
@@ -131,27 +128,21 @@ export const AddEmployer = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Validations
     if (!form.companyName || !form.phone || !form.industryType || !form.country || !form.state || !form.district || !form.city || !form.address || !form.pinCode) {
       showMessage('error', 'Please fill in all required profile details.');
       return;
     }
-
     if (!id && (!form.email || !form.password)) {
       showMessage('error', 'Login email and password are required for new registrations.');
       return;
     }
-
     setSubmitting(true);
     try {
       if (id) {
-        // Update profile details
         await axios.put(`${BASE_API_URL}/employers/${id}`, form);
         showMessage('success', 'Employer profile updated successfully.');
         setTimeout(() => navigate('/employers'), 1500);
       } else {
-        // Create new login and profile
         await axios.post(`${BASE_API_URL}/employers`, form);
         showMessage('success', 'Employer registered successfully.');
         setTimeout(() => navigate('/employers'), 1500);
@@ -164,10 +155,19 @@ export const AddEmployer = () => {
     }
   };
 
-  // Cascading lists based on form selections
   const availableStates = form.country ? states.filter(s => s.cid === form.country) : [];
   const availableDistricts = form.state ? districts.filter(d => d.sid === form.state) : [];
   const availableCities = form.district ? cities.filter(c => c.did === form.district) : [];
+
+  const inputCls = "w-full px-3.5 py-2 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm disabled:bg-slate-50";
+  const labelCls = "block text-sm font-medium text-slate-600 mb-1";
+
+  const tabs = [
+    { key: 'company',      label: 'Company Details',   icon: <Briefcase className="w-4 h-4" /> },
+    { key: 'address',      label: 'Address Detail',    icon: <MapPin className="w-4 h-4" /> },
+    { key: 'subscription', label: 'Subscription Plan', icon: <CreditCard className="w-4 h-4" /> },
+    { key: 'other',        label: 'Other Detail',      icon: <FileText className="w-4 h-4" /> },
+  ];
 
   if (loading) {
     return (
@@ -178,425 +178,317 @@ export const AddEmployer = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <Link
-          to="/employers"
-          className="p-2 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-xl transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 md:text-3xl">
-            {id ? 'Modify Employer Details' : 'Register New Employer'}
-          </h1>
-          <p className="text-sm text-slate-500">
-            {id ? 'Update company credentials and status limits.' : 'Create login credentials and link company profile.'}
-          </p>
+    <div className="space-y-5">
+
+      {/* Breadcrumb Header */}
+      <div className="flex items-center justify-between">
+        <h4 className="text-xl font-bold text-slate-800">Employer</h4>
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 text-[0.9rem]">
+          <span>Dashboard</span>
+          <span>&gt;</span>
+          <span className="text-indigo-600">{id ? 'Edit Employer' : 'Add Employer'}</span>
         </div>
       </div>
 
-      {message.text && (
-        <div className={`flex items-center gap-2.5 p-4 rounded-xl border text-sm font-medium transition-all ${
-          message.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-800' : 'bg-rose-50 border-rose-100 text-rose-800'
-        }`}>
-          {message.type === 'success' ? <CheckCircle className="w-5 h-5 shrink-0" /> : <AlertCircle className="w-5 h-5 shrink-0" />}
-          <span>{message.text}</span>
-        </div>
-      )}
+      {/* Card */}
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
 
-      {/* Tabs */}
-      <div className="flex border-b border-slate-200 bg-white rounded-t-2xl shadow-sm px-4 pt-2">
-        <button
-          onClick={() => setActiveTab('company')}
-          className={`flex items-center gap-2 px-4 py-3 text-sm font-bold border-b-2 transition-colors ${
-            activeTab === 'company' 
-              ? 'border-indigo-600 text-indigo-600' 
-              : 'border-transparent text-slate-500 hover:text-slate-700'
-          }`}
-        >
-          <Building className="w-4 h-4" />
-          Company Details
-        </button>
-        <button
-          onClick={() => setActiveTab('address')}
-          className={`flex items-center gap-2 px-4 py-3 text-sm font-bold border-b-2 transition-colors ${
-            activeTab === 'address' 
-              ? 'border-indigo-600 text-indigo-600' 
-              : 'border-transparent text-slate-500 hover:text-slate-700'
-          }`}
-        >
-          <MapPin className="w-4 h-4" />
-          Address Detail
-        </button>
-        <button
-          onClick={() => setActiveTab('subscription')}
-          className={`flex items-center gap-2 px-4 py-3 text-sm font-bold border-b-2 transition-colors ${
-            activeTab === 'subscription' 
-              ? 'border-indigo-600 text-indigo-600' 
-              : 'border-transparent text-slate-500 hover:text-slate-700'
-          }`}
-        >
-          <CreditCard className="w-4 h-4" />
-          Subscription Plan
-        </button>
-        <button
-          onClick={() => setActiveTab('other')}
-          className={`flex items-center gap-2 px-4 py-3 text-sm font-bold border-b-2 transition-colors ${
-            activeTab === 'other' 
-              ? 'border-indigo-600 text-indigo-600' 
-              : 'border-transparent text-slate-500 hover:text-slate-700'
-          }`}
-        >
-          <FileText className="w-4 h-4" />
-          Other Detail
-        </button>
-      </div>
-
-      {/* Form Card */}
-      <form onSubmit={handleSubmit} className="border border-slate-200 bg-white rounded-b-2xl shadow-sm p-6 space-y-6">
-        
-        {/* Tab 1: Company Details */}
-        {activeTab === 'company' && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2">Credentials & Contact Info</h3>
-            
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
-                  Email Address <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="email"
-                  required
-                  disabled={!!id}
-                  placeholder="name@company.com"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm disabled:bg-slate-50"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
-                  Password {id ? '(Leave blank to keep current)' : <span className="text-rose-500">*</span>}
-                </label>
-                <input
-                  type="password"
-                  required={!id}
-                  placeholder="••••••••"
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
-                  Company Name <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Duke Infosys"
-                  value={form.companyName}
-                  onChange={(e) => setForm({ ...form, companyName: e.target.value })}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
-                  Contact Person
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. John Doe"
-                  value={form.contactPerson}
-                  onChange={(e) => setForm({ ...form, contactPerson: e.target.value })}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
-                  Phone Number <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="+91 9876543210"
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
-                  Industry Type <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  required
-                  value={form.industryType}
-                  onChange={(e) => setForm({ ...form, industryType: e.target.value })}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                >
-                  <option value="">-- Choose Industry --</option>
-                  {industries.map(ind => (
-                    <option key={ind._id} value={ind._id}>{ind.industryType}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
-                  Website URL
-                </label>
-                <input
-                  type="text"
-                  placeholder="www.company.com"
-                  value={form.website}
-                  onChange={(e) => setForm({ ...form, website: e.target.value })}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
-                  Company Description
-                </label>
-                <textarea
-                  rows="4"
-                  placeholder="Describe your company services or product offerings..."
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Tab 2: Address Detail */}
-        {activeTab === 'address' && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2">Geographic Location</h3>
-            
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
-                  Country <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  required
-                  value={form.country}
-                  onChange={(e) => setForm({ ...form, country: e.target.value, state: '', district: '', city: '' })}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                >
-                  <option value="">-- Choose Country --</option>
-                  {countries.map(c => (
-                    <option key={c.cid} value={c.cid}>{c.countryName}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
-                  State <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  required
-                  disabled={!form.country}
-                  value={form.state}
-                  onChange={(e) => setForm({ ...form, state: e.target.value, district: '', city: '' })}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm disabled:bg-slate-50"
-                >
-                  <option value="">-- Choose State --</option>
-                  {availableStates.map(s => (
-                    <option key={s.sid} value={s.sid}>{s.stateName}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
-                  District <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  required
-                  disabled={!form.state}
-                  value={form.district}
-                  onChange={(e) => setForm({ ...form, district: e.target.value, city: '' })}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm disabled:bg-slate-50"
-                >
-                  <option value="">-- Choose District --</option>
-                  {availableDistricts.map(d => (
-                    <option key={d.did} value={d.did}>{d.districtName}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
-                  City <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  required
-                  disabled={!form.district}
-                  value={form.city}
-                  onChange={(e) => setForm({ ...form, city: e.target.value })}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm disabled:bg-slate-50"
-                >
-                  <option value="">-- Choose City --</option>
-                  {availableCities.map(c => (
-                    <option key={c.ctid} value={c.cityName}>{c.cityName}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
-                  Office Address <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Plot/Floor No, Sector/Building Name"
-                  value={form.address}
-                  onChange={(e) => setForm({ ...form, address: e.target.value })}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
-                  Zip/Pin Code <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. 110001"
-                  value={form.pinCode}
-                  onChange={(e) => setForm({ ...form, pinCode: e.target.value })}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Tab 3: Subscription Detail */}
-        {activeTab === 'subscription' && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2">Active Packages</h3>
-            
-            <div className="grid gap-4 md:grid-cols-2 bg-amber-50/40 p-5 rounded-2xl border border-amber-100/50">
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
-                  Current Plan
-                </label>
-                <select
-                  value={form.currentPlan}
-                  onChange={(e) => setForm({ ...form, currentPlan: e.target.value })}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white"
-                >
-                  <option value="">-- None --</option>
-                  {plans.filter(p => p.category === 'Employer').map(p => (
-                    <option key={p._id} value={p._id}>{p.planName} (Rs. {p.cost})</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
-                  Plan Validity (Expiry Date)
-                </label>
-                <input
-                  type="date"
-                  value={form.planValidity}
-                  onChange={(e) => setForm({ ...form, planValidity: e.target.value })}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Tab 4: Other Detail */}
-        {activeTab === 'other' && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2">Company Brand & Blacklist Status</h3>
-            
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
-                  Logo URL / File Link
-                </label>
-                <input
-                  type="text"
-                  placeholder="https://image-server.com/logo.png"
-                  value={form.logo}
-                  onChange={(e) => setForm({ ...form, logo: e.target.value })}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
-                  Account Status <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  value={form.status}
-                  onChange={(e) => setForm({ ...form, status: e.target.value })}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                >
-                  <option value="active">Active</option>
-                  <option value="pending">Pending</option>
-                  <option value="blacklist">Blacklist</option>
-                </select>
-              </div>
-
-              {form.status === 'blacklist' && (
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 text-rose-600">
-                    Reason for Blacklisting <span className="text-rose-500">*</span>
-                  </label>
-                  <textarea
-                    required
-                    rows="3"
-                    placeholder="Specify the reason why this corporate employer is being blacklisted..."
-                    value={form.blacklistReason}
-                    onChange={(e) => setForm({ ...form, blacklistReason: e.target.value })}
-                    className="w-full px-3.5 py-2 border border-rose-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 text-sm bg-rose-50/20"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Buttons */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+        {/* Card Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <h4 className="text-base font-semibold text-slate-800">
+            {id ? 'Edit Employer' : 'Add Employer'}
+          </h4>
           <Link
             to="/employers"
-            className="py-2.5 px-5 border border-slate-200 text-slate-600 font-semibold rounded-xl hover:bg-slate-50 transition-colors text-sm"
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition-colors"
           >
-            Cancel
+            <ClipboardList className="w-3.5 h-3.5" />
+            View Listings
           </Link>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="flex items-center justify-center gap-2 py-2.5 px-6 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-md shadow-indigo-600/10 transition-colors text-sm disabled:bg-slate-300 disabled:shadow-none"
-          >
-            {submitting ? <Loader className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            <span>{submitting ? 'Saving...' : 'Save Employer Profile'}</span>
-          </button>
         </div>
 
-      </form>
+        {/* Alert Message */}
+        {message.text && (
+          <div className={`flex items-center gap-2.5 px-5 py-3 border-b text-sm font-medium ${
+            message.type === 'success'
+              ? 'bg-emerald-50 border-emerald-100 text-emerald-800'
+              : 'bg-rose-50 border-rose-100 text-rose-800'
+          }`}>
+            {message.type === 'success'
+              ? <CheckCircle className="w-4 h-4 shrink-0" />
+              : <AlertCircle className="w-4 h-4 shrink-0" />}
+            <span>{message.text}</span>
+          </div>
+        )}
+
+        {/* Tabs */}
+        <div className="flex border-b border-slate-100 px-5 overflow-x-auto">
+          {tabs.map(tab => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 whitespace-nowrap transition-colors ${
+                activeTab === tab.key
+                  ? 'border-indigo-600 text-indigo-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit}>
+          <div className="p-5">
+
+            {/* Tab 1: Company Details */}
+            {activeTab === 'company' && (
+              <div className="space-y-4">
+                <h5 className="flex items-center gap-2 bg-slate-50 text-slate-700 text-sm font-semibold px-3 py-2 rounded-lg">
+                  <Briefcase className="w-4 h-4 text-slate-500" />
+                  Company Details
+                </h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                  <div>
+                    <label className={labelCls}>Company Name <span className="text-rose-500">*</span></label>
+                    <input type="text" required placeholder="Name of Company" value={form.companyName}
+                      onChange={(e) => setForm({ ...form, companyName: e.target.value })} className={inputCls} />
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>Contact Person</label>
+                    <input type="text" placeholder="Contact Person" value={form.contactPerson}
+                      onChange={(e) => setForm({ ...form, contactPerson: e.target.value })} className={inputCls} />
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>
+                      Email <span className="text-rose-500">*</span>
+                      {id && <span className="text-slate-400 font-normal text-xs ml-1">(cannot change)</span>}
+                    </label>
+                    <input type="email" required disabled={!!id} placeholder="Email" value={form.email}
+                      onChange={(e) => setForm({ ...form, email: e.target.value })} className={inputCls} />
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>
+                      Password{' '}
+                      {id
+                        ? <span className="text-slate-400 font-normal text-xs">(leave blank to keep)</span>
+                        : <span className="text-rose-500">*</span>}
+                    </label>
+                    <input type="password" required={!id} placeholder="••••••••" value={form.password}
+                      onChange={(e) => setForm({ ...form, password: e.target.value })} className={inputCls} />
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>Phone <span className="text-rose-500">*</span></label>
+                    <input type="text" required placeholder="Phone Number" value={form.phone}
+                      onChange={(e) => setForm({ ...form, phone: e.target.value })} className={inputCls} />
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>Industry Type <span className="text-rose-500">*</span></label>
+                    <select required value={form.industryType}
+                      onChange={(e) => setForm({ ...form, industryType: e.target.value })} className={inputCls}>
+                      <option value="">-- Choose --</option>
+                      {industries.map(ind => (
+                        <option key={ind._id} value={ind._id}>{ind.industryType}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className={labelCls}>Company Website</label>
+                    <input type="text" placeholder="www.company.com" value={form.website}
+                      onChange={(e) => setForm({ ...form, website: e.target.value })} className={inputCls} />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className={labelCls}>Company Description</label>
+                    <textarea rows="4" placeholder="Write a brief about company" value={form.description}
+                      onChange={(e) => setForm({ ...form, description: e.target.value })} className={inputCls} />
+                  </div>
+
+                </div>
+              </div>
+            )}
+
+            {/* Tab 2: Address Detail */}
+            {activeTab === 'address' && (
+              <div className="space-y-4">
+                <h5 className="flex items-center gap-2 bg-slate-50 text-slate-700 text-sm font-semibold px-3 py-2 rounded-lg">
+                  <MapPin className="w-4 h-4 text-slate-500" />
+                  Address Detail
+                </h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                  <div>
+                    <label className={labelCls}>Country <span className="text-rose-500">*</span></label>
+                    <select required value={form.country}
+                      onChange={(e) => setForm({ ...form, country: e.target.value, state: '', district: '', city: '' })} className={inputCls}>
+                      <option value="">-- Choose --</option>
+                      {countries.map(c => (
+                        <option key={c.cid} value={c.cid}>{c.countryName}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>State <span className="text-rose-500">*</span></label>
+                    <select required disabled={!form.country} value={form.state}
+                      onChange={(e) => setForm({ ...form, state: e.target.value, district: '', city: '' })} className={inputCls}>
+                      <option value="">-- Choose --</option>
+                      {availableStates.map(s => (
+                        <option key={s.sid} value={s.sid}>{s.stateName}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>District <span className="text-rose-500">*</span></label>
+                    <select required disabled={!form.state} value={form.district}
+                      onChange={(e) => setForm({ ...form, district: e.target.value, city: '' })} className={inputCls}>
+                      <option value="">-- Choose --</option>
+                      {availableDistricts.map(d => (
+                        <option key={d.did} value={d.did}>{d.districtName}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>City <span className="text-rose-500">*</span></label>
+                    <select required disabled={!form.district} value={form.city}
+                      onChange={(e) => setForm({ ...form, city: e.target.value })} className={inputCls}>
+                      <option value="">-- Choose --</option>
+                      {availableCities.map(c => (
+                        <option key={c.ctid} value={c.cityName}>{c.cityName}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className={labelCls}>Address <span className="text-rose-500">*</span></label>
+                    <input type="text" required placeholder="Address of the Company" value={form.address}
+                      onChange={(e) => setForm({ ...form, address: e.target.value })} className={inputCls} />
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>Pin Code <span className="text-rose-500">*</span></label>
+                    <input type="text" required placeholder="Pin Code" value={form.pinCode}
+                      onChange={(e) => setForm({ ...form, pinCode: e.target.value })} className={inputCls} />
+                  </div>
+
+                </div>
+              </div>
+            )}
+
+            {/* Tab 3: Subscription Plan */}
+            {activeTab === 'subscription' && (
+              <div className="space-y-4">
+                <h5 className="flex items-center gap-2 bg-slate-50 text-slate-700 text-sm font-semibold px-3 py-2 rounded-lg">
+                  <CreditCard className="w-4 h-4 text-slate-500" />
+                  Subscription Detail
+                </h5>
+                <div className="bg-amber-50 border border-amber-100 rounded-xl p-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    <div>
+                      <label className={labelCls}>Current Plan</label>
+                      <select value={form.currentPlan}
+                        onChange={(e) => setForm({ ...form, currentPlan: e.target.value })}
+                        className="w-full px-3.5 py-2 border border-amber-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 text-sm bg-white">
+                        <option value="">-- None --</option>
+                        {plans.filter(p => p.category === 'Employer').map(p => (
+                          <option key={p._id} value={p._id}>{p.planName} (Rs. {p.cost})</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className={labelCls}>Plan Validity</label>
+                      <input type="date" value={form.planValidity}
+                        onChange={(e) => setForm({ ...form, planValidity: e.target.value })}
+                        className="w-full px-3.5 py-2 border border-amber-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 text-sm bg-white" />
+                      {form.planValidity && (
+                        <p className="text-xs font-semibold text-emerald-600 mt-1.5">
+                          Valid Till: {new Date(form.planValidity).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </p>
+                      )}
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 4: Other Detail */}
+            {activeTab === 'other' && (
+              <div className="space-y-4">
+                <h5 className="flex items-center gap-2 bg-slate-50 text-slate-700 text-sm font-semibold px-3 py-2 rounded-lg">
+                  <FileText className="w-4 h-4 text-slate-500" />
+                  Other Detail
+                </h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                  <div className="md:col-span-2">
+                    <label className={labelCls}>Upload Logo</label>
+                    <input type="text" placeholder="https://image-server.com/logo.png" value={form.logo}
+                      onChange={(e) => setForm({ ...form, logo: e.target.value })} className={inputCls} />
+                    {form.logo && (
+                      <img src={form.logo} alt="logo preview"
+                        className="mt-2 w-16 h-16 object-cover rounded-lg border border-slate-200" />
+                    )}
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>Status <span className="text-rose-500">*</span></label>
+                    <select value={form.status}
+                      onChange={(e) => setForm({ ...form, status: e.target.value })} className={inputCls}>
+                      <option value="active">Active</option>
+                      <option value="pending">Pending</option>
+                      <option value="blacklist">Blacklist</option>
+                    </select>
+                  </div>
+
+                  {form.status === 'blacklist' && (
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-rose-600 mb-1">
+                        Reason for Blacklist <span className="text-rose-500">*</span>
+                      </label>
+                      <textarea required rows="4" placeholder="Write a Reason" value={form.blacklistReason}
+                        onChange={(e) => setForm({ ...form, blacklistReason: e.target.value })}
+                        className="w-full px-3.5 py-2 border border-rose-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 text-sm bg-rose-50/30" />
+                    </div>
+                  )}
+
+                </div>
+              </div>
+            )}
+
+          </div>
+
+          {/* Submit */}
+          <div className="px-5 py-4 border-t border-slate-100">
+            <button
+              type="submit"
+              disabled={submitting}
+              className="flex items-center gap-2 py-2.5 px-6 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg transition-colors text-sm disabled:bg-slate-300"
+            >
+              {submitting ? <Loader className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              {submitting ? 'Saving...' : 'Submit'}
+            </button>
+          </div>
+
+        </form>
+      </div>
+
     </div>
   );
 };
+
 export default AddEmployer;

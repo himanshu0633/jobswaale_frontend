@@ -204,7 +204,7 @@ export const PlanMaster = () => {
             Jobseeker Plan Master
           </h1>
         </div>
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 text-[0.9rem]">
           <span>Dashboard</span>
           <span>&gt;</span>
           <span className="text-indigo-600">Jobseeker Plan Master</span>
@@ -457,7 +457,7 @@ export const PlanMaster = () => {
                 </tr>
               ) : (
                 list.map((item, idx) => (
-                  <tr key={item._id} className="hover:bg-slate-50/30">
+                  <tr key={item._id}  className={`${idx % 2 === 0 ? '[bg-white]' : 'bg-[slate-50]'} hover:bg-slate-50/30`}>
                     <td className="px-6 py-4 font-bold text-slate-800 uppercase">
                       {String(startIndex + idx + 1).padStart(3, '0')}
                     </td>

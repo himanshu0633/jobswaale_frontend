@@ -78,7 +78,7 @@ export const Dashboard = () => {
             Dashboard
           </h1>
         </div>
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 text-[0.9rem]">
           <span>JobsWaale</span>
           <span>&gt;</span>
           <span className="text-indigo-600">Dashboard</span>

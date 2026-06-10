@@ -186,7 +186,7 @@ export const JobType = () => {
             Job Type
           </h1>
         </div>
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 text-[0.9rem]">
           <span>Dashboard</span>
           <span>&gt;</span>
           <span className="text-indigo-600">
@@ -275,8 +275,13 @@ export const JobType = () => {
                     <td colSpan="5" className="px-6 py-8 text-center text-slate-400">No matching records found.</td>
                   </tr>
                 ) : (
-                  list.map((item) => (
-                    <tr key={item._id} className="hover:bg-slate-50/30">
+                  list.map((item, index) => (
+                      <tr
+                        key={item._id}
+                        className={`{/*hover:bg-slate-50/30*/} ${
+                          index % 2 === 0 ? 'bg-[white]' : 'bg-[slate-50]'
+                        }`}
+                      >
                       <td className="px-6 py-4 font-bold text-slate-800">
                         {String(item.id).padStart(3, '0')}
                       </td>
@@ -430,7 +435,7 @@ export const JobType = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               
               {/* Form Input Grid */}
-              <div className="grid gap-6 md:grid-cols-4">
+              <div className="grid gap-6 md:grid-cols-3">
                 <input type="hidden" value={form.id} readOnly />
 
                 {/* Name */}

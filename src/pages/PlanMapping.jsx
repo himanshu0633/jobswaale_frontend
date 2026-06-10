@@ -109,7 +109,7 @@ export const PlanMapping = () => {
             Plan Mapping
           </h1>
         </div>
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 text-[0.9rem]">
           <span>Dashboard</span>
           <span>&gt;</span>
           <span className="text-indigo-600">Plan Mapping</span>
@@ -171,8 +171,8 @@ export const PlanMapping = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {features.map(f => (
-                    <tr key={f._id} className="hover:bg-slate-50/30">
+                  {features.map((f,index) => (
+                    <tr key={f._id} className="odd:bg-[white] even:[slate-50] {/*hover:bg-slate-50/30*/}">
                       <td className="px-6 py-4 font-semibold text-slate-700 border-r border-slate-100">
                         {f.featureName}
                       </td>
