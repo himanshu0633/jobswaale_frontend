@@ -13,7 +13,8 @@ import {
   Calendar,
   Lock,
   Unlock,
-  MapPin
+  MapPin,
+  Trash2
 } from 'lucide-react';
 
 export const Jobs = () => {
@@ -236,8 +237,16 @@ export const Jobs = () => {
                         <button
                           onClick={() => navigate(`/jobs/edit/${item._id}`)}
                           className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 border border-slate-100 rounded-lg transition-colors"
+                          title="Edit"
                         >
                           <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item._id)}
+                          className="p-1.5 text-rose-600 hover:bg-rose-50 border border-rose-100 rounded-lg transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </td>

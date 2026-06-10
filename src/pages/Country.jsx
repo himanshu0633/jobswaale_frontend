@@ -12,7 +12,8 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  List
+  List,
+  Trash2
 } from 'lucide-react';
 
 export const Country = () => {
@@ -142,6 +143,19 @@ export const Country = () => {
     });
     setAlert({ type: '', text: '' });
     setView('form');
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this country?")) {
+      try {
+        await axios.delete(`${BASE_API_URL}/masters/countries/${id}`);
+        showAlert('success', 'Country deleted successfully.');
+        fetchList();
+      } catch (err) {
+        console.error(err);
+        showAlert('error', err.response?.data?.message || 'Error deleting country.');
+      }
+    }
   };
 
   // Pagination Indices
@@ -277,13 +291,22 @@ export const Country = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <button
-                          onClick={() => handleEdit(item)}
-                          className="w-7 h-7 bg-teal-500 hover:bg-teal-600 text-white rounded-full flex items-center justify-center transition-colors"
-                          title="Edit"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleEdit(item)}
+                            className="w-7 h-7 bg-teal-500 hover:bg-teal-600 text-white rounded-full flex items-center justify-center transition-colors"
+                            title="Edit"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(item._id)}
+                            className="w-7 h-7 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
