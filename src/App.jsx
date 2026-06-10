@@ -91,7 +91,7 @@ const AppLayout = () => {
         {/* Main Content Area */}
         <div className={`flex-grow flex flex-col transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'} bg-[slate-50 ] `}>
           {/* Dynamic Route Content */}
-          <main className="flex-grow p-4 md:p-6 lg:p-8 w-full mx-auto ">
+          <main className="flex-grow p-4 md:p-6 lg:p-8 w-full mx-auto">
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/countries" element={<Country />} />

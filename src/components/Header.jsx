@@ -71,12 +71,12 @@ export const Header = ({ toggleSidebar, isCollapsed, title = '' }) => {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex items-center justify-between h-18 bg-slate-900 text-slate-100 shadow-sm border-b border-slate-800 pr-6 ">
+      <header className="sticky top-0 z-30 flex items-center justify-between h-16 lg:h-18 bg-slate-900 text-slate-100 shadow-sm border-b border-slate-800 pr-6 ">
         
         {/* Left: Brand Logo & Toggle Menu & Search */}
         <div className="flex items-center gap-4 flex-1 h-full">
           {/* Logo container aligning with sidebar below it */}
-          <div className={`flex items-center h-full border-r border-slate-800 transition-all duration-300 shrink-0 ${isCollapsed ? 'w-16 justify-center' : 'w-64 px-6'}`}>
+          <div className={`flex items-center h-full border-r border-slate-800 transition-all duration-300 shrink-0 ${isCollapsed ? 'w-16 justify-center' : 'w-28 lg:w-64 px-3 lg:px-6'}`}>
             <Link to="/" className="flex items-center">
               {isCollapsed ? (
                 <img src={logoSm} alt="JobsWaale" className="w-10 h-auto shrink-0 animate-in fade-in duration-200" />

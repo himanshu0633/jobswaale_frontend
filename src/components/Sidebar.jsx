@@ -43,7 +43,7 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
       )}
 
       {/* Sidebar Container */}
-      <aside className={`fixed top-0 lg:top-16 bottom-0 left-0 z-50 lg:z-20 flex flex-col bg-white text-slate-700 border-r border-slate-200 transition-all duration-300 transform lg:translate-x-0 ${
+      <aside className={`fixed top-16 lg:top-16 bottom-0 left-0 z-50 lg:z-20 flex flex-col bg-white text-slate-700 border-r border-slate-200 transition-all duration-300 transform lg:translate-x-0 ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
       } ${
         isCollapsed ? 'w-16' : 'w-64'

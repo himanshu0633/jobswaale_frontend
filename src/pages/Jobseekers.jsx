@@ -16,6 +16,7 @@ import {
   LayoutDashboard,
   ChevronRight,
 } from 'lucide-react';
+import ResponsiveCardList from '../components/ResponsiveCardList';
 
 export const Jobseekers = () => {
   const [list, setList] = useState([]);
@@ -164,9 +165,67 @@ export const Jobseekers = () => {
             </span>
           </div>
 
+          {/* Mobile cards */}
+          <ResponsiveCardList
+            items={filteredList}
+            emptyMessage="No candidates found."
+            renderCard={(item, index) => (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm shrink-0">
+                      {item.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="font-semibold text-slate-800">{item.name}</div>
+                      <div className="text-xs text-slate-500 truncate">{item.userId?.email || '—'}</div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs font-semibold text-indigo-600">{item.currentPlan?.planName || 'N/A'}</div>
+                    {item.planValidity && <div className="text-[10px] text-slate-400">Till: {new Date(item.planValidity).toLocaleDateString()}</div>}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-slate-600">
+                  <div>
+                    <div className="text-slate-700 font-medium">{item.city}, {item.state}</div>
+                    <div className="text-slate-500">{item.qualification?.name || 'N/A'} • {item.experience}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={item.resume?.startsWith('http') ? item.resume : `http://${item.resume}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={`w-8 h-8 rounded-full flex items-center justify-center ${item.resume ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-400'}`}
+                    >
+                      <FileText className="w-4 h-4" />
+                    </a>
+                    {item.status !== 'active' && (
+                      <button onClick={() => toggleStatus(item, 'active')} className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                        <ShieldCheck className="w-4 h-4" />
+                      </button>
+                    )}
+                    {item.status !== 'blacklist' && (
+                      <button onClick={() => toggleStatus(item, 'blacklist')} className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
+                        <Ban className="w-4 h-4" />
+                      </button>
+                    )}
+                    <button onClick={() => navigate(`/jobseekers/edit/${item._id}`)} className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => handleDelete(item._id)} className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          />
+
           {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
+          <div className="overflow-x-auto hidden md:block">
+            <table className="w-full text-xs md:text-sm text-left min-w-[640px]">
               <thead>
                 <tr className="bg-slate-50 text-xs uppercase tracking-wide text-slate-400 font-semibold">
                   <th className="px-4 py-3">ID</th>

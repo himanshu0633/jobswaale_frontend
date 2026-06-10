@@ -16,6 +16,7 @@ import {
   LayoutDashboard,
   ChevronRight,
 } from 'lucide-react';
+import ResponsiveCardList from '../components/ResponsiveCardList';
 
 export const Employers = () => {
   const [list, setList] = useState([]);
@@ -164,9 +165,57 @@ export const Employers = () => {
             </span>
           </div>
 
+          {/* Mobile cards */}
+          <ResponsiveCardList
+            items={filteredList}
+            emptyMessage="No employers found."
+            renderCard={(item, index) => (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="font-semibold text-slate-800">{item.companyName}</div>
+                    <div className="text-xs text-slate-500">{item.contactPerson || 'N/A'}</div>
+                    <div className="text-xs text-slate-400 mt-1">{item.userId?.email || '—'}</div>
+                  </div>
+                  <div className="text-right">
+                    {item.website && (
+                      <a href={item.website.startsWith('http') ? item.website : `http://${item.website}`} target="_blank" rel="noreferrer" className="text-xs text-indigo-500">Website</a>
+                    )}
+                    <div className="text-xs text-slate-400">{item.city}, {item.state}</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-slate-600">
+                  <div>
+                    <div className="text-slate-700 font-medium">{item.industryType?.industryType || 'N/A'}</div>
+                    <div className="text-slate-500">Plan: {item.currentPlan?.planName || 'N/A'}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {item.status !== 'active' && (
+                      <button onClick={() => toggleStatus(item, 'active')} className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                        <ShieldCheck className="w-4 h-4" />
+                      </button>
+                    )}
+                    {item.status !== 'blacklist' && (
+                      <button onClick={() => toggleStatus(item, 'blacklist')} className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
+                        <Ban className="w-4 h-4" />
+                      </button>
+                    )}
+                    <button onClick={() => navigate(`/employers/edit/${item._id}`)} className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => handleDelete(item._id)} className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          />
+
           {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
+          <div className="overflow-x-auto hidden md:block">
+            <table className="w-full text-xs md:text-sm text-left min-w-[640px]">
               <thead>
                 <tr className="bg-slate-50 text-xs uppercase tracking-wide text-slate-400 font-semibold">
                   <th className="px-4 py-3">ID</th>
