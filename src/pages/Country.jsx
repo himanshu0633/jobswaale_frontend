@@ -21,7 +21,7 @@ import ResponsiveCardList from '../components/ResponsiveCardList';
 export const Country = () => {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+     
   // Search & Pagination States
   const [searchVal, setSearchVal] = useState('');
   const [search, setSearch] = useState('');
