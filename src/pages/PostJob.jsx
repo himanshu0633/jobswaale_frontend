@@ -193,7 +193,7 @@ export const PostJob = () => {
         </div>
       </div>
 
-      {/* Card */}
+      {/* Card  */}
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
 
         {/* Card Header */}
