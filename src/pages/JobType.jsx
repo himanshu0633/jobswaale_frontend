@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BASE_API_URL } from '../context/AuthContext';
+import { getNextMasterId, onlyDigits, toWholeNumber } from '../utils/masterForm';
 import { 
   Plus, 
   Edit2, 
@@ -47,12 +48,7 @@ export const JobType = () => {
 
   const getNextId = async () => {
     try {
-      const response = await axios.get(`${BASE_API_URL}/masters/job-types`);
-      const maxId = response.data.reduce((max, item) => {
-        const num = parseInt(item.id);
-        return !isNaN(num) && num > max ? num : max;
-      }, 0);
-      return String(maxId + 1);
+      return await getNextMasterId(axios, `${BASE_API_URL}/masters/job-types`, 'id');
     } catch (err) {
       console.error(err);
       return '';
@@ -106,7 +102,7 @@ export const JobType = () => {
         // Edit Mode
         await axios.put(`${BASE_API_URL}/masters/job-types/${editingId}`, {
           jobType: form.jobType,
-          sortingNo: Number(form.sortingNo) || 0,
+          sortingNo: toWholeNumber(form.sortingNo),
           status: form.status
         });
         showAlert('success', 'Success! Record added/updated successfully.');
@@ -121,7 +117,7 @@ export const JobType = () => {
         await axios.post(`${BASE_API_URL}/masters/job-types`, {
           id: form.id,
           jobType: form.jobType,
-          sortingNo: Number(form.sortingNo) || 0,
+          sortingNo: toWholeNumber(form.sortingNo),
           status: form.status
         });
         showAlert('success', 'Success! Record added/updated successfully.');
@@ -435,21 +431,7 @@ export const JobType = () => {
               
               {/* Form Input Grid */}
               <div className="grid gap-6 md:grid-cols-4">
-                {/* ID */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                    ID <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    disabled={!!editingId}
-                    placeholder="e.g. 1"
-                    value={form.id}
-                    onChange={(e) => setForm({ ...form, id: e.target.value })}
-                    className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white disabled:bg-slate-50"
-                  />
-                </div>
+                <input type="hidden" value={form.id} readOnly />
 
                 {/* Name */}
                 <div>
@@ -472,10 +454,11 @@ export const JobType = () => {
                     Sorting No.
                   </label>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     placeholder="Sort No."
                     value={form.sortingNo}
-                    onChange={(e) => setForm({ ...form, sortingNo: e.target.value })}
+                    onChange={(e) => setForm({ ...form, sortingNo: onlyDigits(e.target.value) })}
                     className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white"
                   />
                 </div>

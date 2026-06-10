@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BASE_API_URL } from '../context/AuthContext';
+import { getNextMasterId, onlyDigits, toWholeNumber } from '../utils/masterForm';
 import { 
   Plus, 
   Edit2, 
@@ -43,12 +44,7 @@ export const FeatureMaster = () => {
 
   const getNextId = async () => {
     try {
-      const response = await axios.get(`${BASE_API_URL}/masters/features`);
-      const maxId = response.data.reduce((max, item) => {
-        const num = parseInt(item.id);
-        return !isNaN(num) && num > max ? num : max;
-      }, 0);
-      return String(maxId + 1);
+      return await getNextMasterId(axios, `${BASE_API_URL}/masters/features`, 'id');
     } catch (err) {
       console.error(err);
       return '';
@@ -116,7 +112,7 @@ export const FeatureMaster = () => {
         // Edit Mode
         await axios.put(`${BASE_API_URL}/masters/features/${editingId}`, {
           featureName,
-          displayOrder: Number(displayOrder) || 0,
+          displayOrder: toWholeNumber(displayOrder),
           status
         });
         showAlert('success', 'Success! Record added/updated successfully.');
@@ -131,7 +127,7 @@ export const FeatureMaster = () => {
         await axios.post(`${BASE_API_URL}/masters/features`, {
           id,
           featureName,
-          displayOrder: Number(displayOrder) || 0,
+          displayOrder: toWholeNumber(displayOrder),
           status
         });
         showAlert('success', 'Success! Record added/updated successfully.');
@@ -248,7 +244,7 @@ export const FeatureMaster = () => {
             {/* Form Input Grid */}
             <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
               {/* Feature ID (Hidden to match mockup) */}
-              <input type="hidden" value={form.id} />
+              <input type="hidden" value={form.id} readOnly />
 
               {/* Feature Name */}
               <div className="md:col-span-2">
@@ -271,11 +267,12 @@ export const FeatureMaster = () => {
                   Display Order <span className="text-rose-500">*</span>
                 </label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   required
                   placeholder="e.g 1, 2"
                   value={form.displayOrder}
-                  onChange={(e) => setForm({ ...form, displayOrder: e.target.value })}
+                  onChange={(e) => setForm({ ...form, displayOrder: onlyDigits(e.target.value) })}
                   className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white"
                 />
               </div>

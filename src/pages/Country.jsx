@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BASE_API_URL } from '../context/AuthContext';
+import { getNextMasterId } from '../utils/masterForm';
 import { 
   Plus, 
   Edit2, 
@@ -47,12 +48,7 @@ export const Country = () => {
 
   const getNextId = async () => {
     try {
-      const response = await axios.get(`${BASE_API_URL}/masters/countries`);
-      const maxId = response.data.reduce((max, item) => {
-        const num = parseInt(item.cid);
-        return !isNaN(num) && num > max ? num : max;
-      }, 0);
-      return String(maxId + 1);
+      return await getNextMasterId(axios, `${BASE_API_URL}/masters/countries`, 'cid');
     } catch (err) {
       console.error(err);
       return '';
@@ -430,21 +426,7 @@ export const Country = () => {
               
               {/* Form Input Grid */}
               <div className="grid gap-6 md:grid-cols-3">
-                {/* Country ID */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                    Country ID <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    disabled={!!editingId}
-                    placeholder="e.g. 001"
-                    value={form.cid}
-                    onChange={(e) => setForm({ ...form, cid: e.target.value })}
-                    className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white disabled:bg-slate-50"
-                  />
-                </div>
+                <input type="hidden" value={form.cid} readOnly />
 
                 {/* Country Name */}
                 <div>

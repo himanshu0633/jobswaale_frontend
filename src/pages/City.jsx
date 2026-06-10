@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BASE_API_URL } from '../context/AuthContext';
+import { getNextMasterId, sortByText } from '../utils/masterForm';
 import { 
   Plus, 
   Edit2, 
@@ -58,12 +59,7 @@ export const City = () => {
 
   const getNextId = async () => {
     try {
-      const response = await axios.get(`${BASE_API_URL}/masters/cities`);
-      const maxId = response.data.reduce((max, item) => {
-        const num = parseInt(item.ctid);
-        return !isNaN(num) && num > max ? num : max;
-      }, 0);
-      return String(maxId + 1);
+      return await getNextMasterId(axios, `${BASE_API_URL}/masters/cities`, 'ctid');
     } catch (err) {
       console.error(err);
       return '';
@@ -102,9 +98,9 @@ export const City = () => {
         axios.get(`${BASE_API_URL}/masters/states`),
         axios.get(`${BASE_API_URL}/masters/districts`)
       ]);
-      setCountries(resC.data);
-      setStates(resS.data);
-      setDistricts(resD.data);
+      setCountries(sortByText(resC.data, 'countryName'));
+      setStates(sortByText(resS.data, 'stateName'));
+      setDistricts(sortByText(resD.data, 'districtName'));
     } catch (err) {
       console.error(err);
       showAlert('error', 'Error retrieving locations.');
@@ -544,21 +540,7 @@ export const City = () => {
                   </select>
                 </div>
 
-                {/* City ID */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                    City ID (Unique Code) <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    disabled={!!editingId}
-                    placeholder="e.g. NDEL, MUM"
-                    value={form.ctid}
-                    onChange={(e) => setForm({ ...form, ctid: e.target.value })}
-                    className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white disabled:bg-slate-50"
-                  />
-                </div>
+                <input type="hidden" value={form.ctid} readOnly />
 
                 {/* City Name */}
                 <div>

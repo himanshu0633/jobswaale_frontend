@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BASE_API_URL } from '../context/AuthContext';
+import { onlyDigits, toWholeNumber } from '../utils/masterForm';
 import { 
   Plus, 
   Edit2, 
@@ -106,7 +107,7 @@ export const PlanMaster = () => {
           cost: Number(cost),
           planValidity,
           planType,
-          displayOrder: Number(displayOrder),
+          displayOrder: toWholeNumber(displayOrder),
           status
         });
         showAlert('success', 'Success! Record added/updated successfully.');
@@ -131,7 +132,7 @@ export const PlanMaster = () => {
           cost: Number(cost),
           planValidity,
           planType,
-          displayOrder: Number(displayOrder),
+          displayOrder: toWholeNumber(displayOrder),
           status
         });
         showAlert('success', 'Success! Record added/updated successfully.');
@@ -327,11 +328,12 @@ export const PlanMaster = () => {
                   Display Order <span className="text-rose-500">*</span>
                 </label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   required
                   placeholder="e.g 1, 2"
                   value={form.displayOrder}
-                  onChange={(e) => setForm({ ...form, displayOrder: e.target.value })}
+                  onChange={(e) => setForm({ ...form, displayOrder: onlyDigits(e.target.value) })}
                   className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white"
                 />
               </div>
