@@ -101,7 +101,8 @@ const AppLayout = () => {
               <Route path="/job-types" element={<JobType />} />
               <Route path="/job-categories" element={<JobCategory />} />
               <Route path="/features" element={<FeatureMaster />} />
-              <Route path="/plans" element={<PlanMaster />} />
+              <Route path="/jobseeker-packages" element={<PlanMaster />} />
+              <Route path="/plans" element={<Navigate to="/jobseeker-packages" replace />} />
               <Route path="/qualifications" element={<Qualification />} />
               <Route path="/cities" element={<City />} />
               <Route path="/plan-mappings" element={<PlanMapping />} />

@@ -35,8 +35,7 @@ export const PlanMaster = () => {
     cost: '', 
     planValidity: 'One Time', 
     displayOrder: '', 
-    status: 'active',
-    category: 'Jobseeker' 
+    status: 'active'
   });
   const [editingId, setEditingId] = useState(null);
 
@@ -83,13 +82,13 @@ export const PlanMaster = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { planName, planType, cost, planValidity, displayOrder, status, category } = form;
+    const { planName, planType, cost, planValidity, displayOrder, status } = form;
     
     if (!planName) {
       showAlert('error', 'Plan Name is required.');
       return;
     }
-    if (cost === undefined || cost === '') {
+    if (planType === 'Paid' && (cost === undefined || cost === '')) {
       showAlert('error', 'Price is required.');
       return;
     }
@@ -102,9 +101,9 @@ export const PlanMaster = () => {
       if (editingId) {
         // Edit Mode
         await axios.put(`${BASE_API_URL}/masters/plans/${editingId}`, {
-          category,
+          category: 'Jobseeker',
           planName,
-          cost: Number(cost),
+          cost: planType === 'Paid' ? Number(cost) : 0,
           planValidity,
           planType,
           displayOrder: toWholeNumber(displayOrder),
@@ -119,17 +118,16 @@ export const PlanMaster = () => {
             cost: '', 
             planValidity: 'One Time', 
             displayOrder: '', 
-            status: 'active',
-            category: 'Jobseeker' 
+            status: 'active'
           });
           fetchList(); // reload table
         }, 1500);
       } else {
         // Add Mode
         await axios.post(`${BASE_API_URL}/masters/plans`, {
-          category,
+          category: 'Jobseeker',
           planName,
-          cost: Number(cost),
+          cost: planType === 'Paid' ? Number(cost) : 0,
           planValidity,
           planType,
           displayOrder: toWholeNumber(displayOrder),
@@ -142,8 +140,7 @@ export const PlanMaster = () => {
           cost: '', 
           planValidity: 'One Time', 
           displayOrder: '', 
-          status: 'active',
-          category: 'Jobseeker' 
+          status: 'active'
         });
         setTimeout(() => {
           fetchList(); // reload table
@@ -162,8 +159,7 @@ export const PlanMaster = () => {
       cost: item.cost, 
       planValidity: item.planValidity, 
       displayOrder: item.displayOrder, 
-      status: item.status,
-      category: item.category || 'Jobseeker'
+      status: item.status
     });
     setAlert({ type: '', text: '' });
   };
@@ -205,13 +201,13 @@ export const PlanMaster = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-slate-800">
-            Plan Master
+            Jobseeker Plan Master
           </h1>
         </div>
         <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
           <span>Dashboard</span>
           <span>&gt;</span>
-          <span className="text-indigo-600">Plan Master</span>
+          <span className="text-indigo-600">Jobseeker Plan Master</span>
         </div>
       </div>
 
@@ -280,7 +276,7 @@ export const PlanMaster = () => {
                 </label>
                 <select
                   value={form.planType}
-                  onChange={(e) => setForm({ ...form, planType: e.target.value })}
+                  onChange={(e) => setForm({ ...form, planType: e.target.value, cost: e.target.value === 'Paid' ? form.cost : '' })}
                   className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white"
                 >
                   <option value="Free">Free</option>
@@ -288,20 +284,21 @@ export const PlanMaster = () => {
                 </select>
               </div>
 
-              {/* Price */}
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                  Price (Rs.) <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  required
-                  placeholder="Price of the Plan"
-                  value={form.cost}
-                  onChange={(e) => setForm({ ...form, cost: e.target.value })}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white"
-                />
-              </div>
+              {form.planType === 'Paid' && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                    Price (Rs.) <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    placeholder="Price of the Plan"
+                    value={form.cost}
+                    onChange={(e) => setForm({ ...form, cost: e.target.value })}
+                    className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white"
+                  />
+                </div>
+              )}
 
               {/* Validity */}
               <div>
@@ -353,20 +350,6 @@ export const PlanMaster = () => {
                 </select>
               </div>
 
-              {/* Target Category */}
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                  Category <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  value={form.category}
-                  onChange={(e) => setForm({ ...form, category: e.target.value })}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white"
-                >
-                  <option value="Jobseeker">Jobseeker</option>
-                  <option value="Employer">Employer</option>
-                </select>
-              </div>
             </div>
 
             {/* Submit & Cancel Buttons */}
@@ -388,8 +371,7 @@ export const PlanMaster = () => {
                       cost: '', 
                       planValidity: 'One Time', 
                       displayOrder: '', 
-                      status: 'active',
-                      category: 'Jobseeker' 
+                      status: 'active'
                     });
                   }}
                   className="px-6 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg text-sm transition-colors"
@@ -412,7 +394,7 @@ export const PlanMaster = () => {
         {/* Card Header */}
         <div className="p-6 border-b border-slate-100 flex items-center justify-between">
           <h3 className="text-sm font-bold text-slate-800">
-            Plan Listing
+            Jobseeker Plan Listing
           </h3>
         </div>
 

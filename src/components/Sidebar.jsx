@@ -19,7 +19,7 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
 
   const [openMenus, setOpenMenus] = useState({
     locations: location.pathname.startsWith('/countries') || location.pathname.startsWith('/states') || location.pathname.startsWith('/districts') || location.pathname.startsWith('/cities'),
-    packages: location.pathname.startsWith('/plans') || location.pathname.startsWith('/features') || location.pathname.startsWith('/plan-mappings')
+    packages: location.pathname.startsWith('/jobseeker-packages') || location.pathname.startsWith('/plans') || location.pathname.startsWith('/features') || location.pathname.startsWith('/plan-mappings')
   });
 
   const toggleMenu = (menu) => {
@@ -229,10 +229,10 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
           <div>
             {isCollapsed ? (
               <Link
-                to="/plans"
-                title="Packages"
+                to="/jobseeker-packages"
+                title="Jobseeker Packages"
                 className={`flex items-center justify-center w-10 h-10 mx-auto rounded-lg transition-all duration-150 ${
-                  isGroupActive(['/plans', '/features', '/plan-mappings'])
+                  isGroupActive(['/jobseeker-packages', '/plans', '/features', '/plan-mappings'])
                     ? 'bg-indigo-50/70 text-indigo-600'
                     : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
                 }`}
@@ -244,14 +244,14 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
                 <button
                   onClick={() => toggleMenu('packages')}
                   className={`flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150 ${
-                    isGroupActive(['/plans', '/features', '/plan-mappings'])
+                    isGroupActive(['/jobseeker-packages', '/plans', '/features', '/plan-mappings'])
                       ? 'text-indigo-600 bg-indigo-50/30'
                       : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <Gift className="w-4.5 h-4.5 shrink-0" />
-                    <span>Packages</span>
+                    <span>Jobseeker Packages</span>
                   </div>
                   {openMenus.packages ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
                 </button>
@@ -259,14 +259,14 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
                 {openMenus.packages && (
                   <div className="pl-9 mt-1 space-y-1">
                     <Link
-                      to="/plans"
+                      to="/jobseeker-packages"
                       className={`block py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
-                        isActive('/plans')
+                        isActive('/jobseeker-packages') || isActive('/plans')
                           ? 'text-indigo-600 bg-indigo-50/50'
                           : 'text-slate-500 hover:text-slate-950 hover:bg-slate-50'
                       }`}
                     >
-                      Plan Master
+                      Jobseeker Plan Master
                     </Link>
                     <Link
                       to="/features"
