@@ -144,11 +144,11 @@ export const PostJob = () => {
       if (id) {
         await axios.put(`${BASE_API_URL}/jobs/${id}`, form);
         showMessage('success', 'Job posting updated successfully.');
-        setTimeout(() => navigate('/jobs'), 1500);
+        setTimeout(() => navigate('/admin/jobs'), 1500);
       } else {
         await axios.post(`${BASE_API_URL}/jobs`, form);
         showMessage('success', 'Job posted successfully.');
-        setTimeout(() => navigate('/jobs'), 1500);
+        setTimeout(() => navigate('/admin/jobs'), 1500);
       }
     } catch (err) {
       console.error(err);
@@ -202,7 +202,7 @@ export const PostJob = () => {
             {id ? 'Edit Job Posting' : 'Post New Job Opening'}
           </h4>
           <Link
-            to="/jobs"
+            to="/admin/jobs"
             className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition-colors"
           >
             <ClipboardList className="w-3.5 h-3.5" />

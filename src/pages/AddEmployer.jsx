@@ -141,11 +141,11 @@ export const AddEmployer = () => {
       if (id) {
         await axios.put(`${BASE_API_URL}/employers/${id}`, form);
         showMessage('success', 'Employer profile updated successfully.');
-        setTimeout(() => navigate('/employers'), 1500);
+        setTimeout(() => navigate('/admin/employers'), 1500);
       } else {
         await axios.post(`${BASE_API_URL}/employers`, form);
         showMessage('success', 'Employer registered successfully.');
-        setTimeout(() => navigate('/employers'), 1500);
+        setTimeout(() => navigate('/admin/employers'), 1500);
       }
     } catch (err) {
       console.error(err);
@@ -199,7 +199,7 @@ export const AddEmployer = () => {
             {id ? 'Edit Employer' : 'Add Employer'}
           </h4>
           <Link
-            to="/employers"
+            to="/admin/employers"
             className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition-colors"
           >
             <ClipboardList className="w-3.5 h-3.5" />

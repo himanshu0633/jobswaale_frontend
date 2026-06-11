@@ -11,15 +11,21 @@ import {
   ChevronDown,
   ChevronRight,
   Users,
-  Handshake
+  Handshake,
+  FileText
 } from 'lucide-react';
 
 export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
   const location = useLocation();
+  const adminPath = (path) => `/admin${path === '/' ? '' : path}`;
+  const currentPath = location.pathname.startsWith('/admin')
+    ? location.pathname.slice('/admin'.length) || '/'
+    : location.pathname;
 
   const [openMenus, setOpenMenus] = useState({
-    locations: location.pathname.startsWith('/countries') || location.pathname.startsWith('/states') || location.pathname.startsWith('/districts') || location.pathname.startsWith('/cities'),
-    packages: location.pathname.startsWith('/jobseeker-packages') || location.pathname.startsWith('/plans') || location.pathname.startsWith('/features') || location.pathname.startsWith('/plan-mappings')
+    locations: currentPath.startsWith('/countries') || currentPath.startsWith('/states') || currentPath.startsWith('/districts') || currentPath.startsWith('/cities'),
+    packages: currentPath.startsWith('/jobseeker-packages') || currentPath.startsWith('/plans') || currentPath.startsWith('/features') || currentPath.startsWith('/plan-mappings'),
+    cms: currentPath.startsWith('/cms-pages') || currentPath.startsWith('/header-cms')
   });
 
   const toggleMenu = (menu) => {
@@ -29,8 +35,8 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
     }));
   };
 
-  const isActive = (path) => location.pathname === path;
-  const isGroupActive = (paths) => paths.some(path => location.pathname.startsWith(path));
+  const isActive = (path) => currentPath === path;
+  const isGroupActive = (paths) => paths.some(path => currentPath.startsWith(path));
 
   return (
     <>
@@ -61,12 +67,12 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
 
           {/* Dashboard */}
           <Link
-            to="/"
+            to={adminPath('/')}
             title={isCollapsed ? "Dashboard" : ""}
             className={`flex items-center rounded-lg transition-all duration-150 ${
               isCollapsed ? 'justify-center p-2.5 mx-auto w-10 h-10' : 'gap-3 px-3 py-2.5 text-sm font-semibold'
             } ${
-              isActive('/') 
+              isActive('/') || isActive('/dashboard')
                 ? 'bg-indigo-50/70 text-indigo-600' 
                 : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
             }`}
@@ -84,7 +90,7 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
 
           {/* Industry Type */}
           <Link
-            to="/industry-types"
+            to={adminPath('/industry-types')}
             title={isCollapsed ? "Industry Type" : ""}
             className={`flex items-center rounded-lg transition-all duration-150 ${
               isCollapsed ? 'justify-center p-2.5 mx-auto w-10 h-10' : 'gap-3 px-3 py-2.5 text-sm font-semibold'
@@ -100,7 +106,7 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
 
           {/* Job Type */}
           <Link
-            to="/job-types"
+            to={adminPath('/job-types')}
             title={isCollapsed ? "Job Type" : ""}
             className={`flex items-center rounded-lg transition-all duration-150 ${
               isCollapsed ? 'justify-center p-2.5 mx-auto w-10 h-10' : 'gap-3 px-3 py-2.5 text-sm font-semibold'
@@ -116,7 +122,7 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
 
           {/* Job Category */}
           <Link
-            to="/job-categories"
+            to={adminPath('/job-categories')}
             title={isCollapsed ? "Job Category" : ""}
             className={`flex items-center rounded-lg transition-all duration-150 ${
               isCollapsed ? 'justify-center p-2.5 mx-auto w-10 h-10' : 'gap-3 px-3 py-2.5 text-sm font-semibold'
@@ -132,7 +138,7 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
 
           {/* Qualification */}
           <Link
-            to="/qualifications"
+            to={adminPath('/qualifications')}
             title={isCollapsed ? "Qualification" : ""}
             className={`flex items-center rounded-lg transition-all duration-150 ${
               isCollapsed ? 'justify-center p-2.5 mx-auto w-10 h-10' : 'gap-3 px-3 py-2.5 text-sm font-semibold'
@@ -150,7 +156,7 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
           <div>
             {isCollapsed ? (
               <Link
-                to="/countries"
+                to={adminPath('/countries')}
                 title="Locations"
                 className={`flex items-center justify-center w-10 h-10 mx-auto rounded-lg transition-all duration-150 ${
                   isGroupActive(['/countries', '/states', '/districts', '/cities'])
@@ -180,7 +186,7 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
                 {openMenus.locations && (
                   <div className="pl-9 mt-1 space-y-1">
                     <Link
-                      to="/countries"
+                      to={adminPath('/countries')}
                       className={`block py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
                         isActive('/countries')
                           ? 'text-indigo-600 bg-indigo-50/50'
@@ -190,7 +196,7 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
                       Country
                     </Link>
                     <Link
-                      to="/states"
+                      to={adminPath('/states')}
                       className={`block py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
                         isActive('/states')
                           ? 'text-indigo-600 bg-indigo-50/50'
@@ -200,7 +206,7 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
                       State
                     </Link>
                     <Link
-                      to="/districts"
+                      to={adminPath('/districts')}
                       className={`block py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
                         isActive('/districts')
                           ? 'text-indigo-600 bg-indigo-50/50'
@@ -210,7 +216,7 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
                       District
                     </Link>
                     <Link
-                      to="/cities"
+                      to={adminPath('/cities')}
                       className={`block py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
                         isActive('/cities')
                           ? 'text-indigo-600 bg-indigo-50/50'
@@ -229,7 +235,7 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
           <div>
             {isCollapsed ? (
               <Link
-                to="/jobseeker-packages"
+                to={adminPath('/jobseeker-packages')}
                 title="Jobseeker Packages"
                 className={`flex items-center justify-center w-10 h-10 mx-auto rounded-lg transition-all duration-150 ${
                   isGroupActive(['/jobseeker-packages', '/plans', '/features', '/plan-mappings'])
@@ -259,7 +265,7 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
                 {openMenus.packages && (
                   <div className="pl-9 mt-1 space-y-1">
                     <Link
-                      to="/jobseeker-packages"
+                      to={adminPath('/jobseeker-packages')}
                       className={`block py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
                         isActive('/jobseeker-packages') || isActive('/plans')
                           ? 'text-indigo-600 bg-indigo-50/50'
@@ -269,7 +275,7 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
                       Jobseeker Plan Master
                     </Link>
                     <Link
-                      to="/features"
+                      to={adminPath('/features')}
                       className={`block py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
                         isActive('/features')
                           ? 'text-indigo-600 bg-indigo-50/50'
@@ -279,7 +285,7 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
                       Feature Master
                     </Link>
                     <Link
-                      to="/plan-mappings"
+                      to={adminPath('/plan-mappings')}
                       className={`block py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
                         isActive('/plan-mappings')
                           ? 'text-indigo-600 bg-indigo-50/50'
@@ -303,12 +309,12 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
 
           {/* Employer */}
           <Link
-            to="/employers"
+            to={adminPath('/employers')}
             title={isCollapsed ? "Employer" : ""}
             className={`flex items-center rounded-lg transition-all duration-150 ${
               isCollapsed ? 'justify-center p-2.5 mx-auto w-10 h-10' : 'gap-3 px-3 py-2.5 text-sm font-semibold'
             } ${
-              location.pathname.startsWith('/employers')
+              currentPath.startsWith('/employers')
                 ? 'bg-indigo-50/70 text-indigo-600'
                 : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
             }`}
@@ -319,12 +325,12 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
 
           {/* Jobseeker */}
           <Link
-            to="/jobseekers"
+            to={adminPath('/jobseekers')}
             title={isCollapsed ? "Jobseeker" : ""}
             className={`flex items-center rounded-lg transition-all duration-150 ${
               isCollapsed ? 'justify-center p-2.5 mx-auto w-10 h-10' : 'gap-3 px-3 py-2.5 text-sm font-semibold'
             } ${
-              location.pathname.startsWith('/jobseekers')
+              currentPath.startsWith('/jobseekers')
                 ? 'bg-indigo-50/70 text-indigo-600'
                 : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
             }`}
@@ -335,12 +341,12 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
 
           {/* Jobs Posting */}
           <Link
-            to="/jobs"
+            to={adminPath('/jobs')}
             title={isCollapsed ? "Jobs" : ""}
             className={`flex items-center rounded-lg transition-all duration-150 ${
               isCollapsed ? 'justify-center p-2.5 mx-auto w-10 h-10' : 'gap-3 px-3 py-2.5 text-sm font-semibold'
             } ${
-              location.pathname.startsWith('/jobs')
+              currentPath.startsWith('/jobs')
                 ? 'bg-indigo-50/70 text-indigo-600'
                 : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
             }`}
@@ -348,6 +354,71 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
             <Briefcase className="w-4.5 h-4.5 shrink-0" />
             {!isCollapsed && <span>Jobs</span>}
           </Link>
+
+          {/* WEBSITE CMS */}
+          {!isCollapsed && (
+            <div className="px-3 pt-5 mb-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Website CMS
+            </div>
+          )}
+
+          <div>
+            {isCollapsed ? (
+              <Link
+                to={adminPath('/cms-pages')}
+                title="Website CMS"
+                className={`flex items-center justify-center w-10 h-10 mx-auto rounded-lg transition-all duration-150 ${
+                  isGroupActive(['/cms-pages', '/header-cms'])
+                    ? 'bg-indigo-50/70 text-indigo-600'
+                    : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
+                }`}
+              >
+                <FileText className="w-4.5 h-4.5 shrink-0" />
+              </Link>
+            ) : (
+              <>
+                <button
+                  onClick={() => toggleMenu('cms')}
+                  className={`flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150 ${
+                    isGroupActive(['/cms-pages', '/header-cms'])
+                      ? 'text-indigo-600 bg-indigo-50/30'
+                      : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <FileText className="w-4.5 h-4.5 shrink-0" />
+                    <span>Website CMS</span>
+                  </div>
+                  {openMenus.cms ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
+                </button>
+
+                {openMenus.cms && (
+                  <div className="pl-9 mt-1 space-y-1">
+                    <Link
+                      to={adminPath('/cms-pages')}
+                      className={`block py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
+                        isActive('/cms-pages')
+                          ? 'text-indigo-600 bg-indigo-50/50'
+                          : 'text-slate-500 hover:text-slate-950 hover:bg-slate-50'
+                      }`}
+                    >
+                      CMS Pages
+                    </Link>
+                    <Link
+                      to={adminPath('/header-cms')}
+                      className={`block py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
+                        isActive('/header-cms')
+                          ? 'text-indigo-600 bg-indigo-50/50'
+                          : 'text-slate-500 hover:text-slate-950 hover:bg-slate-50'
+                      }`}
+                    >
+                      Header CMS
+                    </Link>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </nav>
       </aside>
     </>

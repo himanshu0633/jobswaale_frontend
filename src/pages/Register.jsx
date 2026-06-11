@@ -35,7 +35,7 @@ export const Register = () => {
       await register(email, password, role);
       setSuccess('Account created successfully! Logging you in...');
       setTimeout(() => {
-        navigate('/');
+        navigate('/admin');
       }, 1000);
     } catch (err) {
       setError(err.message || 'Registration failed');

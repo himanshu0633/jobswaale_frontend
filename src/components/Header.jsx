@@ -77,7 +77,7 @@ export const Header = ({ toggleSidebar, isCollapsed, title = '' }) => {
         <div className="flex items-center gap-4 flex-1 h-full">
           {/* Logo container aligning with sidebar below it */}
           <div className={`flex items-center h-full border-r border-slate-800 transition-all duration-300 shrink-0 ${isCollapsed ? 'w-16 justify-center' : 'w-28 lg:w-64 px-3 lg:px-6'}`}>
-            <Link to="/" className="flex items-center">
+            <Link to="/admin" className="flex items-center">
               {isCollapsed ? (
                 <img src={logoSm} alt="JobsWaale" className="w-10 h-auto shrink-0 animate-in fade-in duration-200" />
               ) : (

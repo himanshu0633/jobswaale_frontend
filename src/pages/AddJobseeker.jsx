@@ -158,11 +158,11 @@ export const AddJobseeker = () => {
       if (id) {
         await axios.put(`${BASE_API_URL}/jobseekers/${id}`, form);
         showMessage('success', 'Jobseeker profile updated successfully.');
-        setTimeout(() => navigate('/jobseekers'), 1500);
+        setTimeout(() => navigate('/admin/jobseekers'), 1500);
       } else {
         await axios.post(`${BASE_API_URL}/jobseekers`, form);
         showMessage('success', 'Jobseeker profile created successfully.');
-        setTimeout(() => navigate('/jobseekers'), 1500);
+        setTimeout(() => navigate('/admin/jobseekers'), 1500);
       }
     } catch (err) {
       console.error(err);
@@ -216,7 +216,7 @@ export const AddJobseeker = () => {
             {id ? 'Edit Jobseeker' : 'Add Jobseeker'}
           </h4>
           <Link
-            to="/jobseekers"
+            to="/admin/jobseekers"
             className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition-colors"
           >
             <ClipboardList className="w-3.5 h-3.5" />

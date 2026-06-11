@@ -25,7 +25,7 @@ export const Login = () => {
       await login(email, password);
       setSuccess('Logged in successfully! Redirecting...');
       setTimeout(() => {
-        navigate('/');
+        navigate('/admin');
       }, 1000);
     } catch (err) {
       setError(err.message || 'Invalid email or password');

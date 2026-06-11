@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -25,6 +25,9 @@ import Jobseekers from './pages/Jobseekers';
 import AddJobseeker from './pages/AddJobseeker';
 import Jobs from './pages/Jobs';
 import PostJob from './pages/PostJob';
+import CMSPages from './pages/CMSPages';
+import HeaderCMS from './pages/HeaderCMS';
+import PublicPage from './pages/PublicPage';
 
 // Protected Route Guard
 const ProtectedRoute = () => {
@@ -56,6 +59,11 @@ const ProtectedRoute = () => {
   }
 
   return <Outlet />;
+};
+
+const AdminLegacyRedirect = () => {
+  const location = useLocation();
+  return <Navigate to={`/admin${location.pathname}${location.search}`} replace />;
 };
 
 // Main Layout Wrapper
@@ -93,28 +101,32 @@ const AppLayout = () => {
           {/* Dynamic Route Content */}
           <main className="flex-grow p-4 md:p-6 lg:p-8 w-full mx-auto">
             <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/countries" element={<Country />} />
-              <Route path="/states" element={<State />} />
-              <Route path="/districts" element={<District />} />
-              <Route path="/industry-types" element={<IndustryType />} />
-              <Route path="/job-types" element={<JobType />} />
-              <Route path="/job-categories" element={<JobCategory />} />
-              <Route path="/features" element={<FeatureMaster />} />
-              <Route path="/jobseeker-packages" element={<PlanMaster />} />
-              <Route path="/plans" element={<Navigate to="/jobseeker-packages" replace />} />
-              <Route path="/qualifications" element={<Qualification />} />
-              <Route path="/cities" element={<City />} />
-              <Route path="/plan-mappings" element={<PlanMapping />} />
-              <Route path="/employers" element={<Employers />} />
-              <Route path="/employers/add" element={<AddEmployer />} />
-              <Route path="/employers/edit/:id" element={<AddEmployer />} />
-              <Route path="/jobseekers" element={<Jobseekers />} />
-              <Route path="/jobseekers/add" element={<AddJobseeker />} />
-              <Route path="/jobseekers/edit/:id" element={<AddJobseeker />} />
-              <Route path="/jobs" element={<Jobs />} />
-              <Route path="/jobs/add" element={<PostJob />} />
-              <Route path="/jobs/edit/:id" element={<PostJob />} />
+              <Route index element={<Dashboard />} />
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="countries" element={<Country />} />
+              <Route path="states" element={<State />} />
+              <Route path="districts" element={<District />} />
+              <Route path="industry-types" element={<IndustryType />} />
+              <Route path="job-types" element={<JobType />} />
+              <Route path="job-categories" element={<JobCategory />} />
+              <Route path="features" element={<FeatureMaster />} />
+              <Route path="jobseeker-packages" element={<PlanMaster />} />
+              <Route path="plans" element={<Navigate to="/admin/jobseeker-packages" replace />} />
+              <Route path="qualifications" element={<Qualification />} />
+              <Route path="cities" element={<City />} />
+              <Route path="plan-mappings" element={<PlanMapping />} />
+              <Route path="employers" element={<Employers />} />
+              <Route path="employers/add" element={<AddEmployer />} />
+              <Route path="employers/edit/:id" element={<AddEmployer />} />
+              <Route path="jobseekers" element={<Jobseekers />} />
+              <Route path="jobseekers/add" element={<AddJobseeker />} />
+              <Route path="jobseekers/edit/:id" element={<AddJobseeker />} />
+              <Route path="jobs" element={<Jobs />} />
+              <Route path="jobs/add" element={<PostJob />} />
+              <Route path="jobs/edit/:id" element={<PostJob />} />
+              <Route path="cms-pages" element={<CMSPages />} />
+              <Route path="header-cms" element={<HeaderCMS />} />
+              <Route path="*" element={<Navigate to="/admin" replace />} />
             </Routes>
           </main>
         </div>
@@ -134,11 +146,30 @@ function App() {
 
           {/* Secure Administrative Paths */}
           <Route element={<ProtectedRoute />}>
-            <Route path="/*" element={<AppLayout />} />
+            <Route path="/admin/*" element={<AppLayout />} />
           </Route>
 
-          {/* Fallback redirect */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="/dashboard/*" element={<AdminLegacyRedirect />} />
+          <Route path="/countries/*" element={<AdminLegacyRedirect />} />
+          <Route path="/states/*" element={<AdminLegacyRedirect />} />
+          <Route path="/districts/*" element={<AdminLegacyRedirect />} />
+          <Route path="/industry-types/*" element={<AdminLegacyRedirect />} />
+          <Route path="/job-types/*" element={<AdminLegacyRedirect />} />
+          <Route path="/job-categories/*" element={<AdminLegacyRedirect />} />
+          <Route path="/features/*" element={<AdminLegacyRedirect />} />
+          <Route path="/jobseeker-packages/*" element={<AdminLegacyRedirect />} />
+          <Route path="/plans/*" element={<AdminLegacyRedirect />} />
+          <Route path="/qualifications/*" element={<AdminLegacyRedirect />} />
+          <Route path="/cities/*" element={<AdminLegacyRedirect />} />
+          <Route path="/plan-mappings/*" element={<AdminLegacyRedirect />} />
+          <Route path="/employers/*" element={<AdminLegacyRedirect />} />
+          <Route path="/jobseekers/*" element={<AdminLegacyRedirect />} />
+          <Route path="/jobs/*" element={<AdminLegacyRedirect />} />
+          <Route path="/cms-pages/*" element={<AdminLegacyRedirect />} />
+          <Route path="/header-cms/*" element={<AdminLegacyRedirect />} />
+
+          {/* Public website fallback */}
+          <Route path="*" element={<PublicPage />} />
         </Routes>
       </Router>
     </AuthProvider>

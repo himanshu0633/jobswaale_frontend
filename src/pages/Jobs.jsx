@@ -132,7 +132,7 @@ export const Jobs = () => {
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
           <h4 className="text-base font-bold text-slate-800">Job Listings</h4>
           <Link
-            to="/jobs/add"
+            to="/admin/jobs/add"
             className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -184,7 +184,7 @@ export const Jobs = () => {
                     <div className="text-slate-500">{item.city}, {item.state}</div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => navigate(`/jobs/edit/${item._id}`)} className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <button onClick={() => navigate(`/admin/jobs/edit/${item._id}`)} className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button onClick={() => handleDelete(item._id)} className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
@@ -304,7 +304,7 @@ export const Jobs = () => {
                             </button>
                           )}
                           <button
-                            onClick={() => navigate(`/jobs/edit/${item._id}`)}
+                            onClick={() => navigate(`/admin/jobs/edit/${item._id}`)}
                             title="Edit"
                             className="w-7 h-7 rounded-full flex items-center justify-center bg-emerald-50 hover:bg-emerald-100 text-emerald-600 transition-colors"
                           >
