@@ -445,12 +445,12 @@ export const PlanMaster = () => {
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <div className="text-xs text-slate-500">{item.duration} days</div>
+                <div className="text-xs text-slate-500">{item.planValidity} (Sort: {item.displayOrder})</div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => handleEdit(item)} className="w-8 h-8 bg-teal-500 hover:bg-teal-600 text-white rounded-full flex items-center justify-center">
                     <Edit2 className="w-4 h-4" />
                   </button>
-                  <button onClick={() => handleDelete(item._id)} className="w-8 h-8 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center">
+                  <button onClick={() => handleDelete(item)} className="w-8 h-8 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
