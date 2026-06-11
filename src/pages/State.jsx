@@ -496,7 +496,7 @@ export const State = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               
               {/* Form Input Grid */}
-              <div className="grid gap-6 md:grid-cols-4">
+              <div className="grid gap-6 md:grid-cols-3">
                 {/* Country Dropdown */}
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">

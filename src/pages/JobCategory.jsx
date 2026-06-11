@@ -468,7 +468,7 @@ export const JobCategory = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               
               {/* Form Input Grid */}
-              <div className="grid gap-6 md:grid-cols-4">
+              <div className="grid gap-6 md:grid-cols-3">
                 <input type="hidden" value={form.id} readOnly />
 
                 {/* Name */}

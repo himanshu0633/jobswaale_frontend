@@ -524,7 +524,7 @@ export const City = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               
               {/* Form Input Grid */}
-              <div className="grid gap-6 md:grid-cols-3">
+              <div className="grid gap-6 md:grid-cols-5">
                 {/* Country Selection */}
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">

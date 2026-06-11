@@ -463,7 +463,7 @@ export const Country = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               
               {/* Form Input Grid */}
-              <div className="grid gap-6 md:grid-cols-3">
+              <div className="grid gap-6 md:grid-cols-2">
                 <input type="hidden" value={form.cid} readOnly />
 
                 {/* Country Name */}
