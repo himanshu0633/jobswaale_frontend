@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BASE_API_URL } from '../context/AuthContext';
 import { onlyDigits, toWholeNumber } from '../utils/masterForm';
+import ResponsiveCardList from '../components/ResponsiveCardList';
 import { 
   Plus, 
   Edit2, 

@@ -359,7 +359,7 @@ export const Qualification = () => {
             <div className="text-xs font-semibold text-slate-400">
               Showing {total === 0 ? 0 : startIndex + 1} to {Math.min(startIndex + entriesPerPage, total)} of {total} entries
             </div>
-
+  
             <div className="flex items-center gap-1 self-end sm:self-auto">
               {/* First Page */}
               <button
