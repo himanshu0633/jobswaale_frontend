@@ -308,7 +308,7 @@ export const Country = () => {
                       <tr
                         key={item._id}
                         className={`{/*hover:bg-slate-50/30*/} ${
-                          index % 2 === 0 ? 'bg-[white]' : 'bg-[slate-50]'
+                          index % 2 === 0 ? 'bg-[white]' : 'bg-slate-50'
                         }`}
                       >
                       <td className="px-6 py-4 font-bold text-slate-800 uppercase">

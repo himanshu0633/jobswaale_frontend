@@ -487,7 +487,7 @@ export const PlanMaster = () => {
                 </tr>
               ) : (
                 list.map((item, idx) => (
-                  <tr key={item._id}  className={`${idx % 2 === 0 ? '[bg-white]' : 'bg-[slate-50]'} hover:bg-slate-50/30`}>
+                  <tr key={item._id}  className={`${idx % 2 === 0 ? '[bg-white]' : 'bg-slate-50'} hover:bg-slate-50/30`}>
                     <td className="px-6 py-4 font-bold text-slate-800 uppercase">
                       {String(startIndex + idx + 1).padStart(3, '0')}
                     </td>
