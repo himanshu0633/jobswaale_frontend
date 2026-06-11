@@ -157,8 +157,8 @@ export const PlanMapping = () => {
               </div>
             )}
 
-            {/* Matrix Table */}
-            <div className="overflow-x-auto border border-slate-150 rounded-xl">
+            {/* ── DESKTOP: Matrix Table (hidden on mobile) ── */}
+            <div className="hidden md:block overflow-x-auto border border-slate-150 rounded-xl">
               <table className="w-full text-xs md:text-sm text-left border-collapse min-w-[640px]">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-100 text-xs text-slate-400 uppercase">
@@ -171,8 +171,8 @@ export const PlanMapping = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {features.map((f,index) => (
-                    <tr key={f._id} className="odd:bg-[white] even:[slate-50] {/*hover:bg-slate-50/30*/}">
+                  {features.map((f) => (
+                    <tr key={f._id} className="odd:bg-[white] even:[slate-50]">
                       <td className="px-6 py-4 font-semibold text-slate-700 border-r border-slate-100">
                         {f.featureName}
                       </td>
@@ -201,12 +201,49 @@ export const PlanMapping = () => {
               </table>
             </div>
 
+            {/* ── MOBILE: Per-plan cards (hidden on desktop) ── */}
+            <div className="md:hidden space-y-4">
+              {plans.map(p => (
+                <div key={p._id} className="border border-slate-200 rounded-xl overflow-hidden">
+                  {/* Plan name header */}
+                  <div className="px-4 py-3 bg-indigo-50 border-b border-indigo-100">
+                    <span className="text-sm font-bold text-indigo-700">{p.planName}</span>
+                  </div>
+                  {/* Feature rows */}
+                  <div className="divide-y divide-slate-100">
+                    {features.map(f => {
+                      const key = `${p._id}_${f._id}`;
+                      const currentVal = mappings[key] || 'No';
+                      return (
+                        <div key={f._id} className="flex items-center justify-between px-4 py-3 gap-3">
+                          <span className="text-xs font-semibold text-slate-700 flex-1 leading-snug">
+                            {f.featureName}
+                          </span>
+                          <select
+                            value={currentVal}
+                            onChange={(e) => handleSelectChange(p._id, f._id, e.target.value)}
+                            className="shrink-0 px-2.5 py-1.5 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-xs font-semibold bg-white cursor-pointer"
+                          >
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                            <option value="Limited">Limited</option>
+                            <option value="Unlimited">Unlimited</option>
+                            <option value="3 Months">3 Months</option>
+                          </select>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
             {/* Submit Button at Bottom Left */}
             <div className="pt-6">
               <button
                 onClick={handleSave}
                 disabled={saving || plans.length === 0 || features.length === 0}
-                className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg shadow-md shadow-indigo-600/10 transition-colors text-sm disabled:bg-slate-300 disabled:shadow-none"
+                className="w-full sm:w-auto px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg shadow-md shadow-indigo-600/10 transition-colors text-sm disabled:bg-slate-300 disabled:shadow-none"
               >
                 {saving ? 'Saving...' : 'Submit'}
               </button>
