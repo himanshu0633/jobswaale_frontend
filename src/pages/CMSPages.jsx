@@ -1,15 +1,33 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import grapesjs from 'grapesjs';
 import 'grapesjs/dist/css/grapes.min.css';
 import { BASE_API_URL } from '../context/AuthContext';
-import { AlertCircle, CheckCircle2, Edit2, FileText, Loader, Plus, Save, Trash2, X } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Edit2, FileText, Loader, Plus, Save, Trash2 } from 'lucide-react';
 
-const emptyProject = {
+const createEmptyProject = () => ({
   pages: [{
     component: '<section style="padding:80px 24px;text-align:center;"><h1>New Page</h1><p>Start editing this CMS page.</p></section>'
   }],
   styles: []
+});
+
+const normalizeProjectData = (projectData) => {
+  if (!projectData) return createEmptyProject();
+
+  if (typeof projectData === 'string') {
+    try {
+      return JSON.parse(projectData);
+    } catch {
+      return createEmptyProject();
+    }
+  }
+
+  if (typeof projectData !== 'object' || Array.isArray(projectData)) {
+    return createEmptyProject();
+  }
+
+  return Object.keys(projectData).length ? projectData : createEmptyProject();
 };
 
 const slugify = (value) => (
@@ -25,11 +43,12 @@ const slugify = (value) => (
 export const CMSPages = () => {
   const editorRef = useRef(null);
   const containerRef = useRef(null);
+  const blockContainerRef = useRef(null);
   const [pages, setPages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState({ title: '', slug: '', published: true, projectData: emptyProject });
+  const [form, setForm] = useState({ title: '', slug: '', published: true, projectData: createEmptyProject() });
   const [alert, setAlert] = useState({ type: '', text: '' });
 
   const showAlert = (type, text) => {
@@ -54,7 +73,7 @@ export const CMSPages = () => {
   }, []);
 
   useEffect(() => {
-    if (!containerRef.current || editorRef.current) return;
+    if (!containerRef.current || !blockContainerRef.current || editorRef.current) return;
 
     editorRef.current = grapesjs.init({
       container: containerRef.current,
@@ -67,7 +86,7 @@ export const CMSPages = () => {
         ]
       },
       blockManager: {
-        appendTo: '#cms-blocks',
+        appendTo: blockContainerRef.current,
         blocks: [
           {
             id: 'section',
@@ -93,7 +112,9 @@ export const CMSPages = () => {
       }
     });
 
-    editorRef.current.loadProjectData(form.projectData || emptyProject);
+    editorRef.current.loadProjectData(normalizeProjectData(form.projectData));
+    editorRef.current.refresh();
+
     return () => {
       editorRef.current?.destroy();
       editorRef.current = null;
@@ -102,12 +123,13 @@ export const CMSPages = () => {
 
   const loadProject = (projectData) => {
     if (!editorRef.current) return;
-    editorRef.current.loadProjectData(projectData && Object.keys(projectData).length ? projectData : emptyProject);
+    editorRef.current.loadProjectData(normalizeProjectData(projectData));
+    editorRef.current.refresh();
   };
 
   const handleNew = () => {
     setEditingId(null);
-    const next = { title: '', slug: '', published: true, projectData: emptyProject };
+    const next = { title: '', slug: '', published: true, projectData: createEmptyProject() };
     setForm(next);
     loadProject(next.projectData);
     setAlert({ type: '', text: '' });
@@ -122,9 +144,9 @@ export const CMSPages = () => {
         title: data.title || '',
         slug: data.slug || '',
         published: data.published !== false,
-        projectData: data.projectData || emptyProject
+        projectData: normalizeProjectData(data.projectData)
       });
-      loadProject(data.projectData || emptyProject);
+      loadProject(data.projectData);
       setAlert({ type: '', text: '' });
     } catch (err) {
       showAlert('error', err.response?.data?.message || 'Page open nahi ho paya.');
@@ -260,7 +282,7 @@ export const CMSPages = () => {
                 <FileText className="w-4 h-4" />
                 Blocks
               </div>
-              <div id="cms-blocks" className="space-y-2" />
+              <div ref={blockContainerRef} className="space-y-2" />
             </div>
             <div ref={containerRef} className="min-h-[620px]" />
           </div>
