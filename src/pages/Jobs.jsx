@@ -103,11 +103,11 @@ export const Jobs = () => {
     <div className="space-y-5">
 
       <div className="flex items-center justify-between">
-  <h4 className="text-xl font-bold text-slate-800">Employers</h4>
+  <h4 className="text-xl font-bold text-slate-800">Jobs</h4>
   <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 text-[0.9rem]">
     <span>Dashboard</span>
     <span>&gt;</span>
-    <span className="text-indigo-600">Manage Employer</span>
+    <span className="text-indigo-600">Manage Jobs</span>
   </div>
 </div>
 
