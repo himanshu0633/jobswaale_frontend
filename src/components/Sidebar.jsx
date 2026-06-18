@@ -162,7 +162,7 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
           </div>
 
           {!isCollapsed && <div className={`${sectionClass} ${palette.title}`}>Finance</div>}
-          <PlaceholderLink icon={CreditCard} label="Payments" />
+          <NavLink to={adminPath('/payments')} icon={CreditCard} label="Payments" active={currentPath.startsWith('/payments')} />
           <PlaceholderLink icon={ArrowRightLeft} label="Transactions" />
 
           {!isCollapsed && <div className={`${sectionClass} ${palette.title}`}>Content</div>}

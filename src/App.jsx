@@ -28,6 +28,8 @@ import PostJob from './pages/PostJob';
 import CMSPages from './pages/CMSPages';
 import HeaderCMS from './pages/HeaderCMS';
 import PublicPage from './pages/PublicPage';
+import Payments from './pages/Payments';
+import AddPayment from './pages/AddPayment';
 
 // Protected Route Guard
 const ProtectedRoute = () => {
@@ -124,6 +126,9 @@ const AppLayout = () => {
               <Route path="jobs" element={<Jobs />} />
               <Route path="jobs/add" element={<PostJob />} />
               <Route path="jobs/edit/:id" element={<PostJob />} />
+              <Route path="payments" element={<Payments />} />
+              <Route path="payments/add" element={<AddPayment />} />
+              <Route path="payments/edit/:id" element={<AddPayment />} />
               <Route path="cms-pages" element={<CMSPages />} />
               <Route path="header-cms" element={<HeaderCMS />} />
               <Route path="*" element={<Navigate to="/admin" replace />} />
@@ -165,6 +170,7 @@ function App() {
           <Route path="/employers/*" element={<AdminLegacyRedirect />} />
           <Route path="/jobseekers/*" element={<AdminLegacyRedirect />} />
           <Route path="/jobs/*" element={<AdminLegacyRedirect />} />
+          <Route path="/payments/*" element={<AdminLegacyRedirect />} />
           <Route path="/cms-pages/*" element={<AdminLegacyRedirect />} />
           <Route path="/header-cms/*" element={<AdminLegacyRedirect />} />
 

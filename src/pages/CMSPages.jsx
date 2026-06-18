@@ -1,9 +1,26 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import grapesjs from 'grapesjs';
 import 'grapesjs/dist/css/grapes.min.css';
 import { BASE_API_URL } from '../context/AuthContext';
-import { AlertCircle, CheckCircle2, Edit2, FileText, Loader, Plus, Save, Trash2 } from 'lucide-react';
+import {
+  AlertCircle,
+  CheckCircle2,
+  ChevronsLeft,
+  ChevronsRight,
+  CirclePlus,
+  ClipboardList,
+  Edit2,
+  FileText,
+  ImagePlus,
+  Loader,
+  Save,
+  Search,
+  Settings,
+  ShieldCheck,
+  Trash2,
+  X
+} from 'lucide-react';
 
 const createEmptyProject = () => ({
   pages: [{
@@ -12,9 +29,21 @@ const createEmptyProject = () => ({
   styles: []
 });
 
+const createBlankForm = () => ({
+  title: '',
+  slug: '',
+  parentPage: '',
+  published: true,
+  featuredImage: '',
+  sortingOrder: 10,
+  seoTitle: '',
+  seoDescription: '',
+  seoKeywords: '',
+  projectData: createEmptyProject()
+});
+
 const normalizeProjectData = (projectData) => {
   if (!projectData) return createEmptyProject();
-
   if (typeof projectData === 'string') {
     try {
       return JSON.parse(projectData);
@@ -22,12 +51,9 @@ const normalizeProjectData = (projectData) => {
       return createEmptyProject();
     }
   }
-
-  if (typeof projectData !== 'object' || Array.isArray(projectData)) {
-    return createEmptyProject();
-  }
-
-  return Object.keys(projectData).length ? projectData : createEmptyProject();
+  return typeof projectData === 'object' && !Array.isArray(projectData) && Object.keys(projectData).length
+    ? projectData
+    : createEmptyProject();
 };
 
 const slugify = (value) => (
@@ -40,20 +66,26 @@ const slugify = (value) => (
     .replace(/\/+/g, '/') || 'home'
 );
 
+const statusLabel = (published) => published ? 'Active' : 'Inactive';
+
 export const CMSPages = () => {
   const editorRef = useRef(null);
   const containerRef = useRef(null);
   const blockContainerRef = useRef(null);
+  const [view, setView] = useState('list');
   const [pages, setPages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState({ title: '', slug: '', published: true, projectData: createEmptyProject() });
+  const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [form, setForm] = useState(createBlankForm);
   const [alert, setAlert] = useState({ type: '', text: '' });
 
   const showAlert = (type, text) => {
     setAlert({ type, text });
-    if (type === 'success') setTimeout(() => setAlert({ type: '', text: '' }), 2500);
+    if (type === 'success') setTimeout(() => setAlert({ type: '', text: '' }), 3000);
   };
 
   const fetchPages = async () => {
@@ -73,41 +105,23 @@ export const CMSPages = () => {
   }, []);
 
   useEffect(() => {
-    if (!containerRef.current || !blockContainerRef.current || editorRef.current) return;
+    if (view !== 'form' || !containerRef.current || !blockContainerRef.current || editorRef.current) return;
 
     editorRef.current = grapesjs.init({
       container: containerRef.current,
-      height: '620px',
+      height: '360px',
       storageManager: false,
       fromElement: false,
       canvas: {
-        styles: [
-          'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css'
-        ]
+        styles: ['https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css']
       },
       blockManager: {
         appendTo: blockContainerRef.current,
         blocks: [
-          {
-            id: 'section',
-            label: 'Section',
-            content: '<section style="padding:64px 24px;"><h2>Section title</h2><p>Write your content here.</p></section>'
-          },
-          {
-            id: 'hero',
-            label: 'Hero',
-            content: '<section style="padding:96px 24px;background:#0f172a;color:white;text-align:center;"><h1>Your headline</h1><p>Supporting copy for this page.</p><a href="/contact-us" style="display:inline-block;margin-top:16px;color:white;border:1px solid white;padding:10px 18px;text-decoration:none;">Contact</a></section>'
-          },
-          {
-            id: 'grid',
-            label: 'Grid',
-            content: '<section style="padding:56px 24px;"><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;"><div><h3>One</h3><p>Detail</p></div><div><h3>Two</h3><p>Detail</p></div><div><h3>Three</h3><p>Detail</p></div></div></section>'
-          },
-          {
-            id: 'button',
-            label: 'Button',
-            content: '<a href="#" style="display:inline-block;background:#4f46e5;color:white;padding:12px 18px;border-radius:8px;text-decoration:none;">Button</a>'
-          }
+          { id: 'section', label: 'Section', content: '<section style="padding:64px 24px;"><h2>Section title</h2><p>Write your content here.</p></section>' },
+          { id: 'hero', label: 'Hero', content: '<section style="padding:96px 24px;background:#0f172a;color:white;text-align:center;"><h1>Your headline</h1><p>Supporting copy for this page.</p><a href="#" style="display:inline-block;margin-top:16px;color:white;border:1px solid white;padding:10px 18px;text-decoration:none;">Button</a></section>' },
+          { id: 'grid', label: 'Grid', content: '<section style="padding:56px 24px;"><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;"><div><h3>One</h3><p>Detail</p></div><div><h3>Two</h3><p>Detail</p></div><div><h3>Three</h3><p>Detail</p></div></div></section>' },
+          { id: 'button', label: 'Button', content: '<a href="#" style="display:inline-block;background:#6658dd;color:white;padding:12px 18px;border-radius:6px;text-decoration:none;">Button</a>' }
         ]
       }
     });
@@ -119,19 +133,31 @@ export const CMSPages = () => {
       editorRef.current?.destroy();
       editorRef.current = null;
     };
-  }, []);
+  }, [view]);
 
-  const loadProject = (projectData) => {
-    if (!editorRef.current) return;
-    editorRef.current.loadProjectData(normalizeProjectData(projectData));
-    editorRef.current.refresh();
+  const filteredPages = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return pages;
+    return pages.filter(page => (
+      page.title?.toLowerCase().includes(q) ||
+      page.slug?.toLowerCase().includes(q) ||
+      page.parentPage?.title?.toLowerCase().includes(q)
+    ));
+  }, [pages, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredPages.length / entriesPerPage));
+  const visiblePages = filteredPages.slice((currentPage - 1) * entriesPerPage, currentPage * entriesPerPage);
+
+  const openList = () => {
+    setView('list');
+    setAlert({ type: '', text: '' });
   };
 
   const handleNew = () => {
     setEditingId(null);
-    const next = { title: '', slug: '', published: true, projectData: createEmptyProject() };
+    const next = createBlankForm();
     setForm(next);
-    loadProject(next.projectData);
+    setView('form');
     setAlert({ type: '', text: '' });
   };
 
@@ -139,14 +165,22 @@ export const CMSPages = () => {
     try {
       const res = await axios.get(`${BASE_API_URL}/cms/pages/${page._id}`);
       const data = res.data;
-      setEditingId(data._id);
-      setForm({
+      const next = {
         title: data.title || '',
         slug: data.slug || '',
+        parentPage: data.parentPage?._id || data.parentPage || '',
         published: data.published !== false,
+        featuredImage: data.featuredImage || '',
+        sortingOrder: data.sortingOrder || 10,
+        seoTitle: data.seoTitle || '',
+        seoDescription: data.seoDescription || '',
+        seoKeywords: data.seoKeywords || '',
         projectData: normalizeProjectData(data.projectData)
-      });
-      loadProject(data.projectData);
+      };
+      setEditingId(data._id);
+      setForm(next);
+      setView('form');
+      if (editorRef.current) editorRef.current.loadProjectData(next.projectData);
       setAlert({ type: '', text: '' });
     } catch (err) {
       showAlert('error', err.response?.data?.message || 'Page open nahi ho paya.');
@@ -159,31 +193,44 @@ export const CMSPages = () => {
       await axios.delete(`${BASE_API_URL}/cms/pages/${page._id}`);
       showAlert('success', 'Page deleted successfully.');
       fetchPages();
-      if (editingId === page._id) handleNew();
     } catch (err) {
       showAlert('error', err.response?.data?.message || 'Page delete nahi ho paya.');
     }
   };
 
+  const handleImage = (file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setForm(prev => ({ ...prev, featuredImage: reader.result || '' }));
+    reader.readAsDataURL(file);
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     if (!form.title.trim()) {
-      showAlert('error', 'Title required hai.');
+      showAlert('error', 'Page Title required hai.');
       return;
     }
-    if (!editorRef.current) return;
+    if (!editorRef.current) {
+      showAlert('error', 'Editor ready nahi hai. Please reload karke try karein.');
+      return;
+    }
 
     setSaving(true);
     const projectData = editorRef.current.getProjectData();
-    const html = editorRef.current.getHtml();
-    const css = editorRef.current.getCss();
     const payload = {
       title: form.title.trim(),
       slug: slugify(form.slug || form.title),
+      parentPage: form.parentPage || null,
       published: form.published,
+      featuredImage: form.featuredImage,
+      sortingOrder: Number(form.sortingOrder) || 10,
+      seoTitle: form.seoTitle,
+      seoDescription: form.seoDescription,
+      seoKeywords: form.seoKeywords,
       projectData,
-      html,
-      css
+      html: editorRef.current.getHtml(),
+      css: editorRef.current.getCss()
     };
 
     try {
@@ -195,10 +242,10 @@ export const CMSPages = () => {
         setEditingId(res.data._id);
         setForm(prev => ({ ...prev, slug: res.data.slug, projectData }));
       }
-      showAlert('success', 'Page structure, HTML aur CSS save ho gaya.');
-      fetchPages();
+      showAlert('success', 'Success! Record added/updated successfully.');
+      await fetchPages();
     } catch (err) {
-      showAlert('error', err.response?.data?.message || 'Page save nahi ho paya.');
+      showAlert('error', err.response?.data?.message || 'Oops! Something went wrong. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -206,88 +253,234 @@ export const CMSPages = () => {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-slate-800">CMS Pages</h1>
-          <p className="text-sm text-slate-500">GrapesJS projectData, generated HTML aur CSS ek saath save honge.</p>
-        </div>
-        <button onClick={handleNew} className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-semibold">
-          <Plus className="w-4 h-4" />
-          New Page
-        </button>
-      </div>
-
-      {alert.text && (
-        <div className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold ${alert.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-rose-50 border-rose-100 text-rose-700'}`}>
-          {alert.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-          {alert.text}
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 xl:grid-cols-[320px_minmax(0,1fr)] gap-5">
-        <aside className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-100 font-bold text-sm text-slate-800">Pages</div>
-          <div className="max-h-[720px] overflow-y-auto divide-y divide-slate-100">
-            {loading ? (
-              <div className="p-6 flex justify-center"><Loader className="w-5 h-5 animate-spin text-indigo-600" /></div>
-            ) : pages.length === 0 ? (
-              <div className="p-6 text-sm text-slate-400">No CMS pages.</div>
-            ) : pages.map(page => (
-              <div key={page._id} className={`p-4 ${editingId === page._id ? 'bg-indigo-50/50' : 'bg-white'}`}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="font-bold text-sm text-slate-800 truncate">{page.title}</div>
-                    <div className="text-xs text-slate-500 truncate">/{page.slug === 'home' ? '' : page.slug}</div>
-                    <span className={`inline-block mt-2 px-2 py-0.5 rounded text-[11px] font-bold ${page.published ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
-                      {page.published ? 'Published' : 'Draft'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => handleEdit(page)} className="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center">
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => handleDelete(page)} className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </aside>
-
-        <section className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-          <form onSubmit={handleSave} className="p-4 border-b border-slate-100 grid grid-cols-1 lg:grid-cols-[1fr_220px_auto_auto] gap-3">
-            <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Title</label>
-              <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value, slug: form.slug || slugify(e.target.value) })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-indigo-500" placeholder="About Us" />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Slug</label>
-              <input value={form.slug} onChange={(e) => setForm({ ...form, slug: slugify(e.target.value) })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-indigo-500" placeholder="about-us" />
-            </div>
-            <label className="flex items-center gap-2 mt-5 text-sm font-semibold text-slate-700">
-              <input type="checkbox" checked={form.published} onChange={(e) => setForm({ ...form, published: e.target.checked })} className="text-indigo-600" />
-              Published
-            </label>
-            <button disabled={saving} className="mt-4 lg:mt-5 inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-300 text-white rounded-lg text-sm font-semibold">
-              {saving ? <Loader className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Save
+      {view === 'list' ? (
+        <section className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+            <h1 className="text-base font-extrabold text-slate-800">All CMS Pages</h1>
+            <button onClick={handleNew} className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-indigo-500">
+              <CirclePlus className="h-4 w-4" />
+              Add New Page
             </button>
-          </form>
+          </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[180px_minmax(0,1fr)]">
-            <div className="border-b lg:border-b-0 lg:border-r border-slate-100 p-3 bg-slate-50">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase text-slate-500 mb-3">
-                <FileText className="w-4 h-4" />
-                Blocks
-              </div>
-              <div ref={blockContainerRef} className="space-y-2" />
+          {alert.text && (
+            <div className={`mx-6 mt-5 flex items-center gap-2 rounded-md px-4 py-3 text-sm font-semibold ${alert.type === 'success' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+              {alert.type === 'success' ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+              {alert.text}
             </div>
-            <div ref={containerRef} className="min-h-[620px]" />
+          )}
+
+          <div className="px-6 py-5">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <label className="flex items-center gap-2 text-sm font-semibold text-slate-600">
+                <select
+                  value={entriesPerPage}
+                  onChange={(e) => {
+                    setEntriesPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="rounded border border-slate-200 px-3 py-2 text-sm"
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                </select>
+                entries per page
+              </label>
+              <label className="flex items-center gap-2 text-sm font-semibold text-slate-600">
+                Search:
+                <input value={search} onChange={(e) => setSearch(e.target.value)} className="w-56 rounded border border-slate-200 px-3 py-2 text-sm" />
+              </label>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[980px] border border-slate-100 text-left text-sm">
+                <thead className="bg-white">
+                  <tr>
+                    <th className="border-r border-slate-100 px-4 py-4">Title</th>
+                    <th className="border-r border-slate-100 px-4 py-4">Slug</th>
+                    <th className="border-r border-slate-100 px-4 py-4">Parent Page</th>
+                    <th className="border-r border-slate-100 px-4 py-4">Status</th>
+                    <th className="border-r border-slate-100 px-4 py-4">Sorting Order</th>
+                    <th className="px-4 py-4">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr><td colSpan="6" className="px-4 py-10 text-center"><Loader className="mx-auto h-5 w-5 animate-spin text-indigo-600" /></td></tr>
+                  ) : visiblePages.length === 0 ? (
+                    <tr><td colSpan="6" className="px-4 py-10 text-center text-slate-400">No CMS pages found.</td></tr>
+                  ) : visiblePages.map((page) => (
+                    <tr key={page._id} className="border-t border-slate-100 odd:bg-slate-50/60">
+                      <td className="border-r border-slate-100 px-4 py-4 font-semibold text-slate-700">{page.title}</td>
+                      <td className="border-r border-slate-100 px-4 py-4 font-mono text-rose-400">/{page.slug === 'home' ? '' : page.slug}</td>
+                      <td className="border-r border-slate-100 px-4 py-4">{page.parentPage?.title || '—'}</td>
+                      <td className="border-r border-slate-100 px-4 py-4">
+                        <span className={`inline-flex rounded px-2 py-1 text-xs font-extrabold text-white ${page.published ? 'bg-emerald-500' : 'bg-amber-400'}`}>
+                          {statusLabel(page.published)}
+                        </span>
+                      </td>
+                      <td className="border-r border-slate-100 px-4 py-4">{page.sortingOrder || 10}</td>
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-3">
+                          <button onClick={() => handleEdit(page)} className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500 text-white hover:bg-emerald-600">
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                          <button onClick={() => handleDelete(page)} className="flex h-9 w-9 items-center justify-center rounded-full bg-rose-500 text-white hover:bg-rose-600">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mt-5 flex flex-col gap-3 text-sm font-semibold text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+              <span>Showing {filteredPages.length ? ((currentPage - 1) * entriesPerPage) + 1 : 0} to {Math.min(currentPage * entriesPerPage, filteredPages.length)} of {filteredPages.length} entries</span>
+              <div className="flex items-center gap-2">
+                <button disabled={currentPage === 1} onClick={() => setCurrentPage(1)} className="rounded border border-slate-200 px-3 py-2 disabled:text-slate-300"><ChevronsLeft className="h-4 w-4" /></button>
+                <button disabled={currentPage === 1} onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} className="rounded border border-slate-200 px-3 py-2 disabled:text-slate-300">‹</button>
+                <span className="rounded bg-indigo-600 px-4 py-2 text-white">{currentPage}</span>
+                <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} className="rounded border border-slate-200 px-3 py-2 disabled:text-slate-300">›</button>
+                <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(totalPages)} className="rounded border border-slate-200 px-3 py-2 disabled:text-slate-300"><ChevronsRight className="h-4 w-4" /></button>
+              </div>
+            </div>
           </div>
         </section>
-      </div>
+      ) : (
+        <section className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+            <h1 className="text-base font-extrabold text-slate-800">{editingId ? 'Edit CMS Page' : 'Add CMS Page'}</h1>
+            <button onClick={openList} className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-indigo-500">
+              <ClipboardList className="h-4 w-4" />
+              View Listings
+            </button>
+          </div>
+
+          <form onSubmit={handleSave} className="space-y-5 p-6">
+            {alert.text && (
+              <div className={`flex items-center justify-between rounded-md px-4 py-3 text-sm font-semibold ${alert.type === 'success' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                <span className="flex items-center gap-2">
+                  {alert.type === 'success' ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+                  {alert.text}
+                </span>
+                <button type="button" onClick={() => setAlert({ type: '', text: '' })}><X className="h-4 w-4" /></button>
+              </div>
+            )}
+
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(360px,1fr)]">
+              <div className="space-y-5">
+                <div className="rounded bg-slate-100 px-4 py-3 text-sm font-extrabold text-slate-700">
+                  <FileText className="mr-2 inline h-4 w-4" />
+                  Page Details
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-extrabold">Page Title <span className="text-rose-500">*</span></label>
+                  <input value={form.title} onChange={(e) => setForm(prev => ({ ...prev, title: e.target.value, slug: prev.slug || slugify(e.target.value) }))} placeholder="Title of the CMS Page" className="w-full rounded border border-slate-200 px-3 py-2.5 text-sm" />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-extrabold">Page Slug (URL) <span className="text-rose-500">*</span></label>
+                  <input value={form.slug} onChange={(e) => setForm(prev => ({ ...prev, slug: slugify(e.target.value) }))} placeholder="page-slug-url" className="w-full rounded border border-slate-200 px-3 py-2.5 text-sm" />
+                  <p className="mt-1 text-xs font-semibold text-slate-400">Auto-generated from title, but you can edit manually.</p>
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-extrabold">Parent Page</label>
+                  <select value={form.parentPage} onChange={(e) => setForm(prev => ({ ...prev, parentPage: e.target.value }))} className="w-full rounded border border-slate-200 px-3 py-2.5 text-sm">
+                    <option value="">None (Top Level Page)</option>
+                    {pages.filter(page => page._id !== editingId).map(page => (
+                      <option key={page._id} value={page._id}>{page.title}</option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-xs font-semibold text-slate-400">Select a parent if this page is a sub-page.</p>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-extrabold">Page Content <span className="text-rose-500">*</span></label>
+                  <div className="rounded border border-slate-200">
+                    <div className="border-b border-slate-100 bg-slate-50 p-2">
+                      <div ref={blockContainerRef} className="flex flex-wrap gap-2" />
+                    </div>
+                    <div ref={containerRef} className="min-h-[360px]" />
+                  </div>
+                </div>
+
+                <div className="rounded bg-slate-100 px-4 py-3 text-sm font-extrabold text-slate-700">
+                  <Search className="mr-2 inline h-4 w-4" />
+                  SEO Details
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-extrabold">SEO Title</label>
+                  <input value={form.seoTitle} onChange={(e) => setForm(prev => ({ ...prev, seoTitle: e.target.value }))} placeholder="Meta SEO Title" className="w-full rounded border border-slate-200 px-3 py-2.5 text-sm" />
+                  <p className="mt-1 text-xs font-semibold text-slate-400">Recommended: 50-60 characters for best search results.</p>
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-extrabold">SEO Description</label>
+                  <textarea value={form.seoDescription} onChange={(e) => setForm(prev => ({ ...prev, seoDescription: e.target.value }))} placeholder="Meta SEO Description" rows={3} className="w-full rounded border border-slate-200 px-3 py-2.5 text-sm" />
+                  <p className="mt-1 text-xs font-semibold text-slate-400">Recommended: 155-160 characters.</p>
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-extrabold">SEO Keywords</label>
+                  <input value={form.seoKeywords} onChange={(e) => setForm(prev => ({ ...prev, seoKeywords: e.target.value }))} placeholder="keyword1, keyword2, keyword3" className="w-full rounded border border-slate-200 px-3 py-2.5 text-sm" />
+                  <p className="mt-1 text-xs font-semibold text-slate-400">Comma-separated keywords (max 3-7 keywords).</p>
+                </div>
+              </div>
+
+              <aside className="space-y-5">
+                <div className="rounded bg-slate-100 px-4 py-3 text-sm font-extrabold text-slate-700">
+                  <Settings className="mr-2 inline h-4 w-4" />
+                  Other Details
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-extrabold">Featured Image/Banner</label>
+                  <label className="flex min-h-20 cursor-pointer items-center justify-center rounded border-2 border-dashed border-slate-200 px-4 py-6 text-center text-sm font-semibold text-slate-600">
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImage(e.target.files?.[0])} />
+                    {form.featuredImage ? (
+                      <img src={form.featuredImage} alt="Featured preview" className="max-h-28 rounded object-contain" />
+                    ) : (
+                      <span><ImagePlus className="mx-auto mb-2 h-5 w-5" />Drag & Drop your files or Browse</span>
+                    )}
+                  </label>
+                  <p className="mt-1 text-xs font-semibold text-slate-400">Max 3MB. Recommended size: 1200x400px</p>
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-extrabold">Sorting Order</label>
+                  <input type="number" value={form.sortingOrder} onChange={(e) => setForm(prev => ({ ...prev, sortingOrder: e.target.value }))} className="w-full rounded border border-slate-200 px-3 py-2.5 text-sm" />
+                  <p className="mt-1 text-xs font-semibold text-slate-400">Use increments (10, 20, 30) for flexibility in reordering.</p>
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-extrabold">Status <span className="text-rose-500">*</span></label>
+                  <select value={form.published ? 'active' : 'inactive'} onChange={(e) => setForm(prev => ({ ...prev, published: e.target.value === 'active' }))} className="w-full rounded border border-slate-200 px-3 py-2.5 text-sm">
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                  <p className="mt-1 text-xs font-semibold text-slate-400">Only Active pages will be visible on frontend.</p>
+                </div>
+                <div className="border-t border-slate-100 pt-5">
+                  <h3 className="mb-4 flex items-center gap-2 text-sm font-extrabold text-slate-700"><ShieldCheck className="h-4 w-4" />System Information</h3>
+                  <div className="space-y-4 text-xs font-semibold text-slate-400">
+                    <p>Created By: Admin User</p>
+                    <p>Created Date: {new Date().toLocaleString()}</p>
+                    <p>Updated Date: {new Date().toLocaleString()}</p>
+                  </div>
+                </div>
+              </aside>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button disabled={saving} className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-5 py-2.5 text-sm font-extrabold text-white hover:bg-indigo-500 disabled:bg-slate-300">
+                {saving ? <Loader className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                Submit
+              </button>
+              <button type="button" onClick={openList} className="rounded-md bg-amber-400 px-5 py-2.5 text-sm font-extrabold text-white hover:bg-amber-500">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
     </div>
   );
 };

@@ -1,0 +1,106 @@
+export const paymentCustomers = [
+  {
+    name: 'Acme Hiring Pvt Ltd',
+    type: 'Employer',
+    email: 'billing@acmejobs.in',
+    phone: '9876543210',
+  },
+  {
+    name: 'BrightPath Careers',
+    type: 'Employer',
+    email: 'accounts@brightpath.in',
+    phone: '9876501234',
+  },
+  {
+    name: 'Himanshu Sharma',
+    type: 'Jobseeker',
+    email: 'himanshu.sharma@example.com',
+    phone: '9123456780',
+  },
+  {
+    name: 'Priya Mehta',
+    type: 'Jobseeker',
+    email: 'priya.mehta@example.com',
+    phone: '9988776655',
+  },
+];
+
+export const paymentPlans = [
+  { name: 'Basic Listing', amount: 1499 },
+  { name: 'Premium Listing', amount: 4999 },
+  { name: 'Resume Boost', amount: 799 },
+  { name: 'Featured Candidate', amount: 1299 },
+  { name: 'Enterprise Hiring', amount: 14999 },
+];
+
+export const validityTypes = [
+  'One Time',
+  'Monthly',
+  'Quarterly',
+  'Half-Yearly',
+  'Yearly',
+  'Always Free',
+];
+
+export const seedPayments = [
+  {
+    id: 'PAY-2026-001',
+    date: '2026-06-10',
+    userType: 'Employer',
+    customer: 'Acme Hiring Pvt Ltd',
+    email: 'billing@acmejobs.in',
+    plan: 'Premium Listing',
+    amount: 4999,
+    method: 'UPI',
+    gatewayTxnId: 'rzp_9KX42P01',
+    status: 'Success',
+  },
+  {
+    id: 'PAY-2026-002',
+    date: '2026-06-11',
+    userType: 'Jobseeker',
+    customer: 'Himanshu Sharma',
+    email: 'himanshu.sharma@example.com',
+    plan: 'Resume Boost',
+    amount: 799,
+    method: 'Card',
+    gatewayTxnId: 'payu_7NQ81A22',
+    status: 'Success',
+  },
+  {
+    id: 'PAY-2026-003',
+    date: '2026-06-12',
+    userType: 'Employer',
+    customer: 'BrightPath Careers',
+    email: 'accounts@brightpath.in',
+    plan: 'Enterprise Hiring',
+    amount: 14999,
+    method: 'Net Banking',
+    gatewayTxnId: 'bank_4PA20M18',
+    status: 'Pending',
+  },
+  {
+    id: 'PAY-2026-004',
+    date: '2026-06-13',
+    userType: 'Jobseeker',
+    customer: 'Priya Mehta',
+    email: 'priya.mehta@example.com',
+    plan: 'Featured Candidate',
+    amount: 1299,
+    method: 'Wallet',
+    gatewayTxnId: 'wal_2FE66C10',
+    status: 'Failed',
+  },
+  {
+    id: 'PAY-2026-005',
+    date: '2026-06-14',
+    userType: 'Employer',
+    customer: 'Acme Hiring Pvt Ltd',
+    email: 'billing@acmejobs.in',
+    plan: 'Basic Listing',
+    amount: 1499,
+    method: 'Cash',
+    gatewayTxnId: '',
+    status: 'Refunded',
+  },
+];
