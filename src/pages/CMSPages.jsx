@@ -1,7 +1,31 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import grapesjs from 'grapesjs';
-import 'grapesjs/dist/css/grapes.min.css';
+import { CKEditor } from '@ckeditor/ckeditor5-react';
+import {
+  Alignment,
+  BlockQuote,
+  Bold,
+  ClassicEditor,
+  Essentials,
+  FontBackgroundColor,
+  FontColor,
+  FontFamily,
+  FontSize,
+  Heading,
+  Indent,
+  IndentBlock,
+  Italic,
+  Link,
+  List,
+  MediaEmbed,
+  Paragraph,
+  SourceEditing,
+  Strikethrough,
+  Table,
+  TableToolbar,
+  Underline
+} from 'ckeditor5';
+import 'ckeditor5/ckeditor5.css';
 import { BASE_API_URL } from '../context/AuthContext';
 import {
   AlertCircle,
@@ -22,12 +46,7 @@ import {
   X
 } from 'lucide-react';
 
-const createEmptyProject = () => ({
-  pages: [{
-    component: '<section style="padding:80px 24px;text-align:center;"><h1>New Page</h1><p>Start editing this CMS page.</p></section>'
-  }],
-  styles: []
-});
+const defaultContent = '<section style="padding:80px 24px;text-align:center;"><h1>New Page</h1><p>Start editing this CMS page.</p></section>';
 
 const createBlankForm = () => ({
   title: '',
@@ -39,21 +58,29 @@ const createBlankForm = () => ({
   seoTitle: '',
   seoDescription: '',
   seoKeywords: '',
-  projectData: createEmptyProject()
+  contentHtml: defaultContent,
+  projectData: { editor: 'ckeditor', html: defaultContent }
 });
 
-const normalizeProjectData = (projectData) => {
-  if (!projectData) return createEmptyProject();
+const normalizeProjectData = (projectData, html = '') => {
+  if (!projectData) return { editor: 'ckeditor', html: html || defaultContent };
   if (typeof projectData === 'string') {
     try {
       return JSON.parse(projectData);
     } catch {
-      return createEmptyProject();
+      return { editor: 'ckeditor', html: html || defaultContent };
     }
   }
   return typeof projectData === 'object' && !Array.isArray(projectData) && Object.keys(projectData).length
     ? projectData
-    : createEmptyProject();
+    : { editor: 'ckeditor', html: html || defaultContent };
+};
+
+const extractContentHtml = (page = {}) => {
+  if (page.html) return page.html;
+  const projectData = normalizeProjectData(page.projectData);
+  if (projectData.editor === 'ckeditor' && projectData.html) return projectData.html;
+  return projectData.pages?.[0]?.component || defaultContent;
 };
 
 const slugify = (value) => (
@@ -69,9 +96,6 @@ const slugify = (value) => (
 const statusLabel = (published) => published ? 'Active' : 'Inactive';
 
 export const CMSPages = () => {
-  const editorRef = useRef(null);
-  const containerRef = useRef(null);
-  const blockContainerRef = useRef(null);
   const [view, setView] = useState('list');
   const [pages, setPages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -104,37 +128,6 @@ export const CMSPages = () => {
     fetchPages();
   }, []);
 
-  useEffect(() => {
-    if (view !== 'form' || !containerRef.current || !blockContainerRef.current || editorRef.current) return;
-
-    editorRef.current = grapesjs.init({
-      container: containerRef.current,
-      height: '360px',
-      storageManager: false,
-      fromElement: false,
-      canvas: {
-        styles: ['https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css']
-      },
-      blockManager: {
-        appendTo: blockContainerRef.current,
-        blocks: [
-          { id: 'section', label: 'Section', content: '<section style="padding:64px 24px;"><h2>Section title</h2><p>Write your content here.</p></section>' },
-          { id: 'hero', label: 'Hero', content: '<section style="padding:96px 24px;background:#0f172a;color:white;text-align:center;"><h1>Your headline</h1><p>Supporting copy for this page.</p><a href="#" style="display:inline-block;margin-top:16px;color:white;border:1px solid white;padding:10px 18px;text-decoration:none;">Button</a></section>' },
-          { id: 'grid', label: 'Grid', content: '<section style="padding:56px 24px;"><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;"><div><h3>One</h3><p>Detail</p></div><div><h3>Two</h3><p>Detail</p></div><div><h3>Three</h3><p>Detail</p></div></div></section>' },
-          { id: 'button', label: 'Button', content: '<a href="#" style="display:inline-block;background:#6658dd;color:white;padding:12px 18px;border-radius:6px;text-decoration:none;">Button</a>' }
-        ]
-      }
-    });
-
-    editorRef.current.loadProjectData(normalizeProjectData(form.projectData));
-    editorRef.current.refresh();
-
-    return () => {
-      editorRef.current?.destroy();
-      editorRef.current = null;
-    };
-  }, [view]);
-
   const filteredPages = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return pages;
@@ -147,6 +140,70 @@ export const CMSPages = () => {
 
   const totalPages = Math.max(1, Math.ceil(filteredPages.length / entriesPerPage));
   const visiblePages = filteredPages.slice((currentPage - 1) * entriesPerPage, currentPage * entriesPerPage);
+
+  const editorConfig = useMemo(() => ({
+    licenseKey: 'GPL',
+    plugins: [
+      Alignment,
+      BlockQuote,
+      Bold,
+      Essentials,
+      FontBackgroundColor,
+      FontColor,
+      FontFamily,
+      FontSize,
+      Heading,
+      Indent,
+      IndentBlock,
+      Italic,
+      Link,
+      List,
+      MediaEmbed,
+      Paragraph,
+      SourceEditing,
+      Strikethrough,
+      Table,
+      TableToolbar,
+      Underline
+    ],
+    toolbar: {
+      items: [
+        'heading',
+        '|',
+        'fontFamily',
+        'fontSize',
+        'fontColor',
+        'fontBackgroundColor',
+        '|',
+        'bold',
+        'italic',
+        'underline',
+        'strikethrough',
+        '|',
+        'alignment',
+        'bulletedList',
+        'numberedList',
+        'outdent',
+        'indent',
+        '|',
+        'link',
+        'blockQuote',
+        'insertTable',
+        'mediaEmbed',
+        '|',
+        'sourceEditing',
+        'undo',
+        'redo'
+      ],
+      shouldNotGroupWhenFull: true
+    },
+    table: {
+      contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells']
+    },
+    link: {
+      addTargetToExternalLinks: true
+    }
+  }), []);
 
   const openList = () => {
     setView('list');
@@ -165,6 +222,7 @@ export const CMSPages = () => {
     try {
       const res = await axios.get(`${BASE_API_URL}/cms/pages/${page._id}`);
       const data = res.data;
+      const contentHtml = extractContentHtml(data);
       const next = {
         title: data.title || '',
         slug: data.slug || '',
@@ -175,12 +233,12 @@ export const CMSPages = () => {
         seoTitle: data.seoTitle || '',
         seoDescription: data.seoDescription || '',
         seoKeywords: data.seoKeywords || '',
-        projectData: normalizeProjectData(data.projectData)
+        contentHtml,
+        projectData: normalizeProjectData(data.projectData, contentHtml)
       };
       setEditingId(data._id);
       setForm(next);
       setView('form');
-      if (editorRef.current) editorRef.current.loadProjectData(next.projectData);
       setAlert({ type: '', text: '' });
     } catch (err) {
       showAlert('error', err.response?.data?.message || 'Page open nahi ho paya.');
@@ -211,13 +269,10 @@ export const CMSPages = () => {
       showAlert('error', 'Page Title required hai.');
       return;
     }
-    if (!editorRef.current) {
-      showAlert('error', 'Editor ready nahi hai. Please reload karke try karein.');
-      return;
-    }
 
     setSaving(true);
-    const projectData = editorRef.current.getProjectData();
+    const contentHtml = form.contentHtml || '';
+    const projectData = { editor: 'ckeditor', html: contentHtml };
     const payload = {
       title: form.title.trim(),
       slug: slugify(form.slug || form.title),
@@ -229,8 +284,8 @@ export const CMSPages = () => {
       seoDescription: form.seoDescription,
       seoKeywords: form.seoKeywords,
       projectData,
-      html: editorRef.current.getHtml(),
-      css: editorRef.current.getCss()
+      html: contentHtml,
+      css: ''
     };
 
     try {
@@ -399,11 +454,16 @@ export const CMSPages = () => {
 
                 <div>
                   <label className="mb-2 block text-sm font-extrabold">Page Content <span className="text-rose-500">*</span></label>
-                  <div className="rounded border border-slate-200">
-                    <div className="border-b border-slate-100 bg-slate-50 p-2">
-                      <div ref={blockContainerRef} className="flex flex-wrap gap-2" />
-                    </div>
-                    <div ref={containerRef} className="min-h-[360px]" />
+                  <div className="cms-ckeditor rounded border border-slate-200">
+                    <CKEditor
+                      editor={ClassicEditor}
+                      config={editorConfig}
+                      data={form.contentHtml}
+                      onChange={(_, editor) => {
+                        const html = editor.getData();
+                        setForm(prev => ({ ...prev, contentHtml: html }));
+                      }}
+                    />
                   </div>
                 </div>
 
