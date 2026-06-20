@@ -80,7 +80,7 @@ export const PublicPage = () => {
         const pageRes = await axios.get(`${BASE_API_URL}/cms/public/pages/${encodeURIComponent(slug)}`);
         setPage(pageRes.data);
       } catch (err) {
-        setError(err.response?.status === 404 ? 'Page not found' : 'Page load nahi ho paya.');
+        setError(err.response?.status === 404 ? 'Page not found' : 'Page could not be loaded.');
       } finally {
         setLoading(false);
       }

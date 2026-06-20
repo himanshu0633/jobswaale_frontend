@@ -21,6 +21,8 @@ import {
   UserCog,
   UserSearch
 } from 'lucide-react';
+import { hasPermission } from '../utils/permissions';
+import { useAuth } from '../context/AuthContext';
 
 const palette = {
   active: 'bg-[#e8e6fa] text-[#6658dd]',
@@ -31,6 +33,7 @@ const palette = {
 
 export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
   const location = useLocation();
+  const { user } = useAuth();
   const adminPath = (path) => `/admin${path === '/' ? '' : path}`;
   const currentPath = location.pathname.startsWith('/admin')
     ? location.pathname.slice('/admin'.length) || '/'
@@ -47,6 +50,7 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
 
   const isActive = (path) => currentPath === path;
   const isGroupActive = (paths) => paths.some(path => currentPath.startsWith(path));
+  const can = (permission) => hasPermission(user, permission);
 
   const sectionClass = 'px-3 pt-5 mb-2 text-[11px] font-extrabold uppercase tracking-wide';
   const linkClass = (active) => `flex items-center rounded-lg transition-all duration-150 ${
@@ -86,15 +90,15 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
       }`}>
         <nav className={`flex-grow py-6 overflow-y-auto ${isCollapsed ? 'px-1 space-y-4' : 'px-4 space-y-1'}`}>
           {!isCollapsed && <div className={`${sectionClass} pt-0 ${palette.title}`}>Navigation</div>}
-          <NavLink to={adminPath('/')} icon={Gauge} label="Dashboard" active={isActive('/') || isActive('/dashboard')} />
+          {can('dashboard.view') && <NavLink to={adminPath('/')} icon={Gauge} label="Dashboard" active={isActive('/') || isActive('/dashboard')} />}
 
           {!isCollapsed && <div className={`${sectionClass} ${palette.title}`}>People</div>}
-          <NavLink to={adminPath('/jobs')} icon={Table2} label="Jobs" active={currentPath.startsWith('/jobs')} />
-          <NavLink to={adminPath('/jobseekers')} icon={UserSearch} label="Jobseeker" active={currentPath.startsWith('/jobseekers')} />
-          <NavLink to={adminPath('/employers')} icon={Handshake} label="Employer" active={currentPath.startsWith('/employers')} />
+          {can('people.jobs.view') && <NavLink to={adminPath('/jobs')} icon={Table2} label="Jobs" active={currentPath.startsWith('/jobs')} />}
+          {can('people.jobseekers.view') && <NavLink to={adminPath('/jobseekers')} icon={UserSearch} label="Jobseeker" active={currentPath.startsWith('/jobseekers')} />}
+          {can('people.employers.view') && <NavLink to={adminPath('/employers')} icon={Handshake} label="Employer" active={currentPath.startsWith('/employers')} />}
 
           {!isCollapsed && <div className={`${sectionClass} ${palette.title}`}>Masters</div>}
-          <div>
+          {can('masters.plans') && <div>
             {isCollapsed ? (
               <NavLink
                 to={adminPath('/jobseeker-packages')}
@@ -123,13 +127,13 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
                 )}
               </>
             )}
-          </div>
-          <NavLink to={adminPath('/industry-types')} icon={Factory} label="Industrial Type" active={isActive('/industry-types')} />
-          <NavLink to={adminPath('/job-categories')} icon={Layers} label="Job Categories" active={isActive('/job-categories')} />
-          <NavLink to={adminPath('/job-types')} icon={Briefcase} label="Job Types" active={isActive('/job-types')} />
-          <NavLink to={adminPath('/qualifications')} icon={GraduationCap} label="Qualifications" active={isActive('/qualifications')} />
+          </div>}
+          {can('masters.industry') && <NavLink to={adminPath('/industry-types')} icon={Factory} label="Industrial Type" active={isActive('/industry-types')} />}
+          {can('masters.categories') && <NavLink to={adminPath('/job-categories')} icon={Layers} label="Job Categories" active={isActive('/job-categories')} />}
+          {can('masters.jobtypes') && <NavLink to={adminPath('/job-types')} icon={Briefcase} label="Job Types" active={isActive('/job-types')} />}
+          {can('masters.qualifications') && <NavLink to={adminPath('/qualifications')} icon={GraduationCap} label="Qualifications" active={isActive('/qualifications')} />}
 
-          <div>
+          {can('masters.locations') && <div>
             {isCollapsed ? (
               <NavLink
                 to={adminPath('/countries')}
@@ -159,21 +163,23 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
                 )}
               </>
             )}
-          </div>
+          </div>}
 
           {!isCollapsed && <div className={`${sectionClass} ${palette.title}`}>Finance</div>}
-          <NavLink to={adminPath('/payments')} icon={CreditCard} label="Payments" active={currentPath.startsWith('/payments')} />
-          <PlaceholderLink icon={ArrowRightLeft} label="Transactions" />
+          {can('finance.payments.view') && <NavLink to={adminPath('/payments')} icon={CreditCard} label="Payments" active={currentPath.startsWith('/payments')} />}
+          {can('finance.transactions.view') && <PlaceholderLink icon={ArrowRightLeft} label="Transactions" />}
 
           {!isCollapsed && <div className={`${sectionClass} ${palette.title}`}>Content</div>}
-          <NavLink to={adminPath('/cms-pages')} icon={CalendarDays} label="CMS Pages" active={isActive('/cms-pages')} />
-          <NavLink to={adminPath('/header-cms')} icon={CalendarDays} label="Header CMS" active={isActive('/header-cms')} />
-          <PlaceholderLink icon={Rss} label="Blog" />
+          {can('content.cms') && <NavLink to={adminPath('/cms-pages')} icon={CalendarDays} label="CMS Pages" active={isActive('/cms-pages')} />}
+          {can('content.cms') && <NavLink to={adminPath('/header-cms')} icon={CalendarDays} label="Header CMS" active={isActive('/header-cms')} />}
+          {can('content.blog') && <PlaceholderLink icon={Rss} label="Blog" />}
 
           {!isCollapsed && <div className={`${sectionClass} ${palette.title}`}>System</div>}
-          <PlaceholderLink icon={BarChart3} label="Reports" />
-          <PlaceholderLink icon={Settings} label="Settings" />
-          <PlaceholderLink icon={UserCog} label="Users & Roles" />
+          {can('system.reports') && <PlaceholderLink icon={BarChart3} label="Reports" />}
+          {can('system.settings') && <PlaceholderLink icon={Settings} label="Settings" />}
+          {(can('system.users') || can('system.roles')) && (
+            <NavLink to={adminPath('/users-roles')} icon={UserCog} label="Users & Roles" active={currentPath.startsWith('/users-roles')} />
+          )}
         </nav>
       </aside>
     </>

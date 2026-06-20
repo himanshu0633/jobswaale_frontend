@@ -80,7 +80,7 @@ export const AddPayment = () => {
         setCustomers(Array.isArray(customersRes.data) ? customersRes.data : []);
         setPlans(planRows);
       } catch (err) {
-        setAlert({ type: 'error', text: err.response?.data?.message || 'Payment form data load nahi ho paya.' });
+        setAlert({ type: 'error', text: err.response?.data?.message || 'Payment form data could not be loaded.' });
       } finally {
         setLoadingOptions(false);
       }
@@ -126,7 +126,7 @@ export const AddPayment = () => {
           recordedBy: payment.recordedBy || 'Admin',
         });
       } catch (err) {
-        setAlert({ type: 'error', text: err.response?.data?.message || 'Payment details load nahi ho payi.' });
+        setAlert({ type: 'error', text: err.response?.data?.message || 'Payment details could not be loaded.' });
       } finally {
         setLoadingPayment(false);
       }
@@ -203,7 +203,7 @@ export const AddPayment = () => {
         setCustomerSearch('');
       }
     } catch (err) {
-      setAlert({ type: 'error', text: err.response?.data?.message || 'Payment add nahi ho payi. Please try again.' });
+      setAlert({ type: 'error', text: err.response?.data?.message || 'Payment could not be added. Please try again.' });
     } finally {
       setSubmitting(false);
     }

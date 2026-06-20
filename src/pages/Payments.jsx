@@ -107,7 +107,7 @@ export const Payments = () => {
       setPayments([]);
       setTotal(0);
       setTotalPages(1);
-      setError(err.response?.data?.message || 'Payments load nahi ho paye.');
+      setError(err.response?.data?.message || 'Payments could not be loaded.');
     } finally {
       setLoading(false);
     }

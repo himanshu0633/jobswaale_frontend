@@ -30,6 +30,11 @@ import HeaderCMS from './pages/HeaderCMS';
 import PublicPage from './pages/PublicPage';
 import Payments from './pages/Payments';
 import AddPayment from './pages/AddPayment';
+import UsersRoles from './pages/UsersRoles';
+import Roles from './pages/Roles';
+import AddRole from './pages/AddRole';
+import Users from './pages/Users';
+import AddUser from './pages/AddUser';
 
 // Protected Route Guard
 const ProtectedRoute = () => {
@@ -47,13 +52,13 @@ const ProtectedRoute = () => {
     return <Navigate to="/login" replace />;
   }
 
-  // Ensure only Admin role can access administrative master controls
-  if (user.role !== 'Admin') {
+  const canAccessAdmin = user.role === 'Admin' || user.accountType === 'admin';
+  if (!canAccessAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-slate-50 text-center">
         <h1 className="text-3xl font-extrabold text-slate-900 mb-2">Access Denied</h1>
         <p className="text-slate-500 mb-4 max-w-sm">
-          Your account role ({user.role}) does not have permissions to view administrative master records.
+          Your account role ({user.roleName || user.role}) does not have permissions to view administrative records.
         </p>
         <Navigate to="/login" replace />
       </div>
@@ -131,6 +136,13 @@ const AppLayout = () => {
               <Route path="payments/edit/:id" element={<AddPayment />} />
               <Route path="cms-pages" element={<CMSPages />} />
               <Route path="header-cms" element={<HeaderCMS />} />
+              <Route path="users-roles" element={<UsersRoles />} />
+              <Route path="users-roles/roles" element={<Roles />} />
+              <Route path="users-roles/roles/add" element={<AddRole />} />
+              <Route path="users-roles/roles/edit/:id" element={<AddRole />} />
+              <Route path="users-roles/users" element={<Users />} />
+              <Route path="users-roles/users/add" element={<AddUser />} />
+              <Route path="users-roles/users/edit/:id" element={<AddUser />} />
               <Route path="*" element={<Navigate to="/admin" replace />} />
             </Routes>
           </main>
@@ -173,6 +185,7 @@ function App() {
           <Route path="/payments/*" element={<AdminLegacyRedirect />} />
           <Route path="/cms-pages/*" element={<AdminLegacyRedirect />} />
           <Route path="/header-cms/*" element={<AdminLegacyRedirect />} />
+          <Route path="/users-roles/*" element={<AdminLegacyRedirect />} />
 
           {/* Public website fallback */}
           <Route path="*" element={<PublicPage />} />

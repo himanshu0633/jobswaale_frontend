@@ -152,7 +152,7 @@ export const HeaderCMS = () => {
         setMenus(normalizeOrders(headerRes.data.menus || []));
         setPages(pagesRes.data || []);
       } catch (err) {
-        showAlert('error', err.response?.data?.message || 'Header data load nahi ho paya.');
+        showAlert('error', err.response?.data?.message || 'Header data could not be loaded.');
       } finally {
         setLoading(false);
       }
@@ -167,7 +167,7 @@ export const HeaderCMS = () => {
       setMenus(normalizeOrders(res.data.menus || []));
       showAlert('success', 'Header menu saved successfully.');
     } catch (err) {
-      showAlert('error', err.response?.data?.message || 'Header save nahi ho paya.');
+      showAlert('error', err.response?.data?.message || 'Header could not be saved.');
     } finally {
       setSaving(false);
     }

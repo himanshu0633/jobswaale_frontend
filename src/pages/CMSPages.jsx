@@ -118,7 +118,7 @@ export const CMSPages = () => {
       const res = await axios.get(`${BASE_API_URL}/cms/pages`);
       setPages(res.data || []);
     } catch (err) {
-      showAlert('error', err.response?.data?.message || 'Pages load nahi ho paye.');
+      showAlert('error', err.response?.data?.message || 'Pages could not be loaded.');
     } finally {
       setLoading(false);
     }
@@ -241,7 +241,7 @@ export const CMSPages = () => {
       setView('form');
       setAlert({ type: '', text: '' });
     } catch (err) {
-      showAlert('error', err.response?.data?.message || 'Page open nahi ho paya.');
+      showAlert('error', err.response?.data?.message || 'Page could not be opened.');
     }
   };
 
@@ -252,7 +252,7 @@ export const CMSPages = () => {
       showAlert('success', 'Page deleted successfully.');
       fetchPages();
     } catch (err) {
-      showAlert('error', err.response?.data?.message || 'Page delete nahi ho paya.');
+      showAlert('error', err.response?.data?.message || 'Page could not be deleted.');
     }
   };
 
@@ -266,7 +266,7 @@ export const CMSPages = () => {
   const handleSave = async (e) => {
     e.preventDefault();
     if (!form.title.trim()) {
-      showAlert('error', 'Page Title required hai.');
+      showAlert('error', 'Page Title is required.');
       return;
     }
 

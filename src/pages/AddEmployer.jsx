@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_API_URL } from '../context/AuthContext';
+import { cleanPhoneInput } from '../utils/phone';
 import {
   Briefcase,
   MapPin,
@@ -287,8 +288,8 @@ export const AddEmployer = () => {
 
                   <div>
                     <label className={labelCls}>Phone <span className="text-rose-500">*</span></label>
-                    <input type="text" required placeholder="Phone Number" value={form.phone}
-                      onChange={(e) => setForm({ ...form, phone: e.target.value })} className={inputCls} />
+                    <input type="text" required placeholder="+91 9999999999" value={form.phone}
+                      onChange={(e) => setForm({ ...form, phone: cleanPhoneInput(e.target.value) })} className={inputCls} />
                   </div>
 
                   <div>
