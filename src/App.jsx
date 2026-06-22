@@ -28,6 +28,7 @@ import PostJob from './pages/PostJob';
 import CMSPages from './pages/CMSPages';
 import HeaderCMS from './pages/HeaderCMS';
 import PublicPage from './pages/PublicPage';
+import PublicBlogs from './pages/PublicBlogs';
 import Payments from './pages/Payments';
 import AddPayment from './pages/AddPayment';
 import UsersRoles from './pages/UsersRoles';
@@ -35,6 +36,19 @@ import Roles from './pages/Roles';
 import AddRole from './pages/AddRole';
 import Users from './pages/Users';
 import AddUser from './pages/AddUser';
+import Settings from './pages/Settings';
+import Reports from './pages/Reports';
+import JobReports from './pages/JobReports';
+import ApplicationReports from './pages/ApplicationReports';
+import CandidateReports from './pages/CandidateReports';
+import EmployerReports from './pages/EmployerReports';
+import FinanceReports from './pages/FinanceReports';
+import Blog from './pages/Blog';
+import BlogCategory from './pages/BlogCategory';
+import Transactions from './pages/Transactions';
+import ForgotPassword from './pages/ForgotPassword';
+
+
 
 // Protected Route Guard
 const ProtectedRoute = () => {
@@ -134,6 +148,7 @@ const AppLayout = () => {
               <Route path="payments" element={<Payments />} />
               <Route path="payments/add" element={<AddPayment />} />
               <Route path="payments/edit/:id" element={<AddPayment />} />
+              <Route path="payments/transactions" element={<Transactions />} />
               <Route path="cms-pages" element={<CMSPages />} />
               <Route path="header-cms" element={<HeaderCMS />} />
               <Route path="users-roles" element={<UsersRoles />} />
@@ -143,6 +158,17 @@ const AppLayout = () => {
               <Route path="users-roles/users" element={<Users />} />
               <Route path="users-roles/users/add" element={<AddUser />} />
               <Route path="users-roles/users/edit/:id" element={<AddUser />} />
+              <Route path="settings" element={<Settings />} />
+              <Route path="reports" element={<Reports />} />
+              <Route path="reports/jobs" element={<JobReports />} />
+              <Route path="reports/applications" element={<ApplicationReports />} />
+              <Route path="reports/candidates" element={<CandidateReports />} />
+              <Route path="reports/employers" element={<EmployerReports />} />
+              <Route path="reports/finance" element={<FinanceReports />} />
+              <Route path="blog" element={<Blog />} />
+              <Route path="blog-categories" element={<BlogCategory />} />
+
+
               <Route path="*" element={<Navigate to="/admin" replace />} />
             </Routes>
           </main>
@@ -160,11 +186,15 @@ function App() {
           {/* Public Authentication Endpoints */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
           {/* Secure Administrative Paths */}
           <Route element={<ProtectedRoute />}>
             <Route path="/admin/*" element={<AppLayout />} />
           </Route>
+
+          <Route path="/blogs" element={<PublicBlogs />} />
+          <Route path="/blogs/:slug" element={<PublicBlogs />} />
 
           <Route path="/dashboard/*" element={<AdminLegacyRedirect />} />
           <Route path="/countries/*" element={<AdminLegacyRedirect />} />
@@ -183,9 +213,14 @@ function App() {
           <Route path="/jobseekers/*" element={<AdminLegacyRedirect />} />
           <Route path="/jobs/*" element={<AdminLegacyRedirect />} />
           <Route path="/payments/*" element={<AdminLegacyRedirect />} />
+          <Route path="/payments/transactions/*" element={<AdminLegacyRedirect />} />
           <Route path="/cms-pages/*" element={<AdminLegacyRedirect />} />
           <Route path="/header-cms/*" element={<AdminLegacyRedirect />} />
           <Route path="/users-roles/*" element={<AdminLegacyRedirect />} />
+          <Route path="/settings/*" element={<AdminLegacyRedirect />} />
+          <Route path="/reports/*" element={<AdminLegacyRedirect />} />
+          <Route path="/blog/*" element={<AdminLegacyRedirect />} />
+          <Route path="/blog-categories/*" element={<AdminLegacyRedirect />} />
 
           {/* Public website fallback */}
           <Route path="*" element={<PublicPage />} />

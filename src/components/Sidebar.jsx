@@ -167,16 +167,16 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
 
           {!isCollapsed && <div className={`${sectionClass} ${palette.title}`}>Finance</div>}
           {can('finance.payments.view') && <NavLink to={adminPath('/payments')} icon={CreditCard} label="Payments" active={currentPath.startsWith('/payments')} />}
-          {can('finance.transactions.view') && <PlaceholderLink icon={ArrowRightLeft} label="Transactions" />}
+          {can('finance.transactions.view') && <NavLink to={adminPath('/payments/transactions')} icon={ArrowRightLeft} label="Transactions" active={currentPath.startsWith('/payments/transactions')} />}
 
           {!isCollapsed && <div className={`${sectionClass} ${palette.title}`}>Content</div>}
           {can('content.cms') && <NavLink to={adminPath('/cms-pages')} icon={CalendarDays} label="CMS Pages" active={isActive('/cms-pages')} />}
           {can('content.cms') && <NavLink to={adminPath('/header-cms')} icon={CalendarDays} label="Header CMS" active={isActive('/header-cms')} />}
-          {can('content.blog') && <PlaceholderLink icon={Rss} label="Blog" />}
+          {can('content.blog') && <NavLink to={adminPath('/blog')} icon={Rss} label="Blog" active={currentPath.startsWith('/blog') || currentPath.startsWith('/blog-categories')} />}
 
           {!isCollapsed && <div className={`${sectionClass} ${palette.title}`}>System</div>}
-          {can('system.reports') && <PlaceholderLink icon={BarChart3} label="Reports" />}
-          {can('system.settings') && <PlaceholderLink icon={Settings} label="Settings" />}
+          {can('system.reports') && <NavLink to={adminPath('/reports')} icon={BarChart3} label="Reports" active={currentPath.startsWith('/reports')} />}
+          {can('system.settings') && <NavLink to={adminPath('/settings')} icon={Settings} label="Settings" active={isActive('/settings')} />}
           {(can('system.users') || can('system.roles')) && (
             <NavLink to={adminPath('/users-roles')} icon={UserCog} label="Users & Roles" active={currentPath.startsWith('/users-roles')} />
           )}
