@@ -44,7 +44,7 @@ export const Login = () => {
         email: 'admin@jobswaale.com',
         password: 'AdminPassword123'
       });
-      setSuccess('Initial admin (admin@jobswaale.com / AdminPassword123) seeded successfully! Log in to proceed.');
+      setSuccess('Initial super admin (admin@jobswaale.com / AdminPassword123) seeded successfully! Log in to proceed.');
       setEmail('admin@jobswaale.com');
       setPassword('AdminPassword123');
     } catch (err) {
@@ -186,7 +186,7 @@ export const Login = () => {
                 <input type="checkbox" defaultChecked className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
                 <span>Keep me signed in</span>
               </label>
-              <Link to="/forgot-password" className="underline hover:text-slate-700">Forgot Password?</Link>
+              <Link to="/forgot-password-SuperAdmin" className="underline hover:text-slate-700">Forgot Password?</Link>
             </div>
 
             {/* Submit Button */}
@@ -208,10 +208,10 @@ export const Login = () => {
               onClick={handleSeedAdmin}
               className="text-xs font-bold text-slate-500 hover:text-slate-700 border border-slate-200 hover:bg-slate-50 px-3 py-1.5 rounded-lg transition-colors"
             >
-              Seed Initial Admin Account
+              Seed Initial Super Admin Account
             </button>
             <p className="text-[10px] text-slate-400 font-semibold">
-              Creates initial admin: admin@jobswaale.com / AdminPassword123
+              Creates initial super admin: admin@jobswaale.com / AdminPassword123
             </p>
           </div>
 

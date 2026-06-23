@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider, isSuperAdminUser, useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 
@@ -27,7 +27,6 @@ import AddJobseeker from './pages/AddJobseeker';
 import Jobs from './pages/Jobs';
 import PostJob from './pages/PostJob';
 import CMSPages from './pages/CMSPages';
-import HeaderCMS from './pages/HeaderCMS';
 import PublicPage from './pages/PublicPage';
 import PublicBlogs from './pages/PublicBlogs';
 import Payments from './pages/Payments';
@@ -67,7 +66,7 @@ const ProtectedRoute = () => {
     return <Navigate to="/login" replace />;
   }
 
-  const canAccessAdmin = user.role === 'Admin' || user.accountType === 'admin';
+  const canAccessAdmin = isSuperAdminUser(user);
   if (!canAccessAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-slate-50 text-center">
@@ -157,7 +156,6 @@ const AppLayout = () => {
               <Route path="payments/edit/:id" element={<AddPayment />} />
               <Route path="payments/transactions" element={<Transactions />} />
               <Route path="cms-pages" element={<CMSPages />} />
-              <Route path="header-cms" element={<HeaderCMS />} />
               <Route path="users-roles" element={<UsersRoles />} />
               <Route path="users-roles/roles" element={<Roles />} />
               <Route path="users-roles/roles/add" element={<AddRole />} />
@@ -191,9 +189,9 @@ function App() {
       <Router>
         <Routes>
           {/* Public Authentication Endpoints */}
-          <Route path="/login" element={<Login />} />
+          <Route path="/login-SuperAdmin" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/forgot-password-SuperAdmin" element={<ForgotPassword />} />
 
           {/* Secure Administrative Paths */}
           <Route element={<ProtectedRoute />}>
@@ -226,7 +224,6 @@ function App() {
           <Route path="/payments/*" element={<AdminLegacyRedirect />} />
           <Route path="/payments/transactions/*" element={<AdminLegacyRedirect />} />
           <Route path="/cms-pages/*" element={<AdminLegacyRedirect />} />
-          <Route path="/header-cms/*" element={<AdminLegacyRedirect />} />
           <Route path="/users-roles/*" element={<AdminLegacyRedirect />} />
           <Route path="/settings/*" element={<AdminLegacyRedirect />} />
           <Route path="/reports/*" element={<AdminLegacyRedirect />} />

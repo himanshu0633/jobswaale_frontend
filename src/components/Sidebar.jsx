@@ -206,7 +206,6 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
 
           {!isCollapsed && <div className={`${sectionClass} ${palette.title}`}>Content</div>}
           {can('content.cms') && <NavLink to={adminPath('/cms-pages')} icon={CalendarDays} label="CMS Pages" active={isActive('/cms-pages')} />}
-          {can('content.cms') && <NavLink to={adminPath('/header-cms')} icon={CalendarDays} label="Header CMS" active={isActive('/header-cms')} />}
           {can('content.blog') && <NavLink to={adminPath('/blog')} icon={Rss} label="Blog" active={currentPath.startsWith('/blog') || currentPath.startsWith('/blog-categories')} />}
 
           {!isCollapsed && <div className={`${sectionClass} ${palette.title}`}>System</div>}
