@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setError(null);
     try {
-      const response = await axios.post(`${API_URL}/login`, { email, password });
+      const response = await axios.post(`${API_URL}/superadmin-login`, { email, password });
       const { token: userToken, ...userData } = response.data;
 
       if (!isSuperAdminUser(userData)) {

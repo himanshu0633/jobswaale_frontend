@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthProvider, isSuperAdminUser, useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 
 // Pages
-import Login from './pages/superadmin/auth/Login';
-import Register from './pages/auth/Register';
+import PublicLogin from './pages/auth/Login';
+import SuperAdminLogin from './pages/superadmin/auth/Login';
+import JobSeekerRegister from './pages/auth/Register';
+import EmployerRegister from './pages/auth/EmployerRegister';
 import ForgotPassword from './pages/superadmin/auth/ForgotPassword';
 import PublicPage from './pages/public/PublicPage';
 import PublicBlogs from './pages/public/PublicBlogs';
@@ -63,7 +65,7 @@ const ProtectedRoute = () => {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/superadmin-login" replace />;
   }
 
   const canAccessAdmin = isSuperAdminUser(user);
@@ -74,7 +76,7 @@ const ProtectedRoute = () => {
         <p className="text-slate-500 mb-4 max-w-sm">
           Your account role ({user.roleName || user.role}) does not have permissions to view administrative records.
         </p>
-        <Navigate to="/login" replace />
+        <Navigate to="/superadmin-login" replace />
       </div>
     );
   }
@@ -189,8 +191,15 @@ function App() {
       <Router>
         <Routes>
           {/* Public Authentication Endpoints */}
-          <Route path="/login-SuperAdmin" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<PublicLogin />} />
+          <Route path="/superadmin-login" element={<SuperAdminLogin />} />
+          <Route path="/login-SuperAdmin" element={<Navigate to="/superadmin-login" replace />} />
+          <Route path="/admin-login" element={<Navigate to="/superadmin-login" replace />} />
+          <Route path="/jobseeker-register" element={<JobSeekerRegister />} />
+          <Route path="/employer-register" element={<EmployerRegister />} />
+          <Route path="/register" element={<Navigate to="/jobseeker-register" replace />} />
+          <Route path="/JobSeekerRegister" element={<Navigate to="/jobseeker-register" replace />} />
+          <Route path="/EmployerRegister" element={<Navigate to="/employer-register" replace />} />
           <Route path="/forgot-password-SuperAdmin" element={<ForgotPassword />} />
 
           {/* Secure Administrative Paths */}

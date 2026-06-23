@@ -3,53 +3,80 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import {
   Briefcase,
+  Building2,
   CheckCircle2,
   Eye,
   EyeOff,
   FileText,
-  GraduationCap,
+  Gauge,
   Headphones,
   HelpCircle,
   Info,
+  Landmark,
   Lock,
   Mail,
   Phone,
-  Send,
+  Rocket,
   ShieldAlert,
   ShieldCheck,
-  Trophy,
   User,
-  UserPlus
+  Users
 } from 'lucide-react';
 import { BASE_API_URL } from '../../context/AuthContext';
 import logoAsset from '../../assets/logo.png';
 
 const benefits = [
   {
-    icon: User,
-    iconClass: 'bg-sky-100 text-sky-600',
-    title: 'Create your profile',
-    text: 'and let verified recruiters find you easily.'
-  },
-  {
     icon: Briefcase,
+    iconClass: 'bg-sky-100 text-sky-600',
+    title: 'Post jobs & find talent',
+    text: 'Reach thousands of active job seekers instantly.'
+  },
+  {
+    icon: Users,
     iconClass: 'bg-orange-100 text-orange-600',
-    title: 'Get relevant opportunities',
-    text: 'delivered directly into your primary inbox.'
+    title: 'Access verified candidates',
+    text: 'Browse pre-screened, quality applicant profiles.'
   },
   {
-    icon: Send,
+    icon: Phone,
     iconClass: 'bg-sky-100 text-blue-600',
-    title: 'Apply with one click',
-    text: 'and systematically manage job applications.'
+    title: 'Direct contact with applicants',
+    text: 'Call or message candidates without intermediaries.'
   },
   {
-    icon: Trophy,
+    icon: Gauge,
     iconClass: 'bg-orange-100 text-orange-500',
-    title: 'Find the right match',
-    text: 'and systematically scale your career paths.'
+    title: 'Smart hiring dashboard',
+    text: 'Track applications, manage jobs & analytics.'
   }
 ];
+
+const companyTypes = [
+  {
+    value: 'startup',
+    icon: Rocket,
+    title: 'Startup',
+    text: 'Building from the ground up',
+    iconClass: 'bg-sky-100 text-blue-600'
+  },
+  {
+    value: 'enterprise',
+    icon: Building2,
+    title: 'Enterprise',
+    text: 'Established organization',
+    iconClass: 'bg-orange-100 text-orange-500'
+  },
+  {
+    value: 'recruitment-agency',
+    icon: Users,
+    title: 'Recruitment Agency',
+    text: 'Connecting talent with companies',
+    iconClass: 'bg-sky-100 text-sky-600'
+  }
+];
+
+const companySizes = ['1-10 employees', '11-50 employees', '51-200 employees', '201-500 employees', '501-1000 employees', '1000+ employees'];
 
 const footerLinks = [
   { label: 'About Us', icon: Info, to: '/about' },
@@ -75,7 +102,7 @@ const getPasswordStrength = (password) => {
 
 const TextInput = ({ icon: Icon, label, required, helper, right, ...props }) => (
   <div>
-    <label className="block text-sm font-bold text-slate-800 mb-2">
+    <label className="mb-2 block text-sm font-bold text-slate-800">
       {label} {required && <span className="text-rose-500">*</span>}
     </label>
     <div className="relative flex items-center rounded-xl border border-slate-300 bg-white transition focus-within:border-[#0058d6] focus-within:ring-2 focus-within:ring-blue-100">
@@ -90,28 +117,32 @@ const TextInput = ({ icon: Icon, label, required, helper, right, ...props }) => 
   </div>
 );
 
-const WorkStatusCard = ({ value, selected, onChange, icon: Icon, title, text, iconClass }) => (
-  <button
-    type="button"
-    onClick={() => onChange(value)}
-    className={`relative flex min-h-[110px] items-center gap-4 rounded-xl border p-5 text-left transition ${
-      selected ? 'border-[#0058d6] bg-blue-50' : 'border-slate-300 bg-white hover:border-slate-400'
-    }`}
-  >
-    <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${iconClass}`}>
-      <Icon className="h-5 w-5" />
-    </span>
-    <span className="pr-8">
-      <span className="block text-base font-extrabold text-slate-900">{title}</span>
-      <span className="mt-1 block text-sm font-medium leading-6 text-slate-500">{text}</span>
-    </span>
-    <span className={`absolute right-5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full border-2 ${
-      selected ? 'border-[#0058d6]' : 'border-slate-300'
-    }`}>
-      {selected && <span className="absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#0058d6]" />}
-    </span>
-  </button>
-);
+const CompanyTypeCard = ({ option, selected, onChange }) => {
+  const Icon = option.icon;
+
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(option.value)}
+      className={`relative flex min-h-[118px] items-center gap-4 rounded-xl border p-5 text-left transition ${
+        selected ? 'border-[#0058d6] bg-blue-50' : 'border-slate-300 bg-white hover:border-slate-400'
+      }`}
+    >
+      <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${option.iconClass}`}>
+        <Icon className="h-5 w-5" />
+      </span>
+      <span className="pr-8">
+        <span className="block text-base font-extrabold text-slate-900">{option.title}</span>
+        <span className="mt-1 block text-sm font-medium leading-6 text-slate-500">{option.text}</span>
+      </span>
+      <span className={`absolute right-5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full border-2 ${
+        selected ? 'border-[#0058d6]' : 'border-slate-300'
+      }`}>
+        {selected && <span className="absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#0058d6]" />}
+      </span>
+    </button>
+  );
+};
 
 const RegisterIllustration = () => (
   <div className="relative mx-auto mb-8 flex h-56 max-w-sm items-end justify-center overflow-hidden rounded-3xl bg-gradient-to-b from-orange-50 to-white">
@@ -144,13 +175,16 @@ const RegisterIllustration = () => (
   </div>
 );
 
-export const Register = () => {
+export const EmployerRegister = () => {
   const [form, setForm] = useState({
     fullName: '',
     email: '',
     password: '',
-    mobile: '',
-    workStatus: 'experienced',
+    phone: '',
+    companyName: '',
+    designation: '',
+    companyType: 'startup',
+    companySize: '',
     updatesConsent: true,
     termsAccepted: true
   });
@@ -196,6 +230,11 @@ export const Register = () => {
       return;
     }
 
+    if (!form.companySize) {
+      setError('Please select company size.');
+      return;
+    }
+
     if (!form.termsAccepted) {
       setError('Please accept the Terms of Service and Privacy Policy.');
       return;
@@ -204,22 +243,28 @@ export const Register = () => {
     setLoading(true);
     try {
       await axios.post(`${BASE_API_URL}/auth/register`, {
-        role: 'Jobseeker',
+        role: 'Employer',
         fullName: form.fullName,
-        phone: form.mobile,
-        workStatus: form.workStatus,
-        updatesConsent: form.updatesConsent,
+        phone: form.phone,
         email: form.email,
-        password: form.password
+        password: form.password,
+        companyName: form.companyName,
+        designation: form.designation,
+        companyType: form.companyType,
+        companySize: form.companySize,
+        updatesConsent: form.updatesConsent
       });
 
-      setSuccess('Account created successfully. You can now sign in when job seeker login is enabled.');
+      setSuccess('Employer account created successfully. You can now sign in as Employer.');
       setForm({
         fullName: '',
         email: '',
         password: '',
-        mobile: '',
-        workStatus: 'experienced',
+        phone: '',
+        companyName: '',
+        designation: '',
+        companyType: 'startup',
+        companySize: '',
         updatesConsent: true,
         termsAccepted: true
       });
@@ -237,18 +282,18 @@ export const Register = () => {
           <img src={logoAsset} alt="JobsWaale" className="h-14 w-auto object-contain" />
         </Link>
         <div className="hidden text-base font-bold text-slate-800 sm:block">
-          Already Registered? <Link to="/login?role=jobseeker" className="text-orange-600 hover:underline">Login here</Link>
+          Already Registered? <Link to="/login?role=employer" className="text-orange-600 hover:underline">Employer Login</Link>
         </div>
       </header>
 
       <main className="mx-auto grid w-full max-w-7xl gap-8 lg:grid-cols-[0.9fr_1.8fr]">
-        <aside className="rounded-3xl border border-slate-100 bg-white p-8 shadow-[0_18px_45px_rgba(15,23,42,0.06)] lg:min-h-[760px]">
+        <aside className="rounded-3xl border border-slate-100 bg-white p-8 shadow-[0_18px_45px_rgba(15,23,42,0.06)] lg:min-h-[980px]">
           <RegisterIllustration />
 
           <div className="mb-8">
-            <h2 className="text-2xl font-extrabold text-slate-950">Why register with</h2>
+            <h2 className="text-2xl font-extrabold text-slate-950">Why register as an</h2>
             <h3 className="mt-2 text-3xl font-extrabold">
-              <span className="text-[#0058d6]">Jobs</span><span className="text-[#ff6b00]">Waale</span>?
+              <span className="text-[#0058d6]">Employer</span> <span className="text-[#ff6b00]">?</span>
             </h3>
           </div>
 
@@ -270,10 +315,10 @@ export const Register = () => {
         <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.06)] sm:p-10">
           <div className="mb-9">
             <h1 className="text-3xl font-extrabold tracking-tight text-slate-950">
-              Create your <span className="text-[#0058d6]">Jobs</span><span className="text-[#ff6b00]">Waale</span> account
+              Register your <span className="text-[#0058d6]">Company</span> <span className="text-[#ff6b00]">Today</span>
             </h1>
-            <p className="mt-2 text-base font-medium text-slate-400">
-              Join thousands of active job seekers and discover real career matches today.
+            <p className="mt-2 text-base font-medium leading-7 text-slate-400">
+              Join hundreds of employers hiring top talent on JobsWaale. Post jobs, connect with candidates, and grow your team.
             </p>
           </div>
 
@@ -311,13 +356,13 @@ export const Register = () => {
 
             <TextInput
               icon={Mail}
-              label="Email Address"
+              label="Official Email Address"
               required
               type="email"
               value={form.email}
               onChange={(event) => setField('email', event.target.value)}
-              placeholder="name@example.com"
-              helper="We'll send relevant jobs and updates to this email."
+              placeholder="you@company.com"
+              helper="We'll send candidate applications and updates to this email."
             />
 
             <div>
@@ -355,37 +400,62 @@ export const Register = () => {
 
             <TextInput
               icon={Phone}
-              label="Mobile Number"
+              label="Phone Number"
               required
               type="tel"
-              value={form.mobile}
-              onChange={(event) => setField('mobile', event.target.value.replace(/[^0-9+\s-]/g, ''))}
+              value={form.phone}
+              onChange={(event) => setField('phone', event.target.value.replace(/[^0-9+\s-]/g, ''))}
               placeholder="e.g. +91 99999 88888"
-              helper="Recruiters may contact you on this number."
+              helper="Candidates and our team may contact you on this number."
+            />
+
+            <TextInput
+              icon={Building2}
+              label="Company / Organization Name"
+              required
+              type="text"
+              value={form.companyName}
+              onChange={(event) => setField('companyName', event.target.value)}
+              placeholder="e.g. ABC Pvt. Ltd."
+            />
+
+            <TextInput
+              icon={Landmark}
+              label="Designation / Job Title"
+              required
+              type="text"
+              value={form.designation}
+              onChange={(event) => setField('designation', event.target.value)}
+              placeholder="e.g. HR Manager, Founder, Recruiter"
             />
 
             <div>
-              <label className="mb-3 block text-sm font-bold text-slate-800">Work Status<span className="text-rose-500">*</span></label>
-              <div className="grid gap-4 md:grid-cols-2">
-                <WorkStatusCard
-                  value="experienced"
-                  selected={form.workStatus === 'experienced'}
-                  onChange={(value) => setField('workStatus', value)}
-                  icon={Briefcase}
-                  title="I'm experienced"
-                  text="I have work experience (excluding internships)"
-                  iconClass="bg-sky-100 text-blue-600"
-                />
-                <WorkStatusCard
-                  value="fresher"
-                  selected={form.workStatus === 'fresher'}
-                  onChange={(value) => setField('workStatus', value)}
-                  icon={GraduationCap}
-                  title="I'm a fresher"
-                  text="I am a student / Haven't worked after graduation"
-                  iconClass="bg-orange-100 text-orange-500"
-                />
+              <label className="mb-3 block text-sm font-bold text-slate-800">Company Type <span className="text-rose-500">*</span></label>
+              <div className="grid gap-4 lg:grid-cols-3">
+                {companyTypes.map((option) => (
+                  <CompanyTypeCard
+                    key={option.value}
+                    option={option}
+                    selected={form.companyType === option.value}
+                    onChange={(value) => setField('companyType', value)}
+                  />
+                ))}
               </div>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-bold text-slate-800">Company Size <span className="text-rose-500">*</span></label>
+              <select
+                required
+                value={form.companySize}
+                onChange={(event) => setField('companySize', event.target.value)}
+                className="w-full rounded-xl border border-slate-300 bg-white px-5 py-4 text-sm font-bold text-slate-800 outline-none focus:border-[#0058d6] focus:ring-2 focus:ring-blue-100"
+              >
+                <option value="">Select number of employees</option>
+                {companySizes.map((size) => (
+                  <option key={size} value={size}>{size}</option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-3 pt-2">
@@ -419,8 +489,8 @@ export const Register = () => {
               disabled={loading || !settings.userRegistration}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0058bf] px-5 py-4 text-base font-extrabold text-white shadow-lg shadow-blue-600/10 transition hover:bg-[#004aa3] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <UserPlus className="h-5 w-5" />
-              {loading ? 'Creating Account...' : 'Create Account'}
+              <Building2 className="h-5 w-5" />
+              {loading ? 'Registering Employer...' : 'Register as Employer'}
             </button>
 
             <div className="relative flex items-center justify-center py-1">
@@ -460,4 +530,4 @@ export const Register = () => {
   );
 };
 
-export default Register;
+export default EmployerRegister;
