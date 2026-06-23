@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import axios from 'axios';
+import { useAuth, BASE_API_URL } from '../context/AuthContext';
 import { Building, ShieldAlert, User, Briefcase, Mail, Key } from 'lucide-react';
 
 export const Register = () => {
@@ -11,9 +12,25 @@ export const Register = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [settings, setSettings] = useState({ userRegistration: true, minPassLen: 6 });
 
   const { register } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const response = await axios.get(`${BASE_API_URL}/settings/public`);
+        setSettings({
+          userRegistration: response.data?.userRegistration !== false,
+          minPassLen: response.data?.minPassLen || 6
+        });
+      } catch (err) {
+        setSettings({ userRegistration: true, minPassLen: 6 });
+      }
+    };
+    loadSettings();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,8 +42,13 @@ export const Register = () => {
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+    if (!settings.userRegistration) {
+      setError('New registrations are currently disabled.');
+      return;
+    }
+
+    if (password.length < settings.minPassLen) {
+      setError(`Password must be at least ${settings.minPassLen} characters`);
       return;
     }
 
@@ -86,6 +108,13 @@ export const Register = () => {
               <div className="flex items-center gap-2.5 p-3 mb-5 text-sm font-medium border rounded-lg bg-rose-500/10 border-rose-500/20 text-rose-400">
                 <ShieldAlert className="w-5 h-5 shrink-0" />
                 <span>{error}</span>
+              </div>
+            )}
+
+            {!settings.userRegistration && (
+              <div className="flex items-center gap-2.5 p-3 mb-5 text-sm font-medium border rounded-lg bg-amber-500/10 border-amber-500/20 text-amber-300">
+                <ShieldAlert className="w-5 h-5 shrink-0" />
+                <span>New registrations are currently disabled by admin.</span>
               </div>
             )}
 
@@ -159,7 +188,7 @@ export const Register = () => {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="At least 6 characters"
+                    placeholder={`At least ${settings.minPassLen} characters`}
                     className="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
                   />
                 </div>
@@ -188,7 +217,7 @@ export const Register = () => {
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !settings.userRegistration}
                 className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-800 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-indigo-500 transition-colors mt-2"
               >
                 {loading ? 'Creating Account...' : 'Register'}

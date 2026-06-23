@@ -64,7 +64,7 @@ export const PlanMaster = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `${BASE_API_URL}/masters/plans?page=${currentPage}&limit=${entriesPerPage}&search=${search}&paginate=true`
+        `${BASE_API_URL}/masters/plans?category=Jobseeker&page=${currentPage}&limit=${entriesPerPage}&search=${search}&paginate=true`
       );
       setList(response.data.docs || []);
       setTotal(response.data.total || 0);

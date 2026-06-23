@@ -16,6 +16,7 @@ import JobType from './pages/JobType';
 import JobCategory from './pages/JobCategory';
 import FeatureMaster from './pages/FeatureMaster';
 import PlanMaster from './pages/PlanMaster';
+import { EmployerPlanForm, EmployerPlanListings } from './pages/EmployerPlans';
 import Qualification from './pages/Qualification';
 import City from './pages/City';
 import PlanMapping from './pages/PlanMapping';
@@ -130,12 +131,18 @@ const AppLayout = () => {
               <Route path="industry-types" element={<IndustryType />} />
               <Route path="job-types" element={<JobType />} />
               <Route path="job-categories" element={<JobCategory />} />
-              <Route path="features" element={<FeatureMaster />} />
-              <Route path="jobseeker-packages" element={<PlanMaster />} />
-              <Route path="plans" element={<Navigate to="/admin/jobseeker-packages" replace />} />
+              <Route path="jobseeker-features" element={<FeatureMaster />} />
+              <Route path="jobseeker-plans" element={<PlanMaster />} />
+              <Route path="features" element={<Navigate to="/admin/jobseeker-features" replace />} />
+              <Route path="jobseeker-packages" element={<Navigate to="/admin/jobseeker-plans" replace />} />
+              <Route path="plans" element={<Navigate to="/admin/jobseeker-plans" replace />} />
               <Route path="qualifications" element={<Qualification />} />
               <Route path="cities" element={<City />} />
-              <Route path="plan-mappings" element={<PlanMapping />} />
+              <Route path="jobseeker-plan-mappings" element={<PlanMapping />} />
+              <Route path="plan-mappings" element={<Navigate to="/admin/jobseeker-plan-mappings" replace />} />
+              <Route path="employer-plans" element={<EmployerPlanListings />} />
+              <Route path="employer-plans/add" element={<EmployerPlanForm />} />
+              <Route path="employer-plans/edit/:id" element={<EmployerPlanForm />} />
               <Route path="employers" element={<Employers />} />
               <Route path="employers/add" element={<AddEmployer />} />
               <Route path="employers/edit/:id" element={<AddEmployer />} />
@@ -203,12 +210,16 @@ function App() {
           <Route path="/industry-types/*" element={<AdminLegacyRedirect />} />
           <Route path="/job-types/*" element={<AdminLegacyRedirect />} />
           <Route path="/job-categories/*" element={<AdminLegacyRedirect />} />
+          <Route path="/jobseeker-features/*" element={<AdminLegacyRedirect />} />
+          <Route path="/jobseeker-plans/*" element={<AdminLegacyRedirect />} />
           <Route path="/features/*" element={<AdminLegacyRedirect />} />
           <Route path="/jobseeker-packages/*" element={<AdminLegacyRedirect />} />
           <Route path="/plans/*" element={<AdminLegacyRedirect />} />
           <Route path="/qualifications/*" element={<AdminLegacyRedirect />} />
           <Route path="/cities/*" element={<AdminLegacyRedirect />} />
+          <Route path="/jobseeker-plan-mappings/*" element={<AdminLegacyRedirect />} />
           <Route path="/plan-mappings/*" element={<AdminLegacyRedirect />} />
+          <Route path="/employer-plans/*" element={<AdminLegacyRedirect />} />
           <Route path="/employers/*" element={<AdminLegacyRedirect />} />
           <Route path="/jobseekers/*" element={<AdminLegacyRedirect />} />
           <Route path="/jobs/*" element={<AdminLegacyRedirect />} />

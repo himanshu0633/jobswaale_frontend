@@ -61,6 +61,7 @@ export const PublicPage = () => {
   const location = useLocation();
   const [header, setHeader] = useState({ logo: '', menus: [] });
   const [page, setPage] = useState(null);
+  const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -69,6 +70,13 @@ export const PublicPage = () => {
       setLoading(true);
       setError('');
       const slug = location.pathname === '/' ? 'home' : location.pathname.replace(/^\/+|\/+$/g, '');
+      try {
+        const settingsRes = await axios.get(`${BASE_API_URL}/settings/public`);
+        setSettings(settingsRes.data || null);
+      } catch (err) {
+        setSettings(null);
+      }
+
       try {
         const headerRes = await axios.get(`${BASE_API_URL}/cms/public/header`);
         setHeader(headerRes.data || { logo: '', menus: [] });
@@ -105,6 +113,11 @@ export const PublicPage = () => {
 
       {loading ? (
         <main className="min-h-[60vh] flex items-center justify-center text-sm font-semibold text-slate-500">Loading...</main>
+      ) : settings?.maintenanceMode ? (
+        <main className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
+          <h1 className="text-3xl font-bold text-slate-900">{settings.siteName || 'JobsWaale'} is under maintenance</h1>
+          <p className="mt-3 max-w-md text-sm text-slate-500">We are making updates right now. Please check back soon.</p>
+        </main>
       ) : error ? (
         <main className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
           <h1 className="text-3xl font-bold text-slate-900">{error}</h1>

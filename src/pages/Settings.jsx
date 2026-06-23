@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import { 
   Settings as SettingsIcon, 
   BellRing, 
@@ -12,6 +13,7 @@ import {
   CheckCircle2, 
   AlertCircle 
 } from 'lucide-react';
+import { BASE_API_URL } from '../context/AuthContext';
 
 const defaultSettings = {
   // General
@@ -48,19 +50,34 @@ const defaultSettings = {
   mailPort: 587,
   mailEncryption: 'tls',
   mailUsername: 'noreply@jobswaale.com',
-  mailPassword: 'Password123!',
+  mailPassword: '',
   mailFromName: 'JobsWaale',
   mailFromEmail: 'noreply@jobswaale.com'
 };
 
 export const Settings = () => {
   const [activeTab, setActiveTab] = useState('general');
-  const [form, setForm] = useState(() => {
-    const saved = localStorage.getItem('jobswaale_settings');
-    return saved ? JSON.parse(saved) : defaultSettings;
-  });
+  const [form, setForm] = useState(defaultSettings);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [testingEmail, setTestingEmail] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.get(`${BASE_API_URL}/settings`);
+        setForm({ ...defaultSettings, ...(response.data || {}) });
+      } catch (err) {
+        showMessage('error', err.response?.data?.message || 'Failed to load settings.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSettings();
+  }, []);
 
   const showMessage = (type, text) => {
     setMessage({ type, text });
@@ -71,22 +88,30 @@ export const Settings = () => {
     setForm(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleSave = (tabName) => {
+  const handleSave = async (tabName) => {
+    setSaving(true);
     try {
-      localStorage.setItem('jobswaale_settings', JSON.stringify(form));
+      const response = await axios.put(`${BASE_API_URL}/settings`, form);
+      setForm({ ...defaultSettings, ...(response.data.settings || {}) });
       showMessage('success', `${tabName.charAt(0).toUpperCase() + tabName.slice(1)} settings saved successfully.`);
     } catch (err) {
       console.error(err);
-      showMessage('error', 'Failed to save settings. Please try again.');
+      showMessage('error', err.response?.data?.message || 'Failed to save settings. Please try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleTestEmail = () => {
+  const handleTestEmail = async () => {
     setTestingEmail(true);
-    setTimeout(() => {
+    try {
+      const response = await axios.post(`${BASE_API_URL}/settings/test-email`);
+      showMessage('success', response.data.message || 'Test email sent successfully.');
+    } catch (err) {
+      showMessage('error', err.response?.data?.message || 'Failed to send test email.');
+    } finally {
       setTestingEmail(false);
-      showMessage('success', 'Test email sent successfully! Please check your SMTP inbox configuration.');
-    }, 1500);
+    }
   };
 
   const inputCls = "w-full px-3.5 py-2 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm disabled:bg-slate-50";
@@ -181,8 +206,11 @@ export const Settings = () => {
 
         {/* Tab Contents */}
         <div className="p-5">
+          {loading && (
+            <div className="py-12 text-center text-sm font-semibold text-slate-500">Loading settings...</div>
+          )}
           {/* Tab 1: General Settings */}
-          {activeTab === 'general' && (
+          {!loading && activeTab === 'general' && (
             <div className="space-y-6">
               <div className="space-y-4">
                 <h5 className="flex items-center gap-2 bg-slate-50 text-slate-700 text-sm font-semibold px-3 py-2 rounded-lg">
@@ -306,17 +334,18 @@ export const Settings = () => {
                 <button
                   type="button"
                   onClick={() => handleSave('general')}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer"
+                  disabled={saving}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-60"
                 >
                   <Save className="w-4 h-4" />
-                  Save General Settings
+                  {saving ? 'Saving...' : 'Save General Settings'}
                 </button>
               </div>
             </div>
           )}
 
           {/* Tab 2: Notification Settings */}
-          {activeTab === 'notification' && (
+          {!loading && activeTab === 'notification' && (
             <div className="space-y-6">
               <div className="space-y-4">
                 <h5 className="flex items-center gap-2 bg-slate-50 text-slate-700 text-sm font-semibold px-3 py-2 rounded-lg">
@@ -361,17 +390,18 @@ export const Settings = () => {
                 <button
                   type="button"
                   onClick={() => handleSave('notification')}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer"
+                  disabled={saving}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-60"
                 >
                   <Save className="w-4 h-4" />
-                  Save Notification Settings
+                  {saving ? 'Saving...' : 'Save Notification Settings'}
                 </button>
               </div>
             </div>
           )}
 
           {/* Tab 3: Security Settings */}
-          {activeTab === 'security' && (
+          {!loading && activeTab === 'security' && (
             <div className="space-y-6">
               <div className="space-y-4">
                 <h5 className="flex items-center gap-2 bg-slate-50 text-slate-700 text-sm font-semibold px-3 py-2 rounded-lg">
@@ -458,17 +488,18 @@ export const Settings = () => {
                 <button
                   type="button"
                   onClick={() => handleSave('security')}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer"
+                  disabled={saving}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-60"
                 >
                   <Save className="w-4 h-4" />
-                  Save Security Settings
+                  {saving ? 'Saving...' : 'Save Security Settings'}
                 </button>
               </div>
             </div>
           )}
 
           {/* Tab 4: Email Settings */}
-          {activeTab === 'email' && (
+          {!loading && activeTab === 'email' && (
             <div className="space-y-6">
               <div className="space-y-4">
                 <h5 className="flex items-center gap-2 bg-slate-50 text-slate-700 text-sm font-semibold px-3 py-2 rounded-lg">
@@ -576,10 +607,11 @@ export const Settings = () => {
                 <button
                   type="button"
                   onClick={() => handleSave('email')}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer"
+                  disabled={saving}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-60"
                 >
                   <Save className="w-4 h-4" />
-                  Save Email Configuration
+                  {saving ? 'Saving...' : 'Save Email Configuration'}
                 </button>
               </div>
             </div>

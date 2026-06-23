@@ -39,8 +39,16 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
     ? location.pathname.slice('/admin'.length) || '/'
     : location.pathname;
 
+  const isActive = (path) => currentPath === path;
+  const isGroupActive = (paths) => paths.some(path => currentPath.startsWith(path));
+  const jobseekerPlanPaths = ['/jobseeker-plans', '/jobseeker-features', '/jobseeker-plan-mappings'];
+  const legacyPlanPaths = ['/jobseeker-packages', '/plans', '/features', '/plan-mappings'];
+  const allJobseekerPlanPaths = [...jobseekerPlanPaths, ...legacyPlanPaths];
+  const employerPlanPaths = ['/employer-plans'];
+
   const [openMenus, setOpenMenus] = useState({
-    plans: currentPath.startsWith('/jobseeker-packages') || currentPath.startsWith('/plans') || currentPath.startsWith('/features') || currentPath.startsWith('/plan-mappings'),
+    plans: isGroupActive(allJobseekerPlanPaths),
+    employerPlans: isGroupActive(employerPlanPaths),
     locations: currentPath.startsWith('/countries') || currentPath.startsWith('/states') || currentPath.startsWith('/districts') || currentPath.startsWith('/cities')
   });
 
@@ -48,8 +56,6 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
     setOpenMenus(prev => ({ ...prev, [menu]: !prev[menu] }));
   };
 
-  const isActive = (path) => currentPath === path;
-  const isGroupActive = (paths) => paths.some(path => currentPath.startsWith(path));
   const can = (permission) => hasPermission(user, permission);
 
   const sectionClass = 'px-3 pt-5 mb-2 text-[11px] font-extrabold uppercase tracking-wide';
@@ -101,28 +107,57 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
           {can('masters.plans') && <div>
             {isCollapsed ? (
               <NavLink
-                to={adminPath('/jobseeker-packages')}
+                to={adminPath('/jobseeker-plans')}
                 icon={Gift}
-                label="Plans"
-                active={isGroupActive(['/jobseeker-packages', '/plans', '/features', '/plan-mappings'])}
+                label="Jobseeker Plans"
+                active={isGroupActive(allJobseekerPlanPaths)}
               />
             ) : (
               <>
                 <button
                   onClick={() => toggleMenu('plans')}
-                  className={buttonClass(isGroupActive(['/jobseeker-packages', '/plans', '/features', '/plan-mappings']))}
+                  className={buttonClass(isGroupActive(allJobseekerPlanPaths))}
                 >
                   <div className="flex items-center gap-3">
                     <Gift className="w-4.5 h-4.5 shrink-0" />
-                    <span>Plans</span>
+                    <span>Jobseeker Plans</span>
                   </div>
                   {openMenus.plans ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                 </button>
                 {openMenus.plans && (
                   <div className="pl-9 mt-1 space-y-1">
-                    <Link to={adminPath('/jobseeker-packages')} className={subLinkClass(isActive('/jobseeker-packages') || isActive('/plans'))}>Plan Master</Link>
-                    <Link to={adminPath('/features')} className={subLinkClass(isActive('/features'))}>Feature Master</Link>
-                    <Link to={adminPath('/plan-mappings')} className={subLinkClass(isActive('/plan-mappings'))}>Plan Mapping</Link>
+                    <Link to={adminPath('/jobseeker-plans')} className={subLinkClass(isActive('/jobseeker-plans') || isActive('/jobseeker-packages') || isActive('/plans'))}>Plan Master</Link>
+                    <Link to={adminPath('/jobseeker-features')} className={subLinkClass(isActive('/jobseeker-features') || isActive('/features'))}>Feature Master</Link>
+                    <Link to={adminPath('/jobseeker-plan-mappings')} className={subLinkClass(isActive('/jobseeker-plan-mappings') || isActive('/plan-mappings'))}>Plan Mapping</Link>
+                  </div>
+                )}
+              </>
+            )}
+          </div>}
+          {can('masters.plans') && <div>
+            {isCollapsed ? (
+              <NavLink
+                to={adminPath('/employer-plans')}
+                icon={Briefcase}
+                label="Employer Plans"
+                active={isGroupActive(employerPlanPaths)}
+              />
+            ) : (
+              <>
+                <button
+                  onClick={() => toggleMenu('employerPlans')}
+                  className={buttonClass(isGroupActive(employerPlanPaths))}
+                >
+                  <div className="flex items-center gap-3">
+                    <Briefcase className="w-4.5 h-4.5 shrink-0" />
+                    <span>Employer Plans</span>
+                  </div>
+                  {openMenus.employerPlans ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                </button>
+                {openMenus.employerPlans && (
+                  <div className="pl-9 mt-1 space-y-1">
+                    <Link to={adminPath('/employer-plans')} className={subLinkClass(isActive('/employer-plans'))}>Plan Listings</Link>
+                    <Link to={adminPath('/employer-plans/add')} className={subLinkClass(isActive('/employer-plans/add'))}>Add Plan</Link>
                   </div>
                 )}
               </>
