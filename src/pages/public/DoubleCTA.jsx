@@ -4,50 +4,46 @@ import { User, Briefcase, ArrowRight } from 'lucide-react';
 
 export const DoubleCTA = () => {
   return (
-    <section className="py-20 bg-white">
+    <section className="py-[60px] bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="border border-slate-200 rounded-3xl overflow-hidden shadow-sm grid md:grid-cols-2">
-          
+        <div className="flex flex-col md:flex-row items-center justify-between gap-10 rounded-[28px] p-9 sm:p-12 border border-black/[0.04] shadow-[0_10px_40px_rgba(15,23,42,0.05)] bg-gradient-to-r from-[#dce6ff] via-white to-[#ffe5dc]">
+
           {/* Job Seeker CTA */}
-          <div className="bg-blue-50/40 p-8 sm:p-10 flex flex-col sm:flex-row gap-6 items-center sm:items-start text-center sm:text-left">
-            <div className="relative flex items-center justify-center shrink-0">
-              <div className="w-24 h-24 rounded-full bg-blue-100/80 flex items-center justify-center ring-8 ring-blue-50/30">
-                <div className="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20">
-                  <User className="h-8 w-8 text-white" />
-                </div>
-              </div>
+          <div className="flex-1 w-full flex flex-col sm:flex-row items-center text-center sm:text-left gap-7">
+            <div className="w-[110px] h-[90px] sm:w-[110px] sm:h-[110px] min-w-[90px] sm:min-w-[110px] rounded-full flex items-center justify-center shrink-0 bg-[radial-gradient(circle,#1a66ff_0%,#0047C7_100%)] shadow-[0_15px_35px_rgba(0,71,199,0.25)]">
+              <User className="h-9 w-9 sm:h-12 sm:w-12 text-white" />
             </div>
-            <div className="space-y-4">
-              <h3 className="text-2xl font-extrabold text-slate-900">For Job Seekers</h3>
-              <p className="text-slate-600 text-sm leading-relaxed max-w-sm">
+            <div>
+              <h3 className="text-xl sm:text-[26px] font-bold text-slate-900 mb-1">For Job Seekers</h3>
+              <p className="text-base text-slate-500 leading-relaxed max-w-[340px] mb-6">
                 Explore the best opportunities and take the next step in your career.
               </p>
-              <Link 
-                to="/jobseeker-register" 
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-[#0d6efd] hover:bg-blue-700 text-white text-xs font-bold transition shadow-md shadow-blue-600/10 cursor-pointer"
+              <Link
+                to="/jobseeker-register"
+                className="inline-flex items-center justify-center gap-3 w-full sm:w-auto sm:min-w-[260px] h-14 rounded-[10px] bg-[#0047C7] hover:bg-[#0039A3] text-white text-base font-semibold transition-all hover:-translate-y-0.5"
               >
                 Explore Job Seeker Plans <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
           </div>
 
+          {/* Divider */}
+          <div className="hidden md:block w-px h-[180px] bg-slate-900/[0.08] shrink-0" />
+          <div className="block md:hidden w-full h-px bg-slate-900/[0.08]" />
+
           {/* Employer CTA */}
-          <div className="bg-orange-50/40 p-8 sm:p-10 flex flex-col sm:flex-row gap-6 items-center sm:items-start text-center sm:text-left border-t md:border-t-0 md:border-l border-slate-200">
-            <div className="relative flex items-center justify-center shrink-0">
-              <div className="w-24 h-24 rounded-full bg-orange-100/80 flex items-center justify-center ring-8 ring-orange-50/30">
-                <div className="w-16 h-16 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-lg shadow-orange-500/20">
-                  <Briefcase className="h-8 w-8 text-white" />
-                </div>
-              </div>
+          <div className="flex-1 w-full flex flex-col sm:flex-row items-center text-center sm:text-left gap-7">
+            <div className="w-[110px] h-[90px] sm:w-[110px] sm:h-[110px] min-w-[90px] sm:min-w-[110px] rounded-full flex items-center justify-center shrink-0 bg-[radial-gradient(circle,#ff954d_0%,#FF6B00_100%)] shadow-[0_15px_35px_rgba(255,107,0,0.25)]">
+              <Briefcase className="h-9 w-9 sm:h-12 sm:w-12 text-white" />
             </div>
-            <div className="space-y-4">
-              <h3 className="text-2xl font-extrabold text-slate-900">For Employers</h3>
-              <p className="text-slate-600 text-sm leading-relaxed max-w-sm">
+            <div>
+              <h3 className="text-xl sm:text-[26px] font-bold text-slate-900 mb-1">For Employers</h3>
+              <p className="text-base text-slate-500 leading-relaxed max-w-[340px] mb-6">
                 Hire the best talent faster with our smart solutions.
               </p>
-              <Link 
-                to="/employer-register" 
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-[#fd7e14] hover:bg-orange-600 text-white text-xs font-bold transition shadow-md shadow-orange-600/10 cursor-pointer"
+              <Link
+                to="/employer-register"
+                className="inline-flex items-center justify-center gap-3 w-full sm:w-auto sm:min-w-[260px] h-14 rounded-[10px] bg-[#FF6B00] hover:bg-[#E85F00] text-white text-base font-semibold transition-all hover:-translate-y-0.5"
               >
                 Explore Employer Plans <ArrowRight className="h-4 w-4" />
               </Link>

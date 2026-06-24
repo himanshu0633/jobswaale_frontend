@@ -27,80 +27,95 @@ const GithubIcon = ({ className }) => (
 
 export const PublicFooter = () => {
   return (
-    <footer className="bg-slate-900 text-slate-400 border-t border-slate-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
+    <footer className="bg-[#001c3d] text-white/75">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-20 pb-8">
         <div className="grid gap-8 grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
           {/* Logo & Info */}
-          <div className="col-span-2 space-y-4">
-            <Link to="/" className="inline-block">
-              <img src={logoAsset} alt="JobsWaale" className="h-9 w-auto object-contain brightness-0 invert" />
-            </Link>
-            <p className="text-xs leading-relaxed max-w-sm">
-              We connect job seekers with the right opportunities and help organizations find exceptional talent.
-            </p>
-            <div className="flex gap-4 pt-2">
-              <a href="#" className="hover:text-white transition duration-150"><TwitterIcon className="h-4 w-4" /></a>
-              <a href="#" className="hover:text-white transition duration-150"><LinkedinIcon className="h-4 w-4" /></a>
-              <a href="#" className="hover:text-white transition duration-150"><GithubIcon className="h-4 w-4" /></a>
+          {/* Logo & Info */}
+        <div className="col-span-2 lg:col-span-1 space-y-4">
+          <Link to="/" className="inline-flex items-center mb-2">
+            <img
+              src={logoAsset}
+              alt="JobsWaale"
+              className="h-12 w-auto object-contain"
+            />
+          </Link>
+
+          <p className="text-sm leading-relaxed max-w-sm text-white/70 mb-4">
+            We connect job seekers with the right opportunities and help organizations find exceptional talent.
+          </p>
+            <div className="flex gap-2">
+              <a href="#" aria-label="Twitter" className="w-[38px] h-[38px] rounded-full bg-white/[0.08] flex items-center justify-center text-white hover:bg-[#FF6B00] hover:-translate-y-0.5 transition-all">
+                <TwitterIcon className="h-4 w-4" />
+              </a>
+              <a href="#" aria-label="LinkedIn" className="w-[38px] h-[38px] rounded-full bg-white/[0.08] flex items-center justify-center text-white hover:bg-[#FF6B00] hover:-translate-y-0.5 transition-all">
+                <LinkedinIcon className="h-4 w-4" />
+              </a>
+              <a href="#" aria-label="GitHub" className="w-[38px] h-[38px] rounded-full bg-white/[0.08] flex items-center justify-center text-white hover:bg-[#FF6B00] hover:-translate-y-0.5 transition-all">
+                <GithubIcon className="h-4 w-4" />
+              </a>
             </div>
           </div>
 
           {/* Candidates Column */}
           <div>
-            <h4 className="font-bold text-white text-xs uppercase tracking-wider mb-4">For Job Seekers</h4>
-            <ul className="space-y-2 text-xs">
-              <li><Link to="/login" className="hover:text-white transition">Browse Jobs</Link></li>
-              <li><Link to="/jobseeker-plan" className="hover:text-white transition">Candidate Plans</Link></li>
-              <li><Link to="/login" className="hover:text-white transition">Upload Resume</Link></li>
-              <li><Link to="/login?role=employer" className="hover:text-white transition">Browse Employer</Link></li>
+            <h4 className="font-semibold text-white text-[1.1rem] mb-7">For Job Seekers</h4>
+            <ul className="space-y-3 text-sm text-white/70">
+              <li><Link to="/login" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Browse Jobs</Link></li>
+              <li><Link to="/jobseeker-plan" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Candidate Plans</Link></li>
+              <li><Link to="/login" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Upload Resume</Link></li>
+              <li><Link to="/login?role=employer" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Browse Employer</Link></li>
             </ul>
           </div>
 
           {/* Employers Column */}
           <div>
-            <h4 className="font-bold text-white text-xs uppercase tracking-wider mb-4">For Employers</h4>
-            <ul className="space-y-2 text-xs">
-              <li><Link to="/employer-plan" className="hover:text-white transition">Employer Plans</Link></li>
-              <li><Link to="/employer-register" className="hover:text-white transition">Post a Job</Link></li>
-              <li><Link to="/login?role=employer" className="hover:text-white transition">Browse Candidates</Link></li>
-              <li><Link to="/contact" className="hover:text-white transition">Hiring Solutions</Link></li>
+            <h4 className="font-semibold text-white text-[1.1rem] mb-7">For Employers</h4>
+            <ul className="space-y-3 text-sm text-white/70">
+              <li><Link to="/employer-plan" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Employer Plans</Link></li>
+              <li><Link to="/employer-register" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Post a Job</Link></li>
+              <li><Link to="/login?role=employer" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Browse Candidates</Link></li>
+              <li><Link to="/contact" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Hiring Solutions</Link></li>
             </ul>
           </div>
 
           {/* Company Column */}
           <div>
-            <h4 className="font-bold text-white text-xs uppercase tracking-wider mb-4">Company</h4>
-            <ul className="space-y-2 text-xs">
-              <li><Link to="/about" className="hover:text-white transition">About Us</Link></li>
-              <li><Link to="/contact" className="hover:text-white transition">Contact Us</Link></li>
-              <li><Link to="/faq" className="hover:text-white transition">FAQ Page</Link></li>
-              <li><Link to="/blogs" className="hover:text-white transition">Blog</Link></li>
+            <h4 className="font-semibold text-white text-[1.1rem] mb-7">Company</h4>
+            <ul className="space-y-3 text-sm text-white/70">
+              <li><Link to="/about" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">About Us</Link></li>
+              <li><Link to="/contact" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Contact Us</Link></li>
+              <li><Link to="/faq" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">FAQ Page</Link></li>
+              <li><Link to="/blogs" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Blog</Link></li>
             </ul>
           </div>
 
           {/* Contact Column */}
-          <div className="space-y-3">
-            <h4 className="font-bold text-white text-xs uppercase tracking-wider mb-4">Contact Us</h4>
-            <div className="flex gap-2.5 items-start text-xs">
-              <Mail className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
+          <div>
+            <h4 className="font-semibold text-white text-[1.1rem] mb-7">Contact Us</h4>
+            <div className="flex gap-3 items-start text-sm text-white/70 mb-4">
+              <Mail className="h-4 w-4 text-[#FF6B00] shrink-0 mt-0.5" />
               <span className="break-all">Jobswaale.india@gmail.com</span>
             </div>
-            <div className="flex gap-2.5 items-center text-xs">
-              <Phone className="h-4 w-4 text-slate-400 shrink-0" />
+            <div className="flex gap-3 items-start text-sm text-white/70 mb-4">
+              <Phone className="h-4 w-4 text-[#FF6B00] shrink-0 mt-0.5" />
               <span>+91 99998 84424</span>
             </div>
-            <div className="flex gap-2.5 items-start text-xs">
-              <MapPin className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
+            <div className="flex gap-3 items-start text-sm text-white/70 mb-4">
+              <MapPin className="h-4 w-4 text-[#FF6B00] shrink-0 mt-0.5" />
               <span>Hamirpur, Himachal Pradesh, India</span>
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="mt-12 pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+      {/* Sub Footer Bottom Bar */}
+      <div className="bg-[#001530] border-t border-white/[0.08] py-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-white/50">
           <p>© {new Date().getFullYear()} JobsWaale. All rights reserved.</p>
-          <div className="flex items-center gap-5 text-slate-500">
-            <Link to="/privacy-policy" className="hover:text-white transition">Privacy Policy</Link>
-            <Link to="/terms-conditions" className="hover:text-white transition">Terms & Conditions</Link>
+          <div className="flex items-center gap-5">
+            <Link to="/privacy-policy" className="hover:text-white/80 transition">Privacy Policy</Link>
+            <Link to="/terms-conditions" className="hover:text-white/80 transition">Terms & Conditions</Link>
           </div>
         </div>
       </div>
