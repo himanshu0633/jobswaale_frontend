@@ -15,11 +15,11 @@ const companies = [
   },
   {
     name: "FedEx",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/b/b0/FedEx_Express.svg",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/9/9d/FedEx_Express.svg",
   },
   {
     name: "Walmart",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/c/ca/Walmart_logo.svg",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/5/5b/Walmart_logo_%282025%29.svg",
   },
   {
     name: "HubSpot",

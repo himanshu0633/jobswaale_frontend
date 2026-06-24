@@ -4,7 +4,7 @@ export const PrivacyPolicy = () => {
   return (
     <div className="w-full bg-white">
       {/* Page Header */}
-      <section className="bg-slate-50 border-b border-slate-200 py-16 sm:py-20">
+      <section className="bg-slate-50 border-b border-slate-200 py-12 sm:py-20">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <p className="text-sm font-bold text-indigo-600 uppercase tracking-wider">Legal</p>
           <h1 className="mt-3 text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight">
@@ -17,7 +17,7 @@ export const PrivacyPolicy = () => {
       </section>
 
       {/* Content Section */}
-      <section className="py-16">
+      <section className="py-10">
         <div className="max-w-3xl mx-auto px-4 prose prose-slate">
           <p className="text-sm leading-relaxed text-slate-600">
             Welcome to JobsWaale. We are committed to protecting your personal information and your right to privacy. If you have any questions or concerns about this privacy notice or our practices with regard to your personal info, please contact us at support@jobswaale.com.

@@ -130,7 +130,7 @@ const FeaturedJobs = () => {
               </div>
 
               {/* Bottom Section */}
-              <div className="mt-auto pt-5 border-t border-slate-100 flex items-center justify-between mt-6">
+              <div className="mt-auto pt-5  border-slate-100 flex items-center justify-between mt-6">
                 <div>
                   <p className="text-xs text-slate-500 mb-1">Salary</p>
                   <p className="font-bold text-slate-900">{job.salary}</p>
