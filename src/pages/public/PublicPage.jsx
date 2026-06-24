@@ -1,68 +1,116 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import axios from 'axios';
 import { BASE_API_URL } from '../../context/AuthContext';
-import logoAsset from '../../assets/logo.png';
+
+import Home from './Home';
+import Jobs from './Jobs';
+import Employers from './Employers';
+import EmployerPlan from './EmployerPlan';
+import JobseekerPlan from './JobseekerPlan';
+import About from './About';
+import Contact from './Contact';
+import PrivacyPolicy from './PrivacyPolicy';
+import TermsConditions from './TermsConditions';
+import Faq from './Faq';
+
+// Import modular header and footer
+import { PublicHeader } from './PublicHeader';
+import { PublicFooter } from './PublicFooter';
+
+// Re-export them to prevent breaking existing imports in other files
+export { PublicHeader, PublicFooter };
 
 export const PublicPage = () => {
   const location = useLocation();
-  const [page, setPage] = useState(null);
   const [settings, setSettings] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [loadingSettings, setLoadingSettings] = useState(true);
 
+  // Normalize slug to match keys
+  const slug = location.pathname === '/' ? 'home' : location.pathname.replace(/^\/+|\/+$/g, '');
+
+  // Load public setting configurations (e.g. maintenance mode)
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      setError('');
-      const slug = location.pathname === '/' ? 'home' : location.pathname.replace(/^\/+|\/+$/g, '');
+    const fetchSettings = async () => {
       try {
         const settingsRes = await axios.get(`${BASE_API_URL}/settings/public`);
         setSettings(settingsRes.data || null);
       } catch (err) {
         setSettings(null);
-      }
-
-      try {
-        const pageRes = await axios.get(`${BASE_API_URL}/cms/public/pages/${encodeURIComponent(slug)}`);
-        setPage(pageRes.data);
-      } catch (err) {
-        setError(err.response?.status === 404 ? 'Page not found' : 'Page could not be loaded.');
       } finally {
-        setLoading(false);
+        setLoadingSettings(false);
       }
     };
-    load();
-  }, [location.pathname]);
+    fetchSettings();
+  }, []);
+
+  // Switch rendering of local components
+  const renderStaticPage = () => {
+    switch (slug) {
+      case 'home':
+        return <Home />;
+      case 'jobs':
+        return <Jobs />;
+      case 'employer':
+        return <Employers />;
+      case 'employer-plan':
+        return <EmployerPlan />;
+      case 'jobseeker-plan':
+        return <JobseekerPlan />;
+      case 'about':
+        return <About />;
+      case 'contact':
+        return <Contact />;
+      case 'faq':
+        return <Faq />;
+      case 'privacy-policy':
+        return <PrivacyPolicy />;
+      case 'terms-conditions':
+        return <TermsConditions />;
+      default:
+        return (
+          <main className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
+            <h1 className="text-3xl font-bold text-slate-900">404 - Page Not Found</h1>
+            <p className="text-slate-550 mt-2 text-sm">The page you are looking for does not exist or has been moved.</p>
+            <Link to="/" className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold text-xs transition duration-150 cursor-pointer">
+              Go back home
+            </Link>
+          </main>
+        );
+    }
+  };
+
+  if (loadingSettings) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white text-sm font-semibold text-slate-500">
+        <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (settings?.maintenanceMode) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-center px-4 bg-slate-50">
+        <h1 className="text-3xl font-bold text-slate-900">{settings.siteName || 'JobsWaale'} is under maintenance</h1>
+        <p className="mt-3 max-w-md text-sm text-slate-500 leading-relaxed">
+          We are currently making updates to enhance your experience. Please check back shortly.
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-white text-slate-900">
-      <header className="sticky top-0 z-30 bg-white/95 border-b border-slate-200 backdrop-blur">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-5">
-          <Link to="/" className="flex items-center gap-3">
-            <img src={logoAsset} alt="JobsWaale" className="h-10 w-auto object-contain" />
-          </Link>
-        </div>
-      </header>
+    <div className="min-h-screen flex flex-col bg-white text-slate-900">
+      {/* Universal Public Navigation Header */}
+      <PublicHeader />
 
-      {loading ? (
-        <main className="min-h-[60vh] flex items-center justify-center text-sm font-semibold text-slate-500">Loading...</main>
-      ) : settings?.maintenanceMode ? (
-        <main className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
-          <h1 className="text-3xl font-bold text-slate-900">{settings.siteName || 'JobsWaale'} is under maintenance</h1>
-          <p className="mt-3 max-w-md text-sm text-slate-500">We are making updates right now. Please check back soon.</p>
-        </main>
-      ) : error ? (
-        <main className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
-          <h1 className="text-3xl font-bold text-slate-900">{error}</h1>
-          <Link to="/" className="mt-4 text-indigo-600 font-semibold">Go home</Link>
-        </main>
-      ) : (
-        <main>
-          <style>{page?.css || ''}</style>
-          <div dangerouslySetInnerHTML={{ __html: page?.html || '' }} />
-        </main>
-      )}
+      {/* Main Dynamic View Content */}
+      <main className="flex-grow">
+        {renderStaticPage()}
+      </main>
+
+      {/* Shared Public Footer */}
+      <PublicFooter />
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
   Briefcase,
@@ -22,7 +22,7 @@ import {
   UserPlus
 } from 'lucide-react';
 import { BASE_API_URL } from '../../context/AuthContext';
-import logoAsset from '../../assets/logo.png';
+import logoAsset from '../../assets/logo-black.png';
 
 const benefits = [
   {
@@ -145,6 +145,7 @@ const RegisterIllustration = () => (
 );
 
 export const Register = () => {
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     fullName: '',
     email: '',
@@ -213,7 +214,7 @@ export const Register = () => {
         password: form.password
       });
 
-      setSuccess('Account created successfully. You can now sign in when job seeker login is enabled.');
+      setSuccess('Account created successfully. Redirecting to login...');
       setForm({
         fullName: '',
         email: '',
@@ -223,12 +224,39 @@ export const Register = () => {
         updatesConsent: true,
         termsAccepted: true
       });
+      setTimeout(() => {
+        navigate('/login?role=jobseeker', { state: { message: 'Account created successfully. You can now sign in.' } });
+      }, 1500);
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
+
+  if (!settings.userRegistration) {
+    return (
+      <div className="min-h-screen bg-[#f1f5f9] flex flex-col items-center justify-center p-4 text-center">
+        <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl max-w-md w-full">
+          <div className="w-16 h-16 bg-rose-50 text-rose-550 rounded-full flex items-center justify-center mx-auto mb-6">
+            <ShieldAlert className="h-8 w-8" />
+          </div>
+          <h1 className="text-2xl font-extrabold text-slate-900">Registration Disabled</h1>
+          <p className="text-slate-500 text-sm mt-3 leading-relaxed">
+            New user registrations are currently disabled by the administrator. Please check back later.
+          </p>
+          <div className="mt-8 flex flex-col gap-3">
+            <Link to="/login" className="w-full py-3 bg-[#0058bf] hover:bg-[#004aa3] text-white font-bold rounded-xl transition shadow-md">
+              Go to Login
+            </Link>
+            <Link to="/" className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-750 font-bold rounded-xl transition">
+              Back to Home
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f1f5f9] bg-[radial-gradient(circle_at_0%_0%,rgba(255,87,34,0.08)_0%,transparent_35%),radial-gradient(circle_at_0%_100%,rgba(30,64,175,0.12)_0%,transparent_40%),radial-gradient(circle_at_100%_100%,rgba(255,87,34,0.12)_0%,transparent_40%)] px-4 py-8 text-slate-900">

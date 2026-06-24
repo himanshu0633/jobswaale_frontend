@@ -171,7 +171,7 @@ export const ForgotPassword = () => {
 
           {/* Footer Back to Login link */}
           <p className="text-slate-500 text-center text-xs mt-6 font-semibold">
-            Return to <Link to="/login-SuperAdmin" className="underline hover:text-slate-800 font-bold text-indigo-600">Sign in</Link>
+            Return to <Link to="/superadmin-login" className="underline hover:text-slate-800 font-bold text-indigo-600">Sign in</Link>
           </p>
 
         </div>

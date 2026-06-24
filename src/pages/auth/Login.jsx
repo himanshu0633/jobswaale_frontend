@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import {
   Briefcase,
@@ -13,7 +13,7 @@ import {
   User
 } from 'lucide-react';
 import { BASE_API_URL } from '../../context/AuthContext';
-import logoAsset from '../../assets/logo.png';
+import logoAsset from '../../assets/logo-black.png';
 
 const makeCaptcha = () => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -35,6 +35,7 @@ const RoleButton = ({ active, icon: Icon, label, onClick }) => (
 
 export const Login = () => {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState(searchParams.get('role') === 'employer' ? 'employer' : 'jobseeker');
@@ -47,6 +48,7 @@ export const Login = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [registrationEnabled, setRegistrationEnabled] = useState(true);
 
   const navigate = useNavigate();
   const registerPath = role === 'employer' ? '/employer-register' : '/jobseeker-register';
@@ -62,13 +64,23 @@ export const Login = () => {
         const response = await axios.get(`${BASE_API_URL}/settings/public`);
         const enabled = response.data?.captchaEnabled === true;
         setCaptchaEnabled(enabled);
+        const regEnabled = response.data?.userRegistration !== false;
+        setRegistrationEnabled(regEnabled);
         if (enabled) setCaptchaCode(makeCaptcha());
       } catch {
         setCaptchaEnabled(false);
+        setRegistrationEnabled(true);
       }
     };
     loadPublicSettings();
   }, []);
+
+  useEffect(() => {
+    if (location.state?.message) {
+      setSuccess(location.state.message);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const refreshCaptcha = () => {
     setCaptchaCode(makeCaptcha());
@@ -270,9 +282,11 @@ export const Login = () => {
                 </button>
               </div>
 
-              <div className="text-center text-sm font-medium text-slate-400">
-                Don't have an account? <Link to={registerPath} className="font-extrabold text-[#0058bf] hover:underline">Sign up here</Link>
-              </div>
+              {registrationEnabled && (
+                <div className="text-center text-sm font-medium text-slate-400">
+                  Don't have an account? <Link to={registerPath} className="font-extrabold text-[#0058bf] hover:underline">Sign up here</Link>
+                </div>
+              )}
             </form>
           </div>
         </div>
