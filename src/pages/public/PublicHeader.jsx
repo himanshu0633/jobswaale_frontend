@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { Menu, X, ChevronDown, User, Briefcase, LogIn, UserPlus, UploadCloud, Building2 } from 'lucide-react';
 import { BASE_API_URL } from '../../context/AuthContext';
-import logoAsset from '../../assets/logo.png';
+import logoAsset from '../../assets/logo-black.png';
 
 export const PublicHeader = () => {
   const location = useLocation();
@@ -40,28 +40,28 @@ export const PublicHeader = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 border-b border-slate-200 backdrop-blur shadow-sm">
+    <header className="sticky top-0 z-50 bg-white/70 border-b border-slate-200/50 backdrop-blur-md shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-5">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 shrink-0">
-          <img src={logoAsset} alt="JobsWaale" className="h-9 sm:h-10 w-auto object-contain" />
+          <img src={logoAsset} alt="JobsWaale" className="h-9 sm:h-13 w-auto object-contain" />
         </Link>
 
         {/* Desktop Navigation Links */}
         <nav className="hidden md:flex items-center gap-8">
-          <Link to="/" className={`text-sm font-bold transition duration-150 ${isActive('/') ? 'text-indigo-600' : 'text-slate-655 hover:text-indigo-600'}`}>
+          <Link to="/" className={`text-sm font-medium transition duration-150 ${isActive('/') ? 'text-indigo-600' : 'text-slate-655 hover:text-indigo-600'}`}>
             Home
           </Link>
-          <Link to="/jobs" className={`text-sm font-bold transition duration-150 ${isActive('/jobs') ? 'text-indigo-600' : 'text-slate-655 hover:text-indigo-600'}`}>
+          <Link to="/jobs" className={`text-sm font-medium transition duration-150 ${isActive('/jobs') ? 'text-indigo-600' : 'text-slate-655 hover:text-indigo-600'}`}>
             Jobs
           </Link>
-          <Link to="/employer" className={`text-sm font-bold transition duration-150 ${isActive('/employer') ? 'text-indigo-600' : 'text-slate-655 hover:text-indigo-600'}`}>
+          <Link to="/employer" className={`text-sm font-medium transition duration-150 ${isActive('/employer') ? 'text-indigo-600' : 'text-slate-655 hover:text-indigo-600'}`}>
             Employers
           </Link>
           
           {/* Pricing Dropdown */}
           <div className="relative group py-2">
-            <button className="flex items-center gap-1 text-sm font-bold text-slate-655 hover:text-indigo-600 focus:outline-none cursor-pointer">
+            <button className="flex items-center gap-1 text-sm font-medium text-slate-655 hover:text-indigo-600 focus:outline-none cursor-pointer">
               Pricing <ChevronDown className="h-3.5 w-3.5" />
             </button>
             <div className="absolute top-full left-0 mt-1 hidden group-hover:block bg-white border border-slate-200 rounded-lg shadow-lg py-2 w-48 z-50">
@@ -74,16 +74,16 @@ export const PublicHeader = () => {
             </div>
           </div>
 
-          <Link to="/about" className={`text-sm font-bold transition duration-150 ${isActive('/about') ? 'text-indigo-600' : 'text-slate-655 hover:text-indigo-600'}`}>
+          <Link to="/about" className={`text-sm font-medium transition duration-150 ${isActive('/about') ? 'text-indigo-600' : 'text-slate-655 hover:text-indigo-600'}`}>
             About Us
           </Link>
         </nav>
 
         {/* Desktop CTA Action Buttons */}
-        <div className="hidden md:flex items-center gap-4">
+        <div className="hidden md:flex items-center gap-1">
           {/* For Jobseekers Dropdown */}
           <div className="relative group py-2">
-            <button className="inline-flex items-center gap-2 bg-[rgb(13,110,253)] hover:bg-[rgb(11,94,215)] text-white font-bold text-xs py-2.5 px-4 rounded-lg transition duration-150 cursor-pointer shadow-md shadow-blue-600/10">
+            <button className="inline-flex items-center gap-2 bg-[rgb(13,110,253)] hover:bg-[rgb(11,94,215)] text-white font-medium text-base py-1.75 px-5 min-w-[170px] rounded-lg transition duration-150 cursor-pointer shadow-md shadow-blue-600/10">
               <User className="h-3.5 w-3.5" /> For Jobseekers <ChevronDown className="h-3.5 w-3.5" />
             </button>
             <div className="absolute top-full right-0 mt-1.5 hidden group-hover:block bg-white border border-slate-200 rounded-xl shadow-xl py-2 w-52 z-50">
@@ -103,7 +103,7 @@ export const PublicHeader = () => {
 
           {/* For Employers Dropdown */}
           <div className="relative group py-2">
-            <button className="inline-flex items-center gap-2 bg-[rgb(253,126,20)] hover:bg-[rgb(221,107,17)] text-white font-bold text-xs py-2.5 px-4 rounded-lg transition duration-150 cursor-pointer shadow-md shadow-orange-600/10">
+            <button className="inline-flex items-center gap-2 bg-[rgb(253,126,20)] hover:bg-[rgb(221,107,17)] text-white font-medium  text-base py-1.75 px-5 min-w-[170px] rounded-lg transition duration-150 cursor-pointer shadow-md shadow-orange-600/10">
               <Briefcase className="h-3.5 w-3.5" /> For Employers <ChevronDown className="h-3.5 w-3.5" />
             </button>
             <div className="absolute top-full right-0 mt-1.5 hidden group-hover:block bg-white border border-slate-200 rounded-xl shadow-xl py-2 w-52 z-50">

@@ -42,7 +42,7 @@ export const Home = () => {
                 <CheckCircle2 className="h-3.5 w-3.5 text-blue-600 fill-blue-100" /> Smart Hiring. Better Recruitment.
               </span>
               
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-none text-slate-900">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-none text-slate-900">
                 Find Your <span className="text-[#ff5e14]">Dream Job</span><br />
                 <span className="text-slate-800">Build Your Future</span>
               </h1>
@@ -98,8 +98,8 @@ export const Home = () => {
 
             {/* Right Block: Choice Cards */}
             <div className="lg:col-span-5">
-              <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-slate-100 space-y-5">
-                <h3 className="text-lg font-bold text-slate-900 text-center mb-6">Choose Your Account Type</h3>
+              <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-slate-100 space-y-5 w-full max-w-2xl ">
+                <h3 className="text-xl font-medium text-slate-900 text-center mb-6">Choose Your Account Type</h3>
                 
                 {/* Job Seeker Choice */}
                 <Link 
@@ -107,12 +107,12 @@ export const Home = () => {
                   className="group flex items-center justify-between p-5 rounded-2xl bg-blue-50/40 hover:bg-blue-50/65 transition-all duration-200"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-xl shrink-0 shadow-sm">
-                      <User className="h-6 w-6 text-blue-600" />
+                    <div className="w-18 h-16 rounded-full bg-blue-100 flex items-center justify-center text-xl shrink-0 shadow-sm">
+                      <User className="h-8 w-8 text-blue-600" />
                     </div>
                     <div>
-                      <h4 className="font-extrabold text-blue-800 text-base">Job Seeker</h4>
-                      <p className="text-xs text-slate-500 mt-1 font-medium">Find jobs, build profile and get hired.</p>
+                      <h4 className="font-bold text-blue-800 text-xl">Job Seeker</h4>
+                      <p className="text-base text-slate-500 mt-1 font-medium">Find jobs, build profile and get hired.</p>
                     </div>
                   </div>
                   <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-blue-600 border border-blue-100 shadow-sm group-hover:bg-blue-600 group-hover:text-white transition-all shrink-0">
@@ -126,12 +126,12 @@ export const Home = () => {
                   className="group flex items-center justify-between p-5 rounded-2xl bg-orange-50/40 hover:bg-orange-50/65 transition-all duration-200"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-xl shrink-0 shadow-sm">
-                      <Briefcase className="h-6 w-6 text-orange-500" />
+                    <div className="w-18 h-16 rounded-full bg-orange-100 flex items-center justify-center text-xl shrink-0 shadow-sm">
+                      <Briefcase className="h-8 w-8 text-orange-500" />
                     </div>
                     <div>
-                      <h4 className="font-extrabold text-orange-600 text-base">Employer</h4>
-                      <p className="text-xs text-slate-500 mt-1 font-medium">Post jobs, find talent and grow your team.</p>
+                      <h4 className="font-bold text-orange-600 text-xl">Employer</h4>
+                      <p className="text-base text-slate-500 mt-1 font-medium">Post jobs, find talent and grow your team.</p>
                     </div>
                   </div>
                   <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-orange-500 border border-orange-100 shadow-sm group-hover:bg-orange-600 group-hover:text-white transition-all shrink-0">

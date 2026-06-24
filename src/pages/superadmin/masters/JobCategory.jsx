@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import JobCategoryCard from './JobCategoryCard';
 import axios from 'axios';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import { getNextMasterId, onlyDigits, toWholeNumber } from '../../../utils/masterForm';
@@ -532,7 +533,7 @@ export const JobCategory = () => {
 
         </div>
       )}
-
+      
     </div>
   );
 };
