@@ -202,7 +202,7 @@ const About = () => {
             </div>
 
             {/* Right Images */}
-            <div className="hidden lg:block relative pl-[200px] py-10">
+            <div className="hidden lg:block relative pl-[20px] py-10">
               <div className="relative w-full">
                 <img 
                   src={onlineMarketing}
