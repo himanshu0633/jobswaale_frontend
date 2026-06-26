@@ -142,7 +142,7 @@ export const Login = () => {
 
           <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_20px_50px_rgba(15,23,42,0.08)] sm:p-10">
             <div className="mb-8 text-center">
-              <h1 className="text-3xl font-extrabold tracking-tight text-slate-950">Account Sign In</h1>
+              <h1 className="text-3xl font-bold tracking-tight text-slate-950">Account Sign In</h1>
               <p className="mt-2 text-base font-medium text-slate-400">Choose your profile and enter your credentials</p>
             </div>
 

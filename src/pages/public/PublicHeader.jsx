@@ -41,14 +41,14 @@ export const PublicHeader = () => {
 
   return (
     <header className="sticky top-0 z-50 bg-white/70 border-b border-slate-200/50 backdrop-blur-md shadow-sm">
-      <div className="max-w-[90rem] mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-5">
+      <div className="max-w-[85rem] mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-5">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 shrink-0">
           <img src={logoAsset} alt="JobsWaale" className="h-9 sm:h-13 w-auto object-contain" />
         </Link>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-8 ml-8">
           <Link to="/" className={`text-[0.9375rem] font-medium transition duration-150 ${isActive('/') ? 'text-blue-600' : 'text-slate-655 hover:text-blue-600'}`}>
             Home
           </Link>
