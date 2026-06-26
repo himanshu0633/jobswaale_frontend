@@ -1,17 +1,13 @@
 import React, { useState } from 'react';
-import { 
-  ChevronDown, 
-  HelpCircle, 
-  Info, 
-  LifeBuoy, 
-  MessageSquare, 
-  Sparkles 
-} from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
+import faqImg1 from './faqImages/img-1.png';
+import faqImg2 from './faqImages/img-2.png';
+import faqImg3 from './faqImages/img-3.png';
 
 export const Faq = () => {
   // Left Column Accordion State (Index 0 is open by default)
   const [leftOpenIndex, setLeftOpenIndex] = useState(0);
-  
+
   // Right Column Accordion State (Index 3 is open by default)
   const [rightOpenIndex, setRightOpenIndex] = useState(3);
 
@@ -61,136 +57,153 @@ export const Faq = () => {
     setRightOpenIndex(rightOpenIndex === index ? -1 : index);
   };
 
+  // Reusable Accordion Item Component
+const AccordionItem = ({ faq, index, isOpen, toggle, isLeft }) => {
   return (
-    <div className="w-full bg-slate-50/50 py-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        
-        {/* Header Section */}
-        <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-            FAQs
-          </h1>
-          <p className="text-sm font-semibold text-slate-500 leading-relaxed">
-            This is part of our help center where frequently asked questions are collected. Do a search here before sending a message or contacting us, here are the most common problems you will encounter when using our system.
-          </p>
-        </div>
+    <div className="border-b border-gray-200 last:border-b-0">
+      <h2 className="accordion-header">
+        <button
+          className={`w-full py-4 px-5 flex items-center gap-3 font-medium text-gray-900 hover:text-blue-600 transition-colors focus:outline-none ${
+            isOpen ? 'text-blue-600' : ''
+          }`}
+          type="button"
+          onClick={() => toggle(index)}
+        >
+          {/* Arrow on the left */}
+          <ChevronDown
+            className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 ${
+              isOpen ? 'rotate-180' : ''
+            }`}
+          />
 
-        {/* Visual Support Grid */}
-        <div className="grid gap-6 md:grid-cols-3 max-w-4xl mx-auto mb-20">
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex items-center gap-4 hover:shadow-md transition">
-            <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center shrink-0">
-              <HelpCircle className="h-6 w-6" />
-            </div>
-            <div>
-              <h5 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">Help Center</h5>
-              <p className="text-[10px] text-slate-450 font-bold mt-1">Browse support logs</p>
-            </div>
+          {/* Question */}
+          <span className="flex-1 text-left">
+            {faq.question}
+          </span>
+        </button>
+      </h2>
+
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          isOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <div className="pl-12 pr-5 pb-4 text-gray-600">
+          {faq.answer.split('\n\n').map((para, pIdx, arr) => (
+            <p key={pIdx} className={pIdx < arr.length - 1 ? 'mb-4' : ''}>
+              {para}
+            </p>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+  return (
+    <main className="min-h-screen bg-white">
+      {/* Page Header */}
+      <section className="py-12">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="w-full md:w-1/2 mx-auto text-center">
+            <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-8">
+              FAQs
+            </h1>
+            <p className="mb-0 text-gray-500 text-base leading-relaxed">
+              This is part of our help center where frequently asked questions are collected. Do a search here before sending a message or contacting us, here are the most common problems you will encounter when using our system.
+            </p>
           </div>
-          
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex items-center gap-4 hover:shadow-md transition">
-            <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center shrink-0">
-              <LifeBuoy className="h-6 w-6" />
-            </div>
-            <div>
-              <h5 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">Quick Guides</h5>
-              <p className="text-[10px] text-slate-450 font-bold mt-1">Troubleshoot key actions</p>
-            </div>
-          </div>
-          
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex items-center gap-4 hover:shadow-md transition">
-            <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center shrink-0">
-              <Info className="h-6 w-6" />
-            </div>
-            <div>
-              <h5 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">Platform Status</h5>
-              <p className="text-[10px] text-slate-450 font-bold mt-1">Operational checks</p>
+        </div>
+      </section>
+
+      {/* FAQ Images */}
+      <section className="py-4 ">
+        <div className="max-w-[1350px] mx-auto px-4 sm:px-6 lg:px-8 ">
+          <div className="w-full lg:w-10/12 mx-auto">
+            <div className="flex flex-wrap -mx-4">
+              <div className="w-full lg:w-7/12 px-4">
+                <img
+                  className="w-full h-auto rounded-lg shadow-md"
+                  src={faqImg1}
+                  alt="FAQ illustration 1"
+                />
+              </div>
+              <div className="w-full lg:w-5/12 px-4 mt-4 lg:mt-0">
+                <img
+                  className="w-full h-auto rounded-lg shadow-md mb-4"
+                  src={faqImg2}
+                  alt="FAQ illustration 2"
+                />
+                <img
+                  className="w-full h-auto rounded-lg shadow-md"
+                  src={faqImg3}
+                  alt="FAQ illustration 3"
+                />
+              </div>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Accordions Container */}
-        <div className="space-y-16">
-          
-          {/* Section Subheading */}
-          <div className="grid gap-6 md:grid-cols-2 items-end pb-8 border-b border-slate-250/60">
-            <div>
-              <span className="text-xs font-black uppercase text-indigo-600 tracking-widest">Questions</span>
-              <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">Frequently Asked Questions</h3>
+      {/* Questions Section */}
+      <section className="py-16 md:py-20">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
+          <div className="flex flex-wrap items-end mb-12">
+            <div className="w-full lg:w-5/12">
+              <span className="text-blue-600 font-semibold text-sm uppercase tracking-wider">
+                Questions
+              </span>
+              <h3 className="text-3xl md:text-5xl font-bold mt-5 text-gray-900">
+                Frequently Ask Questions
+              </h3>
             </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-500 leading-relaxed max-w-sm">
-                Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum is simply dummy.
+            <div className="hidden lg:block w-full lg:w-2/12"></div>
+            <div className="w-full lg:w-5/12 mt-6 lg:mt-0">
+              <p className="text-lg text-gray-500 leading-relaxed">
+                Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum is
+                simply dummy.
               </p>
             </div>
           </div>
 
-          {/* Grid columns */}
-          <div className="grid gap-8 lg:grid-cols-2">
-            
+          {/* Accordion Columns */}
+          <div className="flex flex-wrap -mx-4">
             {/* Left Accordion Column */}
-            <div className="space-y-4">
-              {leftFaqs.map((faq, index) => {
-                const isOpen = leftOpenIndex === index;
-                return (
-                  <div 
-                    key={index} 
-                    className="border border-slate-200 bg-white rounded-2xl overflow-hidden shadow-sm transition-all duration-200"
-                  >
-                    <button 
-                      onClick={() => toggleLeft(index)}
-                      className="w-full flex items-center justify-between p-5 text-left font-bold text-slate-800 hover:text-indigo-600 transition text-sm cursor-pointer"
-                    >
-                      <span>{faq.question}</span>
-                      <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180 text-indigo-650' : ''}`} />
-                    </button>
-                    
-                    <div 
-                      className={`transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'max-h-[500px] border-t border-slate-100' : 'max-h-0'}`}
-                    >
-                      <div className="p-5 text-xs sm:text-sm font-semibold text-slate-500 leading-relaxed whitespace-pre-line bg-slate-50/50">
-                        {faq.answer}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="w-full lg:w-1/2 px-4">
+              <div className=" rounded-lg overflow-hidden bg-white shadow-sm">
+                {leftFaqs.map((faq, index) => (
+                  <AccordionItem
+                    key={`left-${index}`}
+                    faq={faq}
+                    index={index}
+                    isOpen={leftOpenIndex === index}
+                    toggle={toggleLeft}
+                    isLeft={true}
+                  />
+                ))}
+              </div>
             </div>
 
             {/* Right Accordion Column */}
-            <div className="space-y-4">
-              {rightFaqs.map((faq, index) => {
-                const isOpen = rightOpenIndex === index;
-                return (
-                  <div 
-                    key={index} 
-                    className="border border-slate-200 bg-white rounded-2xl overflow-hidden shadow-sm transition-all duration-200"
-                  >
-                    <button 
-                      onClick={() => toggleRight(index)}
-                      className="w-full flex items-center justify-between p-5 text-left font-bold text-slate-800 hover:text-indigo-600 transition text-sm cursor-pointer"
-                    >
-                      <span>{faq.question}</span>
-                      <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180 text-indigo-650' : ''}`} />
-                    </button>
-                    
-                    <div 
-                      className={`transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'max-h-[500px] border-t border-slate-100' : 'max-h-0'}`}
-                    >
-                      <div className="p-5 text-xs sm:text-sm font-semibold text-slate-500 leading-relaxed whitespace-pre-line bg-slate-50/50">
-                        {faq.answer}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="w-full lg:w-1/2 px-4 mt-6 lg:mt-0">
+              <div className=" rounded-lg overflow-hidden bg-white shadow-sm">
+                {rightFaqs.map((faq, index) => (
+                  <AccordionItem
+                    key={`right-${index}`}
+                    faq={faq}
+                    index={index}
+                    isOpen={rightOpenIndex === index}
+                    toggle={toggleRight}
+                    isLeft={false}
+                  />
+                ))}
+              </div>
             </div>
-
           </div>
-
         </div>
-
-      </div>
-    </div>
+      </section>
+    </main>
   );
 };
 

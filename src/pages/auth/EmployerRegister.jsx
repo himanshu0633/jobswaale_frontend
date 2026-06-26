@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { BASE_API_URL } from '../../context/AuthContext';
 import logoAsset from '../../assets/logo-black.png';
+import RegImg from './authImages/register-illustration.png'
 
 const benefits = [
   {
@@ -145,33 +146,8 @@ const CompanyTypeCard = ({ option, selected, onChange }) => {
 };
 
 const RegisterIllustration = () => (
-  <div className="relative mx-auto mb-8 flex h-56 max-w-sm items-end justify-center overflow-hidden rounded-3xl bg-gradient-to-b from-orange-50 to-white">
-    <div className="absolute left-16 top-10 flex h-16 w-16 items-center justify-center rounded-full bg-orange-500 text-white shadow-lg">
-      <User className="h-8 w-8" />
-    </div>
-    <div className="absolute right-20 top-8 flex h-12 w-12 items-center justify-center rounded-2xl border border-orange-100 bg-white text-blue-600 shadow-md">
-      <Briefcase className="h-6 w-6" />
-    </div>
-    <div className="absolute right-12 top-24 flex h-12 w-16 items-center justify-center rounded-2xl border border-orange-100 bg-white text-blue-600 shadow-md">
-      <svg width="30" height="24" viewBox="0 0 30 24" fill="none" aria-hidden="true">
-        <path d="M3 20H27" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        <path d="M5 17L12 10L17 14L25 5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M23 5H25V7" stroke="#ff6b00" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </div>
-    <div className="relative z-10 mb-8 h-36 w-28 rounded-t-[48px] bg-orange-500 shadow-xl">
-      <div className="absolute -top-12 left-1/2 h-20 w-20 -translate-x-1/2 rounded-full bg-[#ffd7bd] shadow-md">
-        <div className="absolute left-4 top-8 h-2 w-2 rounded-full bg-slate-900" />
-        <div className="absolute right-4 top-8 h-2 w-2 rounded-full bg-slate-900" />
-        <div className="absolute left-1/2 top-12 h-1.5 w-8 -translate-x-1/2 rounded-full bg-slate-700" />
-      </div>
-      <div className="absolute -top-16 left-6 h-10 w-16 rounded-full bg-slate-900" />
-      <div className="absolute left-8 top-8 h-24 w-12 rounded-t-full bg-white" />
-    </div>
-    <div className="relative z-20 mb-7 h-24 w-40 rounded-t-xl border border-slate-200 bg-slate-100 shadow-xl">
-      <div className="absolute left-1/2 top-8 h-4 w-4 -translate-x-1/2 rounded-full bg-white" />
-    </div>
-    <div className="absolute bottom-7 h-1 w-72 rounded-full bg-slate-200" />
+  <div>
+    <img src={RegImg} alt="" />
   </div>
 );
 
@@ -319,9 +295,9 @@ export const EmployerRegister = () => {
           <RegisterIllustration />
 
           <div className="mb-8">
-            <h2 className="text-2xl font-extrabold text-slate-950">Why register as an</h2>
+            <h2 className="text-2xl font-bold text-slate-950">Why register with</h2>
             <h3 className="mt-2 text-3xl font-extrabold">
-              <span className="text-[#0058d6]">Employer</span> <span className="text-[#ff6b00]">?</span>
+              <span className="text-[#0058d6]">Jobs</span><span className="text-[#ff6b00]">Waale</span> <span>?</span>
             </h3>
           </div>
 
