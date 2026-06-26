@@ -25,7 +25,7 @@ const About = () => {
   return (
     <div className="w-full bg-white overflow-x-hidden">
       {/* Hero Banner Section */}
-      <section className="bg-[#fff9f3] border-b border-[#fff9f3] relative overflow-hidden rounded-bl-[100px] rounded-br-[100px] pb-10 pt-20">
+      <section className="bg-[#fff9f3] border-b border-[#fff9f3] relative overflow-hidden rounded-bl-[100px] rounded-br-[100px] pb-40 pt-20 ">
         <div className="max-w-[1770px] mx-auto px-4 sm:px-6 lg:pl-[60px] lg:pr-[80px]">
           <div className="grid gap-12 lg:grid-cols-12 items-center">
             {/* Left Column */}
@@ -57,7 +57,7 @@ const About = () => {
 
             {/* Right Column - Banner Images */}
             <div className="lg:col-span-5 hidden lg:block relative">
-              <div className="relative w-auto h-[350px] flex items-center justify-center mx-auto max-w-[580px]">
+              <div className="relative w-auto h-[350px] flex items-center justify-center mx-auto max-w-[580px] m-10">
                 {/* Main Banner Image */}
                 <img 
                   src={bannerImg} 
@@ -65,13 +65,13 @@ const About = () => {
                   className="relative z-10 max-w-full animate-[hero-thumb-sm-2-animation_4s_linear_infinite_alternate]"
                 />
                 {/* Floating Images */}
-                <span className="absolute top-[3%] -left-[80px] w-[102px] h-[102px] rounded-full overflow-hidden animate-[hero-thumb-animation_2s_linear_infinite_alternate] shadow-lg z-20">
+                <span className="absolute top-[-25%] -left-[80px] w-[102px] h-[102px] rounded-full overflow-hidden animate-[hero-thumb-animation_2s_linear_infinite_alternate] shadow-lg z-20">
                   <img src={bannerSm1} alt="jobhub" className="w-full h-full object-cover" />
                 </span>
-                <span className="absolute top-[21%] -left-[110px] w-[132px] z-20 animate-[hero-thumb-sm-animation_4s_linear_infinite_alternate]">
+                <span className="absolute top-[10%] -left-[110px] w-[132px] z-20 animate-[hero-thumb-animation_2s_linear_infinite_alternate]">
                   <img src={bannerSm2} alt="jobhub" className="rounded-t-[40px] rounded-br-[40px] w-full shadow-lg" />
                 </span>
-                <span className="absolute top-[51%] -left-[150px] w-[182px] z-20 animate-[hero-thumb-animation_2s_linear_infinite_alternate]">
+                <span className="absolute top-[70%] -left-[150px] w-[182px] z-20 animate-[hero-thumb-sm-animation_4s_linear_infinite_alternate]">
                   <img src={bannerSm3} alt="jobhub" className="rounded-bl-[40px] w-full shadow-lg" />
                 </span>
               </div>
