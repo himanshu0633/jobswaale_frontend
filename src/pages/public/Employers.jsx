@@ -1,532 +1,693 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Briefcase, MapPin, ChevronDown, Mail, Check } from 'lucide-react';
 
+/* ─────────────────────────────────────────────────────────────
+   DATA
+───────────────────────────────────────────────────────────── */
+
+import employer1 from './employerImages/employer-1.png';
+import employer2 from './employerImages/employer-2.png';
+import employer3 from './employerImages/employer-3.png';
+import employer4 from './employerImages/employer-4.png';
+import employer5 from './employerImages/employer-5.png';
+import employer6 from './employerImages/employer-6.png';
 const MOCK_EMPLOYERS = [
-  {
-    id: 1,
-    name: 'Invision',
-    location: 'Chicago, US',
-    industry: 'Software',
-    openJobs: 12,
-    rating: 5.0,
-    ratesCount: 360,
-    logoLetter: 'I',
-    logoBg: 'bg-rose-100 text-rose-700'
-  },
-  {
-    id: 2,
-    name: 'Bing Search',
-    location: 'New York, US',
-    industry: 'Software',
-    openJobs: 10,
-    rating: 4.8,
-    ratesCount: 280,
-    logoLetter: 'B',
-    logoBg: 'bg-blue-100 text-blue-700'
-  },
-  {
-    id: 3,
-    name: 'Dailymotion',
-    location: 'Iowa, US',
-    industry: 'Designing',
-    openJobs: 16,
-    rating: 4.5,
-    ratesCount: 195,
-    logoLetter: 'D',
-    logoBg: 'bg-emerald-100 text-emerald-700'
-  },
-  {
-    id: 4,
-    name: 'LinkedIn',
-    location: 'Chicago, US',
-    industry: 'Software',
-    openJobs: 122,
-    rating: 4.9,
-    ratesCount: 540,
-    logoLetter: 'L',
-    logoBg: 'bg-sky-100 text-sky-700'
-  },
-  {
-    id: 5,
-    name: 'Adobe Illustrator',
-    location: 'San Jose, US',
-    industry: 'Designing',
-    openJobs: 23,
-    rating: 4.7,
-    ratesCount: 310,
-    logoLetter: 'A',
-    logoBg: 'bg-red-100 text-red-700'
-  },
-  {
-    id: 6,
-    name: 'StumbleUpon',
-    location: 'San Francisco, US',
-    industry: 'Software',
-    openJobs: 24,
-    rating: 4.2,
-    ratesCount: 120,
-    logoLetter: 'S',
-    logoBg: 'bg-amber-100 text-amber-700'
-  },
-  {
-    id: 7,
-    name: 'Amass Education',
-    location: 'Hamirpur, HP',
-    industry: 'Education',
-    openJobs: 5,
-    rating: 4.6,
-    ratesCount: 85,
-    logoLetter: 'E',
-    logoBg: 'bg-purple-100 text-purple-700'
-  },
-  {
-    id: 8,
-    name: 'Tata Consultancy Services',
-    location: 'Chandigarh, PB',
-    industry: 'IT & Consulting',
-    openJobs: 45,
-    rating: 4.4,
-    ratesCount: 420,
-    logoLetter: 'T',
-    logoBg: 'bg-indigo-100 text-indigo-700'
-  }
+  { id: 1, name: 'Invision',                  location: 'Chicago, US',       industry: 'Software',       openJobs: 12,  rating: 5.0, ratesCount: 360, logoImg: employer1, online: true  },
+  { id: 2, name: 'Bing Search',               location: 'New York, US',      industry: 'Software',       openJobs: 10,  rating: 4.8, ratesCount: 280, logoImg: employer2, online: false },
+  { id: 3, name: 'Dailymotion',               location: 'Iowa, US',          industry: 'Designing',      openJobs: 16,  rating: 4.5, ratesCount: 195, logoImg: employer3, online: false },
+  { id: 4, name: 'LinkedIn',                  location: 'Chicago, US',       industry: 'Software',       openJobs: 122, rating: 4.9, ratesCount: 540, logoImg: employer4, online: true  },
+  { id: 5, name: 'Adobe Illustrator',         location: 'San Jose, US',      industry: 'Designing',      openJobs: 23,  rating: 4.7, ratesCount: 310, logoImg: employer5, online: false },
+  { id: 6, name: 'StumbleUpon',               location: 'San Francisco, US', industry: 'Software',       openJobs: 24,  rating: 4.2, ratesCount: 120, logoImg: employer6, online: false },
+  { id: 7, name: 'Amass Education',           location: 'Hamirpur, HP',      industry: 'Education',      openJobs: 5,   rating: 4.6, ratesCount: 85,  logoImg: null, online: false },
+  { id: 8, name: 'Tata Consultancy Services', location: 'Chandigarh, PB',    industry: 'IT & Consulting',openJobs: 45,  rating: 4.4, ratesCount: 420, logoImg: null, online: false },
 ];
 
+/* ─────────────────────────────────────────────────────────────
+   STAR RATING  — matches .rate.small from the CSS
+   (5 gold stars, grey empties, tiny scale)
+───────────────────────────────────────────────────────────── */
 const StarRating = ({ rating }) => {
-  const stars = [];
-  const roundedRating = Math.round(rating);
-  for (let i = 1; i <= 5; i++) {
-    stars.push(
-      <svg
-        key={i}
-        className={`h-3.5 w-3.5 ${
-          i <= roundedRating ? 'text-amber-400 fill-amber-400' : 'text-slate-200'
-        }`}
-        viewBox="0 0 20 20"
-        fill="currentColor"
-      >
-        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-      </svg>
-    );
-  }
-  return <div className="flex items-center gap-0.5">{stars}</div>;
+  const rounded = Math.round(rating);
+  return (
+    <div className="flex items-center gap-0.5">
+      {[1,2,3,4,5].map(s => (
+        <svg key={s} width="13" height="13" viewBox="0 0 20 20"
+          style={{ fill: s <= rounded ? '#f5a623' : '#ccc' }}>
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+        </svg>
+      ))}
+    </div>
+  );
 };
 
+/* SVG icons */
+const IcoMarker = () => (
+  <svg width="16" height="16" fill="none" stroke="#88929b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className="mr-1 flex-shrink-0">
+    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/>
+  </svg>
+);
+const IcoBriefcase = () => (
+  <svg width="16" height="16" fill="none" stroke="#88929b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className="mr-1 flex-shrink-0">
+    <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
+  </svg>
+);
+const IcoMail = () => (
+  <svg width="16" height="16" fill="none" stroke="#88929b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className="absolute left-3 top-1/2 -translate-y-1/2">
+    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+  </svg>
+);
+const IcoShield = () => (
+  <svg width="18" height="18" fill="none" stroke="#88929b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/>
+  </svg>
+);
+const IcoBookmark = () => (
+  <svg width="18" height="18" fill="none" stroke="#88929b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>
+  </svg>
+);
+const IcoSearch = () => (
+  <svg width="18" height="18" fill="none" stroke="#88929b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className="absolute left-3 top-1/2 -translate-y-1/2">
+    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+  </svg>
+);
+const IcoChevronDown = () => (
+  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className="inline ml-1">
+    <polyline points="6 9 12 15 18 9"/>
+  </svg>
+);
+const IcoEnvelope = () => (
+  <svg width="16" height="16" fill="none" stroke="#88929b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className="absolute left-3 top-1/2 -translate-y-1/2">
+    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+  </svg>
+);
+const IcoChevronRight = () => (
+  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className="inline ml-1.5">
+    <polyline points="9 18 15 12 9 6"/>
+  </svg>
+);
+
+/* ─────────────────────────────────────────────────────────────
+   EMPLOYER CARD  — mirrors .card-grid-2.card-employers exactly
+───────────────────────────────────────────────────────────── */
+const EmployerCard = ({ company }) => {
+  const [hovered, setHovered] = useState(false);
+  const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(company.name)}&background=e8eaf6&color=3949ab&size=110&bold=true`;
+
+  return (
+    <div className="col-lg-6 col-md-6 mb-0">
+      <div
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{
+          borderRadius: 10,
+          border: `0.88px solid ${hovered ? '#0047C7' : 'rgba(6,18,36,0.1)'}`,
+          overflow: 'hidden',
+          marginBottom: 30,
+          position: 'relative',
+          background: '#fff',
+          boxShadow: hovered ? '0px 9px 26px 0px rgba(31,31,51,0.06)' : 'none',
+          transition: 'all 0.2s',
+        }}
+      >
+        {/* top-right icon links */}
+        <div className="absolute top-4 right-4 flex gap-2.5 z-10">
+          <a href="#" className="text-[#88929b]"><IcoShield /></a>
+          <a href="#" className="text-[#88929b]"><IcoBookmark /></a>
+        </div>
+
+        {/* circular logo  — matches .card-grid-2-image-rd + .online */}
+        <div className="text-center pt-7 pb-0 inline-block w-full">
+          <div className="relative inline-block">
+            <a href="employer-detail.html">
+              <figure className="relative inline-block m-0">
+                <img
+                  alt={company.name}
+                  src={company.logoImg || fallbackAvatar}
+                  className="rounded-full h-[110px] w-[110px] object-cover"
+                />
+              </figure>
+            </a>
+            {/* online green dot */}
+            {company.online && (
+              <span className="h-[18px] w-[18px] rounded-full bg-[#00c070] border-2 border-white absolute bottom-2.5 right-1.5 block" />
+            )}
+          </div>
+        </div>
+
+        {/* card-block-info */}
+        <div className="inline-block w-full px-7 pt-5 pb-6">
+          {/* card-profile */}
+          <div className="text-center">
+            <h5 className="m-0 mb-1.5">
+              <a
+                href="employer-detail.html"
+                style={{
+                  fontWeight: 'bold',
+                  fontSize: 18,
+                  color: hovered ? '#0047C7' : '#1f2938',
+                  textDecoration: 'none',
+                  transition: 'color 0.2s',
+                }}
+              >
+                {company.name}
+              </a>
+            </h5>
+            {/* stars + count */}
+            <div className="flex justify-center items-center gap-1.5 mt-1.5">
+              <StarRating rating={company.rating} />
+              <span className="text-[#88929b] text-xs">
+                {company.ratesCount} rates ({company.rating.toFixed(1)})
+              </span>
+            </div>
+          </div>
+
+          {/* location + industry row */}
+          <div className="mt-4 grid grid-cols-2 gap-1">
+            <div className="flex items-center justify-center text-sm text-[#475569]">
+              <IcoMarker />
+              <span className="overflow-hidden text-ellipsis whitespace-nowrap">{company.location}</span>
+            </div>
+            <div className="flex items-center justify-center text-sm text-[#475569]">
+              <IcoBriefcase />
+              <span className="overflow-hidden text-ellipsis whitespace-nowrap">{company.industry}</span>
+            </div>
+          </div>
+
+          {/* open jobs button — .btn-border.btn-brand-hover */}
+          <div className="text-center mt-6">
+            <a
+              href="jobs.html"
+              style={{
+                display: 'inline-block',
+                padding: '13px 28px',
+                border: '1px solid rgba(6,18,36,0.1)',
+                borderRadius: 10,
+                background: '#fff',
+                color: '#111112',
+                fontSize: 14,
+                fontWeight: 500,
+                textDecoration: 'none',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background='#0047C7'; e.currentTarget.style.color='#fff'; e.currentTarget.style.transform='translateY(-3px)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background='#fff'; e.currentTarget.style.color='#111112'; e.currentTarget.style.transform='translateY(0)'; }}
+            >
+              {company.openJobs} Open Jobs
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ─────────────────────────────────────────────────────────────
+   CHECKBOX ROW  — matches .cb-container + .number-item
+───────────────────────────────────────────────────────────── */
+const CheckRow = ({ label, count, checked, onChange }) => (
+  <li className="relative pr-[30px] pb-1 inline-block w-full">
+    <label className="block relative pl-[35px] mb-2.5 cursor-pointer leading-[21px] select-none text-sm text-[#475569]">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onChange}
+        className="absolute opacity-0 cursor-pointer h-0 w-0"
+      />
+      {/* custom checkmark box */}
+      <span className={`absolute top-0 left-0 h-[22px] w-[22px] bg-white border-2 ${checked ? 'border-[#0047C7]' : 'border-[#d1d1d1]'} rounded flex items-center justify-center transition-colors duration-150`}>
+        {checked && (
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+            <path d="M2 7l3.5 3.5L11 3" stroke="#0047C7" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        )}
+      </span>
+      <span className="text-sm">{label}</span>
+    </label>
+    <span className="absolute top-[30%] right-0 -translate-y-1/2 px-2 py-0.5 text-xs leading-4 rounded bg-[rgba(156,156,163,0.18)] text-[#9c9ca3]">
+      {count}
+    </span>
+  </li>
+);
+
+/* ─────────────────────────────────────────────────────────────
+   MAIN PAGE COMPONENT
+───────────────────────────────────────────────────────────── */
 export const Employers = () => {
-  // Search state (top bar)
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [searchInd, setSearchInd] = useState('');
-  const [searchLoc, setSearchLoc] = useState('');
-
-  // Sidebar filter states
-  const [sidebarLoc, setSidebarLoc] = useState('');
-  const [sidebarInd, setSidebarInd] = useState('');
-  const [sidebarTypes, setSidebarTypes] = useState([]);
-  const [sidebarExps, setSidebarExps] = useState([]);
-
-  // Active filter state
+  const [searchInd, setSearchInd]         = useState('');
+  const [searchLoc, setSearchLoc]         = useState('');
+  const [sidebarLoc, setSidebarLoc]       = useState('');
+  const [sidebarInd, setSidebarInd]       = useState('');
+  const [sidebarTypes, setSidebarTypes]   = useState([]);
+  const [sidebarExps, setSidebarExps]     = useState([]);
+  const [sortBy, setSortBy]               = useState('newest');
   const [filteredCompanies, setFilteredCompanies] = useState(MOCK_EMPLOYERS);
-  const [sortBy, setSortBy] = useState('newest');
   const [reminderEmail, setReminderEmail] = useState('');
+  const [reminderDone, setReminderDone]   = useState(false);
 
-  const filterCompanies = () => {
-    let result = [...MOCK_EMPLOYERS];
+  /* filter logic */
+  const runFilter = (overrides = {}) => {
+    const kw   = (overrides.searchKeyword ?? searchKeyword).toLowerCase();
+    const ind  = overrides.searchInd  ?? searchInd;
+    const loc  = overrides.searchLoc  ?? searchLoc;
+    const sLoc = overrides.sidebarLoc ?? sidebarLoc;
+    const sInd = overrides.sidebarInd ?? sidebarInd;
+    const sort = overrides.sortBy     ?? sortBy;
 
-    // Top search bar filters
-    if (searchKeyword.trim() !== '') {
-      const kw = searchKeyword.toLowerCase();
-      result = result.filter(
-        (c) =>
-          c.name.toLowerCase().includes(kw) ||
-          c.industry.toLowerCase().includes(kw)
-      );
-    }
-    if (searchInd) {
-      result = result.filter((c) => c.industry.toLowerCase().includes(searchInd.toLowerCase()));
-    }
-    if (searchLoc) {
-      result = result.filter((c) => c.location.toLowerCase().includes(searchLoc.toLowerCase()));
-    }
-
-    // Sidebar filters
-    if (sidebarLoc.trim() !== '') {
-      result = result.filter((c) => c.location.toLowerCase().includes(sidebarLoc.toLowerCase()));
-    }
-    if (sidebarInd) {
-      result = result.filter((c) => c.industry === sidebarInd);
-    }
-
-    // Sort
-    if (sortBy === 'newest') {
-      result.sort((a, b) => b.id - a.id);
-    } else {
-      result.sort((a, b) => a.id - b.id);
-    }
-
-    setFilteredCompanies(result);
+    let res = [...MOCK_EMPLOYERS];
+    if (kw)   res = res.filter(c => c.name.toLowerCase().includes(kw) || c.industry.toLowerCase().includes(kw));
+    if (ind)  res = res.filter(c => c.industry.toLowerCase().includes(ind.toLowerCase()));
+    if (loc)  res = res.filter(c => c.location.toLowerCase().includes(loc.toLowerCase()));
+    if (sLoc) res = res.filter(c => c.location.toLowerCase().includes(sLoc.toLowerCase()));
+    if (sInd) res = res.filter(c => c.industry === sInd);
+    res.sort((a, b) => sort === 'newest' ? b.id - a.id : a.id - b.id);
+    setFilteredCompanies(res);
   };
 
-  useEffect(() => {
-    filterCompanies();
-  }, [sortBy]);
+  useEffect(() => { runFilter({ sortBy }); }, [sortBy]);
 
-  const handleFindNow = (e) => {
-    e.preventDefault();
-    filterCompanies();
-  };
-
-  const applySidebarFilters = () => {
-    filterCompanies();
-  };
-
-  const resetSidebarFilters = () => {
-    setSidebarLoc('');
-    setSidebarInd('');
-    setSidebarTypes([]);
-    setSidebarExps([]);
-    setSearchKeyword('');
-    setSearchInd('');
-    setSearchLoc('');
+  const handleFind = e => { e.preventDefault(); runFilter(); };
+  const resetFilters = () => {
+    setSearchKeyword(''); setSearchInd(''); setSearchLoc('');
+    setSidebarLoc(''); setSidebarInd(''); setSidebarTypes([]); setSidebarExps([]);
     setFilteredCompanies(MOCK_EMPLOYERS);
   };
-
-  const handleSidebarTypeToggle = (type) => {
-    setSidebarTypes((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
-    );
-  };
-
-  const handleSidebarExpToggle = (exp) => {
-    setSidebarExps((prev) =>
-      prev.includes(exp) ? prev.filter((e) => e !== exp) : [...prev, exp]
-    );
-  };
-
-  const handleReminderSubmit = (e) => {
+  const toggleType = t => setSidebarTypes(p => p.includes(t) ? p.filter(x=>x!==t) : [...p,t]);
+  const toggleExp  = e => setSidebarExps (p => p.includes(e) ? p.filter(x=>x!==e) : [...p,e]);
+  const handleReminder = e => {
     e.preventDefault();
-    alert(`Reminder successfully set for: ${reminderEmail}`);
-    setReminderEmail('');
+    setReminderDone(true); setReminderEmail('');
+    setTimeout(() => setReminderDone(false), 3000);
+  };
+
+  /* shared input style */
+  const inputStyle = {
+    border:'1px solid rgba(6,18,36,0.1)',
+    borderRadius:10,
+    height:50,
+    boxShadow:'none',
+    paddingLeft:42,
+    fontSize:14,
+    width:'100%',
+    color:'#37404e',
+    outline:'none',
+    background:'#fff',
   };
 
   return (
-    <div className="w-full bg-white">
-      {/* Top Banner / Breadcrumb Section */}
-      <section className="bg-slate-50 py-12 border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className="w-full bg-white font-sans">
+
+      {/* ══════════════════════════════════════════════════════════
+          BANNER / BREADCRUMB  — .section-box-2 > .box-head-single.none-bg
+      ══════════════════════════════════════════════════════════ */}
+      <section className="bg-[#FFF9F3] inline-block w-full py-[55px] relative">
+        <div className="max-w-[1344px] mx-auto px-4">
+          <h4 className="text-[28px] leading-[34px] font-bold text-[#1f2938] mb-0">
+            There are <strong className="text-[#ff5e14]">500+</strong> companies<br />here for you!
+          </h4>
+
+          <div className="flex flex-wrap mt-[15px] mb-10 items-center justify-between">
             <div>
-              <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight leading-snug">
-                There are <span className="text-[#ff5e14]">500+</span> companies <br />
-                here for you!
-              </h1>
-              <p className="text-slate-500 text-sm mt-2 font-medium">
-                Discover your next career move, freelance gig, or internship
-              </p>
+              <span className="text-[#88929b] text-sm">Discover your next career move, freelance gig, or internship</span>
             </div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-400">
-              <Link to="/" className="hover:text-indigo-650 transition">Home</Link>
-              <span>/</span>
-              <span className="text-slate-600">Companies listing</span>
-            </div>
+            <ul className="list-none m-0 p-0 flex gap-0">
+              <li className="text-[#88929b] text-base pl-0 relative">
+                <a href="/" className="text-base text-[#1f2938] no-underline">Home</a>
+              </li>
+              <li className="text-[#88929b] text-base pl-[13px] relative">
+                <span className="absolute top-1 left-1 text-[#1f2938]">/</span>
+                Companies listing
+              </li>
+            </ul>
+          </div>
+
+          {/* ── FILTER BAR — .box-shadow-bdrd-15.box-filters ── */}
+          <div className="rounded-[15px] shadow-[0px_20px_60px_-6px_rgba(0,0,0,0.04)] bg-white p-[15px] border border-[#ececec]">
+            <form onSubmit={handleFind}>
+              <div className="flex flex-wrap gap-3 items-center">
+                {/* keyword search */}
+                <div className="flex-1 min-w-[220px] relative">
+                  <IcoSearch />
+                  <input
+                    type="text"
+                    placeholder="e.g microsoft"
+                    value={searchKeyword}
+                    onChange={e => setSearchKeyword(e.target.value)}
+                    style={{ ...inputStyle, paddingLeft:42 }}
+                  />
+                </div>
+
+                {/* industry dropdown */}
+                <div className="flex-0 min-w-[160px] relative">
+                  <svg width="18" height="18" fill="none" stroke="#88929b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
+                  </svg>
+                  <select
+                    value={searchInd}
+                    onChange={e => setSearchInd(e.target.value)}
+                    style={{ ...inputStyle, paddingLeft:42, paddingRight:28, appearance:'none', cursor:'pointer', height:50 }}
+                  >
+                    <option value="">Industry</option>
+                    {['Software','Designing','Education','IT & Consulting'].map(i=>(
+                      <option key={i} value={i}>{i}</option>
+                    ))}
+                  </select>
+                  <svg width="12" height="12" fill="none" stroke="#88929b" strokeWidth="2" viewBox="0 0 24 24"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </div>
+
+                {/* location dropdown */}
+                <div className="flex-0 min-w-[160px] relative">
+                  <svg width="18" height="18" fill="none" stroke="#88929b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/>
+                  </svg>
+                  <select
+                    value={searchLoc}
+                    onChange={e => setSearchLoc(e.target.value)}
+                    style={{ ...inputStyle, paddingLeft:42, paddingRight:28, appearance:'none', cursor:'pointer', height:50 }}
+                  >
+                    <option value="">Location</option>
+                    {[
+                      ['Hamirpur','Hamirpur, HP'],['Mohali','Mohali, PB'],['Chandigarh','Chandigarh, PB'],
+                      ['Ambala','Ambala, HR'],['Chicago','Chicago, US'],['New York','New York, US'],['Iowa','Iowa, US'],
+                    ].map(([v,l])=><option key={v} value={v}>{l}</option>)}
+                  </select>
+                  <svg width="12" height="12" fill="none" stroke="#88929b" strokeWidth="2" viewBox="0 0 24 24"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </div>
+
+                {/* Find Now button — .btn.btn-default */}
+                <button
+                  type="submit"
+                  style={{
+                    flex:'0 0 auto',
+                    background:'#0047C7',
+                    color:'#fff',
+                    border:'none',
+                    borderRadius:10,
+                    padding:'14px 25px',
+                    fontSize:14,
+                    fontWeight:600,
+                    cursor:'pointer',
+                    transition:'background 0.2s',
+                    whiteSpace:'nowrap',
+                  }}
+                  onMouseEnter={e=>e.currentTarget.style.background='#0052cc'}
+                  onMouseLeave={e=>e.currentTarget.style.background='#0047C7'}
+                >
+                  Find Now
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </section>
 
-      {/* Floating Filter Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 -mt-7 relative z-20">
-        <form onSubmit={handleFindNow} className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xl shadow-slate-200/50 flex flex-col md:flex-row gap-3">
-          {/* Keyword Search */}
-          <div className="flex-1 relative flex items-center">
-            <Briefcase className="absolute left-4 h-5 w-5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="e.g microsoft"
-              value={searchKeyword}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-150 rounded-xl pl-12 pr-4 py-3 text-slate-800 placeholder-slate-400 text-sm focus:outline-none focus:border-indigo-300 focus:bg-white transition"
-            />
-          </div>
+      {/* ══════════════════════════════════════════════════════════
+          MAIN SECTION  — .section-box.mt-80.mb-80
+      ══════════════════════════════════════════════════════════ */}
+      <section className="max-w-[1344px] mx-auto my-20 px-4">
+        <div className="flex flex-wrap gap-12">
 
-          {/* Industry Dropdown */}
-          <div className="w-full md:w-48 relative flex items-center">
-            <Briefcase className="absolute left-4 h-5 w-5 text-slate-400 pointer-events-none" />
-            <select
-              value={searchInd}
-              onChange={(e) => setSearchInd(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-150 rounded-xl pl-12 pr-10 py-3 text-slate-700 text-sm focus:outline-none focus:border-indigo-300 focus:bg-white transition appearance-none cursor-pointer"
-            >
-              <option value="">Industry</option>
-              <option value="Software">Software</option>
-              <option value="Designing">Designing</option>
-              <option value="Education">Education</option>
-              <option value="IT & Consulting">IT & Consulting</option>
-            </select>
-            <ChevronDown className="absolute right-4 h-4 w-4 text-slate-400 pointer-events-none" />
-          </div>
+          {/* ────────────────────────────────────────────────────
+              SIDEBAR  (col-lg-4) — rendered first in DOM but
+              visually on the left via order / flex layout
+          ──────────────────────────────────────────────────── */}
+          <div className="flex-0 min-w-[340px] flex flex-col gap-[30px]">
 
-          {/* Location Dropdown */}
-          <div className="w-full md:w-48 relative flex items-center">
-            <MapPin className="absolute left-4 h-5 w-5 text-slate-400 pointer-events-none" />
-            <select
-              value={searchLoc}
-              onChange={(e) => setSearchLoc(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-150 rounded-xl pl-12 pr-10 py-3 text-slate-705 text-sm focus:outline-none focus:border-indigo-300 focus:bg-white transition appearance-none cursor-pointer"
-            >
-              <option value="">Location</option>
-              <option value="Hamirpur">Hamirpur, HP</option>
-              <option value="Mohali">Mohali, PB</option>
-              <option value="Chandigarh">Chandigarh, PB</option>
-              <option value="Ambala">Ambala, HR</option>
-              <option value="Chicago">Chicago, US</option>
-              <option value="New York">New York, US</option>
-              <option value="Iowa">Iowa, US</option>
-            </select>
-            <ChevronDown className="absolute right-4 h-4 w-4 text-slate-400 pointer-events-none" />
-          </div>
-
-          {/* Action Button */}
-          <button
-            type="submit"
-            className="bg-[#ff5e14] hover:bg-[#e05300] text-white font-bold text-sm px-6 py-3 rounded-xl transition duration-150 shadow-md shadow-orange-600/20 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
-          >
-            Find Now
-          </button>
-        </form>
-      </div>
-
-      {/* Main Grid Content */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
-        <div className="grid gap-8 lg:grid-cols-12">
-          
-          {/* Left Column: Employer Cards */}
-          <div className="lg:col-span-8 space-y-6 order-1 lg:order-1">
-            
-            {/* Header / Info bar */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-2">
-              <span className="text-xs font-bold text-slate-500">
-                Showing <strong className="text-slate-800">{filteredCompanies.length}</strong> companies
-              </span>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-400">Sort by:</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none cursor-pointer"
-                >
-                  <option value="newest">Newest Post</option>
-                  <option value="oldest">Oldest Post</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Grid of Company Cards */}
-            {filteredCompanies.length === 0 ? (
-              <div className="text-center py-16 border border-slate-100 rounded-2xl bg-slate-50">
-                <p className="text-slate-500 font-semibold text-sm">No companies found matching your filters.</p>
-                <button
-                  onClick={resetSidebarFilters}
-                  className="mt-4 text-xs font-bold text-indigo-655 hover:text-indigo-500"
-                >
-                  Clear Filters
-                </button>
-              </div>
-            ) : (
-              <div className="grid gap-6 sm:grid-cols-2">
-                {filteredCompanies.map((company) => (
-                  <div key={company.id} className="group border border-slate-200 rounded-2xl p-6 bg-white hover:border-indigo-200 hover:shadow-md transition-all duration-200 flex flex-col justify-between h-[280px]">
-                    <div className="relative">
-                      {/* Shield verified icon at the top right */}
-                      <div className="absolute top-0 right-0 w-7 h-7 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100 shadow-sm shrink-0">
-                        <Check className="h-4.5 w-4.5 stroke-[3]" />
-                      </div>
-                      
-                      {/* Logo and company details */}
-                      <div className="flex flex-col items-center text-center mt-3">
-                        <div className={`w-14 h-14 rounded-full flex items-center justify-center font-extrabold text-xl shrink-0 shadow-sm mb-3 ${company.logoBg}`}>
-                          {company.logoLetter}
-                        </div>
-                        <h3 className="font-extrabold text-slate-900 hover:text-indigo-600 transition-colors text-base truncate max-w-[200px]">
-                          <Link to="/login">{company.name}</Link>
-                        </h3>
-                        <div className="flex items-center gap-1.5 justify-center mt-1.5">
-                          <StarRating rating={company.rating} />
-                          <span className="text-[11px] font-semibold text-slate-400">({company.rating.toFixed(1)})</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Metadata indicators */}
-                    <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-100 text-xs font-bold text-slate-500">
-                      <div className="flex items-center gap-1.5 justify-center">
-                        <MapPin className="h-4 w-4 text-slate-400 shrink-0" />
-                        <span className="truncate">{company.location}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 justify-center">
-                        <Briefcase className="h-4 w-4 text-slate-400 shrink-0" />
-                        <span className="truncate">{company.industry}</span>
-                      </div>
-                    </div>
-
-                    {/* Footer redirect to jobs */}
-                    <div className="mt-4 pt-2 flex items-center justify-center">
-                      <Link
-                        to="/jobs"
-                        className="inline-flex items-center justify-center px-6 py-2.5 border border-slate-200 hover:border-indigo-200 rounded-xl text-xs font-extrabold text-indigo-600 hover:bg-indigo-50/50 transition w-full text-center"
-                      >
-                        {company.openJobs} Open Jobs
-                      </Link>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Pagination Controls */}
-            {filteredCompanies.length > 0 && (
-              <div className="flex items-center justify-center pt-10">
-                <nav className="flex items-center gap-1.5">
-                  <button className="px-3.5 py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-50 transition cursor-pointer">Previous</button>
-                  <button className="px-3.5 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white transition">1</button>
-                  <button className="px-3.5 py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-50 transition cursor-pointer">2</button>
-                  <button className="px-3.5 py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-50 transition cursor-pointer">3</button>
-                  <button className="px-3.5 py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-50 transition cursor-pointer">Next</button>
-                </nav>
-              </div>
-            )}
-
-          </div>
-
-          {/* Right Column: Sidebar filters */}
-          <div className="lg:col-span-4 space-y-6 order-2 lg:order-2">
-            
-            {/* Email reminder block */}
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 space-y-4">
-              <h3 className="font-extrabold text-slate-900 text-base">Set job reminder</h3>
-              <p className="text-xs text-slate-500 leading-relaxed font-medium">Enter your email address and get job notifications.</p>
-              <form onSubmit={handleReminderSubmit} className="space-y-3">
-                <div className="relative flex items-center">
-                  <Mail className="absolute left-3.5 h-4 w-4 text-slate-400" />
+            {/* Email reminder — .sidebar-with-bg */}
+            <div className="bg-[rgba(81,146,255,0.12)] rounded-[10px] p-[30px]">
+              <h5 className="text-[22px] leading-[28px] font-medium text-[#1f2938] mb-2.5">Set job reminder</h5>
+              <p className="text-base leading-[22px] text-[#999] mb-0">
+                Enter your email address and get job notification.
+              </p>
+              <form onSubmit={handleReminder}>
+                <div className="relative mt-[15px]">
+                  <IcoEnvelope />
                   <input
                     type="email"
                     required
                     placeholder="Enter email address"
                     value={reminderEmail}
-                    onChange={(e) => setReminderEmail(e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-xl pl-11 pr-4 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-300 transition"
+                    onChange={e => setReminderEmail(e.target.value)}
+                    style={{ ...inputStyle, paddingLeft:42 }}
                   />
                 </div>
-                <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-2.5 rounded-xl transition cursor-pointer shadow-sm">
-                  Submit
-                </button>
+                <div className="mt-[25px] mb-[5px]">
+                  <button
+                    type="submit"
+                    style={{
+                      background:'#0047C7', color:'#fff', border:'none',
+                      borderRadius:10, padding:'14px 25px', fontSize:14,
+                      fontWeight:600, cursor:'pointer', width:'100%',
+                      transition:'background 0.2s',
+                    }}
+                    onMouseEnter={e=>e.currentTarget.style.background='#0052cc'}
+                    onMouseLeave={e=>e.currentTarget.style.background='#0047C7'}
+                  >
+                    {reminderDone ? '✓ Submitted!' : 'Submit'}
+                  </button>
+                </div>
               </form>
             </div>
 
-            {/* Sidebar filters list */}
-            <div className="border border-slate-200 rounded-2xl p-6 space-y-6">
-              
-              {/* Location Input */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Location</h4>
-                <div className="relative flex items-center">
-                  <MapPin className="absolute left-3.5 h-4 w-4 text-slate-400" />
+            {/* Filters panel — .sidebar-shadow.none-shadow */}
+            <div className="border border-[rgba(6,18,36,0.1)] p-[29px_33px] rounded-[10px] bg-white">
+
+              {/* Location */}
+              <div className="mb-[30px]">
+                <h5 className="text-lg text-[#1f2938] font-semibold mb-[15px]">Location</h5>
+                <div className="relative">
+                  <svg width="18" height="18" fill="none" stroke="#88929b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"
+                    className="absolute left-3 top-1/2 -translate-y-1/2">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/>
+                  </svg>
                   <input
                     type="text"
                     placeholder="Location"
                     value={sidebarLoc}
-                    onChange={(e) => setSidebarLoc(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-2.5 text-xs text-slate-850 placeholder-slate-400 focus:outline-none focus:border-indigo-300 focus:bg-white transition"
+                    onChange={e => setSidebarLoc(e.target.value)}
+                    style={{ ...inputStyle }}
                   />
                 </div>
               </div>
 
-              {/* Industry selector */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Industry Type</h4>
-                <div className="relative flex items-center">
-                  <Briefcase className="absolute left-3.5 h-4 w-4 text-slate-400 pointer-events-none" />
+              {/* Industry Type */}
+              <div className="mb-[30px]">
+                <h5 className="text-lg text-[#1f2938] font-semibold mb-[15px]">Industry Type</h5>
+                <div className="relative">
+                  <svg width="18" height="18" fill="none" stroke="#88929b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
+                  </svg>
                   <select
                     value={sidebarInd}
-                    onChange={(e) => setSidebarInd(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-10 py-2.5 text-xs text-slate-700 focus:outline-none focus:border-indigo-300 focus:bg-white transition appearance-none cursor-pointer"
+                    onChange={e => setSidebarInd(e.target.value)}
+                    style={{ ...inputStyle, paddingLeft:42, paddingRight:28, appearance:'none', cursor:'pointer', height:50 }}
                   >
-                    <option value="">All Industries</option>
+                    <option value="">IT &amp; Consulting</option>
+                    <option value="Education">Education</option>
                     <option value="Software">Software</option>
                     <option value="Designing">Designing</option>
-                    <option value="Education">Education</option>
-                    <option value="IT & Consulting">IT & Consulting</option>
                   </select>
-                  <ChevronDown className="absolute right-3.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                  <svg width="12" height="12" fill="none" stroke="#88929b" strokeWidth="2" viewBox="0 0 24 24"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
                 </div>
               </div>
 
-              {/* Job type checklist */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Job Type</h4>
-                <div className="space-y-2.5">
-                  {['Full Time', 'Part Time', 'Remote', 'Freelance'].map((t) => (
-                    <label key={t} className="flex items-center gap-2.5 text-xs font-semibold text-slate-600 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={sidebarTypes.includes(t)}
-                        onChange={() => handleSidebarTypeToggle(t)}
-                        className="h-4 w-4 rounded border-slate-350 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                      />
-                      <span>{t}</span>
-                    </label>
+              {/* Job Type */}
+              <div className="mb-[30px]">
+                <h5 className="text-lg text-[#1f2938] font-semibold mb-[15px]">Job type</h5>
+                <ul className="list-none m-0 pt-[15px] pb-[5px]">
+                  {[
+                    {label:'Full Time Jobs',count:235},
+                    {label:'Part Time Jobs',count:28},
+                    {label:'Remote Jobs',count:67},
+                    {label:'Freelance',count:92},
+                    {label:'Temporary',count:14},
+                  ].map(({label,count}) => (
+                    <CheckRow key={label} label={label} count={count}
+                      checked={sidebarTypes.includes(label)}
+                      onChange={() => toggleType(label)} />
                   ))}
-                </div>
+                </ul>
               </div>
 
-              {/* Experience level checklist */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Experience Level</h4>
-                <div className="space-y-2.5">
-                  {['Junior', 'Regular', 'Senior', 'Expert'].map((exp) => (
-                    <label key={exp} className="flex items-center gap-2.5 text-xs font-semibold text-slate-600 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={sidebarExps.includes(exp)}
-                        onChange={() => handleSidebarExpToggle(exp)}
-                        className="h-4 w-4 rounded border-slate-350 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                      />
-                      <span>{exp}</span>
-                    </label>
+              {/* Experience Level */}
+              <div className="mb-[30px]">
+                <h5 className="text-lg text-[#1f2938] font-semibold mb-[15px]">Experience Level</h5>
+                <ul className="list-none m-0 pt-[15px] pb-[5px]">
+                  {[
+                    {label:'Expert',count:76},{label:'Senior',count:89},
+                    {label:'Junior',count:54},{label:'Regular',count:23},
+                    {label:'Internship',count:22},{label:'Associate',count:14},
+                  ].map(({label,count}) => (
+                    <CheckRow key={label} label={label} count={count}
+                      checked={sidebarExps.includes(label)}
+                      onChange={() => toggleExp(label)} />
                   ))}
-                </div>
+                </ul>
               </div>
 
-              {/* Sidebar filter actions */}
-              <div className="flex items-center gap-3 pt-2">
+              {/* buttons-filter */}
+              <div className="flex gap-3">
                 <button
-                  onClick={applySidebarFilters}
-                  className="flex-1 bg-[#ff5e14] hover:bg-[#e05300] text-white font-bold text-xs py-2.5 rounded-xl transition cursor-pointer shadow-sm"
+                  onClick={() => runFilter()}
+                  style={{
+                    flex:1, background:'#0047C7', color:'#fff', border:'none',
+                    borderRadius:10, padding:'12px 15px', fontSize:14, fontWeight:500, cursor:'pointer',
+                    transition:'background 0.2s',
+                  }}
+                  onMouseEnter={e=>e.currentTarget.style.background='#0052cc'}
+                  onMouseLeave={e=>e.currentTarget.style.background='#0047C7'}
                 >
                   Apply filter
                 </button>
                 <button
-                  onClick={resetSidebarFilters}
-                  className="flex-1 border border-slate-200 hover:bg-slate-50 text-slate-500 font-bold text-xs py-2.5 rounded-xl transition cursor-pointer"
+                  onClick={resetFilters}
+                  style={{
+                    flex:1, background:'transparent', color:'#1f2938', border:'none',
+                    borderRadius:10, padding:'12px 15px', fontSize:14, fontWeight:500, cursor:'pointer',
+                    textDecoration:'none',
+                  }}
+                  onMouseEnter={e=>e.currentTarget.style.color='#0047C7'}
+                  onMouseLeave={e=>e.currentTarget.style.color='#1f2938'}
                 >
                   Reset filter
                 </button>
               </div>
-
             </div>
 
-            {/* Recruiting banner */}
-            <div className="bg-[#eef2ff] border border-blue-100 rounded-2xl p-6 space-y-4">
-              <h4 className="font-extrabold text-[#083ca6] text-base">Recruiting?</h4>
-              <p className="text-xs text-blue-900/70 leading-relaxed font-medium">
+            {/* Recruiting banner — .sidebar-with-bg.background-primary.bg-sidebar */}
+            <div style={{
+              background:'rgb(81,146,255)',
+              borderRadius:10,
+              padding:'30px 30px 80px',
+              backgroundImage:'url(assets/imgs/theme/bg-sidebar.svg)',
+              backgroundPosition:'bottom right',
+              backgroundRepeat:'no-repeat',
+            }}>
+              <h5 className="text-lg text-white font-semibold mb-5 mt-5">Recruiting?</h5>
+              <p className="text-base leading-[22px] text-white mb-[30px] opacity-85">
                 Advertise your jobs to millions of monthly users and search 16.8 million CVs in our database.
               </p>
-              <Link to="/contact" className="inline-flex items-center justify-center w-full bg-white hover:bg-blue-50 border border-blue-200 text-blue-600 font-bold text-xs py-2.5 rounded-xl transition shadow-sm">
+              <a
+                href="#"
+                style={{
+                  display:'inline-flex', alignItems:'center', gap:6,
+                  background:'#fff', color:'#0047C7', border:'1px solid #fff',
+                  borderRadius:10, padding:'8px 37px 9px 17px', fontSize:12,
+                  fontWeight:600, textDecoration:'none',
+                  backgroundImage:'url(assets/imgs/theme/icons/chevron-right.svg)',
+                  backgroundRepeat:'no-repeat',
+                  backgroundPosition:'right 13px center',
+                  transition:'all 0.2s',
+                }}
+                onMouseEnter={e=>{ e.currentTarget.style.background='#0047C7'; e.currentTarget.style.color='#fff'; }}
+                onMouseLeave={e=>{ e.currentTarget.style.background='#fff'; e.currentTarget.style.color='#0047C7'; }}
+              >
                 Post a Job
-              </Link>
+              </a>
             </div>
-
           </div>
 
+          {/* ────────────────────────────────────────────────────
+              CONTENT — col-lg-8  (company cards)
+          ──────────────────────────────────────────────────── */}
+          <div className="flex-1 min-w-0">
+
+            {/* box-filters-job: count + sort */}
+            <div className="flex justify-between items-center mt-[15px] mb-[30px]">
+              <span className="text-sm text-[#37404e]">
+                Showing <strong>{filteredCompanies.length}</strong> companies
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[#9c9ca3] font-semibold text-sm">Sort by:</span>
+                <div className="relative inline-block">
+                  <select
+                    value={sortBy}
+                    onChange={e => setSortBy(e.target.value)}
+                    style={{
+                      border:'none', background:'transparent', fontSize:14, fontWeight:600,
+                      color:'#37404e', cursor:'pointer', outline:'none', paddingRight:20, appearance:'none',
+                    }}
+                  >
+                    <option value="newest">Newest Post</option>
+                    <option value="oldest">Oldest Post</option>
+                  </select>
+                  <svg width="12" height="12" fill="none" stroke="#88929b" strokeWidth="2" viewBox="0 0 24 24"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* company card grid — row.g-4 */}
+            {filteredCompanies.length === 0 ? (
+              <div className="text-center py-[60px] px-5 border border-[#ececec] rounded-[10px]">
+                <p className="text-[#88929b] font-semibold text-sm">No companies found matching your filters.</p>
+                <button
+                  onClick={resetFilters}
+                  className="mt-4 bg-none border-none text-[#0047C7] text-sm cursor-pointer"
+                >
+                  Clear Filters
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-6">
+                {filteredCompanies.map(company => (
+                  <EmployerCard key={company.id} company={company} />
+                ))}
+              </div>
+            )}
+
+            {/* Pagination — .paginations */}
+{filteredCompanies.length > 0 && (
+  <div className="my-[50px] flex justify-center mr-100">
+    <nav className="flex">
+      {['Previous','1','2','3','Next'].map((p) => {
+        const isActive = p === '2';
+        const isNum = !isNaN(Number(p));
+
+        return (
+          <a
+            key={p}
+            href="#"
+            onClick={e => e.preventDefault()}
+            style={{
+              minWidth: isNum ? 45 : 90,
+              height: 42,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0 12px',
+              border: '1px solid #D9DDE5',
+              marginLeft: -1, // connects borders
+              fontWeight: 600,
+              fontSize: 16,
+              color: isActive ? '#0047C7' : '#37404e',
+              background: isActive ? '#E6EEFF' : '#fff',
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {p}
+          </a>
+        );
+      })}
+    </nav>
+  </div>
+)}
+          </div>
         </div>
       </section>
     </div>

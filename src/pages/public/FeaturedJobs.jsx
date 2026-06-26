@@ -76,7 +76,7 @@ const FeaturedJobs = () => {
               Featured Jobs
             </h2>
             <p className="mt-2 text-slate-500">
-              Discover top opportunities from leading companies.
+              Discover top opportunities from leading companies. 
             </p>
           </div>
 
@@ -128,7 +128,7 @@ const FeaturedJobs = () => {
                   </div>
                 </div>
               </div>
-
+ 
               {/* Bottom Section */}
               <div className="mt-auto pt-5  border-slate-100 flex items-center justify-between mt-6">
                 <div>

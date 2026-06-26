@@ -41,7 +41,7 @@ export const PublicHeader = () => {
 
   return (
     <header className="sticky top-0 z-50 bg-white/70 border-b border-slate-200/50 backdrop-blur-md shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-5">
+      <div className="max-w-[90rem] mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-5">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 shrink-0">
           <img src={logoAsset} alt="JobsWaale" className="h-9 sm:h-13 w-auto object-contain" />
@@ -49,19 +49,19 @@ export const PublicHeader = () => {
 
         {/* Desktop Navigation Links */}
         <nav className="hidden md:flex items-center gap-8">
-          <Link to="/" className={`text-sm font-medium transition duration-150 ${isActive('/') ? 'text-indigo-600' : 'text-slate-655 hover:text-indigo-600'}`}>
+          <Link to="/" className={`text-[0.9375rem] font-medium transition duration-150 ${isActive('/') ? 'text-blue-600' : 'text-slate-655 hover:text-blue-600'}`}>
             Home
           </Link>
-          <Link to="/jobs" className={`text-sm font-medium transition duration-150 ${isActive('/jobs') ? 'text-indigo-600' : 'text-slate-655 hover:text-indigo-600'}`}>
+          <Link to="/jobs" className={`text-[0.9375rem] font-medium transition duration-150 ${isActive('/jobs') ? 'text-blue-600' : 'text-slate-655 hover:text-blue-600'}`}>
             Jobs
           </Link>
-          <Link to="/employer" className={`text-sm font-medium transition duration-150 ${isActive('/employer') ? 'text-indigo-600' : 'text-slate-655 hover:text-indigo-600'}`}>
+          <Link to="/employer" className={`text-[0.9375rem] font-medium transition duration-150 ${isActive('/employer') ? 'text-blue-600' : 'text-slate-655 hover:text-blue-600'}`}>
             Employers
           </Link>
           
           {/* Pricing Dropdown */}
           <div className="relative group py-2">
-            <button className="flex items-center gap-1 text-sm font-medium text-slate-655 hover:text-indigo-600 focus:outline-none cursor-pointer">
+            <button className="flex items-center gap-1 text-[0.9375rem] font-medium text-slate-655 hover:text-blue-600 focus:outline-none cursor-pointer">
               Pricing <ChevronDown className="h-3.5 w-3.5" />
             </button>
             <div className="absolute top-full left-0 mt-1 hidden group-hover:block bg-white border border-slate-200 rounded-lg shadow-lg py-2 w-48 z-50">
@@ -74,7 +74,7 @@ export const PublicHeader = () => {
             </div>
           </div>
 
-          <Link to="/about" className={`text-sm font-medium transition duration-150 ${isActive('/about') ? 'text-indigo-600' : 'text-slate-655 hover:text-indigo-600'}`}>
+          <Link to="/about" className={`text-[0.9375rem] font-medium transition duration-150 ${isActive('/about') ? 'text-blue-600' : 'text-slate-655 hover:text-blue-600'}`}>
             About Us
           </Link>
         </nav>
@@ -135,13 +135,13 @@ export const PublicHeader = () => {
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-slate-200 bg-white py-4 px-4 shadow-inner max-h-[80vh] overflow-y-auto">
           <nav className="flex flex-col gap-3.5">
-            <Link to="/" className={`text-sm font-bold py-1 ${isActive('/') ? 'text-indigo-600' : 'text-slate-655'}`}>
+            <Link to="/" className={`text-sm font-bold py-1 ${isActive('/') ? 'text-blue-600' : 'text-slate-655'}`}>
               Home
             </Link>
-            <Link to="/jobs" className={`text-sm font-bold py-1 ${isActive('/jobs') ? 'text-indigo-600' : 'text-slate-655'}`}>
+            <Link to="/jobs" className={`text-sm font-bold py-1 ${isActive('/jobs') ? 'text-blue-600' : 'text-slate-655'}`}>
               Jobs
             </Link>
-            <Link to="/employer" className={`text-sm font-bold py-1 ${isActive('/employer') ? 'text-indigo-600' : 'text-slate-655'}`}>
+            <Link to="/employer" className={`text-sm font-bold py-1 ${isActive('/employer') ? 'text-blue-600' : 'text-slate-655'}`}>
               Employers
             </Link>
 
@@ -162,13 +162,13 @@ export const PublicHeader = () => {
               )}
             </div>
 
-            <Link to="/about" className={`text-sm font-bold py-1 ${isActive('/about') ? 'text-indigo-600' : 'text-slate-655'}`}>
+            <Link to="/about" className={`text-sm font-bold py-1 ${isActive('/about') ? 'text-blue-600' : 'text-slate-655'}`}>
               About Us
             </Link>
-            <Link to="/contact" className={`text-sm font-bold py-1 ${isActive('/contact') ? 'text-indigo-600' : 'text-slate-655'}`}>
+            <Link to="/contact" className={`text-sm font-bold py-1 ${isActive('/contact') ? 'text-blue-600' : 'text-slate-655'}`}>
               Contact Us
             </Link>
-            <Link to="/blogs" className={`text-sm font-bold py-1 ${isActive('/blogs') ? 'text-indigo-600' : 'text-slate-655'}`}>
+            <Link to="/blogs" className={`text-sm font-bold py-1 ${isActive('/blogs') ? 'text-blue-600' : 'text-slate-655'}`}>
               Blogs
             </Link>
 

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Briefcase, MapPin, ChevronDown, Mail, ArrowRight } from 'lucide-react';
+import { Briefcase, MapPin, ChevronDown, Mail, ArrowRight, Search, X } from 'lucide-react';
 import TrustedCompanies from './TrustedCompanies';
 
 const MOCK_JOBS = [
@@ -14,7 +14,7 @@ const MOCK_JOBS = [
     category: 'IT & Software',
     experience: 'Junior',
     logoLetter: 'M',
-    logoBg: 'bg-rose-100 text-rose-700'
+    logoBg: 'bg-rose-500'
   },
   {
     id: 2,
@@ -26,7 +26,7 @@ const MOCK_JOBS = [
     category: 'Designing',
     experience: 'Junior',
     logoLetter: 'T',
-    logoBg: 'bg-blue-100 text-blue-700'
+    logoBg: 'bg-[#0047C7]'
   },
   {
     id: 3,
@@ -38,7 +38,7 @@ const MOCK_JOBS = [
     category: 'IT & Software',
     experience: 'Regular',
     logoLetter: 'I',
-    logoBg: 'bg-emerald-100 text-emerald-700'
+    logoBg: 'bg-emerald-500'
   },
   {
     id: 4,
@@ -50,7 +50,7 @@ const MOCK_JOBS = [
     category: 'HR & Admin',
     experience: 'Regular',
     logoLetter: 'W',
-    logoBg: 'bg-amber-100 text-amber-700'
+    logoBg: 'bg-amber-500'
   },
   {
     id: 5,
@@ -62,7 +62,7 @@ const MOCK_JOBS = [
     category: 'IT & Software',
     experience: 'Senior',
     logoLetter: 'M',
-    logoBg: 'bg-rose-100 text-rose-700'
+    logoBg: 'bg-rose-500'
   },
   {
     id: 6,
@@ -74,7 +74,7 @@ const MOCK_JOBS = [
     category: 'Designing',
     experience: 'Senior',
     logoLetter: 'T',
-    logoBg: 'bg-blue-100 text-blue-700'
+    logoBg: 'bg-[#0047C7]'
   },
   {
     id: 7,
@@ -86,7 +86,7 @@ const MOCK_JOBS = [
     category: 'Customer Support',
     experience: 'Regular',
     logoLetter: 'M',
-    logoBg: 'bg-purple-100 text-purple-700'
+    logoBg: 'bg-purple-500'
   },
   {
     id: 8,
@@ -98,7 +98,7 @@ const MOCK_JOBS = [
     category: 'Accounts & Finance',
     experience: 'Expert',
     logoLetter: 'H',
-    logoBg: 'bg-indigo-100 text-indigo-700'
+    logoBg: 'bg-indigo-500'
   },
   {
     id: 9,
@@ -110,7 +110,7 @@ const MOCK_JOBS = [
     category: 'Sales & Marketing',
     experience: 'Junior',
     logoLetter: 'Z',
-    logoBg: 'bg-red-100 text-red-700'
+    logoBg: 'bg-red-500'
   }
 ];
 
@@ -119,6 +119,10 @@ export const Jobs = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searchType, setSearchType] = useState('');
   const [searchLoc, setSearchLoc] = useState('');
+  const [tagFilter, setTagFilter] = useState('');
+  const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
+  const [locDropdownOpen, setLocDropdownOpen] = useState(false);
+  const filterBarRef = useRef(null);
 
   // Sidebar filter states
   const [sidebarLoc, setSidebarLoc] = useState('');
@@ -144,8 +148,19 @@ export const Jobs = () => {
           j.category.toLowerCase().includes(kw)
       );
     }
+    if (tagFilter.trim() !== '') {
+      const tag = tagFilter.toLowerCase();
+      result = result.filter((j) => j.category.toLowerCase().includes(tag.split('/')[0]) || j.title.toLowerCase().includes(tag));
+    }
     if (searchType) {
-      result = result.filter((j) => j.type.toLowerCase() === searchType.toLowerCase());
+      const typeMap = {
+        'Full time': 'Full Time',
+        'Part time': 'Part Time',
+        Freelancer: 'Freelance',
+        'Online work': 'Remote'
+      };
+      const mapped = (typeMap[searchType] || searchType).toLowerCase();
+      result = result.filter((j) => j.type.toLowerCase() === mapped);
     }
     if (searchLoc) {
       result = result.filter((j) => j.location.toLowerCase().includes(searchLoc.toLowerCase()));
@@ -179,8 +194,18 @@ export const Jobs = () => {
     filterJobs();
   }, [sortBy]);
 
-  const handleFindNow = (e) => {
-    e.preventDefault();
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (filterBarRef.current && !filterBarRef.current.contains(e.target)) {
+        setTypeDropdownOpen(false);
+        setLocDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleFindNow = () => {
     filterJobs();
   };
 
@@ -196,6 +221,7 @@ export const Jobs = () => {
     setSearchKeyword('');
     setSearchType('');
     setSearchLoc('');
+    setTagFilter('');
     setFilteredJobs(MOCK_JOBS);
   };
 
@@ -218,110 +244,173 @@ export const Jobs = () => {
   };
 
   return (
-    <div className="w-full bg-white">
-      {/* Top Banner / Breadcrumb Section */}
-      <section className="bg-slate-50 py-12 border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight leading-snug">
-                Your next opportunity starts here <br />
-                with <span className="text-blue-600">2000+</span> Jobs
-              </h1>
-              <p className="text-slate-500 text-sm mt-2 font-medium">
-                Discover your next career move, freelance gig, or internship
-              </p>
-            </div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-400">
-              <Link to="/" className="hover:text-indigo-650 transition">Home</Link>
-              <span>/</span>
-              <span className="text-slate-600">Jobs listing</span>
+    <div className="w-full bg-white" style={{ fontFamily: "'Inter', sans-serif" }}>
+      {/* Top Banner Section — heading, breadcrumb, and filter card all live inside the cream banner */}
+      <section className="bg-[#FFF9F3] py-[55px] relative overflow-hidden">
+        <div className="max-w-[1350px] mx-auto px-4 sm:px-6 relative z-10">
+
+          {/* Heading row */}
+          <h1 className="text-[28px] leading-[34px] sm:text-4xl sm:leading-tight font-bold text-[#1f2938]">
+            Your next opportunity starts here <br />
+            with <strong className="text-[#FF6B00]">2000+</strong> Jobs
+          </h1>
+
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mt-4 mb-10">
+            <span className="text-[#475569] text-sm">
+              Discover your next career move, freelance gig, or internship
+            </span>
+            <ul className="flex items-center gap-2 text-sm text-[#88929b]">
+              <li><Link to="/" className="text-[#1f2938] hover:text-[#0047C7] font-normal">Home</Link></li>
+              <li className="relative pl-3 before:content-['/'] before:absolute before:left-0 before:text-[#1f2938]">Jobs listing</li>
+            </ul>
+          </div>
+
+          {/* Filter card — matches box-shadow-bdrd-15.box-filters: two columns,
+              left = keyword search + removable tag pill, right = dropdowns + Find Now button */}
+          <div
+            ref={filterBarRef}
+            className="bg-white rounded-[15px] p-[15px]"
+            style={{ boxShadow: '0px 20px 60px -6px rgba(0,0,0,0.04)', border: 'thin solid #ececec' }}
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-center">
+
+              {/* Left column: keyword search (its own form) + removable tag pill below */}
+              <div className="flex flex-wrap items-center gap-4">
+                <form
+                  onSubmit={(e) => e.preventDefault()}
+                  className="flex-1 min-w-[200px]"
+                >
+                  <div className="relative">
+                    <Search className="absolute left-[10px] top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-[#88929b] pointer-events-none" />
+                    <input
+                      type="text"
+                      placeholder="e.g UI Designer"
+                      value={searchKeyword}
+                      onChange={(e) => setSearchKeyword(e.target.value)}
+                      className="w-full border-0 pl-9 pr-2 py-3 text-[#37404e] placeholder-[#88929b] text-sm focus:outline-none bg-transparent"
+                    />
+                  </div>
+                </form>
+
+                {tagFilter && (
+                  <span className="inline-flex items-center gap-2 text-sm text-[#37404e] bg-[#f1f7ff] rounded-[10px] pl-[22px] pr-[14px] py-3">
+                    {tagFilter}
+                    <button
+                      type="button"
+                      onClick={() => setTagFilter('')}
+                      aria-label="Remove filter"
+                      className="h-[15px] w-[15px] flex items-center justify-center text-[#88929b] hover:text-[#37404e] transition"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </span>
+                )}
+              </div>
+
+              {/* Right column: job-type dropdown, location dropdown, Find Now button (floated right) */}
+              <div className="flex items-center flex-wrap gap-3 lg:justify-between">
+                <div className="flex items-center flex-wrap gap-3">
+
+                  {/* Job type custom dropdown */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => { setTypeDropdownOpen((o) => !o); setLocDropdownOpen(false); }}
+                      className="flex items-center gap-2 text-sm text-[#37404e] px-1 py-2 cursor-pointer focus:outline-none"
+                    >
+                      <Briefcase className="h-4 w-4 text-[#88929b]" />
+                      <span>{searchType || 'Full time'}</span>
+                      <ChevronDown className="h-3.5 w-3.5 text-[#88929b]" />
+                    </button>
+                    {typeDropdownOpen && (
+                      <ul
+                        className="absolute left-0 top-full mt-3 min-w-[160px] bg-white rounded-[10px] py-2 z-30"
+                        style={{ border: 'thin solid #ececec', boxShadow: '0px 9px 26px 0px rgba(31,31,51,0.06)' }}
+                      >
+                        {['Full time', 'Part time', 'Freelancer', 'Online work'].map((opt) => (
+                          <li key={opt}>
+                            <button
+                              type="button"
+                              onClick={() => { setSearchType(opt); setTypeDropdownOpen(false); }}
+                              className={`block w-full text-left px-5 py-2.5 text-sm transition ${
+                                searchType === opt ? 'bg-[#0047C7] text-white' : 'text-[#636477] hover:bg-[#f1f7ff]'
+                              }`}
+                            >
+                              {opt}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
+                  {/* Location custom dropdown */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => { setLocDropdownOpen((o) => !o); setTypeDropdownOpen(false); }}
+                      className="flex items-center gap-2 text-sm text-[#37404e] px-1 py-2 cursor-pointer focus:outline-none"
+                    >
+                      <MapPin className="h-4 w-4 text-[#88929b]" />
+                      <span>{searchLoc || 'Hamirpur, HP'}</span>
+                      <ChevronDown className="h-3.5 w-3.5 text-[#88929b]" />
+                    </button>
+                    {locDropdownOpen && (
+                      <ul
+                        className="absolute left-0 top-full mt-3 min-w-[180px] bg-white rounded-[10px] py-2 z-30"
+                        style={{ border: 'thin solid #ececec', boxShadow: '0px 9px 26px 0px rgba(31,31,51,0.06)' }}
+                      >
+                        {['Mohali, PB', 'Chandigarh, PB', 'Ambala, HR'].map((opt) => (
+                          <li key={opt}>
+                            <button
+                              type="button"
+                              onClick={() => { setSearchLoc(opt); setLocDropdownOpen(false); }}
+                              className={`block w-full text-left px-5 py-2.5 text-sm transition ${
+                                searchLoc === opt ? 'bg-[#0047C7] text-white' : 'text-[#636477] hover:bg-[#f1f7ff]'
+                              }`}
+                            >
+                              {opt}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+
+                {/* Find Now button — floats to the right of the row */}
+                <button
+                  type="button"
+                  onClick={handleFindNow}
+                  className="bg-[#0047C7] hover:bg-[#0052cc] text-white font-medium text-sm px-7 py-3 rounded-[10px] transition duration-150 cursor-pointer whitespace-nowrap"
+                >
+                  Find Now
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Floating Filter Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 -mt-7 relative z-20">
-        <form onSubmit={handleFindNow} className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xl shadow-slate-200/50 flex flex-col md:flex-row gap-3">
-          {/* Keyword Search */}
-          <div className="flex-1 relative flex items-center">
-            <Briefcase className="absolute left-4 h-5 w-5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="e.g UI Designer"
-              value={searchKeyword}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-150 rounded-xl pl-12 pr-4 py-3 text-slate-800 placeholder-slate-400 text-sm focus:outline-none focus:border-indigo-300 focus:bg-white transition"
-            />
-          </div>
-
-          {/* Job Type Dropdown */}
-          <div className="w-full md:w-48 relative flex items-center">
-            <Briefcase className="absolute left-4 h-5 w-5 text-slate-400 pointer-events-none" />
-            <select
-              value={searchType}
-              onChange={(e) => setSearchType(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-150 rounded-xl pl-12 pr-10 py-3 text-slate-700 text-sm focus:outline-none focus:border-indigo-300 focus:bg-white transition appearance-none cursor-pointer"
-            >
-              <option value="">Job Type</option>
-              <option value="Full Time">Full Time</option>
-              <option value="Part Time">Part Time</option>
-              <option value="Freelance">Freelance</option>
-              <option value="Remote">Remote</option>
-            </select>
-            <ChevronDown className="absolute right-4 h-4 w-4 text-slate-400 pointer-events-none" />
-          </div>
-
-          {/* Location Dropdown */}
-          <div className="w-full md:w-48 relative flex items-center">
-            <MapPin className="absolute left-4 h-5 w-5 text-slate-400 pointer-events-none" />
-            <select
-              value={searchLoc}
-              onChange={(e) => setSearchLoc(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-150 rounded-xl pl-12 pr-10 py-3 text-slate-700 text-sm focus:outline-none focus:border-indigo-300 focus:bg-white transition appearance-none cursor-pointer"
-            >
-              <option value="">Location</option>
-              <option value="Hamirpur">Hamirpur, HP</option>
-              <option value="Mohali">Mohali, PB</option>
-              <option value="Chandigarh">Chandigarh, PB</option>
-              <option value="Ambala">Ambala, HR</option>
-              <option value="Noida">Noida, UP</option>
-              <option value="Bangalore">Bangalore, KA</option>
-              <option value="Pune">Pune, MH</option>
-              <option value="Hyderabad">Hyderabad, TS</option>
-            </select>
-            <ChevronDown className="absolute right-4 h-4 w-4 text-slate-400 pointer-events-none" />
-          </div>
-
-          {/* Action Button */}
-          <button
-            type="submit"
-            className="bg-[#ff5e14] hover:bg-[#e05300] text-white font-bold text-sm px-6 py-3 rounded-xl transition duration-150 shadow-md shadow-orange-600/10 cursor-pointer whitespace-nowrap"
-          >
-            Find Now
-          </button>
-        </form>
-      </div>
-
-      {/* Main Grid Content */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
+      {/* Main Grid Content — HTML uses row.flex-row-reverse with listings as col-lg-8 first in source
+          (so it renders on the right) and sidebar as col-lg-4 second (renders on the left) */}
+      <section className="max-w-[1350px] mx-auto px-4 sm:px-6 pt-20 pb-16">
         <div className="grid gap-8 lg:grid-cols-12">
-          
-          {/* Left Column: Job Cards */}
-          <div className="lg:col-span-8 space-y-6 order-1 lg:order-1">
-            
+
+          {/* Job listings column — renders on the RIGHT to match the HTML's flex-row-reverse layout */}
+          <div className="lg:col-span-8 space-y-6 order-1 lg:order-2">
+
             {/* Header / Info bar */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-2">
-              <span className="text-xs font-bold text-slate-500">
-                Showing <strong className="text-slate-800">{filteredJobs.length}</strong> jobs
+            <div className="flex items-center justify-between pb-2">
+              <span className="text-sm text-[#37404e]">
+                Showing <strong className="text-[#37404e]">{filteredJobs.length}</strong> jobs
               </span>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-400">Sort by:</span>
+                <span className="text-sm font-semibold text-[#9c9ca3]">Sort by:</span>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none cursor-pointer"
+                  className="text-sm font-semibold text-[#37404e] bg-transparent border-0 focus:outline-none cursor-pointer"
                 >
                   <option value="newest">Newest Post</option>
                   <option value="oldest">Oldest Post</option>
@@ -331,38 +420,44 @@ export const Jobs = () => {
 
             {/* Grid of Job Cards */}
             {filteredJobs.length === 0 ? (
-              <div className="text-center py-16 border border-slate-100 rounded-2xl bg-slate-50">
-                <p className="text-slate-500 font-semibold text-sm">No jobs found matching your filters.</p>
+              <div className="text-center py-16 rounded-[12px] bg-[#f4f6fa]" style={{ border: '0.88px solid rgba(6,18,36,0.1)' }}>
+                <p className="text-[#88929b] font-medium text-sm">No jobs found matching your filters.</p>
                 <button
                   onClick={resetSidebarFilters}
-                  className="mt-4 text-xs font-bold text-indigo-650 hover:text-indigo-500"
+                  className="mt-4 text-sm font-bold text-[#0047C7] hover:text-[#0052cc]"
                 >
                   Clear Filters
                 </button>
               </div>
             ) : (
-              <div className="grid gap-6 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2">
                 {filteredJobs.map((job) => (
-                  <div key={job.id} className="border border-slate-250 rounded-2xl p-6 bg-white hover:border-indigo-200 hover:shadow-md transition-all duration-200 flex flex-col justify-between h-[210px]">
-                    <div className="flex gap-4 items-start">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-extrabold text-lg shrink-0 ${job.logoBg}`}>
-                        {job.logoLetter}
+                  <div key={job.id} className="job-card">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg text-white ${job.logoBg}`}>
+                          {job.logoLetter}
+                        </div>
                       </div>
-                      <div className="space-y-0.5 min-w-0">
-                        <h3 className="font-bold text-slate-900 hover:text-indigo-600 transition-colors text-base truncate">
-                          <Link to="/login">{job.title}</Link>
+                      <div className="flex-grow-1 ms-4 min-w-0">
+                        <h3 className="job-title font-bold text-[#1f2938] text-base leading-snug truncate">
+                          <Link to="/login" className="text-dark hover:text-[#0047C7]">
+                            {job.title}
+                          </Link>
                         </h3>
-                        <p className="text-xs font-semibold text-slate-500 truncate">{job.company}</p>
-                        <div className="flex items-center gap-1 mt-3 text-xs font-bold text-slate-400">
-                          <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                          {job.location}
+                        <p className="company-name text-xs font-bold text-[black] truncate mb-2 mt-2">
+                          {job.company}
+                        </p>
+                        <div className="job-meta-list flex items-center gap-1 text-xs text-[#88929b]">
+                          <MapPin className="h-3.5 w-3.5 text-[#88929b] shrink-0" />
+                          <span>{job.location}</span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between border-t border-slate-100 pt-4 mt-4">
-                      <span className="text-sm font-extrabold text-indigo-600">{job.salary}</span>
-                      <span className="px-2.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] uppercase font-bold tracking-wider">
+                    <div className="job-footer mt-auto pt-4 flex items-center justify-between" style={{ borderTop: '1px solid #d8d2d2', marginTop:'7%' }}>
+                      <span className="job-salary text-sm font-bold text-[black]">{job.salary}</span>
+                      <span className="job-badge px-3 py-1 rounded-[6px] bg-[rgba(0,71,199,0.12)] text-blue-500 text-xs font-medium">
                         {job.type}
                       </span>
                     </div>
@@ -373,71 +468,71 @@ export const Jobs = () => {
 
             {/* Pagination Controls */}
             {filteredJobs.length > 0 && (
-              <div className="flex items-center justify-center pt-10">
-                <nav className="flex items-center gap-1.5">
-                  <button className="px-3.5 py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-50 transition cursor-pointer">Previous</button>
-                  <button className="px-3.5 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white transition">1</button>
-                  <button className="px-3.5 py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-50 transition cursor-pointer">2</button>
-                  <button className="px-3.5 py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-50 transition cursor-pointer">3</button>
-                  <button className="px-3.5 py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-50 transition cursor-pointer">Next</button>
+              <div className="flex items-center pt-10">
+                <nav className="flex items-center gap-1">
+                  <button className="px-3 py-2 text-sm font-semibold text-[#37404e] hover:font-bold transition cursor-pointer">Previous</button>
+                  <button className="px-3.5 py-2 rounded-[8px] text-sm font-bold text-[#37404e]" style={{ backgroundColor: 'rgba(0,71,199,0.3)' }}>1</button>
+                  <button className="px-3.5 py-2 rounded-[8px] text-sm font-semibold text-[#37404e] hover:bg-[rgba(0,71,199,0.3)] transition cursor-pointer">2</button>
+                  <button className="px-3.5 py-2 rounded-[8px] text-sm font-semibold text-[#37404e] hover:bg-[rgba(0,71,199,0.3)] transition cursor-pointer">3</button>
+                  <button className="px-3 py-2 text-sm font-semibold text-[#37404e] hover:font-bold transition cursor-pointer">Next</button>
                 </nav>
               </div>
             )}
 
           </div>
 
-          {/* Right Column: Sidebar filters */}
-          <div className="lg:col-span-4 space-y-6 order-2 lg:order-2">
-            
+          {/* Sidebar column — renders on the LEFT to match the HTML's flex-row-reverse layout */}
+          <div className="lg:col-span-4 space-y-[30px] order-2 lg:order-1">
+
             {/* Email reminder block */}
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 space-y-4">
-              <h3 className="font-extrabold text-slate-900 text-base">Set job reminder</h3>
-              <p className="text-xs text-slate-500 leading-relaxed font-medium">Enter your email address and get job notifications.</p>
-              <form onSubmit={handleReminderSubmit} className="space-y-3">
+            <div className="rounded-[10px] p-[30px] space-y-3" style={{ backgroundColor: 'rgba(81,146,255,0.12)' }}>
+              <h3 className="font-semibold text-[#1f2938] text-[18px]">Set job reminder</h3>
+              <p className="text-sm text-[#999] leading-snug">Enter you email address and get job notification.</p>
+              <form onSubmit={handleReminderSubmit} className="space-y-3 pt-1">
                 <div className="relative flex items-center">
-                  <Mail className="absolute left-3.5 h-4 w-4 text-slate-400" />
+                  <Mail className="absolute left-[15px] h-[18px] w-[18px] text-[#88929b]" />
                   <input
                     type="email"
                     required
                     placeholder="Enter email address"
                     value={reminderEmail}
                     onChange={(e) => setReminderEmail(e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-xl pl-11 pr-4 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-300 transition"
+                    className="w-full bg-white border border-[rgba(6,18,36,0.1)] rounded-[10px] pl-11 pr-4 py-3 text-sm text-[#37404e] placeholder-[#88929b] focus:outline-none focus:border-[#0047C7] transition"
                   />
                 </div>
-                <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-2.5 rounded-xl transition cursor-pointer shadow-sm">
+                <button type="submit" className="bg-[#0047C7] hover:bg-[#0052cc] text-white font-bold text-sm px-6 py-3 rounded-[10px] transition cursor-pointer hover:-translate-y-0.5">
                   Submit
                 </button>
               </form>
             </div>
 
             {/* Sidebar filters list */}
-            <div className="border border-slate-200 rounded-2xl p-6 space-y-6">
-              
+            <div className="rounded-[10px] bg-white p-[29px_33px] space-y-[30px]" style={{ border: '1px solid rgba(6,18,36,0.1)', boxShadow: '0px 9px 26px 0px rgba(31,31,51,0.06)' }}>
+
               {/* Location Input */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Location</h4>
+              <div className="space-y-3">
+                <h4 className="text-[18px] font-semibold text-[#1f2938]">Location</h4>
                 <div className="relative flex items-center">
-                  <MapPin className="absolute left-3.5 h-4 w-4 text-slate-400" />
+                  <MapPin className="absolute left-[15px] h-[18px] w-[18px] text-[#88929b]" />
                   <input
                     type="text"
                     placeholder="Location"
                     value={sidebarLoc}
                     onChange={(e) => setSidebarLoc(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-2.5 text-xs text-slate-850 placeholder-slate-400 focus:outline-none focus:border-indigo-300 focus:bg-white transition"
+                    className="w-full border border-[rgba(6,18,36,0.1)] rounded-[10px] pl-11 pr-4 py-3 text-sm text-[#37404e] placeholder-[#88929b] focus:outline-none focus:border-[#0047C7] transition"
                   />
                 </div>
               </div>
 
               {/* Category selector */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Category</h4>
+              <div className="space-y-3">
+                <h4 className="text-[18px] font-semibold text-[#1f2938]">Category</h4>
                 <div className="relative flex items-center">
-                  <Briefcase className="absolute left-3.5 h-4 w-4 text-slate-400 pointer-events-none" />
+                  <Briefcase className="absolute left-[15px] h-[18px] w-[18px] text-[#88929b] pointer-events-none" />
                   <select
                     value={sidebarCat}
                     onChange={(e) => setSidebarCat(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-10 py-2.5 text-xs text-slate-700 focus:outline-none focus:border-indigo-300 focus:bg-white transition appearance-none cursor-pointer"
+                    className="w-full border border-[rgba(6,18,36,0.1)] rounded-[10px] pl-11 pr-10 py-3 text-sm text-[#88929b] focus:outline-none focus:border-[#0047C7] transition appearance-none cursor-pointer"
                   >
                     <option value="">All Categories</option>
                     <option value="IT & Software">IT & Software</option>
@@ -447,23 +542,33 @@ export const Jobs = () => {
                     <option value="Sales & Marketing">Sales & Marketing</option>
                     <option value="HR & Admin">HR & Admin</option>
                   </select>
-                  <ChevronDown className="absolute right-3.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                  <ChevronDown className="absolute right-[15px] h-4 w-4 text-[#88929b] pointer-events-none" />
                 </div>
               </div>
 
               {/* Job type checklist */}
               <div className="space-y-3">
-                <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Job Type</h4>
-                <div className="space-y-2.5">
-                  {['Full Time', 'Part Time', 'Remote', 'Freelance'].map((t) => (
-                    <label key={t} className="flex items-center gap-2.5 text-xs font-semibold text-slate-600 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={sidebarTypes.includes(t)}
-                        onChange={() => handleSidebarTypeToggle(t)}
-                        className="h-4 w-4 rounded border-slate-350 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                      />
-                      <span>{t}</span>
+                <h4 className="text-[18px] font-semibold text-[#1f2938]">Job type</h4>
+                <div className="space-y-3 pt-1">
+                  {[
+                    ['Full Time', 235],
+                    ['Part Time', 28],
+                    ['Remote', 67],
+                    ['Freelance', 92]
+                  ].map(([t, count]) => (
+                    <label key={t} className="flex items-center justify-between gap-2.5 text-sm text-[#37404e] cursor-pointer select-none">
+                      <span className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={sidebarTypes.includes(t)}
+                          onChange={() => handleSidebarTypeToggle(t)}
+                          className="h-[18px] w-[18px] rounded-[4px] border-2 border-[#d1d1d1] text-[#0047C7] focus:ring-[#0047C7] cursor-pointer"
+                        />
+                        {t}
+                      </span>
+                      <span className="text-xs px-2 py-1 rounded-[5px] text-[#9c9ca3]" style={{ backgroundColor: 'rgba(156,156,163,0.18)' }}>
+                        {count}
+                      </span>
                     </label>
                   ))}
                 </div>
@@ -471,33 +576,43 @@ export const Jobs = () => {
 
               {/* Experience level checklist */}
               <div className="space-y-3">
-                <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Experience Level</h4>
-                <div className="space-y-2.5">
-                  {['Junior', 'Regular', 'Senior', 'Expert'].map((exp) => (
-                    <label key={exp} className="flex items-center gap-2.5 text-xs font-semibold text-slate-600 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={sidebarExps.includes(exp)}
-                        onChange={() => handleSidebarExpToggle(exp)}
-                        className="h-4 w-4 rounded border-slate-350 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                      />
-                      <span>{exp}</span>
+                <h4 className="text-[18px] font-semibold text-[#1f2938]">Experience Level</h4>
+                <div className="space-y-3 pt-1">
+                  {[
+                    ['Junior', 54],
+                    ['Regular', 23],
+                    ['Senior', 89],
+                    ['Expert', 76]
+                  ].map(([exp, count]) => (
+                    <label key={exp} className="flex items-center justify-between gap-2.5 text-sm text-[#37404e] cursor-pointer select-none">
+                      <span className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={sidebarExps.includes(exp)}
+                          onChange={() => handleSidebarExpToggle(exp)}
+                          className="h-[18px] w-[18px] rounded-[4px] border-2 border-[#d1d1d1] text-[#0047C7] focus:ring-[#0047C7] cursor-pointer"
+                        />
+                        {exp}
+                      </span>
+                      <span className="text-xs px-2 py-1 rounded-[5px] text-[#9c9ca3]" style={{ backgroundColor: 'rgba(156,156,163,0.18)' }}>
+                        {count}
+                      </span>
                     </label>
                   ))}
                 </div>
               </div>
 
               {/* Sidebar filter actions */}
-              <div className="flex items-center gap-3 pt-2">
+              <div className="flex items-center gap-3">
                 <button
                   onClick={applySidebarFilters}
-                  className="flex-1 bg-[#ff5e14] hover:bg-[#e05300] text-white font-bold text-xs py-2.5 rounded-xl transition cursor-pointer shadow-sm"
+                  className="flex-1 bg-[#0047C7] hover:bg-[#0052cc] text-white font-bold text-sm py-3 rounded-[10px] transition cursor-pointer hover:-translate-y-0.5"
                 >
                   Apply filter
                 </button>
                 <button
                   onClick={resetSidebarFilters}
-                  className="flex-1 border border-slate-200 hover:bg-slate-50 text-slate-500 font-bold text-xs py-2.5 rounded-xl transition cursor-pointer"
+                  className="text-[#1f2938] hover:text-[#0047C7] font-normal text-sm py-3 transition cursor-pointer"
                 >
                   Reset filter
                 </button>
@@ -506,13 +621,19 @@ export const Jobs = () => {
             </div>
 
             {/* Recruiting banner */}
-            <div className="bg-[#eef2ff] border border-blue-100 rounded-2xl p-6 space-y-4">
-              <h4 className="font-extrabold text-[#083ca6] text-base">Recruiting?</h4>
-              <p className="text-xs text-blue-900/70 leading-relaxed font-medium">
+            <div
+              className="rounded-[10px] p-[30px] pb-[60px] space-y-4 relative overflow-hidden"
+              style={{ backgroundColor: 'rgb(81,146,255)' }}
+            >
+              <h4 className="font-semibold text-white text-[22px] relative z-10">Recruiting?</h4>
+              <p className="text-sm text-white/90 leading-relaxed relative z-10">
                 Advertise your jobs to millions of monthly users and search 16.8 million CVs in our database.
               </p>
-              <Link to="/contact" className="inline-flex items-center justify-center w-full bg-white hover:bg-blue-50 border border-blue-200 text-blue-600 font-bold text-xs py-2.5 rounded-xl transition shadow-sm">
-                Post a Job
+              <Link
+                to="/contact"
+                className="relative z-10 inline-flex items-center gap-2 bg-white hover:bg-[#f1f7ff] text-[#111112] font-medium text-sm px-6 py-3 rounded-[10px] transition"
+              >
+                Post a Job <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
 
@@ -523,6 +644,25 @@ export const Jobs = () => {
 
       {/* Trusted companies component */}
       <TrustedCompanies />
+
+      <style dangerouslySetInnerHTML={{__html: `
+        .job-card {
+          background-color: #ffffff;
+          border-radius: 12px;
+          border: 1px solid rgba(6, 18, 36, 0.1);
+          padding: 1.8rem;
+          transition: all 0.3s ease-in-out;
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+        }
+
+        .job-card:hover {
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+          transform: translateY(-4px);
+          border-color: rgba(0, 102, 255, 0.2);
+        }
+      `}} />
     </div>
   );
 };
