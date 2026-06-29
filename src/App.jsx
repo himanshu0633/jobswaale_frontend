@@ -215,7 +215,7 @@ const AppLayout = () => {
         title="JobsWaale Admin Portal" 
       />
 
-      <div className="flex flex-1 relative">
+      <div className="flex flex-1 relative min-w-0">
         {/* Left Navigation Sidebar panel */}
         <Sidebar 
           isOpen={sidebarOpenMobile} 
@@ -224,8 +224,8 @@ const AppLayout = () => {
         />
 
         {/* Dynamic Route Screen view container */}
-        <div className={`flex-grow flex flex-col transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'} bg-slate-50 `}>
-          <main className="admin-content flex-grow p-4 md:p-6 lg:p-8 w-full mx-auto">
+        <div className={`min-w-0 flex-grow flex flex-col transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'} bg-slate-50 `}>
+          <main className="admin-content min-w-0 flex-grow p-4 md:p-6 lg:p-8 w-full mx-auto overflow-x-hidden">
             <AdminSubRoutes />
           </main>
         </div>

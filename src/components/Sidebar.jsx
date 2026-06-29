@@ -40,7 +40,8 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
     : location.pathname;
 
   const isActive = (path) => currentPath === path;
-  const isGroupActive = (paths) => paths.some(path => currentPath.startsWith(path));
+  const isPathActive = (path) => currentPath === path || currentPath.startsWith(`${path}/`);
+  const isGroupActive = (paths) => paths.some(path => isPathActive(path));
   const jobseekerPlanPaths = ['/jobseeker-plans', '/jobseeker-features', '/jobseeker-plan-mappings'];
   const legacyPlanPaths = ['/jobseeker-packages', '/plans', '/features', '/plan-mappings'];
   const allJobseekerPlanPaths = [...jobseekerPlanPaths, ...legacyPlanPaths];
@@ -49,7 +50,7 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
   const [openMenus, setOpenMenus] = useState({
     plans: isGroupActive(allJobseekerPlanPaths),
     employerPlans: isGroupActive(employerPlanPaths),
-    locations: currentPath.startsWith('/countries') || currentPath.startsWith('/states') || currentPath.startsWith('/districts') || currentPath.startsWith('/cities')
+    locations: isGroupActive(['/countries', '/states', '/districts', '/cities'])
   });
 
   const toggleMenu = (menu) => {
@@ -99,9 +100,9 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
           {can('dashboard.view') && <NavLink to={adminPath('/')} icon={Gauge} label="Dashboard" active={isActive('/') || isActive('/dashboard')} />}
 
           {!isCollapsed && <div className={`${sectionClass} ${palette.title}`}>People</div>}
-          {can('people.jobs.view') && <NavLink to={adminPath('/jobs')} icon={Table2} label="Jobs" active={currentPath.startsWith('/jobs')} />}
-          {can('people.jobseekers.view') && <NavLink to={adminPath('/jobseekers')} icon={UserSearch} label="Jobseeker" active={currentPath.startsWith('/jobseekers')} />}
-          {can('people.employers.view') && <NavLink to={adminPath('/employers')} icon={Handshake} label="Employer" active={currentPath.startsWith('/employers')} />}
+          {can('people.jobs.view') && <NavLink to={adminPath('/jobs')} icon={Table2} label="Jobs" active={isPathActive('/jobs')} />}
+          {can('people.jobseekers.view') && <NavLink to={adminPath('/jobseekers')} icon={UserSearch} label="Jobseeker" active={isPathActive('/jobseekers')} />}
+          {can('people.employers.view') && <NavLink to={adminPath('/employers')} icon={Handshake} label="Employer" active={isPathActive('/employers')} />}
 
           {!isCollapsed && <div className={`${sectionClass} ${palette.title}`}>Masters</div>}
           {can('masters.plans') && <div>
@@ -201,18 +202,18 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
           </div>}
 
           {!isCollapsed && <div className={`${sectionClass} ${palette.title}`}>Finance</div>}
-          {can('finance.payments.view') && <NavLink to={adminPath('/payments')} icon={CreditCard} label="Payments" active={currentPath.startsWith('/payments')} />}
-          {can('finance.transactions.view') && <NavLink to={adminPath('/payments/transactions')} icon={ArrowRightLeft} label="Transactions" active={currentPath.startsWith('/payments/transactions')} />}
+          {can('finance.payments.view') && <NavLink to={adminPath('/payments')} icon={CreditCard} label="Payments" active={isPathActive('/payments')} />}
+          {can('finance.transactions.view') && <NavLink to={adminPath('/payments/transactions')} icon={ArrowRightLeft} label="Transactions" active={isPathActive('/payments/transactions')} />}
 
           {!isCollapsed && <div className={`${sectionClass} ${palette.title}`}>Content</div>}
           {can('content.cms') && <NavLink to={adminPath('/cms-pages')} icon={CalendarDays} label="CMS Pages" active={isActive('/cms-pages')} />}
-          {can('content.blog') && <NavLink to={adminPath('/blog')} icon={Rss} label="Blog" active={currentPath.startsWith('/blog') || currentPath.startsWith('/blog-categories')} />}
+          {can('content.blog') && <NavLink to={adminPath('/blog')} icon={Rss} label="Blog" active={isPathActive('/blog') || isPathActive('/blog-categories')} />}
 
           {!isCollapsed && <div className={`${sectionClass} ${palette.title}`}>System</div>}
-          {can('system.reports') && <NavLink to={adminPath('/reports')} icon={BarChart3} label="Reports" active={currentPath.startsWith('/reports')} />}
+          {can('system.reports') && <NavLink to={adminPath('/reports')} icon={BarChart3} label="Reports" active={isPathActive('/reports')} />}
           {can('system.settings') && <NavLink to={adminPath('/settings')} icon={Settings} label="Settings" active={isActive('/settings')} />}
           {(can('system.users') || can('system.roles')) && (
-            <NavLink to={adminPath('/users-roles')} icon={UserCog} label="Users & Roles" active={currentPath.startsWith('/users-roles')} />
+            <NavLink to={adminPath('/users-roles')} icon={UserCog} label="Users & Roles" active={isPathActive('/users-roles')} />
           )}
         </nav>
       </aside>

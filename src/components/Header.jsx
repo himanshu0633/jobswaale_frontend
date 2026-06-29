@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { 
   Menu, 
   Search, 
   LayoutGrid, 
+  Moon,
   Sun, 
   Maximize, 
   Palette, 
@@ -26,6 +27,7 @@ export const Header = ({ toggleSidebar, isCollapsed, title = '' }) => {
   const { user, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [theme, setTheme] = useState(() => localStorage.getItem('adminTheme') || 'light');
 
   // Admin creation states
   const [newAdminEmail, setNewAdminEmail] = useState('');
@@ -42,6 +44,15 @@ export const Header = ({ toggleSidebar, isCollapsed, title = '' }) => {
     } else {
       document.exitFullscreen();
     }
+  };
+
+  useEffect(() => {
+    document.documentElement.dataset.adminTheme = theme;
+    localStorage.setItem('adminTheme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
 
   const handleCreateAdmin = async (e) => {
@@ -112,8 +123,13 @@ export const Header = ({ toggleSidebar, isCollapsed, title = '' }) => {
             <button className="p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors ">
               <LayoutGrid className="w-5 h-5" />
             </button>
-            <button className="p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
-              <Sun className="w-5 h-5" />
+            <button
+              onClick={toggleTheme}
+              title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+              aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+              className="p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+            >
+              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
             <button 
               onClick={toggleFullscreen}

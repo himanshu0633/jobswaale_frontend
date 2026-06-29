@@ -15,6 +15,7 @@ export const PlanMapping = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const tableMinWidth = 220 + (plans.length * 170);
 
   const showMessage = (type, text) => {
     setMessage({ type, text });
@@ -100,7 +101,7 @@ export const PlanMapping = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       
       {/* Title & Breadcrumb header */}
       <div className="flex items-center justify-between">
@@ -121,7 +122,7 @@ export const PlanMapping = () => {
           Please add Plans in <strong className="text-slate-800">Plan Master</strong> and Features in <strong className="text-slate-800">Feature Master</strong> first to generate the mapping grid.
         </div>
       ) : (
-        <div className="border border-slate-200 bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="min-w-0 border border-slate-200 bg-white rounded-2xl shadow-sm overflow-hidden">
           
           {/* Card Header */}
           <div className="p-5 border-b border-slate-100 bg-slate-50/50">
@@ -131,7 +132,7 @@ export const PlanMapping = () => {
           </div>
           
           {/* Card Content */}
-          <div className="p-6">
+          <div className="min-w-0 p-4 md:p-6">
             
             {/* Alert Boxes inside Card */}
             {message.text && (
@@ -158,13 +159,18 @@ export const PlanMapping = () => {
             )}
 
             {/* ── DESKTOP: Matrix Table (hidden on mobile) ── */}
-            <div className="hidden md:block overflow-x-auto border border-slate-150 rounded-xl">
-              <table className="w-full text-xs md:text-sm text-left border-collapse min-w-[640px]">
+            <div className="hidden md:block max-w-full overflow-x-auto overflow-y-hidden border border-slate-150 rounded-xl">
+              <table
+                className="w-full text-xs md:text-sm text-left border-collapse"
+                style={{ minWidth: `${tableMinWidth}px` }}
+              >
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-100 text-xs text-slate-400 uppercase">
-                    <th className="px-6 py-3.5 font-bold text-slate-600 border-r border-slate-100">Feature</th>
+                    <th className="sticky left-0 z-20 w-[220px] min-w-[220px] bg-slate-50 px-5 py-3.5 font-bold text-slate-600 border-r border-slate-100">
+                      Feature
+                    </th>
                     {plans.map(p => (
-                      <th key={p._id} className="px-6 py-3.5 font-bold text-slate-600 text-center border-r border-slate-100">
+                      <th key={p._id} className="w-[170px] min-w-[170px] px-5 py-3.5 font-bold text-slate-600 text-center border-r border-slate-100">
                         {p.planName}
                       </th>
                     ))}
@@ -172,19 +178,19 @@ export const PlanMapping = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
                   {features.map((f) => (
-                    <tr key={f._id} className="odd:bg-[white] even:[slate-50]">
-                      <td className="px-6 py-4 font-semibold text-slate-700 border-r border-slate-100">
+                    <tr key={f._id} className="odd:bg-white even:bg-slate-50">
+                      <td className="sticky left-0 z-10 w-[220px] min-w-[220px] bg-inherit px-5 py-4 font-semibold text-slate-700 border-r border-slate-100">
                         {f.featureName}
                       </td>
                       {plans.map(p => {
                         const key = `${p._id}_${f._id}`;
                         const currentVal = mappings[key] || 'No';
                         return (
-                          <td key={p._id} className="px-6 py-4 border-r border-slate-100 text-center">
+                          <td key={p._id} className="w-[170px] min-w-[170px] px-5 py-4 border-r border-slate-100 text-center">
                             <select
                               value={currentVal}
                               onChange={(e) => handleSelectChange(p._id, f._id, e.target.value)}
-                              className="mx-auto block px-3 py-1.5 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-xs font-semibold bg-white cursor-pointer"
+                              className="mx-auto block w-32 px-3 py-1.5 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-xs font-semibold bg-white cursor-pointer"
                             >
                               <option value="Yes">Yes</option>
                               <option value="No">No</option>

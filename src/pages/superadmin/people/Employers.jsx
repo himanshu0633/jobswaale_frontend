@@ -104,10 +104,10 @@ export const Employers = () => {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="min-w-0 space-y-5">
 
       {/* Breadcrumb Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
   <h4 className="text-xl font-bold text-slate-800">Employers</h4>
   <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 text-[0.9rem]">
     <span>Dashboard</span>
@@ -131,7 +131,7 @@ export const Employers = () => {
       )}
 
       {/* Card */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+      <div className="min-w-0 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
 
         {/* Card Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
@@ -146,17 +146,17 @@ export const Employers = () => {
         </div>
 
         {/* Card Body */}
-        <div className="p-5">
+        <div className="min-w-0 p-4 md:p-5">
 
           {/* Search + Count */}
           <div className="flex items-center gap-3 mb-4 flex-wrap">
-            <div className="relative">
+            <div className="relative w-full sm:w-auto">
               <input
                 type="text"
                 placeholder="Search by company, contact, email or phone…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 pr-4 py-2 w-72 border border-slate-200 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 bg-white"
+                className="pl-9 pr-4 py-2 w-full sm:w-72 border border-slate-200 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 bg-white"
               />
               <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
             </div>
@@ -214,8 +214,8 @@ export const Employers = () => {
           />
 
           {/* Table */}
-          <div className="overflow-x-auto hidden md:block">
-            <table className="w-full text-xs md:text-sm text-left min-w-[640px]">
+          <div className="max-w-full overflow-x-auto hidden md:block">
+            <table className="w-full text-xs md:text-sm text-left min-w-[1120px]">
               <thead>
                 <tr className="bg-slate-50 text-xs uppercase tracking-wide text-slate-400 font-semibold">
                   <th className="px-4 py-3">ID</th>
@@ -239,7 +239,7 @@ export const Employers = () => {
                   </tr>
                 ) : (
                   filteredList.map((item, index) => (
-                    <tr key={item._id} className="odd:bg-white even:bg-slate-50 {/*hover:bg-slate-50/50 transition-colors*/}">
+                    <tr key={item._id} className="odd:bg-white even:bg-slate-50">
                       <td className="px-4 py-3 text-slate-400 text-xs font-medium">
                         {String(index + 1).padStart(3, '0')}
                       </td>
