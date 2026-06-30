@@ -36,18 +36,31 @@ const TrustedCompanies = () => {
   const swiperRef = useRef(null);
 
   return (
-    <div className="section-box mt-0 py-[30px] bg-white">
+    <div className="section-box mt-0 py-[30px] bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
 
         <h5 className="font-semibold text-center mb-4 text-slate-900 text-lg">
           Trusted by 500+ Leading Companies
         </h5>
 
-        <div className="relative">
+        <div className="hidden lg:grid grid-cols-6 gap-6">
+          {companies.map((company) => (
+            <div key={company.name} className="item-logo">
+              <img
+                src={company.logo}
+                alt={company.name}
+                className="mx-auto h-[38px] max-w-[150px] object-contain"
+                loading="lazy"
+              />
+            </div>
+          ))}
+        </div>
+
+        <div className="relative px-10 sm:px-12 lg:hidden">
           {/* Left Arrow */}
           <button 
             onClick={() => swiperRef.current?.slidePrev()}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-gray-50 p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 -ml-4 border border-gray-200"
+            className="absolute left-0 lg:-left-5 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-gray-50 p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200"
             aria-label="Previous companies"
           >
             <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -58,7 +71,7 @@ const TrustedCompanies = () => {
           <Swiper
             ref={swiperRef}
             modules={[Navigation, FreeMode]}
-            spaceBetween={30}
+            spaceBetween={18}
             slidesPerView={2}
             loop={true}
             freeMode={{
@@ -72,9 +85,6 @@ const TrustedCompanies = () => {
               768: {
                 slidesPerView: 4,
               },
-              1024: {
-                slidesPerView: 6,
-              },
             }}
             className="py-5"
           >
@@ -84,7 +94,7 @@ const TrustedCompanies = () => {
                   <img
                     src={company.logo}
                     alt={company.name}
-                    className="mx-auto h-[38px] object-contain"
+                    className="mx-auto h-[38px] max-w-[150px] object-contain"
                     loading="lazy"
                   />
                 </div>
@@ -95,7 +105,7 @@ const TrustedCompanies = () => {
           {/* Right Arrow */}
           <button 
             onClick={() => swiperRef.current?.slideNext()}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-gray-50 p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 -mr-4 border border-gray-200"
+            className="absolute right-0 lg:-right-5 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-gray-50 p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200"
             aria-label="Next companies"
           >
             <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -105,7 +115,7 @@ const TrustedCompanies = () => {
         </div>
 
         {/* Scroll indicators */}
-        <div className="flex justify-center gap-2 mt-4">
+        <div className="flex lg:hidden justify-center gap-2 mt-4">
           {companies.map((_, index) => (
             <button
               key={index}
@@ -123,6 +133,10 @@ const TrustedCompanies = () => {
           border: 1px solid rgba(6,18,36,.1);
           padding: 39px 20px 36px;
           width:100%;
+          min-height: 104px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           text-align:center;
           border-radius:12px;
           background:white;
@@ -150,12 +164,6 @@ const TrustedCompanies = () => {
 
         /* Responsive button positioning */
         @media (max-width: 640px) {
-          .absolute.left-0 {
-            margin-left: -8px;
-          }
-          .absolute.right-0 {
-            margin-right: -8px;
-          }
           .absolute button {
             padding: 8px;
           }

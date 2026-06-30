@@ -101,7 +101,7 @@ export const PopularCategories = () => {
           {/* Scrolling track */}
           <div
             ref={scrollerRef}
-            className="flex gap-3 overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:hidden"
+            className="flex gap-3 overflow-x-auto scroll-smooth py-1 px-0.5 [&::-webkit-scrollbar]:hidden"
             style={{ scrollbarWidth: 'none' }}
           >
             {CATEGORIES.map((cat, idx) => {
@@ -109,16 +109,16 @@ export const PopularCategories = () => {
               return (
                 <div
                   key={idx}
-                  className="shrink-0 w-[200px] bg-white border border-slate-200 rounded-xl py-7 px-4 text-center hover:shadow-[0_10px_25px_rgba(0,0,0,0.05)] hover:border-[#0047C7] hover:-translate-y-1.5 transition-all duration-300"
+                  className="group shrink-0 w-[200px] min-h-[190px] bg-white border border-slate-200 rounded-xl py-7 px-4 text-center shadow-sm transition-all duration-200 hover:border-[#0047C7]/35 hover:bg-[#f8fbff] hover:shadow-[0_12px_28px_rgba(15,23,42,0.08)]"
                 >
                   <div
-                    className="w-[60px] h-[60px] rounded-full flex items-center justify-center mx-auto mb-5"
+                    className="w-[60px] h-[60px] rounded-full flex items-center justify-center mx-auto mb-5 transition-transform duration-200 group-hover:scale-105"
                     style={{ backgroundColor: cat.iconBg, color: cat.iconColor }}
                   >
                     <IconComp className="h-7 w-7" />
                   </div>
                   <h5 className="text-sm font-semibold text-slate-900 mb-1.5">{cat.title}</h5>
-                  <span className="inline-block text-xs font-semibold text-[#0047C7] bg-[#F2F6FF] px-3 py-1 rounded-full">
+                  <span className="inline-block text-xs font-semibold text-[#0047C7] bg-[#F2F6FF] px-3 py-1 rounded-full transition-colors duration-200 group-hover:bg-white">
                     {cat.count}
                   </span>
                 </div>

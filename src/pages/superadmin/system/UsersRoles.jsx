@@ -38,8 +38,8 @@ const UsersRoles = () => {
   const formatNumber = (value) => Number(value || 0).toLocaleString('en-IN');
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
+    <div className="min-w-0 space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h4 className="text-xl font-bold text-slate-800">Users & Roles</h4>
         <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 text-[0.9rem]">
           <Link to="/admin" className="hover:text-indigo-600">JobsWaale</Link>
@@ -64,7 +64,7 @@ const UsersRoles = () => {
           {statCards.map(card => {
             const Icon = card.icon;
             return (
-              <div key={card.key} className="bg-white border border-slate-200 rounded-xl shadow-sm p-4">
+              <div key={card.key} className="min-w-0 bg-white border border-slate-200 rounded-xl shadow-sm p-4">
                 <div className="flex items-center justify-between">
                   <div className={`w-14 h-14 rounded-lg flex items-center justify-center ${card.tone}`}>
                     <Icon className="w-7 h-7" />
@@ -80,7 +80,7 @@ const UsersRoles = () => {
         </div>
       )}
 
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+      <div className="min-w-0 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-100">
           <h5 className="text-base font-bold text-slate-800 mb-1">Manage Users & Roles</h5>
           <p className="text-sm text-slate-500 mb-0">

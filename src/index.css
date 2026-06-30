@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+html,
+body,
+#root {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   font-family: 'Nunito', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -240,6 +247,16 @@ body {
   background-color: var(--admin-primary-soft) !important;
 }
 
+:root[data-admin-theme='dark'] .admin-content .hover\:bg-slate-50:hover,
+:root[data-admin-theme='dark'] .admin-content .hover\:bg-slate-100:hover,
+:root[data-admin-theme='dark'] .admin-content .hover\:bg-slate-200:hover {
+  background-color: #202b3c !important;
+}
+
+:root[data-admin-theme='dark'] .admin-content .hover\:border-indigo-300:hover {
+  border-color: rgba(139, 124, 246, 0.55) !important;
+}
+
 .admin-content .bg-slate-50,
 .admin-content .bg-slate-50\/30 {
   background-color: #f6f7fb !important;
@@ -247,6 +264,37 @@ body {
 
 .admin-content .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
   border-color: #eef2f7 !important;
+}
+
+:root[data-admin-theme='dark'] .admin-content table {
+  color: #d5dce7;
+}
+
+:root[data-admin-theme='dark'] .admin-content thead tr {
+  background-color: #1f2a3d !important;
+}
+
+:root[data-admin-theme='dark'] .admin-content tbody tr,
+:root[data-admin-theme='dark'] .admin-content tbody tr:nth-child(odd) {
+  background-color: var(--admin-card) !important;
+}
+
+:root[data-admin-theme='dark'] .admin-content tbody tr:nth-child(even) {
+  background-color: #1f2a3d !important;
+}
+
+:root[data-admin-theme='dark'] .admin-content tbody tr:hover {
+  background-color: #26344d !important;
+}
+
+:root[data-admin-theme='dark'] .admin-content .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--admin-border) !important;
+}
+
+:root[data-admin-theme='dark'] .admin-content .border-slate-100,
+:root[data-admin-theme='dark'] .admin-content .border-slate-200,
+:root[data-admin-theme='dark'] .admin-content .border-slate-300 {
+  border-color: var(--admin-border) !important;
 }
 
 .admin-content .rounded-lg {
