@@ -29,28 +29,11 @@ const statusStyles = {
   Interview: 'bg-indigo-50 text-indigo-500',
   Shortlisted: 'bg-amber-50 text-amber-500',
   Pending: 'bg-amber-50 text-amber-500',
-  Expired: 'bg-rose-50 text-rose-500'
+  Expired: 'bg-rose-50 text-rose-500',
+  Inactive: 'bg-slate-100 text-slate-500',
+  Selected: 'bg-blue-50 text-blue-500',
+  Blacklist: 'bg-rose-50 text-rose-500'
 };
-
-const candidates = [
-  ['PS', 'Priya Sharma', 'priya@gmail.com', 'Senior React Developer', 'Tech Solutions Inc.', 'May 21, 2026', 'Shortlisted', 'from-indigo-500 to-purple-400'],
-  ['RK', 'Rahul Kumar', 'rahul@gmail.com', 'UI/UX Designer', 'Web tech Pvt Ltd', 'May 20, 2026', 'Interview', 'from-blue-500 to-sky-400'],
-  ['AV', 'Amit Verma', 'amit@gmail.com', 'Laravel Developer', 'Creative Minds', 'May 19, 2026', 'Applied', 'from-emerald-500 to-teal-400'],
-  ['NS', 'Neha Singh', 'neha@gmail.com', 'Digital Marketing Manager', 'Brands Mart', 'May 18, 2026', 'Applied', 'from-rose-500 to-pink-400'],
-  ['PS', 'Priya Sharma', 'priya@gmail.com', 'Senior React Developer', 'Tech Solutions Inc.', 'May 21, 2026', 'Shortlisted', 'from-amber-400 to-orange-300'],
-  ['RK', 'Rahul Kumar', 'rahul@gmail.com', 'UI/UX Designer', 'Web tech Pvt Ltd', 'May 20, 2026', 'Interview', 'from-cyan-400 to-blue-300'],
-  ['AV', 'Amit Verma', 'amit@gmail.com', 'Laravel Developer', 'Creative Minds', 'May 19, 2026', 'Applied', 'from-slate-400 to-slate-200']
-];
-
-const jobPostings = [
-  ['Senior React Developer', 'Tech Solutions Inc.', '45', 'May 21, 2026', 'Active'],
-  ['UI/UX Designer', 'Creative Minds', '32', 'May 20, 2026', 'Active'],
-  ['Laravel Developer', 'Web tech Pvt Ltd', '28', 'May 19, 2026', 'Active'],
-  ['Digital Marketing Manager', 'Brands Mart', '19', 'May 18, 2026', 'Expired'],
-  ['Senior React Developer', 'Tech Solutions Inc.', '45', 'May 21, 2026', 'Active'],
-  ['UI/UX Designer', 'Creative Minds', '32', 'May 20, 2026', 'Active'],
-  ['Laravel Developer', 'Web tech Pvt Ltd', '28', 'May 19, 2026', 'Pending']
-];
 
 const quickActions = [
   { title: 'Add New Job', subtitle: 'Post a new job opening', icon: Plus, color: 'bg-blue-600', to: '/admin/jobs/add' },
@@ -110,84 +93,118 @@ const StatCard = ({ icon: Icon, value, title, tone }) => (
         <div className="mt-2 text-sm font-semibold text-slate-400">{title}</div>
       </div>
     </div>
-    <div className="mt-10 text-base font-semibold text-slate-400">
-      <span className="font-extrabold text-emerald-500">↑ 12.5%</span> from last week
-    </div>
   </div>
 );
 
-const LineChart = () => {
-  const points = '20,170 120,128 220,108 320,56 420,88 520,30 620,58';
+const LineChart = ({ data = [] }) => {
+  const rows = data.length ? data : [{ label: 'No data', value: 0 }];
+  const maxValue = Math.max(...rows.map((item) => Number(item.value || 0)), 1);
+  const width = 660;
+  const chartHeight = 160;
+  const points = rows.map((item, index) => {
+    const x = rows.length === 1 ? 20 : 20 + index * ((width - 40) / (rows.length - 1));
+    const y = 20 + chartHeight - ((Number(item.value || 0) / maxValue) * chartHeight);
+    return `${x},${y}`;
+  }).join(' ');
   return (
     <div className="px-8 py-8">
       <svg viewBox="0 0 660 220" className="h-72 w-full">
         {[50, 100, 150].map((y) => (
           <line key={y} x1="0" x2="660" y1={y} y2={y} stroke="#e8eef7" strokeDasharray="7 10" />
         ))}
-        <text x="0" y="52" fill="#98a6ba" fontSize="16">100</text>
-        <text x="10" y="102" fill="#98a6ba" fontSize="16">80</text>
-        <text x="10" y="152" fill="#98a6ba" fontSize="16">60</text>
+        <text x="0" y="52" fill="#98a6ba" fontSize="16">{formatNumber(maxValue)}</text>
+        <text x="10" y="102" fill="#98a6ba" fontSize="16">{formatNumber(Math.round(maxValue * 0.6))}</text>
+        <text x="10" y="152" fill="#98a6ba" fontSize="16">{formatNumber(Math.round(maxValue * 0.3))}</text>
         <path d={`M ${points}`} fill="none" stroke="#6658dd" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
         {points.split(' ').map((point) => {
           const [cx, cy] = point.split(',');
           return <circle key={point} cx={cx} cy={cy} r="5" fill="white" stroke="#6658dd" strokeWidth="4" />;
         })}
-        {['May 15', 'May 16', 'May 17', 'May 18', 'May 19', 'May 20', 'May 21'].map((label, index) => (
-          <text key={label} x={index * 100} y="210" fill="#98a6ba" fontSize="16">{label}</text>
+        {rows.map((item, index) => (
+          <text key={`${item.label}-${index}`} x={rows.length === 1 ? 0 : index * (width / rows.length)} y="210" fill="#98a6ba" fontSize="16">{item.label}</text>
         ))}
       </svg>
     </div>
   );
 };
 
-const DonutChart = () => (
+const DonutChart = ({ data = {} }) => {
+  const total = Number(data.total || 0);
+  const rows = [
+    ['#2563ff', 'Applied', Number(data.applied || 0)],
+    ['#ff8800', 'Shortlisted', Number(data.shortlisted || 0)],
+    ['#883cff', 'Interview', Number(data.interview || 0)],
+    ['#20c777', 'Hired', Number(data.hired || 0)],
+    ['#ff2b2b', 'Rejected', Number(data.rejected || 0)]
+  ];
+  let cursor = 0;
+  const gradient = total
+    ? rows.map(([color, , value]) => {
+      const start = cursor;
+      cursor += (value / total) * 100;
+      return `${color} ${start}% ${cursor}%`;
+    }).join(', ')
+    : '#e2e8f0 0% 100%';
+
+  return (
   <div className="grid gap-8 px-8 py-8 md:grid-cols-[300px_minmax(0,1fr)] md:items-center">
-    <div className="relative mx-auto h-64 w-64 rounded-full" style={{ background: 'conic-gradient(#2563ff 0 49.4%, #ff8800 49.4% 70.7%, #883cff 70.7% 85.9%, #20c777 85.9% 93.3%, #ff2b2b 93.3% 100%)' }}>
+    <div className="relative mx-auto h-64 w-64 rounded-full" style={{ background: `conic-gradient(${gradient})` }}>
       <div className="absolute inset-12 flex flex-col items-center justify-center rounded-full bg-white">
-        <span className="text-4xl font-extrabold text-slate-900">2,543</span>
+        <span className="text-4xl font-extrabold text-slate-900">{formatNumber(total)}</span>
         <span className="text-lg font-extrabold text-slate-500">Total</span>
       </div>
     </div>
     <div className="space-y-5 text-sm font-extrabold text-slate-900">
-      {[
-        ['#2563ff', 'Applied', '1,256 (49.4%)'],
-        ['#ff8800', 'Shortlisted', '542 (21.3%)'],
-        ['#883cff', 'Interview', '387 (15.2%)'],
-        ['#20c777', 'Hired', '189 (7.4%)'],
-        ['#ff2b2b', 'Rejected', '169 (6.6%)']
-      ].map(([color, label, value]) => (
+      {rows.map(([color, label, value]) => (
         <div key={label} className="flex items-center gap-4">
           <span className="h-4 w-4 rounded-full" style={{ backgroundColor: color }} />
           <span>{label}</span>
-          <span className="ml-auto">{value}</span>
+          <span className="ml-auto">{formatNumber(value)} ({total ? ((value / total) * 100).toFixed(1) : '0.0'}%)</span>
         </div>
       ))}
     </div>
   </div>
-);
+  );
+};
 
 export const Dashboard = () => {
-  const [stats, setStats] = useState({ employers: 0, jobseekers: 0, jobsPosted: 0, revenue: 0 });
+  const [stats, setStats] = useState({
+    employers: 0,
+    jobseekers: 0,
+    jobsPosted: 0,
+    activeJobs: 0,
+    totalUsers: 0,
+    activeUsers: 0,
+    activeCompanies: 0,
+    revenue: 0,
+    applicationsOverview: [],
+    applicationsByStatus: {},
+    recentCandidates: [],
+    recentJobs: []
+  });
   const [loading, setLoading] = useState(true);
 
-  const fetchStats = async () => {
-    try {
-      const response = await axios.get(`${BASE_API_URL}/masters/dashboard/stats`);
-      setStats({
-        employers: response.data.employers || 0,
-        jobseekers: response.data.jobseekers || 0,
-        jobsPosted: response.data.jobsPosted || 0,
-        revenue: response.data.revenue || 0
-      });
-    } catch (err) {
-      console.error('Error fetching dashboard stats', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchStats();
+    let isMounted = true;
+
+    axios.get(`${BASE_API_URL}/masters/dashboard/stats`)
+      .then((response) => {
+        if (isMounted) {
+          setStats((current) => ({ ...current, ...response.data }));
+        }
+      })
+      .catch((err) => {
+        console.error('Error fetching dashboard stats', err);
+      })
+      .finally(() => {
+        if (isMounted) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   if (loading) {
@@ -198,14 +215,13 @@ export const Dashboard = () => {
     );
   }
 
-  const totalUsers = Number(stats.jobseekers || 0) + Number(stats.employers || 0);
   const statCards = [
-    { title: 'Total Jobs', value: stats.jobsPosted || 856, icon: Briefcase, tone: 'bg-indigo-50 text-indigo-600' },
-    { title: 'Active Jobs', value: Math.max(Math.round((stats.jobsPosted || 856) * 0.29), 247), icon: ClipboardCheck, tone: 'bg-emerald-50 text-emerald-500' },
-    { title: 'Total Users', value: totalUsers || 2543, icon: Users, tone: 'bg-amber-50 text-amber-500' },
-    { title: 'Active Users', value: stats.jobseekers || 1892, icon: UserRound, tone: 'bg-rose-50 text-rose-500' },
-    { title: 'Companies', value: stats.employers || 432, icon: Building2, tone: 'bg-cyan-50 text-cyan-500' },
-    { title: 'Active Companies', value: Math.max(Math.round((stats.employers || 432) * 0.57), 245), icon: Home, tone: 'bg-blue-50 text-blue-500' }
+    { title: 'Total Jobs', value: stats.jobsPosted, icon: Briefcase, tone: 'bg-indigo-50 text-indigo-600' },
+    { title: 'Active Jobs', value: stats.activeJobs, icon: ClipboardCheck, tone: 'bg-emerald-50 text-emerald-500' },
+    { title: 'Total Users', value: stats.totalUsers, icon: Users, tone: 'bg-amber-50 text-amber-500' },
+    { title: 'Active Users', value: stats.activeUsers, icon: UserRound, tone: 'bg-rose-50 text-rose-500' },
+    { title: 'Companies', value: stats.employers, icon: Building2, tone: 'bg-cyan-50 text-cyan-500' },
+    { title: 'Active Companies', value: stats.activeCompanies, icon: Home, tone: 'bg-blue-50 text-blue-500' }
   ];
 
   return (
@@ -247,11 +263,11 @@ export const Dashboard = () => {
 
       <div className="grid gap-8 xl:grid-cols-2">
         <DashboardCard title="Applications Overview">
-          <LineChart />
+          <LineChart data={stats.applicationsOverview} />
         </DashboardCard>
 
         <DashboardCard title="Applications by Status">
-          <DonutChart />
+          <DonutChart data={stats.applicationsByStatus} />
         </DashboardCard>
       </div>
 
@@ -263,36 +279,38 @@ export const Dashboard = () => {
                 <th className="px-6 py-4">Candidate</th>
                 <th className="px-6 py-4">Job Title</th>
                 <th className="px-6 py-4">Company</th>
-                <th className="px-6 py-4">Applied On</th>
+                <th className="px-6 py-4">Joined On</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4 text-right">Action</th>
               </tr>
             </thead>
             <tbody>
-              {candidates.map(([initials, name, email, job, company, date, status, gradient], index) => (
-                <tr key={`${name}-${index}`} className="border-t border-slate-100">
+              {stats.recentCandidates.length ? stats.recentCandidates.map((candidate) => (
+                <tr key={candidate.id} className="border-t border-slate-100">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-4">
-                      <span className={`flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br ${gradient} text-sm font-extrabold text-white`}>
-                        {initials}
+                      <span className={`flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br ${candidate.gradient || 'from-slate-400 to-slate-200'} text-sm font-extrabold text-white`}>
+                        {candidate.initials}
                       </span>
                       <span>
-                        <span className="block text-base font-extrabold text-slate-800">{name}</span>
-                        <span className="block text-sm font-semibold text-slate-400">{email}</span>
+                        <span className="block text-base font-extrabold text-slate-800">{candidate.name}</span>
+                        <span className="block text-sm font-semibold text-slate-400">{candidate.email || '-'}</span>
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-base font-semibold text-slate-700">{job}</td>
-                  <td className="px-6 py-4 text-base font-semibold text-slate-700">{company}</td>
-                  <td className="px-6 py-4 text-base font-semibold text-slate-700">{date}</td>
-                  <td className="px-6 py-4"><StatusBadge status={status} /></td>
+                  <td className="px-6 py-4 text-base font-semibold text-slate-700">{candidate.jobTitle}</td>
+                  <td className="px-6 py-4 text-base font-semibold text-slate-700">{candidate.company}</td>
+                  <td className="px-6 py-4 text-base font-semibold text-slate-700">{candidate.joinedOn || '-'}</td>
+                  <td className="px-6 py-4"><StatusBadge status={candidate.status} /></td>
                   <td className="px-6 py-4 text-right text-slate-400"><MoreVertical className="ml-auto h-5 w-5" /></td>
                 </tr>
-              ))}
+              )) : (
+                <tr><td colSpan="6" className="px-6 py-12 text-center text-sm font-bold text-slate-400">No recent candidates found.</td></tr>
+              )}
             </tbody>
           </table>
         </div>
-        <Pagination label="Showing 1 to 7 of 8 orders" />
+        <Pagination label={`Showing ${stats.recentCandidates.length ? 1 : 0} to ${stats.recentCandidates.length} of ${stats.recentCandidates.length} candidates`} />
       </DashboardCard>
 
       <DashboardCard title="Recent Job Posting" action={<ViewAllButton to="/admin/jobs" />}>
@@ -302,34 +320,36 @@ export const Dashboard = () => {
               <tr>
                 <th className="px-6 py-4">Job Title</th>
                 <th className="px-6 py-4">Company</th>
-                <th className="px-6 py-4">Applications</th>
+                <th className="px-6 py-4">Vacancies</th>
                 <th className="px-6 py-4">Posted On</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4 text-right">Action</th>
               </tr>
             </thead>
             <tbody>
-              {jobPostings.map(([title, company, applications, postedOn, status], index) => (
-                <tr key={`${title}-${index}`} className="border-t border-slate-100">
+              {stats.recentJobs.length ? stats.recentJobs.map((job) => (
+                <tr key={job.id} className="border-t border-slate-100">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-4">
                       <span className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
                         <Image className="h-6 w-6" />
                       </span>
-                      <span className="text-base font-extrabold text-slate-800">{title}</span>
+                      <span className="text-base font-extrabold text-slate-800">{job.title}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-base font-semibold text-slate-700">{company}</td>
-                  <td className="px-6 py-4 text-base font-extrabold text-slate-700">{applications}</td>
-                  <td className="px-6 py-4 text-base font-semibold text-slate-700">{postedOn}</td>
-                  <td className="px-6 py-4"><StatusBadge status={status} /></td>
+                  <td className="px-6 py-4 text-base font-semibold text-slate-700">{job.company}</td>
+                  <td className="px-6 py-4 text-base font-extrabold text-slate-700">{formatNumber(job.vacancies)}</td>
+                  <td className="px-6 py-4 text-base font-semibold text-slate-700">{job.postedOn || '-'}</td>
+                  <td className="px-6 py-4"><StatusBadge status={job.status} /></td>
                   <td className="px-6 py-4 text-right text-slate-400"><MoreVertical className="ml-auto h-5 w-5" /></td>
                 </tr>
-              ))}
+              )) : (
+                <tr><td colSpan="6" className="px-6 py-12 text-center text-sm font-bold text-slate-400">No recent jobs found.</td></tr>
+              )}
             </tbody>
           </table>
         </div>
-        <Pagination label="Showing 1 to 7 of 8 products" />
+        <Pagination label={`Showing ${stats.recentJobs.length ? 1 : 0} to ${stats.recentJobs.length} of ${stats.recentJobs.length} jobs`} />
       </DashboardCard>
     </div>
   );

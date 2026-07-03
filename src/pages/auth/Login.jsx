@@ -5,6 +5,7 @@ import {
   Briefcase,
   Eye,
   EyeOff,
+  KeyRound,
   Lock,
   Mail,
   Phone,
@@ -18,6 +19,11 @@ import logoAsset from '../../assets/logo-black.png';
 const makeCaptcha = () => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   return Array.from({ length: 5 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+};
+
+const TEST_EMPLOYER_LOGIN = {
+  identifier: 'testemployer@gmail.com',
+  password: 'TestEmployer'
 };
 
 const RoleButton = ({ active, icon: Icon, label, onClick }) => (
@@ -46,7 +52,8 @@ export const Login = () => {
   const [captchaCode, setCaptchaCode] = useState(makeCaptcha);
   const [captchaInput, setCaptchaInput] = useState('');
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [success, setSuccess] = useState(location.state?.message || '');
+  const [blacklistNotice, setBlacklistNotice] = useState(null);
   const [loading, setLoading] = useState(false);
   const [registrationEnabled, setRegistrationEnabled] = useState(true);
 
@@ -77,7 +84,6 @@ export const Login = () => {
 
   useEffect(() => {
     if (location.state?.message) {
-      setSuccess(location.state.message);
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
@@ -87,10 +93,20 @@ export const Login = () => {
     setCaptchaInput('');
   };
 
+  const fillTestEmployerLogin = () => {
+    setRole('employer');
+    setLoginMethod('password');
+    setIdentifier(TEST_EMPLOYER_LOGIN.identifier);
+    setPassword(TEST_EMPLOYER_LOGIN.password);
+    setError('');
+    setSuccess('');
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
     setSuccess('');
+    setBlacklistNotice(null);
 
     if (captchaEnabled && captchaInput.trim().toUpperCase() !== captchaCode) {
       setError('Captcha does not match. Please try again.');
@@ -121,9 +137,18 @@ export const Login = () => {
       localStorage.setItem('publicUser', JSON.stringify(response.data));
       if (response.data?.token) localStorage.setItem('publicToken', response.data.token);
       setSuccess('Logged in successfully.');
-      setTimeout(() => navigate('/'), 700);
+      setTimeout(() => navigate(role === 'employer' ? '/employer' : '/'), 700);
     } catch (err) {
-      setError(err.message || 'Invalid login credentials.');
+      const data = err.response?.data || {};
+      if (data.accountStatus === 'blacklisted') {
+        setBlacklistNotice({
+          reason: data.blacklistReason || '',
+          message: data.message || 'Your employer account has been blacklisted. Please contact admin.'
+        });
+        setError('');
+      } else {
+        setError(data.message || err.message || 'Invalid login credentials.');
+      }
       if (captchaEnabled) refreshCaptcha();
     } finally {
       setLoading(false);
@@ -132,6 +157,35 @@ export const Login = () => {
 
   return (
     <div className="flex min-h-screen flex-col justify-between bg-[#f1f5f9] bg-[radial-gradient(circle_at_0%_0%,rgba(255,87,34,0.08)_0%,transparent_35%),radial-gradient(circle_at_0%_100%,rgba(30,64,175,0.12)_0%,transparent_40%),radial-gradient(circle_at_100%_100%,rgba(255,87,34,0.12)_0%,transparent_40%)] text-slate-900">
+      {blacklistNotice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4">
+          <div className="w-full max-w-md rounded-2xl border border-rose-100 bg-white p-6 shadow-2xl">
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-600">
+                <ShieldAlert className="h-6 w-6" />
+              </div>
+              <div>
+                <h2 className="text-lg font-extrabold text-slate-900">Account Blacklisted</h2>
+                <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
+                  {blacklistNotice.message}
+                </p>
+                {blacklistNotice.reason && (
+                  <div className="mt-4 rounded-xl border border-rose-100 bg-rose-50 p-3 text-sm font-bold text-rose-700">
+                    {blacklistNotice.reason}
+                  </div>
+                )}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setBlacklistNotice(null)}
+              className="mt-6 w-full rounded-xl bg-rose-600 px-4 py-3 text-sm font-extrabold text-white transition hover:bg-rose-500"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
       <main className="flex flex-1 items-start justify-center px-4 py-12 sm:py-16">
         <div className="w-full max-w-[560px]">
           <div className="mb-9 flex justify-center">
@@ -164,6 +218,17 @@ export const Login = () => {
                 <RoleButton active={role === 'jobseeker'} icon={User} label="Job Seeker" onClick={() => setRole('jobseeker')} />
                 <RoleButton active={role === 'employer'} icon={Briefcase} label="Employer" onClick={() => setRole('employer')} />
               </div>
+
+              {role === 'employer' && (
+                <button
+                  type="button"
+                  onClick={fillTestEmployerLogin}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm font-extrabold text-orange-600 transition hover:border-orange-300 hover:bg-orange-100"
+                >
+                  <KeyRound className="h-5 w-5" />
+                  Use Test Employer Login
+                </button>
+              )}
 
               <div>
                 <label className="mb-2 block text-sm font-extrabold text-slate-800">Email or Phone Number</label>

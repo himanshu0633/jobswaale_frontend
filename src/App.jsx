@@ -18,6 +18,15 @@ import ForgotPassword from './pages/superadmin/auth/ForgotPassword';
 // Public Portal Pages (Visitor Pages)
 import PublicPage from './pages/public/PublicPage';
 import PublicBlogs from './pages/public/PublicBlogs';
+import EmployerLayout, { EmployerProtectedRoute } from './pages/employer/EmployerLayout';
+import EmployerDashboard from './pages/employer/dashboard/EmployerDashboard';
+import EmployerPlaceholder from './pages/employer/EmployerPlaceholder';
+import EmployerJobDetails from './pages/employer/jobs/EmployerJobDetails';
+import EmployerJobs from './pages/employer/jobs/EmployerJobs';
+import EmployerPostJob from './pages/employer/jobs/EmployerPostJob';
+import EmployerSearchCandidates from './pages/employer/candidates/EmployerSearchCandidates';
+import EmployerApplications from './pages/employer/applications/EmployerApplications';
+import EmployerShortlisted from './pages/employer/candidates/EmployerShortlisted';
 
 // Admin Core & Master Pages
 import Dashboard from './pages/superadmin/dashboard/Dashboard';
@@ -215,7 +224,7 @@ const AppLayout = () => {
         title="JobsWaale Admin Portal" 
       />
 
-      <div className="flex flex-1 relative min-w-0">
+      <div className="flex flex-1 relative min-w-0 pt-16">
         {/* Left Navigation Sidebar panel */}
         <Sidebar 
           isOpen={sidebarOpenMobile} 
@@ -256,7 +265,33 @@ function App() {
             <Route path="/admin/*" element={<AppLayout />} />
           </Route>
 
-          {/* C. Public Web Blogs Pages */}
+          {/* C. Secure Employer Console Route Block */}
+          <Route element={<EmployerProtectedRoute />}>
+            <Route path="/employer" element={<EmployerLayout />}>
+              <Route index element={<EmployerDashboard />} />
+              <Route path="dashboard" element={<EmployerDashboard />} />
+              <Route path="jobs" element={<EmployerJobs />} />
+              <Route path="jobs/create" element={<EmployerPostJob />} />
+              <Route path="jobs/:id/edit" element={<EmployerPostJob />} />
+              <Route path="jobs/:id" element={<EmployerJobDetails />} />
+              <Route path="applications" element={<EmployerApplications />} />
+              <Route path="shortlisted" element={<EmployerShortlisted />} />
+              <Route path="interviews" element={<EmployerPlaceholder title="Interviews" />} />
+              <Route path="selected" element={<EmployerPlaceholder title="Selected" />} />
+              <Route path="candidates" element={<EmployerSearchCandidates />} />
+              <Route path="company" element={<EmployerPlaceholder title="Company Profile" />} />
+              <Route path="payments" element={<EmployerPlaceholder title="Payments" />} />
+              <Route path="subscription" element={<EmployerPlaceholder title="Subscription" />} />
+              <Route path="talent-pool" element={<EmployerPlaceholder title="Talent Pool" />} />
+              <Route path="messages" element={<EmployerPlaceholder title="Messages" />} />
+              <Route path="reports" element={<EmployerPlaceholder title="Reports" />} />
+              <Route path="settings" element={<EmployerPlaceholder title="Settings" />} />
+              <Route path="support" element={<EmployerPlaceholder title="Support Center" />} />
+              <Route path="*" element={<Navigate to="/employer" replace />} />
+            </Route>
+          </Route>
+
+          {/* D. Public Web Blogs Pages */}
           <Route path="/blogs" element={<PublicBlogs />} />
           <Route path="/blogs/:slug" element={<PublicBlogs />} />
           

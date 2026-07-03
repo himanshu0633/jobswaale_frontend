@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_API_URL } from '../../../context/AuthContext';
@@ -13,14 +13,40 @@ import {
   ShieldCheck,
   Globe,
   Trash2,
-  LayoutDashboard,
-  ChevronRight,
 } from 'lucide-react';
 import ResponsiveCardList from '../../../components/ResponsiveCardList';
 
+const formatDate = (value) => {
+  if (!value) return '—';
+  return new Date(value).toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+};
+
+const formatConsent = (value) => {
+  if (value === true) return 'Yes';
+  if (value === false) return 'No';
+  return '—';
+};
+
+const isEmployerVerified = (item) => item.isVerified === true && !item.profileIncomplete && item.status === 'active' && item.userId?.status !== 'inactive';
+
+const VerificationBadge = ({ item }) => {
+  const verified = isEmployerVerified(item);
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+      verified ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
+    }`}>
+      {verified ? <ShieldCheck className="h-3.5 w-3.5" /> : <AlertCircle className="h-3.5 w-3.5" />}
+      {verified ? 'Verified' : 'Unverified'}
+    </span>
+  );
+};
+
 export const Employers = () => {
   const [list, setList] = useState([]);
-  const [filteredList, setFilteredList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -31,33 +57,45 @@ export const Employers = () => {
     setTimeout(() => setMessage({ type: '', text: '' }), 4000);
   };
 
-  const fetchEmployers = async () => {
-    try {
-      const response = await axios.get(`${BASE_API_URL}/employers`);
-      setList(response.data);
-      setFilteredList(response.data);
-    } catch (err) {
-      console.error(err);
-      showMessage('error', 'Failed to retrieve employers database.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchEmployers();
+    let isMounted = true;
+
+    axios.get(`${BASE_API_URL}/employers`)
+      .then((response) => {
+        if (isMounted) {
+          setList(response.data);
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        showMessage('error', 'Failed to retrieve employers database.');
+      })
+      .finally(() => {
+        if (isMounted) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  useEffect(() => {
+  const filteredList = useMemo(() => {
     const q = search.toLowerCase();
-    setFilteredList(
-      list.filter(item =>
-        item.companyName.toLowerCase().includes(q) ||
+    return list.filter(item => {
+      const verificationText = isEmployerVerified(item) ? 'verified' : 'unverified';
+      return (
+        (item.companyName || '').toLowerCase().includes(q) ||
         (item.contactPerson && item.contactPerson.toLowerCase().includes(q)) ||
-        item.phone.includes(q) ||
-        (item.userId?.email && item.userId.email.toLowerCase().includes(q))
-      )
-    );
+        (item.phone || '').includes(q) ||
+        (item.userId?.email && item.userId.email.toLowerCase().includes(q)) ||
+        (item.designation || '').toLowerCase().includes(q) ||
+        (item.companyType || '').toLowerCase().includes(q) ||
+        (item.companySize || '').toLowerCase().includes(q) ||
+        verificationText.includes(q)
+      );
+    });
   }, [search, list]);
 
   const handleDelete = async (uid) => {
@@ -85,13 +123,40 @@ export const Employers = () => {
       });
       setList(list.map(emp =>
         emp._id === item._id
-          ? { ...emp, status: res.data.status, blacklistReason: res.data.blacklistReason }
+          ? { ...emp, status: res.data.status, blacklistReason: res.data.blacklistReason, isVerified: res.data.isVerified }
           : emp
       ));
       showMessage('success', `Employer status changed to ${targetStatus}.`);
     } catch (err) {
       console.error(err);
       showMessage('error', 'Error changing status.');
+    }
+  };
+
+  const verifyEmployer = async (item) => {
+    if (item.profileIncomplete) {
+      showMessage('error', 'Complete employer profile before verification.');
+      return;
+    }
+
+    try {
+      const res = await axios.put(`${BASE_API_URL}/employers/${item._id}/verify`);
+      setList(list.map(emp => emp._id === item._id ? { ...emp, ...res.data } : emp));
+      showMessage('success', 'Employer verified successfully.');
+    } catch (err) {
+      console.error(err);
+      showMessage('error', err.response?.data?.message || 'Error verifying employer.');
+    }
+  };
+
+  const unverifyEmployer = async (item) => {
+    try {
+      const res = await axios.put(`${BASE_API_URL}/employers/${item._id}/unverify`);
+      setList(list.map(emp => emp._id === item._id ? { ...emp, ...res.data } : emp));
+      showMessage('success', 'Employer marked as unverified.');
+    } catch (err) {
+      console.error(err);
+      showMessage('error', err.response?.data?.message || 'Error unverifying employer.');
     }
   };
 
@@ -169,44 +234,72 @@ export const Employers = () => {
           <ResponsiveCardList
             items={filteredList}
             emptyMessage="No employers found."
-            renderCard={(item, index) => (
+            renderCard={(item) => (
               <div className="flex flex-col gap-2">
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="font-semibold text-slate-800">{item.companyName}</div>
                     <div className="text-xs text-slate-500">{item.contactPerson || 'N/A'}</div>
+                    {item.profileIncomplete && item.designation && (
+                      <div className="text-xs text-slate-500">{item.designation}</div>
+                    )}
                     <div className="text-xs text-slate-400 mt-1">{item.userId?.email || '—'}</div>
+                    <div className="mt-2">
+                      <VerificationBadge item={item} />
+                    </div>
                   </div>
                   <div className="text-right">
                     {item.website && (
                       <a href={item.website.startsWith('http') ? item.website : `http://${item.website}`} target="_blank" rel="noreferrer" className="text-xs text-indigo-500">Website</a>
                     )}
-                    <div className="text-xs text-slate-400">{item.city}, {item.state}</div>
+                    <div className="text-xs text-slate-400">
+                      {item.profileIncomplete ? `Registered: ${formatDate(item.registeredOn || item.createDate)}` : `${item.city}, ${item.state}`}
+                    </div>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between text-xs text-slate-600">
                   <div>
-                    <div className="text-slate-700 font-medium">{item.industryType?.industryType || 'N/A'}</div>
-                    <div className="text-slate-500">Plan: {item.currentPlan?.planName || 'N/A'}</div>
+                    <div className="text-slate-700 font-medium">
+                      {item.profileIncomplete ? item.companyType || 'Company type not filled' : item.industryType?.industryType || 'N/A'}
+                    </div>
+                    <div className="text-slate-500">
+                      {item.profileIncomplete ? `Size: ${item.companySize || '—'} • Updates: ${formatConsent(item.updatesConsent)}` : `Plan: ${item.currentPlan?.planName || 'N/A'}`}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {item.status !== 'active' && (
-                      <button onClick={() => toggleStatus(item, 'active')} className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                        <ShieldCheck className="w-4 h-4" />
-                      </button>
+                    {item.profileIncomplete ? (
+                      <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-600">Profile pending</span>
+                    ) : (
+                      <>
+                        {!isEmployerVerified(item) && (
+                          <button onClick={() => verifyEmployer(item)} className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center" title="Verify">
+                            <CheckCircle className="w-4 h-4" />
+                          </button>
+                        )}
+                        {isEmployerVerified(item) && (
+                          <button onClick={() => unverifyEmployer(item)} className="w-8 h-8 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center" title="Unverify">
+                            <AlertCircle className="w-4 h-4" />
+                          </button>
+                        )}
+                        {item.status !== 'active' && (
+                          <button onClick={() => toggleStatus(item, 'active')} className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                            <ShieldCheck className="w-4 h-4" />
+                          </button>
+                        )}
+                        {item.status !== 'blacklist' && (
+                          <button onClick={() => toggleStatus(item, 'blacklist')} className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
+                            <Ban className="w-4 h-4" />
+                          </button>
+                        )}
+                        <button onClick={() => navigate(`/admin/employers/edit/${item._id}`)} className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => handleDelete(item._id)} className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </>
                     )}
-                    {item.status !== 'blacklist' && (
-                      <button onClick={() => toggleStatus(item, 'blacklist')} className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
-                        <Ban className="w-4 h-4" />
-                      </button>
-                    )}
-                    <button onClick={() => navigate(`/admin/employers/edit/${item._id}`)} className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => handleDelete(item._id)} className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
                   </div>
                 </div>
               </div>
@@ -215,7 +308,7 @@ export const Employers = () => {
 
           {/* Table */}
           <div className="max-w-full overflow-x-auto hidden md:block">
-            <table className="w-full text-xs md:text-sm text-left min-w-[1120px]">
+            <table className="w-full text-xs md:text-sm text-left min-w-[1220px]">
               <thead>
                 <tr className="bg-slate-50 text-xs uppercase tracking-wide text-slate-400 font-semibold">
                   <th className="px-4 py-3">ID</th>
@@ -226,6 +319,7 @@ export const Employers = () => {
                   <th className="px-4 py-3">Industry Type</th>
                   <th className="px-4 py-3">City</th>
                   <th className="px-4 py-3">Plan</th>
+                  <th className="px-4 py-3">Verification</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Action</th>
                 </tr>
@@ -233,7 +327,7 @@ export const Employers = () => {
               <tbody className="divide-y divide-slate-100">
                 {filteredList.length === 0 ? (
                   <tr>
-                    <td colSpan="10" className="px-4 py-8 text-center text-slate-400 text-sm">
+                    <td colSpan="11" className="px-4 py-8 text-center text-slate-400 text-sm">
                       No employers found.
                     </td>
                   </tr>
@@ -256,27 +350,43 @@ export const Employers = () => {
                           </a>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-slate-600">{item.contactPerson || 'N/A'}</td>
+                      <td className="px-4 py-3 text-slate-600">
+                        <div>{item.contactPerson || 'N/A'}</div>
+                        {item.profileIncomplete && item.designation && (
+                          <div className="text-[11px] text-slate-400">{item.designation}</div>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-slate-500">{item.userId?.email || '—'}</td>
                       <td className="px-4 py-3 text-indigo-500 font-medium">{item.phone}</td>
                       <td className="px-4 py-3">
                         <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-xs font-semibold">
-                          {item.industryType?.industryType || 'N/A'}
+                          {item.profileIncomplete ? item.companyType || 'Public Registration' : item.industryType?.industryType || 'N/A'}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-slate-600 text-xs">
-                        <div className="font-medium">{item.city}</div>
-                        <div className="text-slate-400">{item.state}</div>
+                        <div className="font-medium">
+                          {item.city || (item.profileIncomplete ? 'Not provided' : '—')}
+                        </div>
+                        <div className="text-slate-400">
+                          {item.state || (item.profileIncomplete ? 'Profile pending' : '—')}
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="font-semibold text-indigo-600 text-xs">
-                          {item.currentPlan?.planName || 'N/A'}
+                          {item.profileIncomplete ? item.source || 'Public Registration' : item.currentPlan?.planName || 'N/A'}
                         </div>
-                        {item.planValidity && (
+                        {item.profileIncomplete ? (
+                          <div className="text-[10px] text-slate-400 mt-0.5">
+                            Updates: {formatConsent(item.updatesConsent)}
+                          </div>
+                        ) : item.planValidity && (
                           <div className="text-[10px] text-slate-400 mt-0.5">
                             Till: {new Date(item.planValidity).toLocaleDateString()}
                           </div>
                         )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <VerificationBadge item={item} />
                       </td>
                       <td className="px-4 py-3">
                         <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
@@ -286,7 +396,7 @@ export const Employers = () => {
                             ? 'bg-amber-50 text-amber-600'
                             : 'bg-rose-50 text-rose-600'
                         }`}>
-                          {item.status}
+                          {item.profileIncomplete ? 'profile pending' : item.status}
                         </span>
                         {item.status === 'blacklist' && item.blacklistReason && (
                           <div
@@ -299,38 +409,62 @@ export const Employers = () => {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5">
-                          {item.status !== 'active' && (
-                            <button
-                              onClick={() => toggleStatus(item, 'active')}
-                              title="Activate"
-                              className="w-7 h-7 rounded-full flex items-center justify-center bg-emerald-50 hover:bg-emerald-100 text-emerald-600 transition-colors"
-                            >
-                              <ShieldCheck className="w-3.5 h-3.5" />
-                            </button>
+                          {item.profileIncomplete ? (
+                            <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-600">Profile pending</span>
+                          ) : (
+                            <>
+                              {!isEmployerVerified(item) && (
+                                <button
+                                  onClick={() => verifyEmployer(item)}
+                                  title="Verify"
+                                  className="w-7 h-7 rounded-full flex items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-600 transition-colors"
+                                >
+                                  <CheckCircle className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                              {isEmployerVerified(item) && (
+                                <button
+                                  onClick={() => unverifyEmployer(item)}
+                                  title="Unverify"
+                                  className="w-7 h-7 rounded-full flex items-center justify-center bg-amber-50 hover:bg-amber-100 text-amber-600 transition-colors"
+                                >
+                                  <AlertCircle className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                              {item.status !== 'active' && (
+                                <button
+                                  onClick={() => toggleStatus(item, 'active')}
+                                  title="Activate"
+                                  className="w-7 h-7 rounded-full flex items-center justify-center bg-emerald-50 hover:bg-emerald-100 text-emerald-600 transition-colors"
+                                >
+                                  <ShieldCheck className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                              {item.status !== 'blacklist' && (
+                                <button
+                                  onClick={() => toggleStatus(item, 'blacklist')}
+                                  title="Blacklist"
+                                  className="w-7 h-7 rounded-full flex items-center justify-center bg-rose-50 hover:bg-rose-100 text-rose-500 transition-colors"
+                                >
+                                  <Ban className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                              <button
+                                onClick={() => navigate(`/admin/employers/edit/${item._id}`)}
+                                title="Edit"
+                                className="w-7 h-7 rounded-full flex items-center justify-center bg-emerald-50 hover:bg-emerald-100 text-emerald-600 transition-colors"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(item._id)}
+                                title="Delete"
+                                className="w-7 h-7 rounded-full flex items-center justify-center bg-rose-50 hover:bg-rose-100 text-rose-500 transition-colors"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </>
                           )}
-                          {item.status !== 'blacklist' && (
-                            <button
-                              onClick={() => toggleStatus(item, 'blacklist')}
-                              title="Blacklist"
-                              className="w-7 h-7 rounded-full flex items-center justify-center bg-rose-50 hover:bg-rose-100 text-rose-500 transition-colors"
-                            >
-                              <Ban className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                          <button
-                            onClick={() => navigate(`/admin/employers/edit/${item._id}`)}
-                            title="Edit"
-                            className="w-7 h-7 rounded-full flex items-center justify-center bg-emerald-50 hover:bg-emerald-100 text-emerald-600 transition-colors"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(item._id)}
-                            title="Delete"
-                            className="w-7 h-7 rounded-full flex items-center justify-center bg-rose-50 hover:bg-rose-100 text-rose-500 transition-colors"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
                         </div>
                       </td>
                     </tr>
