@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { Menu, X, ChevronDown, User, Briefcase, LogIn, UserPlus, UploadCloud, Building2 } from 'lucide-react';
@@ -12,6 +12,10 @@ export const PublicHeader = () => {
   const [jobseekersMobileOpen, setJobseekersMobileOpen] = useState(false);
   const [employersMobileOpen, setEmployersMobileOpen] = useState(false);
   const [registrationEnabled, setRegistrationEnabled] = useState(true);
+  const [jobseekersDesktopOpen, setJobseekersDesktopOpen] = useState(false);
+  const [employersDesktopOpen, setEmployersDesktopOpen] = useState(false);
+  const jobseekersDesktopRef = useRef(null);
+  const employersDesktopRef = useRef(null);
 
   // Close mobile drawer on route transition
   useEffect(() => {
@@ -19,7 +23,23 @@ export const PublicHeader = () => {
     setPricingMobileOpen(false);
     setJobseekersMobileOpen(false);
     setEmployersMobileOpen(false);
+    setJobseekersDesktopOpen(false);
+    setEmployersDesktopOpen(false);
   }, [location.pathname]);
+
+  // Close desktop CTA dropdowns when clicking outside of them
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (jobseekersDesktopRef.current && !jobseekersDesktopRef.current.contains(event.target)) {
+        setJobseekersDesktopOpen(false);
+      }
+      if (employersDesktopRef.current && !employersDesktopRef.current.contains(event.target)) {
+        setEmployersDesktopOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Load public settings to check if registration is enabled
   useEffect(() => {
@@ -82,43 +102,59 @@ export const PublicHeader = () => {
         {/* Desktop CTA Action Buttons */}
         <div className="hidden md:flex items-center gap-1">
           {/* For Jobseekers Dropdown */}
-          <div className="relative group py-2">
-            <button className="inline-flex items-center gap-2 bg-[rgb(13,110,253)] hover:bg-[rgb(11,94,215)] text-white font-medium text-base py-1.75 px-5 min-w-[170px] rounded-lg transition duration-150 cursor-pointer shadow-md shadow-blue-600/10">
-              <User className="h-3.5 w-3.5" /> For Jobseekers <ChevronDown className="h-3.5 w-3.5" />
+          <div className="relative py-2" ref={jobseekersDesktopRef}>
+            <button
+              onClick={() => {
+                setJobseekersDesktopOpen((prev) => !prev);
+                setEmployersDesktopOpen(false);
+              }}
+              className="inline-flex items-center gap-2 bg-[rgb(13,110,253)] hover:bg-[rgb(11,94,215)] text-white font-medium text-base py-1.75 px-5 min-w-[170px] rounded-lg transition duration-150 cursor-pointer shadow-md shadow-blue-600/10"
+            >
+              <User className="h-3.5 w-3.5" /> For Jobseekers <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${jobseekersDesktopOpen ? 'rotate-180' : ''}`} />
             </button>
-            <div className="absolute top-full right-0 mt-1.5 hidden group-hover:block bg-white border border-slate-200 rounded-xl shadow-xl py-2 w-52 z-50">
-              <Link to="/login" className="flex items-center gap-2.5 px-4 py-3 text-xs font-bold text-slate-700 hover:bg-slate-50 border-b border-slate-100 last:border-0 transition">
-                <LogIn className="h-4 w-4 text-slate-400" /> Login
-              </Link>
-              {registrationEnabled && (
-                <Link to="/jobseeker-register" className="flex items-center gap-2.5 px-4 py-3 text-xs font-bold text-slate-700 hover:bg-slate-50 border-b border-slate-100 last:border-0 transition">
-                  <UserPlus className="h-4 w-4 text-slate-400" /> Register Free
+            {jobseekersDesktopOpen && (
+              <div className="absolute top-full right-0 mt-1.5 block bg-white border border-slate-200 rounded-xl shadow-xl py-2 w-52 z-50">
+                <Link to="/login" className="flex items-center gap-2.5 px-4 py-3 text-xs font-bold text-slate-700 hover:bg-slate-50 border-b border-slate-100 last:border-0 transition">
+                  <LogIn className="h-4 w-4 text-slate-400" /> Login
                 </Link>
-              )}
-              <Link to="/login" className="flex items-center gap-2.5 px-4 py-3 text-xs font-bold text-slate-700 hover:bg-slate-50 border-b border-slate-100 last:border-0 transition">
-                <UploadCloud className="h-4 w-4 text-slate-400" /> Upload Resume
-              </Link>
-            </div>
+                {registrationEnabled && (
+                  <Link to="/jobseeker-register" className="flex items-center gap-2.5 px-4 py-3 text-xs font-bold text-slate-700 hover:bg-slate-50 border-b border-slate-100 last:border-0 transition">
+                    <UserPlus className="h-4 w-4 text-slate-400" /> Register Free
+                  </Link>
+                )}
+                <Link to="/login" className="flex items-center gap-2.5 px-4 py-3 text-xs font-bold text-slate-700 hover:bg-slate-50 border-b border-slate-100 last:border-0 transition">
+                  <UploadCloud className="h-4 w-4 text-slate-400" /> Upload Resume
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* For Employers Dropdown */}
-          <div className="relative group py-2">
-            <button className="inline-flex items-center gap-2 bg-[rgb(253,126,20)] hover:bg-[rgb(221,107,17)] text-white font-medium  text-base py-1.75 px-5 min-w-[170px] rounded-lg transition duration-150 cursor-pointer shadow-md shadow-orange-600/10">
-              <Briefcase className="h-3.5 w-3.5" /> For Employers <ChevronDown className="h-3.5 w-3.5" />
+          <div className="relative py-2" ref={employersDesktopRef}>
+            <button
+              onClick={() => {
+                setEmployersDesktopOpen((prev) => !prev);
+                setJobseekersDesktopOpen(false);
+              }}
+              className="inline-flex items-center gap-2 bg-[rgb(253,126,20)] hover:bg-[rgb(221,107,17)] text-white font-medium  text-base py-1.75 px-5 min-w-[170px] rounded-lg transition duration-150 cursor-pointer shadow-md shadow-orange-600/10"
+            >
+              <Briefcase className="h-3.5 w-3.5" /> For Employers <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${employersDesktopOpen ? 'rotate-180' : ''}`} />
             </button>
-            <div className="absolute top-full right-0 mt-1.5 hidden group-hover:block bg-white border border-slate-200 rounded-xl shadow-xl py-2 w-52 z-50">
-              <Link to="/login?role=employer" className="flex items-center gap-2.5 px-4 py-3 text-xs font-bold text-slate-700 hover:bg-slate-50 border-b border-slate-100 last:border-0 transition">
-                <LogIn className="h-4 w-4 text-slate-400" /> Employer Login
-              </Link>
-              {registrationEnabled && (
-                <Link to="/employer-register" className="flex items-center gap-2.5 px-4 py-3 text-xs font-bold text-slate-700 hover:bg-slate-50 border-b border-slate-100 last:border-0 transition">
-                  <Building2 className="h-4 w-4 text-slate-400" /> Register Company
+            {employersDesktopOpen && (
+              <div className="absolute top-full right-0 mt-1.5 block bg-white border border-slate-200 rounded-xl shadow-xl py-2 w-52 z-50">
+                <Link to="/login?role=employer" className="flex items-center gap-2.5 px-4 py-3 text-xs font-bold text-slate-700 hover:bg-slate-50 border-b border-slate-100 last:border-0 transition">
+                  <LogIn className="h-4 w-4 text-slate-400" /> Employer Login
                 </Link>
-              )}
-              <Link to="/login?role=employer" className="flex items-center gap-2.5 px-4 py-3 text-xs font-bold text-slate-700 hover:bg-slate-50 border-b border-slate-100 last:border-0 transition">
-                <Briefcase className="h-4 w-4 text-slate-400" /> Post a Job
-              </Link>
-            </div>
+                {registrationEnabled && (
+                  <Link to="/employer-register" className="flex items-center gap-2.5 px-4 py-3 text-xs font-bold text-slate-700 hover:bg-slate-50 border-b border-slate-100 last:border-0 transition">
+                    <Building2 className="h-4 w-4 text-slate-400" /> Register Company
+                  </Link>
+                )}
+                <Link to="/login?role=employer" className="flex items-center gap-2.5 px-4 py-3 text-xs font-bold text-slate-700 hover:bg-slate-50 border-b border-slate-100 last:border-0 transition">
+                  <Briefcase className="h-4 w-4 text-slate-400" /> Post a Job
+                </Link>
+              </div>
+            )}
           </div>
         </div>
 
