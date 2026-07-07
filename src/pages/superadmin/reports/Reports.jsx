@@ -187,7 +187,7 @@ export const Reports = () => {
 
       {!selectedReport ? (
         /* Main Grid View */
-        <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden -ml-3 lg:-ml-5">
           {/* Card Header */}
           <div className="px-5 py-4 border-b border-slate-100">
             <h4 className="text-base font-bold text-slate-800">System Reports Overview</h4>
@@ -238,7 +238,7 @@ export const Reports = () => {
         </div>
       ) : (
         /* Detailed Report Category View */
-        <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden -ml-3 lg:-ml-5">
           {/* Header Actions */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-4 border-b border-slate-100">
             <div className="flex items-center gap-3">

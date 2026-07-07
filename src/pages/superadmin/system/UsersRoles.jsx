@@ -80,7 +80,7 @@ const UsersRoles = () => {
         </div>
       )}
 
-      <div className="min-w-0 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+      <div className="min-w-0 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden -ml-3 lg:-ml-5">
         <div className="px-5 py-4 border-b border-slate-100">
           <h5 className="text-base font-bold text-slate-800 mb-1">Manage Users & Roles</h5>
           <p className="text-sm text-slate-500 mb-0">

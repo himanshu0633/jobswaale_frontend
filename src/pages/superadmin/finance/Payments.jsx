@@ -160,7 +160,7 @@ export const Payments = () => {
         <SummaryCard icon={<ReceiptText className="w-6 h-6" />} value={summary.failed} label="Failed / Refunded" tone="rose" />
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden -ml-3 lg:-ml-5">
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
           <h4 className="text-base font-bold text-slate-800">Payment Listings</h4>
           <Link

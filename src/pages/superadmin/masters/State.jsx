@@ -226,7 +226,7 @@ export const State = () => {
         /* ============================================================== */
         /* LISTINGS SCREEN */
         /* ============================================================== */
-        <div className="border border-slate-200 bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="border border-slate-200 bg-white rounded-2xl shadow-sm overflow-hidden -ml-3 lg:-ml-5">
           
           {/* Card Header */}
           <div className="p-6 border-b border-slate-100 flex items-center justify-between">
@@ -445,7 +445,7 @@ export const State = () => {
         /* ============================================================== */
         /* ADD / EDIT FORM SCREEN */
         /* ============================================================== */
-        <div className="border border-slate-200 bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="border border-slate-200 bg-white rounded-2xl shadow-sm overflow-hidden -ml-3 lg:-ml-5">
           
           {/* Card Header */}
           <div className="p-6 border-b border-slate-100 flex items-center justify-between">

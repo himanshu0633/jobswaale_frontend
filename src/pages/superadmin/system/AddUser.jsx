@@ -112,7 +112,7 @@ const AddUser = () => {
         </div>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden -ml-3 lg:-ml-5">
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
           <h4 className="text-base font-bold text-slate-800">{id ? 'Edit User' : 'Create New User'}</h4>
           <Link to="/admin/users-roles/users" className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg"><ClipboardList className="w-3.5 h-3.5" /> View All Users</Link>

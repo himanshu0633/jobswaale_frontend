@@ -211,7 +211,7 @@ export const AddPayment = () => {
 
   return (
     <div className="space-y-5">
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden -ml-3 lg:-ml-5">
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
           <h4 className="text-base font-semibold text-slate-800">{isEditMode ? 'Edit Payment' : 'Add / Update Payment'}</h4>
           <Link

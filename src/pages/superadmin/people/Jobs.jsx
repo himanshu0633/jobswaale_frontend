@@ -151,7 +151,7 @@ export const Jobs = () => {
         </div>
       )}
 
-      {/* Card */}
+      {/* ana */}
       <div className="min-w-0 overflow-hidden rounded-[5px] bg-white shadow-[0_0.75rem_6rem_rgba(56,65,74,0.03)]">
 
         {/* Card Header */}
