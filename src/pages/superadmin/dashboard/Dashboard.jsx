@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import {
@@ -53,8 +53,8 @@ const quickActions = [
   { title: 'Add New Job', subtitle: 'Post a new job opening', icon: Plus, color: 'bg-blue-600', to: '/admin/jobs/add' },
   { title: 'Verify Candidates', subtitle: 'Review pending candidates', icon: Check, color: 'bg-green-500', to: '/admin/jobseekers' },
   { title: 'Manage Applications', subtitle: 'View and manage applications', icon: Briefcase, color: 'bg-purple-600', to: '/admin/jobs' },
-  { title: 'View Payments', subtitle: 'Track payments and transactions', icon: CreditCard, color: 'bg-orange-500', to: '/admin' },
-  { title: 'Generate Report', subtitle: 'Download performance report', icon: FileText, color: 'bg-green-500', to: '/admin' }
+  { title: 'View Payments', subtitle: 'Track payments and transactions', icon: CreditCard, color: 'bg-orange-500', to: '/admin/payments' },
+  { title: 'Generate Report', subtitle: 'Download performance report', icon: FileText, color: 'bg-green-500', to: '/admin/reports' }
 ];
 
 const StatusBadge = ({ status }) => {
@@ -195,6 +195,7 @@ const DonutChart = ({ data = {} }) => {
 };
 
 export const Dashboard = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     employers: 0,
     jobseekers: 0,
@@ -275,6 +276,19 @@ export const Dashboard = () => {
                 <Link
                   key={action.title}
                   to={action.to}
+                  onClick={(e) => {
+                    // Force programmatic navigation for actions that have been
+                    // observed to not navigate reliably in some environments
+                    // (reports/payments). Prevent default and use SPA navigate.
+                    if (action.to === '/admin/reports' || action.to === '/admin/payments') {
+                      e.preventDefault();
+                      try {
+                        navigate(action.to);
+                      } catch (err) {
+                        window.location.href = action.to;
+                      }
+                    }
+                  }}
                   className="flex items-center gap-3 rounded-xl border border-[#e9edf5] p-[10.5px] text-[#4c4c5c] transition hover:border-[#d8e0ee] hover:bg-[#f2f6fc] hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)]"
                 >
                   <span className={`flex h-[38px] w-[38px] flex-shrink-0 items-center justify-center rounded-lg text-white ${action.color}`}>
