@@ -190,7 +190,7 @@ export const Jobs = () => {
           <ResponsiveCardList
             items={filteredList}
             emptyMessage="No jobs posted yet."
-            renderCard={(item, index) => (
+            renderCard={(item) => (
               <div className="flex flex-col gap-2">
                 <div className="flex items-start justify-between">
                   <div>
