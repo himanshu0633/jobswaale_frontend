@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useLayoutEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   ArrowRightLeft,
@@ -43,6 +43,15 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
   const currentPath = location.pathname.startsWith('/admin')
     ? location.pathname.slice('/admin'.length) || '/'
     : location.pathname;
+
+  const sidebarRef = useRef(null);
+  const savedScrollTop = useRef(0);
+
+  useLayoutEffect(() => {
+    if (sidebarRef.current) {
+      sidebarRef.current.scrollTop = savedScrollTop.current;
+    }
+  }, [location.pathname]);
 
   const isActive = (path) => currentPath === path;
   const isPathActive = (path) => currentPath === path || currentPath.startsWith(`${path}/`);
@@ -110,7 +119,9 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
         isCollapsed ? 'w-[75px]' : 'w-60'
       }`}>
         {/* .side-nav: flex column, gap 5px, padding-bottom 50px */}
-        <nav className={`hide-scrollbar flex-grow flex flex-col gap-[5px] pt-2 pb-[50px] ${isCollapsed ? 'px-1' : 'px-[10px]'}`}>
+        <nav ref={sidebarRef} className={`hide-scrollbar flex-grow flex flex-col gap-[5px] pt-2 pb-[50px] ${isCollapsed ? 'px-1' : 'px-[10px]'}`} onScroll={(event) => {
+          savedScrollTop.current = event.currentTarget.scrollTop;
+        }}>
           {!isCollapsed && <div className={`${sectionClass} mt-2 ${palette.title}`}>Navigation</div>}
           {can('dashboard.view') && <NavLink to={adminPath('/')} icon={Gauge} label="Dashboard" active={isActive('/') || isActive('/dashboard')} />}
 
