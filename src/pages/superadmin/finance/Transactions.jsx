@@ -167,7 +167,7 @@ export const Transactions = () => {
       </div>
 
       {/* Metrics Summary cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-4 -ml-3 lg:-ml-5">
         {/* Card 1: Total Credits */}
         <div className="border border-slate-200 bg-white rounded-2xl shadow-sm p-4 flex items-center justify-between">
           <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
