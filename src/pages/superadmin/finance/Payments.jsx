@@ -153,7 +153,7 @@ export const Payments = () => {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 -ml-3 lg:-ml-5">
         <SummaryCard icon={<span className="text-2xl font-bold">Rs.</span>} value={formatAmount(summary.revenue)} label="Total Revenue (Rs.)" tone="indigo" />
         <SummaryCard icon={<CheckCircle2 className="w-6 h-6" />} value={summary.success} label="Successful" tone="emerald" />
         <SummaryCard icon={<RefreshCcw className="w-6 h-6" />} value={summary.pending} label="Pending" tone="amber" />

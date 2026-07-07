@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { AlertCircle, CheckCircle, Edit2, Loader, Plus, Search, Shield, Trash2 } from 'lucide-react';
+import { AlertCircle, CheckCircle, Edit2, Loader, Plus, Search, Shield, Trash2, X } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 
 const Roles = () => {
@@ -71,6 +71,9 @@ const Roles = () => {
         <div className={`flex items-center gap-2.5 p-3 rounded-lg border text-sm font-medium ${message.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-800' : 'bg-rose-50 border-rose-100 text-rose-800'}`}>
           {message.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
           <span>{message.text}</span>
+          <button type="button" onClick={() => setMessage({ type: '', text: '' })} className="ml-auto rounded-full p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700">
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 

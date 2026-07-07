@@ -11,7 +11,8 @@ import {
   Save, 
   Send, 
   CheckCircle2, 
-  AlertCircle 
+  AlertCircle, 
+  X 
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 
@@ -172,6 +173,9 @@ export const Settings = () => {
             <AlertCircle className="w-4 h-4 shrink-0" />
           )}
           <span>{message.text}</span>
+          <button type="button" onClick={() => setMessage({ type: '', text: '' })} className="ml-auto rounded-full p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700">
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
@@ -186,7 +190,7 @@ export const Settings = () => {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-slate-100 px-5 overflow-x-auto">
+        <div className="grid grid-cols-4 grid-flow-col auto-cols-max place-items-center border-b border-slate-100 px-5 overflow-x-auto">
           {tabs.map(tab => (
             <button
               key={tab.key}
