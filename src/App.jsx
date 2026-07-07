@@ -21,6 +21,11 @@ import PublicBlogs from './pages/public/PublicBlogs';
 import EmployerLayout, { EmployerProtectedRoute } from './pages/employer/EmployerLayout';
 import EmployerDashboard from './pages/employer/dashboard/EmployerDashboard';
 import EmployerPlaceholder from './pages/employer/EmployerPlaceholder';
+import EmployerCompanyProfile from './pages/employer/company/EmployerCompanyProfile';
+import EmployerSubscription from './pages/employer/subscription/EmployerSubscription';
+import EmployerTalentPool from './pages/employer/talentpool/EmployerTalentPool';
+import EmployerSettings from './pages/employer/settings/EmployerSettings';
+import EmployerSupport from './pages/employer/support/EmployerSupport';
 import EmployerJobDetails from './pages/employer/jobs/EmployerJobDetails';
 import EmployerJobs from './pages/employer/jobs/EmployerJobs';
 import EmployerPostJob from './pages/employer/jobs/EmployerPostJob';
@@ -282,14 +287,14 @@ function App() {
               <Route path="interviews" element={<EmployerInterviews />} />
               <Route path="selected" element={<EmployerSelected />} />
               <Route path="candidates" element={<EmployerSearchCandidates />} />
-              <Route path="company" element={<EmployerPlaceholder title="Company Profile" />} />
+              <Route path="company" element={<EmployerCompanyProfile />} />
               <Route path="payments" element={<EmployerPlaceholder title="Payments" />} />
-              <Route path="subscription" element={<EmployerPlaceholder title="Subscription" />} />
-              <Route path="talent-pool" element={<EmployerPlaceholder title="Talent Pool" />} />
+              <Route path="subscription" element={<EmployerSubscription />} />
+              <Route path="talent-pool" element={<EmployerTalentPool />} />
               <Route path="messages" element={<EmployerPlaceholder title="Messages" />} />
               <Route path="reports" element={<EmployerPortalReports />} />
-              <Route path="settings" element={<EmployerPlaceholder title="Settings" />} />
-              <Route path="support" element={<EmployerPlaceholder title="Support Center" />} />
+              <Route path="settings" element={<EmployerSettings />} />
+              <Route path="support" element={<EmployerSupport />} />
               <Route path="*" element={<Navigate to="/employer" replace />} />
             </Route>
           </Route>
