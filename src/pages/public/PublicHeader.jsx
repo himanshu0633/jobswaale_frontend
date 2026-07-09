@@ -173,9 +173,9 @@ export const PublicHeader = () => {
                   <Link to={dashboardPath} onClick={() => setProfileDropdownOpen(false)} className="flex items-center gap-2.5 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
                     <LayoutDashboard className="h-4 w-4 text-slate-400" /> Go to Dashboard
                   </Link>
-                  <button onClick={handleLogout} className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                  <div onClick={handleLogout} className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
                     <LogOut className="h-4 w-4 text-slate-400" /> Log out
-                  </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -268,9 +268,9 @@ export const PublicHeader = () => {
                   <Link to={dashboardPath} className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                     <LayoutDashboard className="h-4 w-4 text-slate-400" /> Go to Dashboard
                   </Link>
-                  <button onClick={handleLogout} className="flex items-center gap-2 text-left text-sm font-semibold text-slate-700">
+                  <div onClick={handleLogout} className="flex items-center gap-2 text-left text-sm font-semibold text-slate-700">
                     <LogOut className="h-4 w-4 text-slate-400" /> Log out
-                  </button>
+                  </div>
                 </div>
               </div>
             ) : null}

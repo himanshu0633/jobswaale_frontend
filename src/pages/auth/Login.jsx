@@ -151,7 +151,7 @@ export const Login = () => {
       localStorage.setItem('publicUser', JSON.stringify(response.data));
       if (response.data?.token) localStorage.setItem('publicToken', response.data.token);
       setSuccess('Logged in successfully.');
-      setTimeout(() => navigate(role === 'employer' ? '/employer' : '/jobseeker'), 700);
+      setTimeout(() => navigate('/'), 700);
     } catch (err) {
       const data = err.response?.data || {};
       if (data.accountStatus === 'blacklisted') {

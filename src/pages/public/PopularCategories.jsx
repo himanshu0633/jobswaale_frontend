@@ -76,7 +76,7 @@ export const PopularCategories = () => {
 
   return (
     <section className="py-16 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="max-w-[1500px] mx-auto px-4 sm:px-6">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-12 gap-3">
           <h2 className="text-2xl sm:text-[2rem] font-bold text-slate-900">Popular Job Categories</h2>
           <Link

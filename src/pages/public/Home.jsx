@@ -29,10 +29,10 @@ export const Home = () => {
   };
 
   return (
-    <div className="w-full bg-white">
+    <div className="w-full">
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-white py-16 lg:py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="max-w-[1500px] mx-auto px-4 sm:px-6">
           <div className="grid gap-12 lg:grid-cols-12 items-center">
 
             {/* Left Block: Search & Text */}
@@ -107,7 +107,7 @@ export const Home = () => {
 
                 {/* Job Seeker Choice */}
                 <Link
-                  to="/login?role=jobseeker"
+                  to="/jobs"
                   className="group flex items-center justify-between p-6 rounded-xl bg-[#F2F6FF] border border-transparent hover:border-[#0047C7] transition-all duration-300 hover:-translate-y-0.5 shadow-[0_0_1px_rgba(0,0,0,0.26)]"
                 >
                   <div className="flex items-center gap-4">
@@ -151,7 +151,7 @@ export const Home = () => {
 
       {/* Floating Stats Bar */}
       <section className="relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="max-w-[1500px] mx-auto px-4 sm:px-6">
           <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-[0_10px_35px_rgba(0,0,0,0.05)]">
             <div className="grid gap-6 grid-cols-2 lg:grid-cols-4">
 
