@@ -49,6 +49,7 @@ export const Employers = () => {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState('latest');
   const [message, setMessage] = useState({ type: '', text: '' });
   const navigate = useNavigate();
 
@@ -83,7 +84,7 @@ export const Employers = () => {
 
   const filteredList = useMemo(() => {
     const q = search.toLowerCase();
-    return list.filter(item => {
+    const filtered = list.filter(item => {
       const verificationText = isEmployerVerified(item) ? 'verified' : 'unverified';
       return (
         (item.companyName || '').toLowerCase().includes(q) ||
@@ -96,7 +97,27 @@ export const Employers = () => {
         verificationText.includes(q)
       );
     });
-  }, [search, list]);
+
+    return [...filtered].sort((a, b) => {
+      if (sortBy === 'latest') {
+        const dateA = new Date(a.registeredOn || a.createDate || a.createdAt || 0);
+        const dateB = new Date(b.registeredOn || b.createDate || b.createdAt || 0);
+        return dateB - dateA;
+      }
+      if (sortBy === 'oldest') {
+        const dateA = new Date(a.registeredOn || a.createDate || a.createdAt || 0);
+        const dateB = new Date(b.registeredOn || b.createDate || b.createdAt || 0);
+        return dateA - dateB;
+      }
+      if (sortBy === 'az') {
+        return (a.companyName || '').localeCompare(b.companyName || '');
+      }
+      if (sortBy === 'za') {
+        return (b.companyName || '').localeCompare(a.companyName || '');
+      }
+      return 0;
+    });
+  }, [search, list, sortBy]);
 
   const handleDelete = async (uid) => {
     if (!window.confirm('Delete this employer profile and login user?')) return;
@@ -213,8 +234,8 @@ export const Employers = () => {
         {/* Card Body */}
         <div className="min-w-0 p-4 md:p-5">
 
-          {/* Search + Count */}
-          <div className="flex items-center gap-3 mb-4 flex-wrap">
+          {/* Search + Sort + Count */}
+          <div className="flex items-center gap-3 mb-4 flex-wrap w-full">
             <div className="relative w-full sm:w-auto">
               <input
                 type="text"
@@ -225,6 +246,20 @@ export const Employers = () => {
               />
               <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
             </div>
+
+            <div className="w-full sm:w-auto">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="px-3 py-2 w-full sm:w-44 border border-slate-200 rounded-lg text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 cursor-pointer"
+              >
+                <option value="latest">Latest</option>
+                <option value="oldest">Oldest</option>
+                <option value="az">A to Z</option>
+                <option value="za">Z to A</option>
+              </select>
+            </div>
+
             <span className="ml-auto text-xs text-slate-400 font-medium">
               Showing {filteredList.length} of {list.length} employers
             </span>
