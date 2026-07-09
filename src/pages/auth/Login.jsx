@@ -26,6 +26,11 @@ const TEST_EMPLOYER_LOGIN = {
   password: 'TestEmployer'
 };
 
+const TEST_JOBSEEKER_LOGIN = {
+  identifier: 'jseeker@jobswaale.com',
+  password: 'JobSeeker'
+};
+
 const RoleButton = ({ active, icon: Icon, label, onClick }) => (
   <button
     type="button"
@@ -102,6 +107,15 @@ export const Login = () => {
     setSuccess('');
   };
 
+  const fillTestJobseekerLogin = () => {
+    setRole('jobseeker');
+    setLoginMethod('password');
+    setIdentifier(TEST_JOBSEEKER_LOGIN.identifier);
+    setPassword(TEST_JOBSEEKER_LOGIN.password);
+    setError('');
+    setSuccess('');
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
@@ -137,7 +151,7 @@ export const Login = () => {
       localStorage.setItem('publicUser', JSON.stringify(response.data));
       if (response.data?.token) localStorage.setItem('publicToken', response.data.token);
       setSuccess('Logged in successfully.');
-      setTimeout(() => navigate(role === 'employer' ? '/employer' : '/'), 700);
+      setTimeout(() => navigate(role === 'employer' ? '/employer' : '/jobseeker'), 700);
     } catch (err) {
       const data = err.response?.data || {};
       if (data.accountStatus === 'blacklisted') {
@@ -219,6 +233,7 @@ export const Login = () => {
                 <RoleButton active={role === 'employer'} icon={Briefcase} label="Employer" onClick={() => setRole('employer')} />
               </div>
 
+              {/* Test Employer Login Button */}
               {role === 'employer' && (
                 <button
                   type="button"
@@ -227,6 +242,18 @@ export const Login = () => {
                 >
                   <KeyRound className="h-5 w-5" />
                   Use Test Employer Login
+                </button>
+              )}
+
+              {/* Test Jobseeker Login Button */}
+              {role === 'jobseeker' && (
+                <button
+                  type="button"
+                  onClick={fillTestJobseekerLogin}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-extrabold text-blue-600 transition hover:border-blue-300 hover:bg-blue-100"
+                >
+                  <KeyRound className="h-5 w-5" />
+                  Use Test Jobseeker Login
                 </button>
               )}
 

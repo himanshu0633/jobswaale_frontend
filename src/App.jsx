@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, isSuperAdminUser, useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -30,6 +30,18 @@ import EmployerShortlisted from './pages/employer/candidates/EmployerShortlisted
 import EmployerInterviews from './pages/employer/interviews/EmployerInterviews';
 import EmployerPortalReports from './pages/employer/reports/EmployerReports';
 import EmployerSelected from './pages/employer/selected/EmployerSelected';
+
+// Jobseeker Portal (read-only import of layout + dashboard)
+import JobseekerLayout, { JobseekerProtectedRoute } from './pages/jobseeker/JobseekerLayout';
+import JobseekerDashboard from './pages/jobseeker/dashboard/JobseekerDashboard';
+import JobseekerApplications from './pages/jobseeker/applications/JobseekerApplications';
+import JobseekerChat from './pages/jobseeker/chat/JobseekerChat';
+import JobseekerSubscription from './pages/jobseeker/subscription/JobseekerSubscription';
+
+
+import JobseekerProfile from './pages/jobseeker/profile/JobseekerProfile';
+import JobseekerSavedJobs from './pages/jobseeker/savedjobs/JobseekerSavedJobs';
+
 
 // Admin Core & Master Pages
 import Dashboard from './pages/superadmin/dashboard/Dashboard';
@@ -298,7 +310,24 @@ function App() {
           <Route path="/blogs" element={<PublicBlogs />} />
           <Route path="/blogs/:slug" element={<PublicBlogs />} />
           
+          {/* F. Secure Jobseeker Console Route Block */}
+          <Route element={<JobseekerProtectedRoute />}>
+            <Route path="/jobseeker" element={<JobseekerLayout />}>
+              <Route index element={<JobseekerDashboard />} />
+              <Route path="dashboard" element={<JobseekerDashboard />} />
+              <Route path="profile" element={<JobseekerProfile />} />
+              <Route path="subscription" element={<JobseekerSubscription />} />
+              <Route path="jobs-applied" element={<JobseekerApplications />} />
+              <Route path="saved-jobs" element={<JobseekerSavedJobs />} />
+              <Route path="messages" element={<JobseekerChat />} />
+              <Route path="applications" element={<JobseekerApplications />} />
+              
+              <Route path="*" element={<Navigate to="/jobseeker" replace />} />
+            </Route>
+          </Route>
+          
           {/* E. Public Web Portal Wildcard Route Fallback */}
+          <Route path="/jobs/:id" element={<PublicPage />} />
           <Route path="*" element={<PublicPage />} />
         </Routes>
       </Router>

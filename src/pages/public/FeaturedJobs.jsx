@@ -111,7 +111,7 @@ const FeaturedJobs = () => {
 
                   <h3 className="text-lg font-semibold text-slate-900 leading-snug">
                     <Link
-                      to="/login"
+                      to={`/jobs/${job.id}`}
                       className="hover:text-[#0047C7] transition-colors"
                     >
                       {job.title}
