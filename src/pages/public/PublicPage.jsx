@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_API_URL } from '../../context/AuthContext';
@@ -36,7 +36,7 @@ export const PublicPage = () => {
       try {
         const settingsRes = await axios.get(`${BASE_API_URL}/settings/public`);
         setSettings(settingsRes.data || null);
-      } catch (err) {
+      } catch {
         setSettings(null);
       } finally {
         setLoadingSettings(false);
@@ -116,7 +116,7 @@ export const PublicPage = () => {
       <PublicHeader />
 
       {/* Main Dynamic View Content */}
-      <main className="flex-grow">
+      <main className="flex-grow pt-20 sm:pt-24">
         {renderStaticPage()}
       </main>
 
