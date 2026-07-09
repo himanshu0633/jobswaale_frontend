@@ -24,6 +24,7 @@ export const Jobs = () => {
   const [filteredList, setFilteredList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState('latest');
   const [message, setMessage] = useState({ type: '', text: '' });
   const navigate = useNavigate();
 
@@ -51,15 +52,35 @@ export const Jobs = () => {
 
   useEffect(() => {
     const q = search.toLowerCase();
-    setFilteredList(
-      list.filter(item =>
-        item.jobTitle.toLowerCase().includes(q) ||
-        item.companyName.toLowerCase().includes(q) ||
-        item.experience.toLowerCase().includes(q) ||
-        item.email.toLowerCase().includes(q)
-      )
+    const filtered = list.filter(item =>
+      item.jobTitle.toLowerCase().includes(q) ||
+      item.companyName.toLowerCase().includes(q) ||
+      item.experience.toLowerCase().includes(q) ||
+      item.email.toLowerCase().includes(q)
     );
-  }, [search, list]);
+
+    const sorted = [...filtered].sort((a, b) => {
+      if (sortBy === 'latest') {
+        const dateA = new Date(a.postingDate || a.createDate || a.createdAt || 0);
+        const dateB = new Date(b.postingDate || b.createDate || b.createdAt || 0);
+        return dateB - dateA;
+      }
+      if (sortBy === 'oldest') {
+        const dateA = new Date(a.postingDate || a.createDate || a.createdAt || 0);
+        const dateB = new Date(b.postingDate || b.createDate || b.createdAt || 0);
+        return dateA - dateB;
+      }
+      if (sortBy === 'az') {
+        return (a.jobTitle || '').localeCompare(b.jobTitle || '');
+      }
+      if (sortBy === 'za') {
+        return (b.jobTitle || '').localeCompare(a.jobTitle || '');
+      }
+      return 0;
+    });
+
+    setFilteredList(sorted);
+  }, [search, list, sortBy]);
 
   const handleDelete = async (uid) => {
     if (!window.confirm('Delete this job posting permanently?')) return;
@@ -143,8 +164,8 @@ export const Jobs = () => {
         {/* Card Body */}
         <div className="min-w-0 p-4 md:p-5">
 
-          {/* Search + Count */}
-          <div className="flex items-center gap-3 mb-4 flex-wrap">
+          {/* Search + Sort + Count */}
+          <div className="flex items-center gap-3 mb-4 flex-wrap w-full">
             <div className="relative w-full sm:w-auto">
               <input
                 type="text"
@@ -155,6 +176,20 @@ export const Jobs = () => {
               />
               <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
             </div>
+
+            <div className="w-full sm:w-auto">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="px-3 py-2 w-full sm:w-44 border border-slate-200 rounded-lg text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 cursor-pointer"
+              >
+                <option value="latest">Latest</option>
+                <option value="oldest">Oldest</option>
+                <option value="az">A to Z</option>
+                <option value="za">Z to A</option>
+              </select>
+            </div>
+
             <span className="ml-auto text-xs text-slate-400 font-medium">
               Showing {filteredList.length} of {list.length} jobs
             </span>

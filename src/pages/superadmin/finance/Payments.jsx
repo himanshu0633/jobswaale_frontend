@@ -113,6 +113,21 @@ export const Payments = () => {
     }
   };
 
+  const [updatingStatusId, setUpdatingStatusId] = useState(null);
+
+  const handleStatusChange = async (paymentId, newStatus) => {
+    setUpdatingStatusId(paymentId);
+    setError('');
+    try {
+      await axios.patch(`${BASE_API_URL}/payments/${paymentId}/status`, { paymentStatus: newStatus });
+      await Promise.all([fetchSummary(), fetchPayments()]);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update payment status.');
+    } finally {
+      setUpdatingStatusId(null);
+    }
+  };
+
   useEffect(() => {
     fetchSummary().catch(() => setSummary({ revenue: 0, success: 0, pending: 0, failed: 0, plans: [], methods: [] }));
   }, []);
@@ -248,9 +263,17 @@ export const Payments = () => {
                   <div className="text-xs text-slate-500">{item.customer}</div>
                   <div className="text-xs text-slate-400">{item.email}</div>
                 </div>
-                <span className={`px-2 py-0.5 rounded text-[11px] font-bold border ${statusClass[item.status] || 'bg-slate-50 text-slate-500 border-slate-100'}`}>
-                  {item.status}
-                </span>
+                <select
+                  value={item.status}
+                  onChange={(e) => handleStatusChange(item._id, e.target.value)}
+                  disabled={updatingStatusId === item._id}
+                  className={`px-2 py-0.5 rounded text-[11px] font-bold border cursor-pointer outline-none ${statusClass[item.status] || 'bg-slate-50 text-slate-500 border-slate-100'} disabled:opacity-50`}
+                >
+                  <option value="Success">Success</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Failed">Failed</option>
+                  <option value="Refunded">Refunded</option>
+                </select>
               </div>
               <div className="flex items-center justify-between text-xs text-slate-500">
                 <span>{formatDate(item.date)} - {item.plan}</span>
@@ -296,7 +319,17 @@ export const Payments = () => {
                   <td className="px-4 py-3 text-slate-600">{item.method || '-'}</td>
                   <td className="px-4 py-3 text-slate-500">{item.gatewayTxnId || '-'}</td>
                   <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded text-[11px] font-bold border ${statusClass[item.status] || 'bg-slate-50 text-slate-500 border-slate-100'}`}>{item.status}</span>
+                    <select
+                      value={item.status}
+                      onChange={(e) => handleStatusChange(item._id, e.target.value)}
+                      disabled={updatingStatusId === item._id}
+                      className={`px-2 py-0.5 rounded text-[11px] font-bold border cursor-pointer outline-none ${statusClass[item.status] || 'bg-slate-50 text-slate-500 border-slate-100'} disabled:opacity-50`}
+                    >
+                      <option value="Success">Success</option>
+                      <option value="Pending">Pending</option>
+                      <option value="Failed">Failed</option>
+                      <option value="Refunded">Refunded</option>
+                    </select>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-center gap-2">
