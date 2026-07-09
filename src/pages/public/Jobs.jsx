@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Briefcase, MapPin, ChevronDown, Mail, ArrowRight, Search, X } from 'lucide-react';
 import TrustedCompanies from './TrustedCompanies';
+import axios from 'axios';
+import { BASE_API_URL } from '../../context/AuthContext';
 
 const MOCK_JOBS = [
   {
@@ -131,12 +133,44 @@ export const Jobs = () => {
   const [sidebarExps, setSidebarExps] = useState([]);
 
   // Active filter state
-  const [filteredJobs, setFilteredJobs] = useState(MOCK_JOBS);
+  const [dbJobs, setDbJobs] = useState([]);
+  const [filteredJobs, setFilteredJobs] = useState([]);
   const [sortBy, setSortBy] = useState('newest');
   const [reminderEmail, setReminderEmail] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  // Fetch jobs from database on mount
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const res = await axios.get(`${BASE_API_URL}/jobs`);
+        const mappedJobs = (res.data || []).map(j => ({
+          id: j.slug || j._id,
+          title: j.jobTitle,
+          company: j.companyName,
+          location: `${j.city}, ${j.state}`,
+          salary: j.salary || (j.minSalary && j.maxSalary ? `₹${j.minSalary} - ${j.maxSalary}` : 'Not Specified'),
+          type: j.jobType?.jobType || j.workMode || 'Full Time',
+          category: j.jobCategory?.categoryName || 'IT & Software',
+          experience: j.experience,
+          logoLetter: j.companyName ? j.companyName.charAt(0).toUpperCase() : 'J',
+          logoBg: ['bg-red-500', 'bg-blue-600', 'bg-emerald-500', 'bg-purple-500', 'bg-amber-500'][Math.floor(Math.random() * 5)]
+        }));
+        setDbJobs(mappedJobs);
+        setFilteredJobs(mappedJobs);
+      } catch (err) {
+        console.error('Fetch jobs error:', err);
+        setError('Failed to fetch jobs from database.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJobs();
+  }, []);
 
   const filterJobs = () => {
-    let result = [...MOCK_JOBS];
+    let result = [...dbJobs];
 
     // Top search bar filters
     if (searchKeyword.trim() !== '') {
@@ -182,9 +216,9 @@ export const Jobs = () => {
 
     // Sort
     if (sortBy === 'newest') {
-      result.sort((a, b) => b.id - a.id);
+      result.sort((a, b) => String(b.id).localeCompare(String(a.id)));
     } else {
-      result.sort((a, b) => a.id - b.id);
+      result.sort((a, b) => String(a.id).localeCompare(String(b.id)));
     }
 
     setFilteredJobs(result);
@@ -192,7 +226,7 @@ export const Jobs = () => {
 
   useEffect(() => {
     filterJobs();
-  }, [sortBy]);
+  }, [dbJobs, sortBy]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -222,7 +256,7 @@ export const Jobs = () => {
     setSearchType('');
     setSearchLoc('');
     setTagFilter('');
-    setFilteredJobs(MOCK_JOBS);
+    setFilteredJobs(dbJobs);
   };
 
   const handleSidebarTypeToggle = (type) => {
@@ -419,8 +453,12 @@ export const Jobs = () => {
             </div>
 
             {/* Grid of Job Cards */}
-            {filteredJobs.length === 0 ? (
-              <div className="text-center py-16 rounded-[12px] bg-[#f4f6fa]" style={{ border: '0.88px solid rgba(6,18,36,0.1)' }}>
+            {loading ? (
+              <div className="flex min-h-[300px] items-center justify-center py-16 w-full col-span-2">
+                <div className="h-9 w-9 animate-spin rounded-full border-4 border-[#0047C7] border-t-transparent"/>
+              </div>
+            ) : filteredJobs.length === 0 ? (
+              <div className="text-center py-16 rounded-[12px] bg-[#f4f6fa] w-full col-span-2" style={{ border: '0.88px solid rgba(6,18,36,0.1)' }}>
                 <p className="text-[#88929b] font-medium text-sm">No jobs found matching your filters.</p>
                 <button
                   onClick={resetSidebarFilters}

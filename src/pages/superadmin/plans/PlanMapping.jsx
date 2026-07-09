@@ -11,11 +11,11 @@ import {
 export const PlanMapping = () => {
   const [plans, setPlans] = useState([]);
   const [features, setFeatures] = useState([]);
+  const [selectedPlanId, setSelectedPlanId] = useState(null);
   const [mappings, setMappings] = useState({}); // Stores mapping as key: planId_featureId, value: String
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
-  const tableMinWidth = 220 + (plans.length * 170);
 
   const showMessage = (type, text) => {
     setMessage({ type, text });
@@ -27,17 +27,20 @@ export const PlanMapping = () => {
   const fetchData = async () => {
     try {
       const [resP, resF, resM] = await Promise.all([
-        axios.get(`${BASE_API_URL}/masters/plans`),
+        axios.get(`${BASE_API_URL}/masters/plans?category=Jobseeker`),
         axios.get(`${BASE_API_URL}/masters/features`),
         axios.get(`${BASE_API_URL}/masters/plan-mappings`)
       ]);
-      // Sort plans by displayOrder to ensure consistent column ordering matching mockup
+      
       const sortedPlans = (resP.data || []).sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
-      // Sort features by displayOrder to ensure consistent row ordering
       const sortedFeatures = (resF.data || []).sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
       
       setPlans(sortedPlans);
       setFeatures(sortedFeatures);
+
+      if (sortedPlans.length > 0) {
+        setSelectedPlanId(sortedPlans[0]._id);
+      }
 
       // Build key-value map for quick lookup
       const mapObj = {};
@@ -83,7 +86,7 @@ export const PlanMapping = () => {
       });
 
       await axios.post(`${BASE_API_URL}/masters/plan-mappings`, payload);
-      showMessage('success', 'Success! Record added/updated successfully.');
+      showMessage('success', 'Success! Mappings updated successfully.');
     } catch (err) {
       console.error(err);
       showMessage('error', err.response?.data?.message || 'Oops! Something went wrong. Please try again.');
@@ -100,6 +103,8 @@ export const PlanMapping = () => {
     );
   }
 
+  const selectedPlan = plans.find(p => p._id === selectedPlanId);
+
   return (
     <div className="min-w-0 space-y-6">
       
@@ -109,6 +114,7 @@ export const PlanMapping = () => {
           <h1 className="text-xl font-bold text-slate-800">
             Plan Mapping
           </h1>
+          <p className="text-sm text-slate-400 mt-1">Configure feature permissions for each subscription plan.</p>
         </div>
         <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 text-[0.9rem]">
           <span>Dashboard</span>
@@ -117,145 +123,140 @@ export const PlanMapping = () => {
         </div>
       </div>
 
+      {message.text && (
+        <div className={`flex items-start gap-3 p-4 rounded-xl border text-sm font-semibold transition-all ${
+          message.type === 'success' 
+            ? 'bg-emerald-50 border-emerald-100 text-emerald-800 shadow-sm shadow-emerald-100/30' 
+            : 'bg-rose-50 border-rose-100 text-rose-800 shadow-sm shadow-rose-100/30'
+        }`}>
+          {message.type === 'success' ? (
+            <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-500" />
+          ) : (
+            <AlertCircle className="w-5 h-5 shrink-0 text-rose-500" />
+          )}
+          <div className="flex-grow">{message.text}</div>
+          <button 
+            onClick={() => setMessage({ type: '', text: '' })}
+            className="p-0.5 rounded-lg hover:bg-slate-200/50 text-slate-400 hover:text-slate-600 transition-colors shrink-0"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {plans.length === 0 || features.length === 0 ? (
         <div className="p-8 border border-dashed border-slate-200 bg-white rounded-2xl text-center text-slate-500">
           Please add Plans in <strong className="text-slate-800">Plan Master</strong> and Features in <strong className="text-slate-800">Feature Master</strong> first to generate the mapping grid.
         </div>
       ) : (
-        <div className="min-w-0 border border-slate-200 bg-white rounded-2xl shadow-sm overflow-hidden -ml-3 lg:-ml-5">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
-          {/* Card Header */}
-          <div className="p-5 border-b border-slate-100 bg-slate-50/50">
-            <h3 className="text-sm font-bold text-slate-800">
-              Create Plan Mapping
-            </h3>
+          {/* Left Column: List of Plans */}
+          <div className="lg:col-span-4 space-y-4">
+            <div className="bg-white rounded-2xl border border-slate-150 p-5 shadow-sm">
+              <h3 className="text-xs font-bold text-slate-400 mb-4 tracking-wide uppercase">
+                Select Subscription Plan
+              </h3>
+              <div className="space-y-2">
+                {plans.map(p => {
+                  const activeCount = features.filter(f => {
+                    const key = `${p._id}_${f._id}`;
+                    return mappings[key] && mappings[key] !== 'No';
+                  }).length;
+                  const isSelected = selectedPlanId === p._id;
+
+                  return (
+                    <button
+                      key={p._id}
+                      onClick={() => setSelectedPlanId(p._id)}
+                      className={`w-full text-left p-4 rounded-xl border transition-all flex flex-col gap-1 cursor-pointer ${
+                        isSelected
+                          ? 'border-indigo-600 bg-indigo-50/50 ring-2 ring-indigo-600/10'
+                          : 'border-slate-100 bg-white hover:border-slate-200 hover:bg-slate-50/30'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <span className={`font-bold text-sm ${isSelected ? 'text-indigo-800' : 'text-slate-800'}`}>
+                          {p.planName}
+                        </span>
+                        <span className={`text-[0.7rem] font-black px-2 py-0.5 rounded-full ${
+                          isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500'
+                        }`}>
+                          ₹{p.cost}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between w-full mt-2">
+                        <span className="text-[0.7rem] text-slate-400 font-semibold">{p.planValidity}</span>
+                        <span className="text-[0.7rem] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                          {activeCount} Features Active
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
-          
-          {/* Card Content */}
-          <div className="min-w-0 p-4 md:p-6">
-            
-            {/* Alert Boxes inside Card */}
-            {message.text && (
-              <div className="mb-5 relative animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className={`flex items-start gap-3 p-4 rounded-xl border text-sm font-semibold ${
-                  message.type === 'success' 
-                    ? 'bg-emerald-50 border-emerald-100 text-emerald-800' 
-                    : 'bg-rose-50 border-rose-100 text-rose-800'
-                }`}>
-                  {message.type === 'success' ? (
-                    <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-500" />
-                  ) : (
-                    <AlertCircle className="w-5 h-5 shrink-0 text-rose-500" />
-                  )}
-                  <div className="flex-grow">{message.text}</div>
-                  <button 
-                    onClick={() => setMessage({ type: '', text: '' })}
-                    className="p-0.5 rounded-lg hover:bg-slate-200/50 text-slate-400 hover:text-slate-600 transition-colors shrink-0"
+
+          {/* Right Column: Manage Mapped Features for Selected Plan */}
+          <div className="lg:col-span-8">
+            {selectedPlan && (
+              <div className="bg-white rounded-2xl border border-slate-150 shadow-sm overflow-hidden">
+                
+                {/* Panel Header */}
+                <div className="p-5 border-b border-slate-150 bg-slate-50/50 flex items-center justify-between flex-wrap gap-3">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-800">
+                      Configure Features for: <span className="text-indigo-600">{selectedPlan.planName}</span>
+                    </h3>
+                    <p className="text-xs text-slate-400 font-semibold mt-0.5">Specify access level and details for each feature.</p>
+                  </div>
+                  <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg shadow-md shadow-indigo-600/10 transition-all text-xs cursor-pointer disabled:bg-slate-300 disabled:shadow-none"
                   >
-                    <X className="w-4 h-4" />
+                    {saving ? 'Saving...' : 'Save Mapping'}
                   </button>
                 </div>
-              </div>
-            )}
 
-            {/* ── DESKTOP: Matrix Table (hidden on mobile) ── */}
-            <div className="hidden md:block max-w-full overflow-x-auto overflow-y-hidden border border-slate-150 rounded-xl">
-              <table
-                className="w-full text-xs md:text-sm text-left border-collapse"
-                style={{ minWidth: `${tableMinWidth}px` }}
-              >
-                <thead>
-                  <tr className="bg-slate-50 border-b border-slate-100 text-xs text-slate-400 uppercase">
-                    <th className="sticky left-0 z-20 w-[220px] min-w-[220px] bg-slate-50 px-5 py-3.5 font-bold text-slate-600 border-r border-slate-100">
-                      Feature
-                    </th>
-                    {plans.map(p => (
-                      <th key={p._id} className="w-[170px] min-w-[170px] px-5 py-3.5 font-bold text-slate-600 text-center border-r border-slate-100">
-                        {p.planName}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {features.map((f) => (
-                    <tr key={f._id} className="odd:bg-white even:bg-slate-50">
-                      <td className="sticky left-0 z-10 w-[220px] min-w-[220px] bg-inherit px-5 py-4 font-semibold text-slate-700 border-r border-slate-100">
-                        {f.featureName}
-                      </td>
-                      {plans.map(p => {
-                        const key = `${p._id}_${f._id}`;
-                        const currentVal = mappings[key] || 'No';
-                        return (
-                          <td key={p._id} className="w-[170px] min-w-[170px] px-5 py-4 border-r border-slate-100 text-center">
-                            <select
-                              value={currentVal}
-                              onChange={(e) => handleSelectChange(p._id, f._id, e.target.value)}
-                              className="mx-auto block w-32 px-3 py-1.5 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-xs font-semibold bg-white cursor-pointer"
-                            >
-                              <option value="Yes">Yes</option>
-                              <option value="No">No</option>
-                              <option value="Limited">Limited</option>
-                              <option value="Unlimited">Unlimited</option>
-                              <option value="3 Months">3 Months</option>
-                            </select>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                {/* Features list table/grid */}
+                <div className="p-6 divide-y divide-slate-100">
+                  {features.map((f, index) => {
+                    const key = `${selectedPlanId}_${f._id}`;
+                    const currentVal = mappings[key] || 'No';
 
-            {/* ── MOBILE: Per-plan cards (hidden on desktop) ── */}
-            <div className="md:hidden space-y-4">
-              {plans.map(p => (
-                <div key={p._id} className="border border-slate-200 rounded-xl overflow-hidden">
-                  {/* Plan name header */}
-                  <div className="px-4 py-3 bg-indigo-50 border-b border-indigo-100">
-                    <span className="text-sm font-bold text-indigo-700">{p.planName}</span>
-                  </div>
-                  {/* Feature rows */}
-                  <div className="divide-y divide-slate-100">
-                    {features.map(f => {
-                      const key = `${p._id}_${f._id}`;
-                      const currentVal = mappings[key] || 'No';
-                      return (
-                        <div key={f._id} className="flex items-center justify-between px-4 py-3 gap-3">
-                          <span className="text-xs font-semibold text-slate-700 flex-1 leading-snug">
+                    return (
+                      <div key={f._id} className="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 first:pt-0 last:pb-0">
+                        <div className="max-w-md">
+                          <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            <span className="text-xs font-extrabold text-slate-300">#{index+1}</span>
                             {f.featureName}
-                          </span>
+                          </h4>
+                          <p className="text-xs text-slate-400 mt-0.5">Toggle this feature's status for the {selectedPlan.planName} plan.</p>
+                        </div>
+                        <div className="flex items-center gap-2">
                           <select
                             value={currentVal}
-                            onChange={(e) => handleSelectChange(p._id, f._id, e.target.value)}
-                            className="shrink-0 px-2.5 py-1.5 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-xs font-semibold bg-white cursor-pointer"
+                            onChange={(e) => handleSelectChange(selectedPlanId, f._id, e.target.value)}
+                            className="w-36 px-3 py-2 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-xs font-semibold bg-white cursor-pointer hover:border-slate-300 transition-colors"
                           >
-                            <option value="Yes">Yes</option>
-                            <option value="No">No</option>
+                            <option value="Yes">Yes (Enabled)</option>
+                            <option value="No">No (Disabled)</option>
                             <option value="Limited">Limited</option>
                             <option value="Unlimited">Unlimited</option>
                             <option value="3 Months">3 Months</option>
                           </select>
                         </div>
-                      );
-                    })}
-                  </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
 
-            {/* Submit Button at Bottom Left */}
-            <div className="pt-6">
-              <button
-                onClick={handleSave}
-                disabled={saving || plans.length === 0 || features.length === 0}
-                className="w-full sm:w-auto px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg shadow-md shadow-indigo-600/10 transition-colors text-sm disabled:bg-slate-300 disabled:shadow-none"
-              >
-                {saving ? 'Saving...' : 'Submit'}
-              </button>
-            </div>
-
+              </div>
+            )}
           </div>
+
         </div>
       )}
     </div>

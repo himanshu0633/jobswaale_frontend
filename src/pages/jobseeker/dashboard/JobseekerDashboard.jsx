@@ -196,6 +196,11 @@ export const JobseekerDashboard = () => {
 
   return (
     <div className="space-y-5">
+      {error && (
+        <div className="rounded-md border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
+          {error}
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
