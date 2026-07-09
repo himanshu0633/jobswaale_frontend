@@ -63,6 +63,7 @@ export const PublicPage = () => {
       case 'jobs':
         return <Jobs />;
       case 'employer':
+      case 'employers':
         return <Employers />;
       case 'employer-plan':
         return <EmployerPlan />;

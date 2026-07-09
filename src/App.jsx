@@ -285,7 +285,10 @@ function App() {
             <Route path="/admin/*" element={<AppLayout />} />
           </Route>
 
-          {/* C. Secure Employer Console Route Block */}
+          {/* C. Public Employers Page */}
+          <Route path="/employers" element={<PublicPage />} />
+
+          {/* D. Secure Employer Console Route Block */}
           <Route element={<EmployerProtectedRoute />}>
             <Route path="/employer" element={<EmployerLayout />}>
               <Route index element={<EmployerDashboard />} />
@@ -311,7 +314,7 @@ function App() {
             </Route>
           </Route>
 
-          {/* D. Public Web Blogs Pages */}
+          {/* E. Public Web Blogs Pages */}
           <Route path="/blogs" element={<PublicBlogs />} />
           <Route path="/blogs/:slug" element={<PublicBlogs />} />
           
@@ -331,7 +334,7 @@ function App() {
             </Route>
           </Route>
           
-          {/* E. Public Web Portal Wildcard Route Fallback */}
+          {/* F. Public Web Portal Wildcard Route Fallback */}
           <Route path="/jobs/:id" element={<PublicPage />} />
           <Route path="*" element={<PublicPage />} />
         </Routes>
