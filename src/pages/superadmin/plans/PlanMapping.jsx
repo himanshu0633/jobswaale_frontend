@@ -122,7 +122,7 @@ export const PlanMapping = () => {
           Please add Plans in <strong className="text-slate-800">Plan Master</strong> and Features in <strong className="text-slate-800">Feature Master</strong> first to generate the mapping grid.
         </div>
       ) : (
-        <div className="min-w-0 border border-slate-200 bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="min-w-0 border border-slate-200 bg-white rounded-2xl shadow-sm overflow-hidden -ml-3 lg:-ml-5">
           
           {/* Card Header */}
           <div className="p-5 border-b border-slate-100 bg-slate-50/50">

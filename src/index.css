@@ -329,3 +329,15 @@ body {
     -webkit-overflow-scrolling: touch;
   }
 }
+
+.hide-scrollbar {
+  overflow-y: auto;
+  scrollbar-width: none;      /* Firefox */
+  -ms-overflow-style: none;   /* IE/Edge */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;              /* Chrome, Safari, Edge */
+}

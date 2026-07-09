@@ -141,7 +141,7 @@ export const EmployerPlanListings = () => {
         </div>
       </div>
 
-      <div className="border border-slate-200 bg-white rounded-lg shadow-sm overflow-hidden">
+      <div className="border border-slate-200 bg-white rounded-lg shadow-sm overflow-hidden -ml-3 lg:-ml-5">
         <div className="p-6 border-b border-slate-100 flex items-center justify-between">
           <h3 className="text-base font-bold text-slate-700">Employer Plan Listings</h3>
           <Link
@@ -431,7 +431,7 @@ export const EmployerPlanForm = () => {
         </div>
       </div>
 
-      <div className="border border-slate-200 bg-white rounded-lg shadow-sm overflow-hidden">
+      <div className="border border-slate-200 bg-white rounded-lg shadow-sm overflow-hidden -ml-3 lg:-ml-5">
         <div className="p-6 border-b border-slate-100 flex items-center justify-between">
           <h3 className="text-base font-bold text-slate-700">{id ? 'Update Employer Plan' : 'Create Employer Plan'}</h3>
           <Link to="/admin/employer-plans" className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md text-sm font-bold">

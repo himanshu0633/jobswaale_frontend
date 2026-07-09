@@ -209,7 +209,7 @@ export const AddJobseeker = () => {
       </div>
 
       {/* Card */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden -ml-3 lg:-ml-5">
 
         {/* Card Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">

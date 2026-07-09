@@ -441,7 +441,7 @@ export const Jobs = () => {
                       </div>
                       <div className="flex-grow-1 ms-4 min-w-0">
                         <h3 className="job-title font-bold text-[#1f2938] text-base leading-snug truncate">
-                          <Link to="/login" className="text-dark hover:text-[#0047C7]">
+                          <Link to={`/jobs/${job.id}`} className="text-dark hover:text-[#0047C7]">
                             {job.title}
                           </Link>
                         </h3>

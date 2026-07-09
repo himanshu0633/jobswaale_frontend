@@ -13,6 +13,7 @@ import Contact from './Contact';
 import PrivacyPolicy from './PrivacyPolicy';
 import TermsConditions from './TermsConditions';
 import Faq from './Faq';
+import JobDetail from '../jobs/JobDetail';
 
 // Import modular header and footer
 import { PublicHeader } from './PublicHeader';
@@ -46,6 +47,16 @@ export const PublicPage = () => {
 
   // Switch rendering of local components
   const renderStaticPage = () => {
+    if (slug.startsWith('jobs/')) {
+      return (
+        <section className="bg-slate-50 py-12 min-h-screen">
+          <div className="max-w-[1350px] mx-auto px-4 sm:px-6">
+            <JobDetail />
+          </div>
+        </section>
+      );
+    }
+
     switch (slug) {
       case 'home':
         return <Home />;

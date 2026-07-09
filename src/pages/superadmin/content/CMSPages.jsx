@@ -309,7 +309,7 @@ export const CMSPages = () => {
   return (
     <div className="space-y-5">
       {view === 'list' ? (
-        <section className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm">
+        <section className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm -ml-3 lg:-ml-5">
           <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
             <h1 className="text-base font-extrabold text-slate-800">All CMS Pages</h1>
             <button onClick={handleNew} className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-indigo-500">
@@ -405,7 +405,7 @@ export const CMSPages = () => {
           </div>
         </section>
       ) : (
-        <section className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm">
+        <section className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm -ml-3 lg:-ml-5">
           <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
             <h1 className="text-base font-extrabold text-slate-800">{editingId ? 'Edit CMS Page' : 'Add CMS Page'}</h1>
             <button onClick={openList} className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-indigo-500">
