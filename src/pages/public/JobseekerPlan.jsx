@@ -1,8 +1,132 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import TrustedCompanies from './TrustedCompanies';
 import bannerPrice from "./JobSeekerPlanImage/banner-price.png";
+import { BASE_API_URL } from '../../context/AuthContext';
+
+const formatPrice = (cost) => `₹${Number(cost || 0).toLocaleString('en-IN')}`;
+
+const getPlanFeatures = (plan) => {
+    const features = Array.isArray(plan.mappedFeatures) && plan.mappedFeatures.length
+        ? plan.mappedFeatures
+        : Array.isArray(plan.features)
+            ? plan.features
+            : [];
+    return features
+        .filter((feature) => feature?.value !== 'No')
+        .map((feature) => {
+            const name = feature?.featureName || feature?.name || feature;
+            const value = feature?.value;
+            return value && value !== 'Yes' ? `${name} (${value})` : name;
+        })
+        .filter(Boolean);
+};
+
+const JobseekerPlanCard = ({ plan, index }) => {
+    const features = getPlanFeatures(plan);
+    const isFeatured = Boolean(plan.showBadge) || String(plan.planName || '').toLowerCase() === 'pro' || index === 2;
+    const badgeText = plan.badge || 'Most popular';
+    const validity = plan.planValidity || (Number(plan.cost || 0) === 0 ? 'Always Free' : 'One Time');
+
+    if (isFeatured) {
+        return (
+            <div className="w-full md:w-1/2 lg:w-1/4 px-3">
+                <div className="inline-block w-full -mt-[50px] bg-[#0047C7] bg-[url('/assets/imgs/theme/bg-featured.svg')] bg-no-repeat bg-[top_right] bg-contain rounded-[26px] p-5 pb-11 px-8 mb-8 shadow-sm relative">
+                    <div className="text-end mb-2.5">
+                        <span className="inline-block bg-white px-[37px] py-2 rounded-[14px] text-[10px] font-bold text-[#0047C7] uppercase tracking-wide">
+                            {badgeText}
+                        </span>
+                    </div>
+                    <div className="inline-block w-full pb-10">
+                        <span className="text-[36px] text-white font-semibold leading-[46px] mr-4">{formatPrice(plan.cost)}</span>
+                        <span className="text-[17px] leading-[23px] text-white block mb-2">{validity}</span>
+                        {plan.unlockCount && (
+                            <span className="rounded px-3 py-2 bg-yellow-400 text-white uppercase font-semibold text-[13px]">{plan.unlockCount}</span>
+                        )}
+                    </div>
+                    <div>
+                        <h4 className="text-[28px] leading-[34px] font-bold text-white mb-4 uppercase">{plan.planName}</h4>
+                        <p className="text-[15px] leading-5 text-white mb-8">
+                            {plan.planSubtitle || 'Career support plan'}
+                        </p>
+                    </div>
+                    <ul className="inline-block w-full pb-8">
+                        {features.length > 0 ? features.map((item) => (
+                            <li key={item} className="inline-block w-full pl-9 bg-[url('/assets/imgs/theme/icons/check-circle-white.svg')] bg-no-repeat bg-left-center mb-3 text-[15px] leading-5 text-white">
+                                {item}
+                            </li>
+                        )) : (
+                            <li className="inline-block w-full pl-9 bg-[url('/assets/imgs/theme/icons/check-circle-white.svg')] bg-no-repeat bg-left-center mb-3 text-[15px] leading-5 text-white">
+                                Plan benefits available after selection
+                            </li>
+                        )}
+                    </ul>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="w-full md:w-1/2 lg:w-1/4 px-3">
+            <div className="inline-block w-full p-6 border border-[#fff7f0] rounded-[30px] bg-[#fff7f0] mb-8 shadow-sm">
+                <div className="inline-block w-full pb-10">
+                    <span className="text-[36px] text-[#231d4f] font-semibold leading-[46px] mr-4">{formatPrice(plan.cost)}</span>
+                    <span className="text-[17px] leading-[23px] text-[#37404e] block mb-2">{validity}</span>
+                    {plan.unlockCount && (
+                        <span className="rounded px-3 py-2 bg-yellow-400 text-white uppercase font-semibold text-[13px]">{plan.unlockCount}</span>
+                    )}
+                </div>
+                <div>
+                    <h4 className="text-[28px] leading-[34px] font-bold text-[#1f2938] mb-4 uppercase">{plan.planName}</h4>
+                    <p className="text-[15px] leading-5 text-[#37404e] mb-8">
+                        {plan.planSubtitle || 'Career support plan'}
+                    </p>
+                </div>
+                <ul className="inline-block w-full pb-8">
+                    {features.length > 0 ? features.map((item) => (
+                        <li key={item} className="inline-block w-full pl-9 bg-[url('/assets/imgs/theme/icons/check-circle.svg')] bg-no-repeat bg-left-center mb-3 text-[15px] leading-5 text-[#37404e]">
+                            {item}
+                        </li>
+                    )) : (
+                        <li className="inline-block w-full pl-9 bg-[url('/assets/imgs/theme/icons/check-circle.svg')] bg-no-repeat bg-left-center mb-3 text-[15px] leading-5 text-[#37404e]">
+                            Plan benefits available after selection
+                        </li>
+                    )}
+                </ul>
+            </div>
+        </div>
+    );
+};
 
 const JobseekerPlan = () => {
+    const [plans, setPlans] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        const fetchPlans = async () => {
+            try {
+                const res = await axios.get(`${BASE_API_URL}/masters/plans?category=Jobseeker&limit=1000`);
+                const activePlans = (res.data || [])
+                    .filter((plan) => (plan.status || 'active') === 'active')
+                    .sort((a, b) => {
+                        const orderA = Number.isFinite(Number(a.displayOrder)) ? Number(a.displayOrder) : Number.MAX_SAFE_INTEGER;
+                        const orderB = Number.isFinite(Number(b.displayOrder)) ? Number(b.displayOrder) : Number.MAX_SAFE_INTEGER;
+                        if (orderA !== orderB) return orderA - orderB;
+                        return Number(a.cost || 0) - Number(b.cost || 0);
+                    });
+                setPlans(activePlans);
+            } catch (err) {
+                console.error('Error fetching jobseeker plans:', err);
+                setError('Unable to load jobseeker plans right now.');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPlans();
+    }, []);
+
     return (
         <main className="main">
 
@@ -23,161 +147,27 @@ const JobseekerPlan = () => {
                     </div>
 
                     {/* Pricing Cards */}
-                    <div className="mt-32 md:mt-12]">
-                        <div className="flex flex-wrap -mx-3">
-
-                            {/* FREE Card */}
-                            <div className="w-full md:w-1/2 lg:w-1/4 px-3">
-                                <div className="inline-block w-full p-6 border border-[#fff7f0] rounded-[30px] bg-[#fff7f0] mb-8 shadow-sm">
-                                    <div className="inline-block w-full pb-10">
-                                        <span className="text-[36px] text-[#231d4f] font-semibold leading-[46px] mr-4">&#8377;0</span>
-                                        <span className="text-[17px] leading-[23px] text-[#37404e] block">Always Free</span>
-                                    </div>
-                                    <div>
-                                        <h4 className="text-[28px] leading-[34px] font-bold text-[#1f2938] mb-4 uppercase">FREE</h4>
-                                        <p className="text-[15px] leading-5 text-[#37404e] mb-8">
-                                            Start your journey with us
-                                        </p>
-                                    </div>
-                                    <ul className="inline-block w-full pb-8">
-                                        {['Candidate Profile Registration', 'Profile Support', 'Limited Job Offers'].map((item) => (
-                                            <li key={item} className="inline-block w-full pl-9 bg-[url('/assets/imgs/theme/icons/check-circle.svg')] bg-no-repeat bg-left-center mb-3 text-[15px] leading-5 text-[#37404e]">
-                                                {item}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                    <div>
-                                        <a
-                                            href="#"
-                                            className="mt-8 inline-flex items-center justify-center w-full border border-[rgba(0,71,199)] rounded-[10px] bg-white text-[#111112] text-base py-4 px-6 font-semibold transition-all duration-200 hover:bg-[#0047C7] hover:text-white pr-[42px] bg-[url('/assets/imgs/theme/icons/chevron-right.svg')] bg-no-repeat bg-[right_19px_center] hover:bg-[url('/assets/imgs/theme/icons/chevron-right-light.svg')]"
-                                        >
-                                            Choose plan
-                                        </a>
-                                    </div>
-                                </div>
+                    <div className="mt-32 md:mt-12">
+                        {loading ? (
+                            <div className="flex min-h-[280px] items-center justify-center">
+                                <div className="h-9 w-9 animate-spin rounded-full border-4 border-[#0047C7] border-t-transparent" />
                             </div>
-
-                            {/* Basic Card */}
-                            <div className="w-full md:w-1/2 lg:w-1/4 px-3">
-                                <div className="inline-block w-full p-6 border border-[#fff7f0] rounded-[30px] bg-[#fff7f0] mb-8 shadow-sm">
-                                    <div className="inline-block w-full pb-10">
-                                        <span className="text-[36px] text-[#231d4f] font-semibold leading-[46px] mr-4">&#8377;500</span>
-                                        <span className="text-[17px] leading-[23px] text-[#37404e] block">One Time Registration</span>
-                                    </div>
-                                    <div>
-                                        <h4 className="text-[28px] leading-[34px] font-bold text-[#1f2938] mb-4 uppercase">Basic</h4>
-                                        <p className="text-[15px] leading-5 text-[#37404e] mb-8">
-                                            Register &amp; Get Started
-                                        </p>
-                                    </div>
-                                    <ul className="inline-block w-full pb-8">
-                                        {[
-                                            'Candidate Profile Registration',
-                                            'Profile Support',
-                                            'Limited Job Offers',
-                                            'Job Alerts & Vacancy Updates',
-                                            'Profile Forward to Suitable Companies',
-                                        ].map((item) => (
-                                            <li key={item} className="inline-block w-full pl-9 bg-[url('/assets/imgs/theme/icons/check-circle.svg')] bg-no-repeat bg-left-center mb-3 text-[15px] leading-5 text-[#37404e]">
-                                                {item}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                    <div>
-                                        <a
-                                            href="#"
-                                            className="mt-8 inline-flex items-center justify-center w-full border border-[rgba(0,71,199)] rounded-[10px] bg-white text-[#111112] text-base py-4 px-6 font-semibold transition-all duration-200 hover:bg-[#0047C7] hover:text-white pr-[42px] bg-[url('/assets/imgs/theme/icons/chevron-right.svg')] bg-no-repeat bg-[right_19px_center] hover:bg-[url('/assets/imgs/theme/icons/chevron-right-light.svg')]"
-                                        >
-                                            Choose plan
-                                        </a>
-                                    </div>
-                                </div>
+                        ) : error ? (
+                            <div className="rounded-[18px] border border-rose-100 bg-rose-50 px-6 py-8 text-center text-sm font-semibold text-rose-700">
+                                {error}
                             </div>
-
-                            {/* Pro Card (Most Popular) */}
-                            <div className="w-full md:w-1/2 lg:w-1/4 px-3">
-                                <div className="inline-block w-full -mt-[50px] bg-[#0047C7] bg-[url('/assets/imgs/theme/bg-featured.svg')] bg-no-repeat bg-[top_right] bg-contain rounded-[26px] p-5 pb-11 px-8 mb-8 shadow-sm relative">
-                                    <div className="text-end mb-2.5">
-                                        <a href="#" className="inline-block bg-white px-[37px] py-2 rounded-[14px] text-[10px] font-bold text-[#0047C7] uppercase tracking-wide bg-[right_13px_center] bg-no-repeat">
-                                            Most popular
-                                        </a>
-                                    </div>
-                                    <div className="inline-block w-full pb-10">
-                                        <span className="text-[36px] text-white font-semibold leading-[46px] mr-4">&#8377;1000</span>
-                                        <span className="text-[17px] leading-[23px] text-white block mb-2">One Time Payment</span>
-                                        <span className="rounded px-3 py-2 bg-yellow-400 text-white uppercase font-semibold text-[13px]">3 Months Assistance</span>
-                                    </div>
-                                    <div>
-                                        <h4 className="text-[28px] leading-[34px] font-bold text-white mb-4 uppercase">Pro</h4>
-                                        <p className="text-[15px] leading-5 text-white mb-8">
-                                            Placement Support
-                                        </p>
-                                    </div>
-                                    <ul className="inline-block w-full pb-8">
-                                        {[
-                                            'Multiple Interview Opportunities',
-                                            'Telephonic & Face-to-Face Interview Support',
-                                            'Priority Profile Forwarding',
-                                            'Guidance for Accounts, Billing & Backend Jobs',
-                                            'Regular Job Updates & Career Support',
-                                        ].map((item) => (
-                                            <li key={item} className="inline-block w-full pl-9 bg-[url('/assets/imgs/theme/icons/check-circle-white.svg')] bg-no-repeat bg-left-center mb-3 text-[15px] leading-5 text-white">
-                                                {item}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                    <div>
-                                        <a
-                                            href="#"
-                                            className="mt-8 inline-flex items-center justify-center w-full bg-yellow-400 hover:bg-yellow-500 text-white rounded-[10px] py-4 px-6 font-bold text-base transition-all duration-200 pr-[42px] bg-[url('/assets/imgs/theme/icons/chevron-right-light.svg')] bg-no-repeat bg-[right_19px_center]"
-                                        >
-                                            Choose plan
-                                        </a>
-                                    </div>
-                                </div>
+                        ) : plans.length === 0 ? (
+                            <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-6 py-8 text-center text-sm font-semibold text-slate-500">
+                                No active jobseeker plans found.
                             </div>
-
-                            {/* Premium Card */}
-                            <div className="w-full md:w-1/2 lg:w-1/4 px-3">
-                                <div className="inline-block w-full p-6 border border-[#fff7f0] rounded-[30px] bg-[#fff7f0] mb-8 shadow-sm">
-                                    <div className="inline-block w-full pb-10">
-                                        <span className="text-[36px] text-[#231d4f] font-semibold leading-[46px] mr-4">&#8377;5000</span>
-                                        <span className="text-[17px] leading-[23px] text-[#37404e] block mb-2">One Time Payment</span>
-                                        <span className="rounded px-3 py-2 bg-yellow-400 text-white uppercase font-semibold text-[13px]">3 Months Assistance</span>
-                                    </div>
-                                    <div>
-                                        <h4 className="text-[28px] leading-[34px] font-bold text-[#1f2938] mb-4 uppercase">Premium</h4>
-                                        <p className="text-[15px] leading-5 text-[#37404e] mb-8">
-                                            Advanced Career Support
-                                        </p>
-                                    </div>
-                                    <ul className="inline-block w-full pb-8">
-                                        {[
-                                            'Priority Access to WFH & Office Jobs',
-                                            'Multiple Interview Opportunities',
-                                            'Maximum Interview & Placement Support',
-                                            'Training on Computer Basics & Accounting',
-                                            'Government Certified Training',
-                                            'Job Assurance Support',
-                                        ].map((item) => (
-                                            <li key={item} className="inline-block w-full pl-9 bg-[url('/assets/imgs/theme/icons/check-circle.svg')] bg-no-repeat bg-left-center mb-3 text-[15px] leading-5 text-[#37404e]">
-                                                {item}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                    <div>
-                                        <a
-                                            href="#"
-                                            className="mt-8 inline-flex items-center justify-center w-full border border-[rgba(0,71,199)] rounded-[10px] bg-white text-[#111112] text-base py-4 px-6 font-semibold transition-all duration-200 hover:bg-[#0047C7] hover:text-white pr-[42px] bg-[url('/assets/imgs/theme/icons/chevron-right.svg')] bg-no-repeat bg-[right_19px_center] hover:bg-[url('/assets/imgs/theme/icons/chevron-right-light.svg')]"
-                                        >
-                                            Choose plan
-                                        </a>
-                                    </div>
-                                </div>
+                        ) : (
+                            <div className="flex flex-wrap -mx-3">
+                                {plans.map((plan, index) => (
+                                    <JobseekerPlanCard key={plan._id || plan.planName} plan={plan} index={index} />
+                                ))}
                             </div>
-
+                        )}
                         </div>
-                    </div>
                 </div>
             </section>
 

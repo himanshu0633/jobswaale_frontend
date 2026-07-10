@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Briefcase, MapPin, ChevronDown, Mail, ArrowRight, Search, X } from 'lucide-react';
 import TrustedCompanies from './TrustedCompanies';
 import axios from 'axios';
@@ -117,6 +117,10 @@ const MOCK_JOBS = [
 ];
 
 export const Jobs = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const queryCategory = searchParams.get('category') || '';
+  const queryCompany = searchParams.get('company') || '';
+
   // Search state (top bar)
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searchType, setSearchType] = useState('');
@@ -135,6 +139,7 @@ export const Jobs = () => {
   // Active filter state
   const [dbJobs, setDbJobs] = useState([]);
   const [filteredJobs, setFilteredJobs] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [sortBy, setSortBy] = useState('newest');
   const [reminderEmail, setReminderEmail] = useState('');
   const [loading, setLoading] = useState(true);
@@ -168,6 +173,32 @@ export const Jobs = () => {
     };
     fetchJobs();
   }, []);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await axios.get(`${BASE_API_URL}/masters/job-categories`);
+        const activeCategories = (res.data || [])
+          .filter((category) => (category.status || 'active') === 'active')
+          .sort((a, b) => {
+            const sortA = Number.isFinite(Number(a.sortingNo)) ? Number(a.sortingNo) : Number.MAX_SAFE_INTEGER;
+            const sortB = Number.isFinite(Number(b.sortingNo)) ? Number(b.sortingNo) : Number.MAX_SAFE_INTEGER;
+            if (sortA !== sortB) return sortA - sortB;
+            return (a.categoryName || '').localeCompare(b.categoryName || '');
+          });
+        setCategories(activeCategories);
+      } catch (err) {
+        console.error('Fetch categories error:', err);
+        setCategories([]);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    setSidebarCat(queryCategory);
+  }, [queryCategory]);
 
   const filterJobs = () => {
     let result = [...dbJobs];
@@ -204,8 +235,13 @@ export const Jobs = () => {
     if (sidebarLoc.trim() !== '') {
       result = result.filter((j) => j.location.toLowerCase().includes(sidebarLoc.toLowerCase()));
     }
-    if (sidebarCat) {
-      result = result.filter((j) => j.category === sidebarCat);
+    const selectedCategory = sidebarCat || queryCategory;
+    if (selectedCategory) {
+      result = result.filter((j) => j.category === selectedCategory);
+    }
+    if (queryCompany) {
+      const company = queryCompany.trim().toLowerCase();
+      result = result.filter((j) => String(j.company || '').trim().toLowerCase() === company);
     }
     if (sidebarTypes.length > 0) {
       result = result.filter((j) => sidebarTypes.includes(j.type));
@@ -226,7 +262,7 @@ export const Jobs = () => {
 
   useEffect(() => {
     filterJobs();
-  }, [dbJobs, sortBy]);
+  }, [dbJobs, sortBy, queryCategory, queryCompany]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -247,7 +283,17 @@ export const Jobs = () => {
     filterJobs();
   };
 
+  const handleSidebarCategoryChange = (value) => {
+    setSidebarCat(value);
+    if (queryCategory) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('category');
+      setSearchParams(nextParams);
+    }
+  };
+
   const resetSidebarFilters = () => {
+    setSearchParams({});
     setSidebarLoc('');
     setSidebarCat('');
     setSidebarTypes([]);
@@ -569,16 +615,15 @@ export const Jobs = () => {
                   <Briefcase className="absolute left-[15px] h-[18px] w-[18px] text-[#88929b] pointer-events-none" />
                   <select
                     value={sidebarCat}
-                    onChange={(e) => setSidebarCat(e.target.value)}
+                    onChange={(e) => handleSidebarCategoryChange(e.target.value)}
                     className="w-full border border-[rgba(6,18,36,0.1)] rounded-[10px] pl-11 pr-10 py-3 text-sm text-[#88929b] focus:outline-none focus:border-[#0047C7] transition appearance-none cursor-pointer"
                   >
                     <option value="">All Categories</option>
-                    <option value="IT & Software">IT & Software</option>
-                    <option value="Designing">Designing</option>
-                    <option value="Accounts & Finance">Accounts & Finance</option>
-                    <option value="Customer Support">Customer Support</option>
-                    <option value="Sales & Marketing">Sales & Marketing</option>
-                    <option value="HR & Admin">HR & Admin</option>
+                    {categories.map((category) => (
+                      <option key={category._id || category.id || category.categoryName} value={category.categoryName}>
+                        {category.categoryName}
+                      </option>
+                    ))}
                   </select>
                   <ChevronDown className="absolute right-[15px] h-4 w-4 text-[#88929b] pointer-events-none" />
                 </div>

@@ -15,7 +15,8 @@ const getPublicUser = () => {
 export const isEmployerUser = (user) => {
   const accountType = String(user?.accountType || '').trim().toLowerCase();
   const role = String(user?.role || '').trim().toLowerCase();
-  return accountType === 'employer' || role === 'employer';
+  if (accountType) return accountType === 'employer';
+  return role === 'employer';
 };
 
 export const EmployerProtectedRoute = () => {
@@ -23,6 +24,10 @@ export const EmployerProtectedRoute = () => {
   const token = localStorage.getItem('publicToken');
 
   if (!user || !token || !isEmployerUser(user)) {
+    if (user || token) {
+      localStorage.removeItem('publicUser');
+      localStorage.removeItem('publicToken');
+    }
     return <Navigate to="/login?role=employer" replace />;
   }
 

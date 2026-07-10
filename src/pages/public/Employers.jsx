@@ -1,25 +1,6 @@
 import React, { useState, useEffect } from 'react';
-
-/* ─────────────────────────────────────────────────────────────
-   DATA
-───────────────────────────────────────────────────────────── */
-
-import employer1 from './employerImages/employer-1.png';
-import employer2 from './employerImages/employer-2.png';
-import employer3 from './employerImages/employer-3.png';
-import employer4 from './employerImages/employer-4.png';
-import employer5 from './employerImages/employer-5.png';
-import employer6 from './employerImages/employer-6.png';
-const MOCK_EMPLOYERS = [
-  { id: 1, name: 'Invision',                  location: 'Chicago, US',       industry: 'Software',       openJobs: 12,  rating: 5.0, ratesCount: 360, logoImg: employer1, online: true  },
-  { id: 2, name: 'Bing Search',               location: 'New York, US',      industry: 'Software',       openJobs: 10,  rating: 4.8, ratesCount: 280, logoImg: employer2, online: false },
-  { id: 3, name: 'Dailymotion',               location: 'Iowa, US',          industry: 'Designing',      openJobs: 16,  rating: 4.5, ratesCount: 195, logoImg: employer3, online: false },
-  { id: 4, name: 'LinkedIn',                  location: 'Chicago, US',       industry: 'Software',       openJobs: 122, rating: 4.9, ratesCount: 540, logoImg: employer4, online: true  },
-  { id: 5, name: 'Adobe Illustrator',         location: 'San Jose, US',      industry: 'Designing',      openJobs: 23,  rating: 4.7, ratesCount: 310, logoImg: employer5, online: false },
-  { id: 6, name: 'StumbleUpon',               location: 'San Francisco, US', industry: 'Software',       openJobs: 24,  rating: 4.2, ratesCount: 120, logoImg: employer6, online: false },
-  { id: 7, name: 'Amass Education',           location: 'Hamirpur, HP',      industry: 'Education',      openJobs: 5,   rating: 4.6, ratesCount: 85,  logoImg: null, online: false },
-  { id: 8, name: 'Tata Consultancy Services', location: 'Chandigarh, PB',    industry: 'IT & Consulting',openJobs: 45,  rating: 4.4, ratesCount: 420, logoImg: null, online: false },
-];
+import axios from 'axios';
+import { BASE_API_URL } from '../../context/AuthContext';
 
 /* ─────────────────────────────────────────────────────────────
    STAR RATING  — matches .rate.small from the CSS
@@ -118,7 +99,7 @@ const EmployerCard = ({ company }) => {
         {/* circular logo  — matches .card-grid-2-image-rd + .online */}
         <div className="text-center pt-7 pb-0 inline-block w-full">
           <div className="relative inline-block">
-            <a href="employer-detail.html">
+            <a href={`/employer-detail?id=${encodeURIComponent(company.id)}`}>
               <figure className="relative inline-block m-0">
                 <img
                   alt={company.name}
@@ -140,7 +121,7 @@ const EmployerCard = ({ company }) => {
           <div className="text-center">
             <h5 className="m-0 mb-1.5">
               <a
-                href="employer-detail.html"
+                href={`/employer-detail?id=${encodeURIComponent(company.id)}`}
                 style={{
                   fontWeight: 'bold',
                   fontSize: 18,
@@ -176,7 +157,7 @@ const EmployerCard = ({ company }) => {
           {/* open jobs button — .btn-border.btn-brand-hover */}
           <div className="text-center mt-6">
             <a
-              href="jobs.html"
+              href={`/jobs?company=${encodeURIComponent(company.name)}`}
               style={{
                 display: 'inline-block',
                 padding: '13px 28px',
@@ -241,9 +222,15 @@ export const Employers = () => {
   const [sidebarTypes, setSidebarTypes]   = useState([]);
   const [sidebarExps, setSidebarExps]     = useState([]);
   const [sortBy, setSortBy]               = useState('newest');
-  const [filteredCompanies, setFilteredCompanies] = useState(MOCK_EMPLOYERS);
+  const [companies, setCompanies] = useState([]);
+  const [filteredCompanies, setFilteredCompanies] = useState([]);
+  const [loadingCompanies, setLoadingCompanies] = useState(true);
+  const [companyError, setCompanyError] = useState('');
   const [reminderEmail, setReminderEmail] = useState('');
   const [reminderDone, setReminderDone]   = useState(false);
+
+  const industries = [...new Set(companies.map(company => company.industry).filter(Boolean))];
+  const locations = [...new Set(companies.map(company => company.location).filter(Boolean))];
 
   /* filter logic */
   const runFilter = (overrides = {}) => {
@@ -254,23 +241,65 @@ export const Employers = () => {
     const sInd = overrides.sidebarInd ?? sidebarInd;
     const sort = overrides.sortBy     ?? sortBy;
 
-    let res = [...MOCK_EMPLOYERS];
+    let res = [...companies];
     if (kw)   res = res.filter(c => c.name.toLowerCase().includes(kw) || c.industry.toLowerCase().includes(kw));
     if (ind)  res = res.filter(c => c.industry.toLowerCase().includes(ind.toLowerCase()));
     if (loc)  res = res.filter(c => c.location.toLowerCase().includes(loc.toLowerCase()));
     if (sLoc) res = res.filter(c => c.location.toLowerCase().includes(sLoc.toLowerCase()));
     if (sInd) res = res.filter(c => c.industry === sInd);
-    res.sort((a, b) => sort === 'newest' ? b.id - a.id : a.id - b.id);
+    res.sort((a, b) => {
+      const dateA = new Date(a.createdAt || 0);
+      const dateB = new Date(b.createdAt || 0);
+      if (dateA.getTime() !== dateB.getTime()) {
+        return sort === 'newest' ? dateB - dateA : dateA - dateB;
+      }
+      return sort === 'newest'
+        ? String(b.id).localeCompare(String(a.id))
+        : String(a.id).localeCompare(String(b.id));
+    });
     setFilteredCompanies(res);
   };
 
-  useEffect(() => { runFilter({ sortBy }); }, [sortBy]);
+  useEffect(() => {
+    const fetchEmployers = async () => {
+      setLoadingCompanies(true);
+      setCompanyError('');
+      try {
+        const res = await axios.get(`${BASE_API_URL}/employers/public`);
+        const mapped = (res.data || []).map((item) => ({
+          id: item.id || item._id,
+          name: item.name || 'Employer',
+          location: item.location || 'Location not specified',
+          industry: item.industry || 'General',
+          openJobs: Number(item.openJobs || 0),
+          rating: Number(item.rating || 4.2),
+          ratesCount: Number(item.ratesCount || 0),
+          logoImg: item.logoImg || null,
+          online: Boolean(item.online),
+          createdAt: item.createdAt || ''
+        }));
+        setCompanies(mapped);
+        setFilteredCompanies(mapped);
+      } catch (err) {
+        console.error('Error fetching public employers:', err);
+        setCompanyError('Failed to load employers from database.');
+        setCompanies([]);
+        setFilteredCompanies([]);
+      } finally {
+        setLoadingCompanies(false);
+      }
+    };
+
+    fetchEmployers();
+  }, []);
+
+  useEffect(() => { runFilter({ sortBy }); }, [sortBy, companies]);
 
   const handleFind = e => { e.preventDefault(); runFilter(); };
   const resetFilters = () => {
     setSearchKeyword(''); setSearchInd(''); setSearchLoc('');
     setSidebarLoc(''); setSidebarInd(''); setSidebarTypes([]); setSidebarExps([]);
-    setFilteredCompanies(MOCK_EMPLOYERS);
+    setFilteredCompanies(companies);
   };
   const toggleType = t => setSidebarTypes(p => p.includes(t) ? p.filter(x=>x!==t) : [...p,t]);
   const toggleExp  = e => setSidebarExps (p => p.includes(e) ? p.filter(x=>x!==e) : [...p,e]);
@@ -349,7 +378,7 @@ export const Employers = () => {
                     style={{ ...inputStyle, paddingLeft:42, paddingRight:28, appearance:'none', cursor:'pointer', height:50 }}
                   >
                     <option value="">Industry</option>
-                    {['Software','Designing','Education','IT & Consulting'].map(i=>(
+                    {industries.map(i=>(
                       <option key={i} value={i}>{i}</option>
                     ))}
                   </select>
@@ -371,10 +400,9 @@ export const Employers = () => {
                     style={{ ...inputStyle, paddingLeft:42, paddingRight:28, appearance:'none', cursor:'pointer', height:50 }}
                   >
                     <option value="">Location</option>
-                    {[
-                      ['Hamirpur','Hamirpur, HP'],['Mohali','Mohali, PB'],['Chandigarh','Chandigarh, PB'],
-                      ['Ambala','Ambala, HR'],['Chicago','Chicago, US'],['New York','New York, US'],['Iowa','Iowa, US'],
-                    ].map(([v,l])=><option key={v} value={v}>{l}</option>)}
+                    {locations.map(location => (
+                      <option key={location} value={location}>{location}</option>
+                    ))}
                   </select>
                   <svg width="12" height="12" fill="none" stroke="#88929b" strokeWidth="2" viewBox="0 0 24 24"
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -492,9 +520,9 @@ export const Employers = () => {
                     style={{ ...inputStyle, paddingLeft:42, paddingRight:28, appearance:'none', cursor:'pointer', height:50 }}
                   >
                     <option value="">IT &amp; Consulting</option>
-                    <option value="Education">Education</option>
-                    <option value="Software">Software</option>
-                    <option value="Designing">Designing</option>
+                    {industries.map(industry => (
+                      <option key={industry} value={industry}>{industry}</option>
+                    ))}
                   </select>
                   <svg width="12" height="12" fill="none" stroke="#88929b" strokeWidth="2" viewBox="0 0 24 24"
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -632,7 +660,15 @@ export const Employers = () => {
             </div>
 
             {/* company card grid — row.g-4 */}
-            {filteredCompanies.length === 0 ? (
+            {loadingCompanies ? (
+              <div className="flex min-h-[300px] items-center justify-center">
+                <div className="h-9 w-9 animate-spin rounded-full border-4 border-[#0047C7] border-t-transparent" />
+              </div>
+            ) : companyError ? (
+              <div className="text-center py-[60px] px-5 border border-[#ececec] rounded-[10px]">
+                <p className="text-rose-600 font-semibold text-sm">{companyError}</p>
+              </div>
+            ) : filteredCompanies.length === 0 ? (
               <div className="text-center py-[60px] px-5 border border-[#ececec] rounded-[10px]">
                 <p className="text-[#88929b] font-semibold text-sm">No companies found matching your filters.</p>
                 <button
@@ -654,8 +690,8 @@ export const Employers = () => {
 {filteredCompanies.length > 0 && (
   <div className="my-[50px] flex justify-center mr-100">
     <nav className="flex">
-      {['Previous','1','2','3','Next'].map((p) => {
-        const isActive = p === '2';
+      {['Previous','1','Next'].map((p) => {
+        const isActive = p === '1';
         const isNum = !isNaN(Number(p));
 
         return (

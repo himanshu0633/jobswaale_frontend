@@ -97,18 +97,18 @@ export const EmployerJobDetails = () => {
     try {
       const response = await axios.post(`${BASE_API_URL}/employer/jobs/${id}/duplicate`, {}, { headers: getTokenHeaders() });
       const copiedId = response.data?.job?._id || response.data?.job?.id;
-      setMessage('Job duplicate ho gaya. Copy draft me save ho gayi hai.');
+      setMessage('Job duplicated successfully. Copy saved in draft.');
       if (copiedId) {
         window.setTimeout(() => navigate(`/employer/jobs/${copiedId}/edit`), 500);
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Job duplicate nahi ho paya.');
+      setError(err.response?.data?.message || 'Failed to duplicate job.');
     } finally {
       setDuplicating(false);
     }
   };
   const runJobAction = async (action) => {
-    if (action === 'close' && !window.confirm('Kya aap is job ko close karna chahte hain?')) {
+    if (action === 'close' && !window.confirm('Are you sure you want to close this job?')) {
       return;
     }
 
@@ -117,15 +117,15 @@ export const EmployerJobDetails = () => {
     try {
       await axios.patch(`${BASE_API_URL}/employer/jobs/${id}/action`, { action }, { headers: getTokenHeaders() });
       const messages = {
-        pause: 'Job pause ho gayi.',
-        close: 'Job close ho gayi.',
-        reopen: 'Job reopen ho gayi.',
-        renew: 'Job renew ho gayi.'
+        pause: 'Job paused successfully.',
+        close: 'Job closed successfully.',
+        reopen: 'Job reopened successfully.',
+        renew: 'Job renewed successfully.'
       };
-      setMessage(messages[action] || 'Job update ho gayi.');
+      setMessage(messages[action] || 'Job updated successfully.');
       await loadDetails({ silent: true });
     } catch (err) {
-      setMessage(err.response?.data?.message || 'Job action complete nahi ho paya.');
+      setMessage(err.response?.data?.message || 'Failed to complete job action.');
     } finally {
       setActionState('');
     }

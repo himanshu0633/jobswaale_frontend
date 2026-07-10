@@ -553,7 +553,7 @@ export const EmployerPostJob = () => {
                         )}
                       </div>}
                     </div>
-                    <p className="mt-1 text-xs font-semibold text-slate-400">Country, state, district aur city sab superadmin masters se aate hain.</p>
+                    <p className="mt-1 text-xs font-semibold text-slate-400">Country, state, district, and city are managed by superadmin masters.</p>
                   </div>
                   <div><label className={labelClass}>No. of Openings *</label><input type="number" min="1" className={inputClass} value={form.vacancies} onChange={(e) => setValue('vacancies', e.target.value)} /></div>
                   <div className="grid gap-2 md:grid-cols-3">

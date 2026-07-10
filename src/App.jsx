@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthProvider, isSuperAdminUser, useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -30,7 +30,9 @@ import EmployerJobDetails from './pages/employer/jobs/EmployerJobDetails';
 import EmployerJobs from './pages/employer/jobs/EmployerJobs';
 import EmployerPostJob from './pages/employer/jobs/EmployerPostJob';
 import EmployerSearchCandidates from './pages/employer/candidates/EmployerSearchCandidates';
+import EmployerCandidateProfile from './pages/employer/candidates/EmployerCandidateProfile';
 import EmployerApplications from './pages/employer/applications/EmployerApplications';
+import EmployerApplicationDetails from './pages/employer/applications/EmployerApplicationDetails';
 import EmployerShortlisted from './pages/employer/candidates/EmployerShortlisted';
 import EmployerInterviews from './pages/employer/interviews/EmployerInterviews';
 import EmployerPortalReports from './pages/employer/reports/EmployerReports';
@@ -101,6 +103,16 @@ import Settings from './pages/superadmin/system/Settings';
 /* ==========================================
    2. SECURITY GUARDS & ROUTE REDIRECTS
    ========================================== */
+
+const ScrollToTop = () => {
+  const { pathname, search } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [pathname, search]);
+
+  return null;
+};
 
 // Protected Route Guard: Checks auth and superadmin access
 const ProtectedRoute = () => {
@@ -272,6 +284,7 @@ function App() {
   return (
     <AuthProvider>
       <Router>
+        <ScrollToTop />
         <Routes>
           {/* A. Visitor Authentication Routes */}
           <Route path="/login" element={<PublicLogin />} />
@@ -285,7 +298,10 @@ function App() {
             <Route path="/admin/*" element={<AppLayout />} />
           </Route>
 
-          {/* C. Secure Employer Console Route Block */}
+          {/* C. Public Employers Page */}
+          <Route path="/employers" element={<PublicPage />} />
+
+          {/* D. Secure Employer Console Route Block */}
           <Route element={<EmployerProtectedRoute />}>
             <Route path="/employer" element={<EmployerLayout />}>
               <Route index element={<EmployerDashboard />} />
@@ -295,10 +311,12 @@ function App() {
               <Route path="jobs/:id/edit" element={<EmployerPostJob />} />
               <Route path="jobs/:id" element={<EmployerJobDetails />} />
               <Route path="applications" element={<EmployerApplications />} />
+              <Route path="applications/:id" element={<EmployerApplicationDetails />} />
               <Route path="shortlisted" element={<EmployerShortlisted />} />
               <Route path="interviews" element={<EmployerInterviews />} />
               <Route path="selected" element={<EmployerSelected />} />
               <Route path="candidates" element={<EmployerSearchCandidates />} />
+              <Route path="candidateProfile/:id" element={<EmployerCandidateProfile />} />
               <Route path="company" element={<EmployerCompanyProfile />} />
               <Route path="payments" element={<EmployerPlaceholder title="Payments" />} />
               <Route path="subscription" element={<EmployerSubscription />} />
@@ -311,7 +329,7 @@ function App() {
             </Route>
           </Route>
 
-          {/* D. Public Web Blogs Pages */}
+          {/* E. Public Web Blogs Pages */}
           <Route path="/blogs" element={<PublicBlogs />} />
           <Route path="/blogs/:slug" element={<PublicBlogs />} />
           
@@ -331,7 +349,7 @@ function App() {
             </Route>
           </Route>
           
-          {/* E. Public Web Portal Wildcard Route Fallback */}
+          {/* F. Public Web Portal Wildcard Route Fallback */}
           <Route path="/jobs/:id" element={<PublicPage />} />
           <Route path="*" element={<PublicPage />} />
         </Routes>

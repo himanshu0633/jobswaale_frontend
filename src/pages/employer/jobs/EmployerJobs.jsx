@@ -106,18 +106,18 @@ export const EmployerJobs = () => {
     setError('');
     try {
       await axios.post(`${BASE_API_URL}/employer/jobs/${jobId}/duplicate`, {}, { headers: getTokenHeaders() });
-      setMessage('Job duplicate ho gaya. Copy draft me save ho gayi hai.');
+      setMessage('Job duplicated successfully. Copy saved in draft.');
       await loadJobs({ silent: true });
     } catch (err) {
-      setError(err.response?.data?.message || 'Job duplicate nahi ho paya.');
+      setError(err.response?.data?.message || 'Failed to duplicate job.');
     } finally {
       setDuplicatingJobId('');
     }
   };
   const runJobAction = async (jobId, action) => {
     const confirmMessages = {
-      delete: 'Kya aap is job ko delete karna chahte hain?',
-      close: 'Kya aap is job ko close karna chahte hain?'
+      delete: 'Are you sure you want to delete this job?',
+      close: 'Are you sure you want to close this job?'
     };
 
     if (confirmMessages[action] && !window.confirm(confirmMessages[action])) {
@@ -134,17 +134,17 @@ export const EmployerJobs = () => {
         await axios.patch(`${BASE_API_URL}/employer/jobs/${jobId}/action`, { action }, { headers: getTokenHeaders() });
       }
       const messages = {
-        pause: 'Job pause ho gayi.',
-        close: 'Job close ho gayi.',
-        reopen: 'Job reopen ho gayi.',
-        renew: 'Job renew ho gayi.',
-        publish: 'Draft publish ho gayi.',
-        delete: 'Job delete ho gayi.'
+        pause: 'Job paused successfully.',
+        close: 'Job closed successfully.',
+        reopen: 'Job reopened successfully.',
+        renew: 'Job renewed successfully.',
+        publish: 'Draft published successfully.',
+        delete: 'Job deleted successfully.'
       };
-      setMessage(messages[action] || 'Job update ho gayi.');
+      setMessage(messages[action] || 'Job updated successfully.');
       await loadJobs({ silent: true });
     } catch (err) {
-      setError(err.response?.data?.message || 'Job action complete nahi ho paya.');
+      setError(err.response?.data?.message || 'Failed to complete job action.');
     } finally {
       setActionState({ jobId: '', action: '' });
     }

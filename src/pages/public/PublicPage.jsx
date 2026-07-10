@@ -6,6 +6,7 @@ import { BASE_API_URL } from '../../context/AuthContext';
 import Home from './Home';
 import Jobs from './Jobs';
 import Employers from './Employers';
+import EmployerDetail from './EmployerDetail';
 import EmployerPlan from './EmployerPlan';
 import JobseekerPlan from './JobseekerPlan';
 import About from './About';
@@ -63,7 +64,10 @@ export const PublicPage = () => {
       case 'jobs':
         return <Jobs />;
       case 'employer':
+      case 'employers':
         return <Employers />;
+      case 'employer-detail':
+        return <EmployerDetail />;
       case 'employer-plan':
         return <EmployerPlan />;
       case 'jobseeker-plan':

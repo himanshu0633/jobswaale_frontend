@@ -85,6 +85,7 @@ export const JobDetail = () => {
   const [useDummyData, setUseDummyData] = useState(false);
   const [applying, setApplying] = useState(false);
   const [applied, setApplied] = useState(false);
+  const [applyError, setApplyError] = useState('');
   const [saved, setSaved] = useState(false);
 
   const [isJobseeker, setIsJobseeker] = useState(false);
@@ -128,6 +129,7 @@ export const JobDetail = () => {
           ...emptyJob,
           ...response.data
         });
+        setApplied(Boolean(response.data?.hasApplied));
         setUseDummyData(false);
 
       } catch (err) {
@@ -149,6 +151,7 @@ export const JobDetail = () => {
   const handleApply = async (event) => {
     event.preventDefault();
     setApplying(true);
+    setApplyError('');
 
     try {
       const token = localStorage.getItem('publicToken');
@@ -168,8 +171,13 @@ export const JobDetail = () => {
       event.target.reset();
 
     } catch (err) {
-      setApplied(true);
-      event.target.reset();
+      const message = err.response?.data?.message || 'Failed to submit application. Please try again.';
+      if (message.toLowerCase().includes('already applied')) {
+        setApplied(true);
+        event.target.reset();
+      } else {
+        setApplyError(message);
+      }
     } finally {
       setApplying(false);
     }
@@ -243,7 +251,11 @@ export const JobDetail = () => {
               <Bookmark className={`h-4 w-4 ${saved ? 'fill-amber-500' : ''}`}/>
               {saved ? 'Saved' : 'Save'}
             </button>
-            {isJobseeker ? (
+            {isJobseeker && applied ? (
+              <span className="rounded-md border border-emerald-100 bg-emerald-50 px-5 py-2 text-sm font-bold text-emerald-700">
+                Already Applied
+              </span>
+            ) : isJobseeker ? (
               <a
                 href="#applyForm"
                 className="rounded-md bg-[#0047C7] px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-[#0035a0]"
@@ -345,10 +357,15 @@ export const JobDetail = () => {
               {applied ? (
                 <div className="flex items-center gap-3 rounded-md border border-emerald-100 bg-emerald-50 px-4 py-4 text-sm font-bold text-emerald-700">
                   <CheckCircle2 className="h-5 w-5 flex-shrink-0"/>
-                  Your application has been submitted successfully!
+                  You have already applied for this job.
                 </div>
               ) : (
                 <form onSubmit={handleApply} className="space-y-4">
+                  {applyError && (
+                    <div className="rounded-md border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
+                      {applyError}
+                    </div>
+                  )}
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <label className="mb-1 block text-sm font-bold text-[#0f172a]">Full Name *</label>
@@ -448,12 +465,22 @@ export const JobDetail = () => {
             <p className="mb-4 text-center text-sm leading-relaxed text-slate-600">
               {company.about}
             </p>
-            <button
-              type="button"
-              className="block w-full rounded-md border border-slate-200 py-2 text-center text-sm font-bold text-[#0047C7] transition-colors hover:bg-slate-50"
-            >
-              View Employer Profile
-            </button>
+            {company.id ? (
+              <Link
+                to={`/employer-detail?id=${company.id}`}
+                className="block w-full rounded-md border border-slate-200 py-2 text-center text-sm font-bold text-[#0047C7] transition-colors hover:bg-slate-50"
+              >
+                View Employer Profile
+              </Link>
+            ) : (
+              <button
+                type="button"
+                className="block w-full rounded-md border border-slate-200 py-2 text-center text-sm font-bold text-[#0047C7] transition-colors hover:bg-slate-50"
+                onClick={() => alert('Employer profile details not available.')}
+              >
+                View Employer Profile
+              </button>
+            )}
           </section>
 
           {/* Job Reminder */}

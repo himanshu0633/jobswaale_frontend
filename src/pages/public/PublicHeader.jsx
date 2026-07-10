@@ -16,6 +16,7 @@ export const PublicHeader = () => {
   const [jobseekersDesktopOpen, setJobseekersDesktopOpen] = useState(false);
   const [employersDesktopOpen, setEmployersDesktopOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [pricingDesktopOpen, setPricingDesktopOpen] = useState(false); // Added state for pricing dropdown
   const [authUser, setAuthUser] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('publicUser') || 'null');
@@ -26,6 +27,7 @@ export const PublicHeader = () => {
   const jobseekersDesktopRef = useRef(null);
   const employersDesktopRef = useRef(null);
   const profileMenuRef = useRef(null);
+  const pricingRef = useRef(null); // Added ref for pricing dropdown
 
   const isLoggedIn = Boolean(authUser);
   const dashboardPath = authUser?.accountType === 'employer' || authUser?.role === 'Employer' || authUser?.role === 'employer'
@@ -59,6 +61,7 @@ export const PublicHeader = () => {
     setJobseekersDesktopOpen(false);
     setEmployersDesktopOpen(false);
     setProfileDropdownOpen(false);
+    setPricingDesktopOpen(false); // Close pricing dropdown on route change
   }, [location.pathname]);
 
   // Close desktop CTA dropdowns when clicking outside of them
@@ -72,6 +75,9 @@ export const PublicHeader = () => {
       }
       if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
         setProfileDropdownOpen(false);
+      }
+      if (pricingRef.current && !pricingRef.current.contains(event.target)) {
+        setPricingDesktopOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -109,9 +115,10 @@ export const PublicHeader = () => {
     fetchSettings();
   }, []);
 
+  // FIXED: Updated isActive function to prevent /jobseeker-plan from matching /jobs
   const isActive = (path) => {
     if (path === '/') return location.pathname === '/';
-    return location.pathname.startsWith(path);
+    return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
   return (
@@ -130,23 +137,28 @@ export const PublicHeader = () => {
           <Link to="/jobs" className={`text-[0.9375rem] font-medium transition duration-150 ${isActive('/jobs') ? 'text-blue-600' : 'text-slate-655 hover:text-blue-600'}`}>
             Jobs
           </Link>
-          <Link to="/employer" className={`text-[0.9375rem] font-medium transition duration-150 ${isActive('/employer') ? 'text-blue-600' : 'text-slate-655 hover:text-blue-600'}`}>
+          <Link to="/employers" className={`text-[0.9375rem] font-medium transition duration-150 ${isActive('/employers') ? 'text-blue-600' : 'text-slate-655 hover:text-blue-600'}`}>
             Employers
           </Link>
           
-          {/* Pricing Dropdown */}
-          <div className="relative group py-2">
-            <button className="flex items-center gap-1 text-[0.9375rem] font-medium text-slate-655 hover:text-blue-600 focus:outline-none cursor-pointer">
-              Pricing <ChevronDown className="h-3.5 w-3.5" />
+          {/* Pricing Dropdown - CHANGED: Now click-based instead of hover */}
+          <div className="relative py-2" ref={pricingRef}>
+            <button
+              onClick={() => setPricingDesktopOpen(!pricingDesktopOpen)}
+              className="flex items-center gap-1 text-[0.9375rem] font-medium text-slate-655 hover:text-blue-600 focus:outline-none cursor-pointer"
+            >
+              Pricing <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${pricingDesktopOpen ? 'rotate-180' : ''}`} />
             </button>
-            <div className="absolute top-full left-0 mt-1 hidden group-hover:block bg-white border border-slate-200 rounded-lg shadow-lg py-2 w-48 z-50">
-              <Link to="/jobseeker-plan" className="block px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition">
-                Jobseeker Plan
-              </Link>
-              <Link to="/employer-plan" className="block px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition">
-                Employer Plan
-              </Link>
-            </div>
+            {pricingDesktopOpen && (
+              <div className="absolute top-full left-0 mt-1 block bg-white border border-slate-200 rounded-lg shadow-lg py-2 w-48 z-50">
+                <Link to="/jobseeker-plan" className="block px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition">
+                  Jobseeker Plan
+                </Link>
+                <Link to="/employer-plan" className="block px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition">
+                  Employer Plan
+                </Link>
+              </div>
+            )}
           </div>
 
           <Link to="/about" className={`text-[0.9375rem] font-medium transition duration-150 ${isActive('/about') ? 'text-blue-600' : 'text-slate-655 hover:text-blue-600'}`}>
@@ -173,9 +185,9 @@ export const PublicHeader = () => {
                   <Link to={dashboardPath} onClick={() => setProfileDropdownOpen(false)} className="flex items-center gap-2.5 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
                     <LayoutDashboard className="h-4 w-4 text-slate-400" /> Go to Dashboard
                   </Link>
-                  <button onClick={handleLogout} className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                  <div onClick={handleLogout} className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
                     <LogOut className="h-4 w-4 text-slate-400" /> Log out
-                  </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -187,6 +199,7 @@ export const PublicHeader = () => {
                   onClick={() => {
                     setJobseekersDesktopOpen((prev) => !prev);
                     setEmployersDesktopOpen(false);
+                    setPricingDesktopOpen(false); // Close pricing dropdown when opening this
                   }}
                   className="inline-flex items-center gap-2 bg-[rgb(13,110,253)] hover:bg-[rgb(11,94,215)] text-white font-medium text-base py-1.75 px-5 min-w-[170px] rounded-lg transition duration-150 cursor-pointer shadow-md shadow-blue-600/10"
                 >
@@ -215,6 +228,7 @@ export const PublicHeader = () => {
                   onClick={() => {
                     setEmployersDesktopOpen((prev) => !prev);
                     setJobseekersDesktopOpen(false);
+                    setPricingDesktopOpen(false); // Close pricing dropdown when opening this
                   }}
                   className="inline-flex items-center gap-2 bg-[rgb(253,126,20)] hover:bg-[rgb(221,107,17)] text-white font-medium  text-base py-1.75 px-5 min-w-[170px] rounded-lg transition duration-150 cursor-pointer shadow-md shadow-orange-600/10"
                 >
@@ -268,9 +282,9 @@ export const PublicHeader = () => {
                   <Link to={dashboardPath} className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                     <LayoutDashboard className="h-4 w-4 text-slate-400" /> Go to Dashboard
                   </Link>
-                  <button onClick={handleLogout} className="flex items-center gap-2 text-left text-sm font-semibold text-slate-700">
+                  <div onClick={handleLogout} className="flex items-center gap-2 text-left text-sm font-semibold text-slate-700">
                     <LogOut className="h-4 w-4 text-slate-400" /> Log out
-                  </button>
+                  </div>
                 </div>
               </div>
             ) : null}
