@@ -123,7 +123,7 @@ export const PublicHeader = () => {
 
   return (
     <header className="fixed inset-x-0 top-0 z-[60] w-full border-b border-slate-200/50 bg-white/80 backdrop-blur-md shadow-sm">
-      <div className="mx-auto flex max-w-[90rem] items-center justify-between gap-5 px-4 py-2.5 sm:px-6">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-5 px-4 py-2.5 sm:px-6">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 shrink-0">
           <img src={logoAsset} alt="JobsWaale" className="h-9 sm:h-13 w-auto object-contain" />

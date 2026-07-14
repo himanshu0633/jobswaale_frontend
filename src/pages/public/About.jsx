@@ -26,7 +26,7 @@ const About = () => {
     <div className="w-full bg-white overflow-x-hidden">
       {/* Hero Banner Section */}
       <section className="bg-[#fff9f3] border-b border-[#fff9f3] relative overflow-hidden rounded-bl-[100px] rounded-br-[100px] pb-40 pt-20 ">
-        <div className="max-w-[1770px] mx-auto px-4 sm:px-6 lg:pl-[60px] lg:pr-[80px]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid gap-12 lg:grid-cols-12 items-center">
             {/* Left Column */}
             <div className="lg:col-span-7 space-y-6 lg:py-[20px] lg:pr-[60px]">

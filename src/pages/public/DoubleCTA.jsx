@@ -9,7 +9,7 @@ export const DoubleCTA = () => {
 
   return (
     <section className="py-[60px] bg-white">
-      <div className="max-w-[1500px] mx-auto px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-10 rounded-[28px] p-9 sm:p-12 border border-black/[0.04] shadow-[0_10px_40px_rgba(15,23,42,0.05)] bg-gradient-to-r from-[#dce6ff] via-white to-[#ffe5dc]">
 
           {/* Job Seeker CTA */}

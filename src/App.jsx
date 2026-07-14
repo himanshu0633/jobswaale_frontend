@@ -48,6 +48,7 @@ import JobseekerSubscription from './pages/jobseeker/subscription/JobseekerSubsc
 
 import JobseekerProfile from './pages/jobseeker/profile/JobseekerProfile';
 import JobseekerSavedJobs from './pages/jobseeker/savedjobs/JobseekerSavedJobs';
+import JobseekerSavedEmployers from './pages/jobseeker/savedemployers/JobseekerSavedEmployers';
 
 
 // Admin Core & Master Pages
@@ -342,6 +343,7 @@ function App() {
               <Route path="subscription" element={<JobseekerSubscription />} />
               <Route path="jobs-applied" element={<JobseekerApplications />} />
               <Route path="saved-jobs" element={<JobseekerSavedJobs />} />
+              <Route path="saved-employers" element={<JobseekerSavedEmployers />} />
               <Route path="messages" element={<JobseekerChat />} />
               <Route path="applications" element={<JobseekerApplications />} />
               

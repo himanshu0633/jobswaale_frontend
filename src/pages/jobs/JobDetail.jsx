@@ -77,6 +77,76 @@ const overviewRows = [
   { key: 'location', label: 'Location', icon: MapPin }
 ];
 
+const JobDetailSkeleton = () => (
+  <div className="space-y-5 animate-pulse" style={{ fontFamily: "'Inter', sans-serif" }}>
+    {/* Header Skeleton */}
+    <div className="rounded-md border border-slate-100 bg-white p-6 shadow-sm sm:p-8">
+      <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Logo */}
+          <div className="h-[70px] w-[70px] rounded-lg bg-slate-200 shrink-0" />
+          <div className="space-y-2">
+            {/* Title */}
+            <div className="h-6 w-56 bg-slate-200 rounded" />
+            {/* Company */}
+            <div className="h-4 w-32 bg-slate-200 rounded" />
+          </div>
+        </div>
+        <div className="flex gap-2">
+          {/* Save Button */}
+          <div className="h-10 w-24 bg-slate-200 rounded" />
+          {/* Apply Button */}
+          <div className="h-10 w-28 bg-slate-200 rounded" />
+        </div>
+      </div>
+      {/* Job Meta Row */}
+      <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-dashed border-slate-200 pt-5">
+        <div className="h-4 w-28 bg-slate-200 rounded" />
+        <div className="h-4 w-24 bg-slate-200 rounded" />
+        <div className="h-4 w-20 bg-slate-200 rounded" />
+        <div className="h-4 w-20 bg-slate-200 rounded" />
+      </div>
+    </div>
+
+    {/* Body Grid */}
+    <div className="grid gap-7 xl:grid-cols-[1fr_380px]">
+      {/* Left Description */}
+      <div className="space-y-6">
+        <section className="rounded-md border border-slate-100 bg-white p-6 shadow-sm sm:p-8">
+          <div className="h-6 w-36 bg-slate-200 rounded mb-4" />
+          <div className="space-y-3">
+            <div className="h-4 w-full bg-slate-200 rounded" />
+            <div className="h-4 w-full bg-slate-200 rounded" />
+            <div className="h-4 w-3/4 bg-slate-200 rounded" />
+          </div>
+        </section>
+        <section className="rounded-md border border-slate-100 bg-white p-6 shadow-sm sm:p-8">
+          <div className="h-6 w-44 bg-slate-200 rounded mb-4" />
+          <div className="space-y-3">
+            <div className="h-4 w-full bg-slate-200 rounded" />
+            <div className="h-4 w-5/6 bg-slate-200 rounded" />
+          </div>
+        </section>
+      </div>
+
+      {/* Right Sidebar */}
+      <div className="space-y-6">
+        <section className="rounded-md border border-slate-100 bg-white p-6 shadow-sm">
+          <div className="h-5 w-28 bg-slate-200 rounded mb-4" />
+          <div className="space-y-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex justify-between border-b border-slate-100 pb-3 last:border-0 last:pb-0">
+                <div className="h-4 w-20 bg-slate-200 rounded" />
+                <div className="h-4 w-24 bg-slate-200 rounded" />
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+);
+
 export const JobDetail = () => {
   const { id } = useParams();
   const [data, setData] = useState(emptyJob);
@@ -87,6 +157,7 @@ export const JobDetail = () => {
   const [applied, setApplied] = useState(false);
   const [applyError, setApplyError] = useState('');
   const [saved, setSaved] = useState(false);
+  const [toggling, setToggling] = useState(false);
 
   const [isJobseeker, setIsJobseeker] = useState(false);
   const [showAuthPopup, setShowAuthPopup] = useState(false);
@@ -130,6 +201,7 @@ export const JobDetail = () => {
           ...response.data
         });
         setApplied(Boolean(response.data?.hasApplied));
+        setSaved(Boolean(response.data?.hasSaved));
         setUseDummyData(false);
 
       } catch (err) {
@@ -183,12 +255,33 @@ export const JobDetail = () => {
     }
   };
 
+  const handleToggleSave = async () => {
+    if (toggling) return;
+    setToggling(true);
+    try {
+      const token = localStorage.getItem('publicToken');
+      if (!token) {
+        setShowAuthPopup(true);
+        setToggling(false);
+        return;
+      }
+      const res = await axios.post(
+        `${BASE_API_URL}/jobseeker/saved-jobs/${id}/toggle`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      setSaved(Boolean(res.data?.saved));
+    } catch (err) {
+      console.error('Toggle save job error:', err);
+    } finally {
+      setToggling(false);
+    }
+  };
+
   if (loading) {
-    return (
-      <div className="flex min-h-[420px] items-center justify-center">
-        <div className="h-9 w-9 animate-spin rounded-full border-4 border-[#0047C7] border-t-transparent"/>
-      </div>
-    );
+    return <JobDetailSkeleton />;
   }
 
   const job = data.job;
@@ -241,15 +334,16 @@ export const JobDetail = () => {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setSaved(prev => !prev)}
-              className={`flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-bold transition-colors ${
+              onClick={handleToggleSave}
+              disabled={toggling}
+              className={`flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                 saved
                   ? 'border-amber-200 bg-amber-50 text-amber-600'
                   : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
               }`}
             >
               <Bookmark className={`h-4 w-4 ${saved ? 'fill-amber-500' : ''}`}/>
-              {saved ? 'Saved' : 'Save'}
+              {toggling ? 'Saving...' : (saved ? 'Saved' : 'Save')}
             </button>
             {isJobseeker && applied ? (
               <span className="rounded-md border border-emerald-100 bg-emerald-50 px-5 py-2 text-sm font-bold text-emerald-700">

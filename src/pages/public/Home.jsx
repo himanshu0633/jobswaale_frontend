@@ -32,7 +32,7 @@ export const Home = () => {
     <div className="w-full">
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-white py-16 lg:py-20">
-        <div className="max-w-[1500px] mx-auto px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid gap-12 lg:grid-cols-12 items-center">
 
             {/* Left Block: Search & Text */}
@@ -151,7 +151,7 @@ export const Home = () => {
 
       {/* Floating Stats Bar */}
       <section className="relative z-10">
-        <div className="max-w-[1500px] mx-auto px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-[0_10px_35px_rgba(0,0,0,0.05)]">
             <div className="grid gap-6 grid-cols-2 lg:grid-cols-4">
 

@@ -118,7 +118,7 @@ const AccordionItem = ({ faq, index, isOpen, toggle, isLeft }) => {
 
       {/* FAQ Images */}
       <section className="py-4 ">
-        <div className="max-w-[1350px] mx-auto px-4 sm:px-6 lg:px-8 ">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="w-full lg:w-10/12 mx-auto">
             <div className="flex flex-wrap -mx-4">
               <div className="w-full lg:w-7/12 px-4">
@@ -147,7 +147,7 @@ const AccordionItem = ({ faq, index, isOpen, toggle, isLeft }) => {
 
       {/* Questions Section */}
       <section className="py-16 md:py-20">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="flex flex-wrap items-end mb-12">
             <div className="w-full lg:w-5/12">

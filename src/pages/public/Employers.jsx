@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Bookmark } from 'lucide-react';
 import { BASE_API_URL } from '../../context/AuthContext';
 
 /* ─────────────────────────────────────────────────────────────
@@ -72,7 +73,35 @@ const IcoChevronRight = () => (
 ───────────────────────────────────────────────────────────── */
 const EmployerCard = ({ company }) => {
   const [hovered, setHovered] = useState(false);
+  const [saved, setSaved] = useState(Boolean(company.hasSaved));
+  const [toggling, setToggling] = useState(false);
   const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(company.name)}&background=e8eaf6&color=3949ab&size=110&bold=true`;
+
+  const handleToggleSave = async (e) => {
+    e.preventDefault();
+    if (toggling) return;
+    setToggling(true);
+    try {
+      const token = localStorage.getItem('publicToken');
+      if (!token) {
+        alert('Please log in to save employers.');
+        setToggling(false);
+        return;
+      }
+      const res = await axios.post(
+        `${BASE_API_URL}/jobseeker/saved-employers/${company.id}/toggle`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      setSaved(Boolean(res.data?.saved));
+    } catch (err) {
+      console.error('Toggle save employer error:', err);
+    } finally {
+      setToggling(false);
+    }
+  };
 
   return (
     <div className="col-lg-6 col-md-6 mb-0">
@@ -93,7 +122,16 @@ const EmployerCard = ({ company }) => {
         {/* top-right icon links */}
         <div className="absolute top-4 right-4 flex gap-2.5 z-10">
           <a href="#" className="text-[#88929b]"><IcoShield /></a>
-          <a href="#" className="text-[#88929b]"><IcoBookmark /></a>
+          <button
+            type="button"
+            onClick={handleToggleSave}
+            disabled={toggling}
+            title={saved ? "Saved" : "Save Employer"}
+            className="border-0 bg-transparent p-0 cursor-pointer transition hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ color: toggling ? '#ccc' : (saved ? '#ffb020' : '#88929b') }}
+          >
+            <Bookmark className={`h-5 w-5 ${saved ? 'fill-current' : ''}`} />
+          </button>
         </div>
 
         {/* circular logo  — matches .card-grid-2-image-rd + .online */}
@@ -265,7 +303,10 @@ export const Employers = () => {
       setLoadingCompanies(true);
       setCompanyError('');
       try {
-        const res = await axios.get(`${BASE_API_URL}/employers/public`);
+        const token = localStorage.getItem('publicToken');
+        const res = await axios.get(`${BASE_API_URL}/employers/public`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
         const mapped = (res.data || []).map((item) => ({
           id: item.id || item._id,
           name: item.name || 'Employer',
@@ -276,7 +317,8 @@ export const Employers = () => {
           ratesCount: Number(item.ratesCount || 0),
           logoImg: item.logoImg || null,
           online: Boolean(item.online),
-          createdAt: item.createdAt || ''
+          createdAt: item.createdAt || '',
+          hasSaved: Boolean(item.hasSaved)
         }));
         setCompanies(mapped);
         setFilteredCompanies(mapped);
@@ -330,7 +372,7 @@ export const Employers = () => {
           BANNER / BREADCRUMB  — .section-box-2 > .box-head-single.none-bg
       ══════════════════════════════════════════════════════════ */}
       <section className="bg-[#FFF9F3] inline-block w-full py-[55px] relative">
-        <div className="max-w-[1344px] mx-auto px-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <h4 className="text-[28px] leading-[34px] font-bold text-[#1f2938] mb-0">
             There are <strong className="text-[#ff5e14]">500+</strong> companies<br />here for you!
           </h4>
@@ -440,7 +482,7 @@ export const Employers = () => {
       {/* ══════════════════════════════════════════════════════════
           MAIN SECTION  — .section-box.mt-80.mb-80
       ══════════════════════════════════════════════════════════ */}
-      <section className="max-w-[1344px] mx-auto my-20 px-4">
+      <section className="max-w-7xl mx-auto my-20 px-4 sm:px-6">
         <div className="flex flex-wrap gap-12">
 
           {/* ────────────────────────────────────────────────────
@@ -661,8 +703,29 @@ export const Employers = () => {
 
             {/* company card grid — row.g-4 */}
             {loadingCompanies ? (
-              <div className="flex min-h-[300px] items-center justify-center">
-                <div className="h-9 w-9 animate-spin rounded-full border-4 border-[#0047C7] border-t-transparent" />
+              <div className="grid grid-cols-2 gap-6 animate-pulse w-full">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="border border-[rgba(6,18,36,0.1)] rounded-[10px] bg-white p-7 flex flex-col min-h-[320px] items-center text-center relative">
+                    {/* Top right icon placeholders */}
+                    <div className="absolute top-4 right-4 flex gap-2">
+                      <div className="h-5 w-5 rounded bg-slate-200" />
+                      <div className="h-5 w-5 rounded bg-slate-200" />
+                    </div>
+                    {/* Circular Logo */}
+                    <div className="h-[110px] w-[110px] rounded-full bg-slate-200 mb-5" />
+                    {/* Name */}
+                    <div className="h-5 w-40 bg-slate-200 rounded mb-3" />
+                    {/* Stars */}
+                    <div className="h-4 w-28 bg-slate-200 rounded mb-4" />
+                    {/* Location + Industry row */}
+                    <div className="grid grid-cols-2 gap-4 w-full mt-2">
+                      <div className="h-4 bg-slate-200 rounded w-full" />
+                      <div className="h-4 bg-slate-200 rounded w-full" />
+                    </div>
+                    {/* Open jobs button */}
+                    <div className="h-11 w-32 bg-slate-200 rounded-lg mt-6" />
+                  </div>
+                ))}
               </div>
             ) : companyError ? (
               <div className="text-center py-[60px] px-5 border border-[#ececec] rounded-[10px]">

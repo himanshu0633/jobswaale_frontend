@@ -327,7 +327,7 @@ export const Jobs = () => {
     <div className="w-full bg-white" style={{ fontFamily: "'Inter', sans-serif" }}>
       {/* Top Banner Section — heading, breadcrumb, and filter card all live inside the cream banner */}
       <section className="bg-[#FFF9F3] py-[55px] relative overflow-hidden">
-        <div className="max-w-[1350px] mx-auto px-4 sm:px-6 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
 
           {/* Heading row */}
           <h1 className="text-[28px] leading-[34px] sm:text-4xl sm:leading-tight font-bold text-[#1f2938]">
@@ -474,7 +474,7 @@ export const Jobs = () => {
 
       {/* Main Grid Content — HTML uses row.flex-row-reverse with listings as col-lg-8 first in source
           (so it renders on the right) and sidebar as col-lg-4 second (renders on the left) */}
-      <section className="max-w-[1350px] mx-auto px-4 sm:px-6 pt-20 pb-16">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-20 pb-16">
         <div className="grid gap-8 lg:grid-cols-12">
 
           {/* Job listings column — renders on the RIGHT to match the HTML's flex-row-reverse layout */}
@@ -500,8 +500,23 @@ export const Jobs = () => {
 
             {/* Grid of Job Cards */}
             {loading ? (
-              <div className="flex min-h-[300px] items-center justify-center py-16 w-full col-span-2">
-                <div className="h-9 w-9 animate-spin rounded-full border-4 border-[#0047C7] border-t-transparent"/>
+              <div className="grid gap-4 sm:grid-cols-2 animate-pulse w-full col-span-2">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="border border-[#e8ecf3] rounded-[10px] bg-white p-[1.8rem] flex flex-col min-h-[180px]">
+                    <div className="flex items-start">
+                      <div className="w-12 h-12 rounded-full bg-slate-200 shrink-0" />
+                      <div className="ms-4 space-y-2 flex-grow">
+                        <div className="h-4 w-3/4 bg-slate-200 rounded" />
+                        <div className="h-3 w-1/2 bg-slate-200 rounded" />
+                        <div className="h-3 w-1/3 bg-slate-200 rounded mt-3" />
+                      </div>
+                    </div>
+                    <div className="border-t border-[#eef1f6] pt-4 mt-auto flex items-center justify-between" style={{ marginTop: '7%' }}>
+                      <div className="h-4 w-20 bg-slate-200 rounded" />
+                      <div className="h-6 w-16 bg-slate-200 rounded-full" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : filteredJobs.length === 0 ? (
               <div className="text-center py-16 rounded-[12px] bg-[#f4f6fa] w-full col-span-2" style={{ border: '0.88px solid rgba(6,18,36,0.1)' }}>

@@ -4,6 +4,7 @@ import axios from 'axios';
 import {
   Bookmark,
   Briefcase,
+  Building,
   LayoutGrid,
   LogOut,
   MessageSquare,
@@ -19,6 +20,7 @@ const mainMenu = [
   { to: '/jobseeker/profile', icon: User, label: 'My Profile' },
   { to: '/jobseeker/jobs-applied', icon: Briefcase, label: 'Jobs Applied', badgeKey: 'jobsApplied' },
   { to: '/jobseeker/saved-jobs', icon: Bookmark, label: 'Saved Jobs' },
+  { to: '/jobseeker/saved-employers', icon: Building, label: 'Saved Employers' },
   { to: '/jobseeker/subscription', icon: Star, label: 'My Plan' },
   { to: '/jobseeker/messages', icon: MessageSquare, label: 'Messages', badgeKey: 'messages' }
 ];

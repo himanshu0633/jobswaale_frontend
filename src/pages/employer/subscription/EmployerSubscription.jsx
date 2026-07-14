@@ -25,6 +25,67 @@ const formatDate = (value, fallback = '-') => {
   return new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(value));
 };
 
+const EmployerSubscriptionSkeleton = () => (
+  <div className="space-y-6 animate-pulse" style={{ fontFamily: "'Inter', sans-serif" }}>
+    {/* Title & Breadcrumb */}
+    <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
+      <div className="space-y-2">
+        <div className="h-7 w-56 bg-slate-200 rounded" />
+        <div className="h-4 w-96 bg-slate-200 rounded" />
+      </div>
+      <div className="h-4 w-40 bg-slate-200 rounded" />
+    </div>
+
+    {/* Plan Banner */}
+    <div className="rounded-lg border border-slate-100 bg-white p-6 shadow-sm">
+      <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+        <div className="flex items-start gap-4">
+          <div className="h-14 w-14 rounded-full bg-slate-200 shrink-0" />
+          <div className="space-y-3 flex-grow">
+            <div className="flex gap-2">
+              <div className="h-5 w-32 bg-slate-200 rounded" />
+              <div className="h-5 w-16 bg-slate-200 rounded-full" />
+            </div>
+            <div className="h-4 w-48 bg-slate-200 rounded" />
+            <div className="pt-3 flex gap-6 flex-wrap">
+              {[1, 2, 3].map((x) => (
+                <div key={x} className="h-10 w-24 bg-slate-200 rounded" />
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <div className="h-11 w-32 bg-slate-200 rounded-lg" />
+          <div className="h-11 w-32 bg-slate-200 rounded-lg" />
+        </div>
+      </div>
+    </div>
+
+    {/* Usage Stats Grid */}
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {[1, 2, 3, 4].map((x) => (
+        <div key={x} className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm flex items-center gap-4">
+          <div className="h-12 w-12 rounded-full bg-slate-200 shrink-0" />
+          <div className="space-y-2 flex-grow">
+            <div className="h-3 w-16 bg-slate-200 rounded" />
+            <div className="h-5 w-24 bg-slate-200 rounded" />
+          </div>
+        </div>
+      ))}
+    </div>
+
+    {/* Pricing plans block */}
+    <div className="rounded-lg border border-slate-100 bg-white shadow-sm p-6 space-y-4">
+      <div className="h-6 w-44 bg-slate-200 rounded" />
+      <div className="space-y-2">
+        {[1, 2, 3].map((x) => (
+          <div key={x} className="h-14 w-full bg-slate-100 rounded" />
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
 export const EmployerSubscription = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -73,11 +134,7 @@ export const EmployerSubscription = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex min-h-[450px] items-center justify-center">
-        <Loader className="h-9 w-9 animate-spin text-[#6658dd]" />
-      </div>
-    );
+    return <EmployerSubscriptionSkeleton />;
   }
 
   const sub = data?.subscription || { planName: 'Free', status: 'Active', validUntil: null, jobsUsed: 0, jobLimit: 50, remainingCredits: 50, utilization: 0, applicationsCount: 0, applicationsLimit: 500, teamMembersCount: 1, teamMembersLimit: 10, daysRemaining: 0 };

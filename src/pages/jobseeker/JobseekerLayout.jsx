@@ -47,6 +47,7 @@ export const JobseekerLayout = () => {
     if (path === 'subscription') return 'My Plan';
     if (path === 'jobs-applied') return 'Jobs Applied';
     if (path === 'saved-jobs') return 'Saved Jobs';
+    if (path === 'saved-employers') return 'Saved Employers';
     if (path === 'messages') return 'Messages';
     if (path === 'applications') return 'Applications';
     if (path === 'interviews') return 'Interviews';

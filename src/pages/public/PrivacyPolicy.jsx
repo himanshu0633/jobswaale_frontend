@@ -7,7 +7,7 @@ export const PrivacyPolicy = () => {
       <main className="flex-grow">
         {/* Page Intro */}
         <section className="pt-[50px]">
-          <div className="max-w-[1344px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="w-full">
               <h3 className="text-[44px] font-bold text-[#1f2938] leading-[54px] mb-5">
                 Privacy Policy
@@ -24,7 +24,7 @@ export const PrivacyPolicy = () => {
 
         {/* Policy Content */}
         <section className="mb-[80px]">
-          <div className="max-w-[1344px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
             {/* 1. Information We Collect */}
             <div className="mb-[40px]">

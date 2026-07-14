@@ -96,7 +96,7 @@ export const PopularCategories = () => {
 
   return (
     <section className="py-16 bg-white">
-      <div className="max-w-[1500px] mx-auto px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-12 gap-3">
           <h2 className="text-2xl sm:text-[2rem] font-bold text-slate-900">Popular Job Categories</h2>
           <Link
@@ -120,8 +120,14 @@ export const PopularCategories = () => {
           )}
 
           {loading ? (
-            <div className="flex min-h-[190px] items-center justify-center">
-              <div className="h-9 w-9 animate-spin rounded-full border-4 border-[#0047C7] border-t-transparent" />
+            <div className="flex gap-3 overflow-x-auto py-1 px-0.5 animate-pulse w-full [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="shrink-0 w-[200px] min-h-[190px] bg-white border border-slate-200 rounded-xl py-7 px-4 flex flex-col items-center justify-center">
+                  <div className="w-[60px] h-[60px] rounded-full bg-slate-200 mb-5" />
+                  <div className="h-4 w-24 bg-slate-200 rounded mb-3" />
+                  <div className="h-6 w-16 bg-slate-200 rounded-full" />
+                </div>
+              ))}
             </div>
           ) : categories.length === 0 ? (
             <div className="flex min-h-[190px] items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-6 text-center text-sm font-medium text-slate-500">

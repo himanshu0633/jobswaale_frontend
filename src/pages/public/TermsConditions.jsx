@@ -11,7 +11,7 @@ export const TermsConditions = () => {
 
         {/* Breadcrumb */}
         {/* <div className="bg-[#fff9f3] py-5">
-          <div className="max-w-[1344px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <ul className="flex items-center list-none p-0">
               <li>
                 <Link to="/" className="text-base text-[#1f2938] hover:text-[#0047C7] no-underline">
@@ -27,7 +27,7 @@ export const TermsConditions = () => {
 
         {/* Page Intro */}
         <section className="pt-[50px]">
-          <div className="max-w-[1344px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="w-full">
               <h3 className="text-[44px] font-bold text-[#1f2938] leading-[54px] mb-5">
                 Terms &amp; Conditions
@@ -44,7 +44,7 @@ export const TermsConditions = () => {
 
         {/* Policy Content */}
         <section className="mb-[80px]">
-          <div className="max-w-[1344px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
             {/* 1. Acceptance of Terms */}
             <div className="mb-[40px]">

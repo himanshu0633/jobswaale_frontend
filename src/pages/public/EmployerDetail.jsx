@@ -120,12 +120,107 @@ const JobCard = ({ job }) => {
   );
 };
 
+const EmployerDetailSkeleton = () => (
+  <div className="w-full bg-white animate-pulse" style={{ fontFamily: "'Inter', sans-serif" }}>
+    {/* Header Skeleton Box */}
+    <div className="bg-[#fff9f3] border-b border-[#f0e9df] py-10 sm:py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8 items-center">
+          <div className="flex flex-col sm:flex-row gap-5">
+            {/* Logo Circle Skeleton */}
+            <div className="h-[110px] w-[110px] rounded-full bg-slate-200 shrink-0" />
+            <div className="flex-grow">
+              {/* Title Skeleton */}
+              <div className="h-8 w-64 bg-slate-200 rounded mb-4" />
+              {/* Meta items Skeleton */}
+              <div className="flex flex-wrap gap-4 mt-2">
+                <div className="h-4 w-32 bg-slate-200 rounded" />
+                <div className="h-4 w-28 bg-slate-200 rounded" />
+                <div className="h-4 w-24 bg-slate-200 rounded" />
+                <div className="h-4 w-20 bg-slate-200 rounded" />
+              </div>
+              {/* Badge Button Skeleton */}
+              <div className="h-8 w-24 bg-slate-200 rounded-lg mt-5" />
+            </div>
+          </div>
+          <div className="lg:text-right flex flex-col items-start lg:items-end gap-4">
+            <div className="h-4 w-40 bg-slate-200 rounded" />
+            <div className="flex gap-2 w-full lg:justify-end">
+              <div className="h-11 w-24 bg-slate-200 rounded-lg" />
+              <div className="h-11 w-36 bg-slate-200 rounded-lg" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Content Skeleton Box */}
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 mt-12 mb-20">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_390px] gap-10">
+        <div>
+          {/* About section Skeleton */}
+          <div className="h-7 w-48 bg-slate-200 rounded mb-6" />
+          <div className="space-y-3 mb-8">
+            <div className="h-4 w-full bg-slate-200 rounded" />
+            <div className="h-4 w-full bg-slate-200 rounded" />
+            <div className="h-4 w-3/4 bg-slate-200 rounded" />
+          </div>
+
+          <div className="border-t border-[#eef1f6] my-8" />
+
+          {/* Openings section Skeleton */}
+          <div className="h-7 w-48 bg-slate-200 rounded mb-6" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[1, 2].map((i) => (
+              <div key={i} className="border border-[#e8ecf3] rounded-[10px] p-6 space-y-4">
+                <div className="flex gap-4">
+                  <div className="h-[52px] w-[52px] rounded-[10px] bg-slate-200 shrink-0" />
+                  <div className="space-y-2 flex-grow">
+                    <div className="h-5 w-32 bg-slate-200 rounded" />
+                    <div className="h-4 w-20 bg-slate-200 rounded" />
+                    <div className="h-4 w-24 bg-slate-200 rounded" />
+                  </div>
+                </div>
+                <div className="border-t border-[#eef1f6] pt-4 flex justify-between">
+                  <div className="h-4 w-20 bg-slate-200 rounded" />
+                  <div className="h-6 w-16 bg-slate-200 rounded-full" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Sidebar Skeleton */}
+        <aside>
+          <div className="rounded-[10px] border border-[#e8ecf3] p-7 space-y-6">
+            <div className="h-7 w-28 bg-slate-200 rounded" />
+            <div className="space-y-4">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="flex gap-4 py-2 border-b border-[#eef1f6] last:border-0">
+                  <div className="h-10 w-10 rounded-lg bg-slate-200 shrink-0" />
+                  <div className="space-y-2 flex-grow">
+                    <div className="h-3 w-16 bg-slate-200 rounded" />
+                    <div className="h-4 w-28 bg-slate-200 rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="h-11 w-full bg-slate-200 rounded-lg mt-4" />
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+);
+
 const EmployerDetail = () => {
   const [searchParams] = useSearchParams();
   const employerId = searchParams.get('id');
-  const [employer, setEmployer] = useState(fallbackEmployer);
+  const [employer, setEmployer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [saved, setSaved] = useState(false);
+  const [toggling, setToggling] = useState(false);
 
   useEffect(() => {
     const fetchEmployer = async () => {
@@ -143,8 +238,15 @@ const EmployerDetail = () => {
           return;
         }
 
-        const res = await axios.get(`${BASE_API_URL}/employers/public/${id}`);
+        const token = localStorage.getItem('publicToken');
+        const res = await axios.get(
+          `${BASE_API_URL}/employers/public/${id}`,
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+          }
+        );
         setEmployer({ ...fallbackEmployer, ...res.data, jobs: res.data?.jobs || [] });
+        setSaved(Boolean(res.data?.hasSaved));
       } catch (err) {
         console.error('Fetch employer detail error:', err);
         setError('Failed to load employer details.');
@@ -157,19 +259,55 @@ const EmployerDetail = () => {
     fetchEmployer();
   }, [employerId]);
 
+  const handleToggleSave = async () => {
+    if (toggling) return;
+    setToggling(true);
+    try {
+      const token = localStorage.getItem('publicToken');
+      if (!token) {
+        alert('Please log in to save employers.');
+        setToggling(false);
+        return;
+      }
+      const id = employerId || employer?.id || employer?._id;
+      if (!id) {
+        setToggling(false);
+        return;
+      }
+      
+      const res = await axios.post(
+        `${BASE_API_URL}/jobseeker/saved-employers/${id}/toggle`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      setSaved(Boolean(res.data?.saved));
+    } catch (err) {
+      console.error('Toggle save employer error:', err);
+    } finally {
+      setToggling(false);
+    }
+  };
+
+  const aboutParagraphs = useMemo(() => {
+    const text = employer?.description || fallbackEmployer.description;
+    return text.split(/\n+/).filter(Boolean).slice(0, 3);
+  }, [employer?.description]);
+
+  if (loading) {
+    return <EmployerDetailSkeleton />;
+  }
+
   const logoSrc = employer.logoImg || defaultEmployerLogo;
   const sinceText = employer.foundedYear ? `Since ${employer.foundedYear}` : `Since ${formatMonthYear(employer.memberSince)}`;
   const openJobsUrl = `/jobs?company=${encodeURIComponent(employer.name)}`;
-  const aboutParagraphs = useMemo(() => {
-    const text = employer.description || fallbackEmployer.description;
-    return text.split(/\n+/).filter(Boolean).slice(0, 3);
-  }, [employer.description]);
 
   return (
     <div className="w-full bg-white" style={{ fontFamily: "'Inter', sans-serif" }}>
       <section className="section-box">
         <div className="bg-[#fff9f3] border-b border-[#f0e9df] py-10 sm:py-12">
-          <div className="max-w-[1320px] mx-auto px-4 sm:px-6">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
             {loading && (
               <div className="mb-4 text-sm font-semibold text-[#667085]">Loading employer details...</div>
             )}
@@ -214,8 +352,18 @@ const EmployerDetail = () => {
                   <li>Employer Detail</li>
                 </ul>
                 <div className="flex justify-start lg:justify-end gap-2">
-                  <button type="button" className="inline-flex items-center gap-2 rounded-lg bg-[#ffb020] px-5 py-3 text-sm font-bold text-[#1f2938] hover:bg-[#f5a400] transition">
-                    <Bookmark className="h-4 w-4" /> Save
+                  <button
+                    type="button"
+                    onClick={handleToggleSave}
+                    disabled={toggling}
+                    className={`inline-flex items-center gap-2 rounded-lg px-5 py-3 text-sm font-bold transition disabled:opacity-60 disabled:cursor-not-allowed ${
+                      saved
+                        ? 'bg-amber-500 text-white hover:bg-amber-600'
+                        : 'bg-[#ffb020] text-[#1f2938] hover:bg-[#f5a400]'
+                    }`}
+                  >
+                    <Bookmark className={`h-4 w-4 ${saved ? 'fill-current' : ''}`} />
+                    {toggling ? 'Saving...' : (saved ? 'Saved' : 'Save')}
                   </button>
                   <Link to={openJobsUrl} className="inline-flex items-center gap-2 rounded-lg bg-[#0047C7] px-5 py-3 text-sm font-bold text-white hover:bg-[#003aa3] transition">
                     Apply for Job
@@ -228,7 +376,7 @@ const EmployerDetail = () => {
       </section>
 
       <section className="mt-12 mb-20">
-        <div className="max-w-[1320px] mx-auto px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_390px] gap-10">
             <div className="lg:pr-5">
               <div className="content-single">

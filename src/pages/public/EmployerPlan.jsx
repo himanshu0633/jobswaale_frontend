@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 const EmployerPlan = () => {
     return (
         <main className="py-5">
-            <div className="max-w-[1344px] mx-auto px-4">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6">
 
                 {/* Header Promo Header Banner */}
                 <div className="flex flex-wrap items-center mb-8 gap-3">

@@ -132,7 +132,7 @@ const JobseekerPlan = () => {
 
             {/* Pricing Plans Section */}
             <section className="mt-16 mb-12 py-10 inline-block w-full overflow-hidden">
-                <div className="max-w-[1344px] mx-auto px-4">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6">
 
                     {/* Section Heading */}
                     <div className="w-1/2 mx-auto text-center mb-8">
@@ -149,8 +149,32 @@ const JobseekerPlan = () => {
                     {/* Pricing Cards */}
                     <div className="mt-32 md:mt-12">
                         {loading ? (
-                            <div className="flex min-h-[280px] items-center justify-center">
-                                <div className="h-9 w-9 animate-spin rounded-full border-4 border-[#0047C7] border-t-transparent" />
+                            <div className="flex flex-wrap -mx-3 animate-pulse w-full">
+                                {[1, 2, 3, 4].map((i) => (
+                                    <div key={i} className="w-full md:w-1/2 lg:w-1/4 px-3 mb-8">
+                                        <div className="inline-block w-full p-6 border border-slate-200 rounded-[30px] bg-slate-50 shadow-sm min-h-[380px]">
+                                            {/* Price Section */}
+                                            <div className="space-y-2 mb-8">
+                                                <div className="h-10 w-24 bg-slate-200 rounded" />
+                                                <div className="h-4 w-16 bg-slate-200 rounded" />
+                                            </div>
+                                            {/* Title Section */}
+                                            <div className="space-y-3 mb-8">
+                                                <div className="h-6 w-32 bg-slate-200 rounded" />
+                                                <div className="h-4 w-44 bg-slate-200 rounded" />
+                                            </div>
+                                            {/* Features Checklist */}
+                                            <div className="space-y-4">
+                                                {[1, 2, 3, 4].map((f) => (
+                                                    <div key={f} className="flex items-center gap-3">
+                                                        <div className="h-4 w-4 rounded-full bg-slate-200 shrink-0" />
+                                                        <div className="h-3 w-3/4 bg-slate-200 rounded" />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         ) : error ? (
                             <div className="rounded-[18px] border border-rose-100 bg-rose-50 px-6 py-8 text-center text-sm font-semibold text-rose-700">
@@ -173,7 +197,7 @@ const JobseekerPlan = () => {
 
             {/* Invest in Yourself Section */}
             <section className="py-10 mt-24 inline-block w-full overflow-hidden">
-                <div className="max-w-[1344px] mx-auto px-4">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6">
                     <div className="flex flex-wrap -mx-3">
 
                         {/* Left Image */}
@@ -212,7 +236,7 @@ const JobseekerPlan = () => {
 
             {/* CTA Blue Banner Section */}
             <section className="bg-[#ecf4ff] py-[78px] mt-24 mb-12 inline-block w-full overflow-hidden">
-    <div className="max-w-[1344px] mx-auto px-4">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <h3 className="text-[44px] leading-[54px] font-bold text-[#1f2938] mb-5">
             Your Career Deserves More<br />Than Just Applications
         </h3>
