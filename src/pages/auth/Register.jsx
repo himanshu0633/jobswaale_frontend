@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { BASE_API_URL } from '../../context/AuthContext';
 import logoAsset from '../../assets/logo-black.png';
+import { getPublicSettings } from '../../utils/publicSettings';
 import RegImg from './authImages/register-illustration.png'
 
 const benefits = [
@@ -142,10 +143,10 @@ export const Register = () => {
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const response = await axios.get(`${BASE_API_URL}/settings/public`);
+        const data = await getPublicSettings();
         setSettings({
-          userRegistration: response.data?.userRegistration !== false,
-          minPassLen: Math.max(response.data?.minPassLen || 8, 8)
+          userRegistration: data?.userRegistration !== false,
+          minPassLen: Math.max(data?.minPassLen || 8, 8)
         });
       } catch {
         setSettings({ userRegistration: true, minPassLen: 8 });

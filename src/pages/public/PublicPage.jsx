@@ -16,6 +16,8 @@ import TermsConditions from './TermsConditions';
 import Faq from './Faq';
 import JobDetail from '../jobs/JobDetail';
 
+import { getPublicSettings } from '../../utils/publicSettings';
+
 // Import modular header and footer
 import { PublicHeader } from './PublicHeader';
 import { PublicFooter } from './PublicFooter';
@@ -35,8 +37,8 @@ export const PublicPage = () => {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const settingsRes = await axios.get(`${BASE_API_URL}/settings/public`);
-        setSettings(settingsRes.data || null);
+        const data = await getPublicSettings();
+        setSettings(data || null);
       } catch {
         setSettings(null);
       } finally {

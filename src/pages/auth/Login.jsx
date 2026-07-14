@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { BASE_API_URL } from '../../context/AuthContext';
 import logoAsset from '../../assets/logo-black.png';
+import { getPublicSettings } from '../../utils/publicSettings';
 
 const makeCaptcha = () => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -73,10 +74,10 @@ export const Login = () => {
   useEffect(() => {
     const loadPublicSettings = async () => {
       try {
-        const response = await axios.get(`${BASE_API_URL}/settings/public`);
-        const enabled = response.data?.captchaEnabled === true;
+        const data = await getPublicSettings();
+        const enabled = data?.captchaEnabled === true;
         setCaptchaEnabled(enabled);
-        const regEnabled = response.data?.userRegistration !== false;
+        const regEnabled = data?.userRegistration !== false;
         setRegistrationEnabled(regEnabled);
         if (enabled) setCaptchaCode(makeCaptcha());
       } catch {

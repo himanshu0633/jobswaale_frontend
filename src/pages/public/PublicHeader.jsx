@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Menu, X, ChevronDown, User, Briefcase, LogIn, UserPlus, UploadCloud, Building2, LayoutDashboard, LogOut } from 'lucide-react';
 import { BASE_API_URL } from '../../context/AuthContext';
 import logoAsset from '../../assets/logo-black.png';
+import { getPublicSettings } from '../../utils/publicSettings';
 
 export const PublicHeader = () => {
   const location = useLocation();
@@ -106,8 +107,8 @@ export const PublicHeader = () => {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const response = await axios.get(`${BASE_API_URL}/settings/public`);
-        setRegistrationEnabled(response.data?.userRegistration !== false);
+        const data = await getPublicSettings();
+        setRegistrationEnabled(data?.userRegistration !== false);
       } catch {
         setRegistrationEnabled(true);
       }
