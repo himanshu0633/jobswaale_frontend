@@ -93,6 +93,11 @@ const IcoSliders = () => (
     <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>
   </svg>
 );
+const IcoX = () => (
+  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+  </svg>
+);
 
 /* ─────────────────────────────────────────────────────────────
    EMPLOYER CARD  — mirrors .card-grid-2.card-employers exactly
@@ -253,6 +258,11 @@ export const Employers = () => {
   const [reminderEmail, setReminderEmail] = useState('');
   const [reminderDone, setReminderDone]   = useState(false);
 
+  // Top search-bar dropdown open/close state (mirrors Jobs.jsx's custom dropdowns)
+  const [indDropdownOpen, setIndDropdownOpen] = useState(false);
+  const [locDropdownOpen, setLocDropdownOpen] = useState(false);
+  const filterBarRef = useRef(null);
+
   // Mobile filter/sort toggle menu (mirrors Jobs.jsx)
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const mobileFilterRef = useRef(null);
@@ -278,9 +288,13 @@ export const Employers = () => {
 
   useEffect(() => { runFilter({ sortBy }); }, [sortBy]);
 
-  // Close the mobile filter/sort panel on outside click (mirrors Jobs.jsx)
+  // Close the top search-bar dropdowns and the mobile filter/sort panel on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
+      if (filterBarRef.current && !filterBarRef.current.contains(e.target)) {
+        setIndDropdownOpen(false);
+        setLocDropdownOpen(false);
+      }
       if (mobileFilterRef.current && !mobileFilterRef.current.contains(e.target)) {
         setMobileFilterOpen(false);
       }
@@ -431,6 +445,12 @@ export const Employers = () => {
     </>
   );
 
+  const INDUSTRY_OPTIONS = ['Software', 'Designing', 'Education', 'IT & Consulting'];
+  const LOCATION_OPTIONS = [
+    ['Hamirpur','Hamirpur, HP'],['Mohali','Mohali, PB'],['Chandigarh','Chandigarh, PB'],
+    ['Ambala','Ambala, HR'],['Chicago','Chicago, US'],['New York','New York, US'],['Iowa','Iowa, US'],
+  ];
+
   return (
     <div className="w-full bg-white font-sans">
 
@@ -458,91 +478,111 @@ export const Employers = () => {
             </ul>
           </div>
 
-          {/* ── FILTER BAR — .box-shadow-bdrd-15.box-filters ── */}
-          <div className="rounded-[15px] shadow-[0px_20px_60px_-6px_rgba(0,0,0,0.04)] bg-white p-[15px] border border-[#ececec]">
-            <form onSubmit={handleFind}>
-              <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:items-center">
-                {/* keyword search */}
-                <div className="w-full sm:flex-1 sm:min-w-[220px] relative">
-                  <IcoSearch />
-                  <input
-                    type="text"
-                    placeholder="e.g microsoft"
-                    value={searchKeyword}
-                    onChange={e => setSearchKeyword(e.target.value)}
-                    style={{ ...inputStyle, paddingLeft:42 }}
-                  />
+          {/* ── FILTER BAR — matches Jobs.jsx's box-shadow-bdrd-15.box-filters layout ── */}
+          <div
+            ref={filterBarRef}
+            className="bg-white rounded-[15px] p-[15px]"
+            style={{ boxShadow: '0px 20px 60px -6px rgba(0,0,0,0.04)', border: 'thin solid #ececec' }}
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-center">
+
+              {/* Left column: keyword search */}
+              <div className="flex flex-wrap items-center gap-4">
+                <form onSubmit={handleFind} className="flex-1 min-w-[200px]">
+                  <div className="relative">
+                    <IcoSearch />
+                    <input
+                      type="text"
+                      placeholder="e.g microsoft"
+                      value={searchKeyword}
+                      onChange={e => setSearchKeyword(e.target.value)}
+                      className="w-full border-0 pl-9 pr-2 py-3 text-[#37404e] placeholder-[#88929b] text-sm focus:outline-none bg-transparent"
+                    />
+                  </div>
+                </form>
+              </div>
+
+              {/* Right column: industry dropdown, location dropdown, Find Now button */}
+              <div className="flex items-center flex-wrap gap-3 lg:justify-between">
+                <div className="flex items-center flex-wrap gap-3">
+
+                  {/* Industry custom dropdown */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => { setIndDropdownOpen(o => !o); setLocDropdownOpen(false); }}
+                      className="flex items-center gap-2 text-sm text-[#37404e] px-1 py-2 cursor-pointer focus:outline-none"
+                    >
+                      <IcoBriefcase />
+                      <span>{searchInd || 'Industry'}</span>
+                      <IcoChevronDown />
+                    </button>
+                    {indDropdownOpen && (
+                      <ul
+                        className="absolute left-0 top-full mt-3 min-w-[180px] bg-white rounded-[10px] py-2 z-30"
+                        style={{ border: 'thin solid #ececec', boxShadow: '0px 9px 26px 0px rgba(31,31,51,0.06)' }}
+                      >
+                        {INDUSTRY_OPTIONS.map(opt => (
+                          <li key={opt}>
+                            <button
+                              type="button"
+                              onClick={() => { setSearchInd(opt); setIndDropdownOpen(false); }}
+                              className={`block w-full text-left px-5 py-2.5 text-sm transition ${
+                                searchInd === opt ? 'bg-[#0047C7] text-white' : 'text-[#636477] hover:bg-[#f1f7ff]'
+                              }`}
+                            >
+                              {opt}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
+                  {/* Location custom dropdown */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => { setLocDropdownOpen(o => !o); setIndDropdownOpen(false); }}
+                      className="flex items-center gap-2 text-sm text-[#37404e] px-1 py-2 cursor-pointer focus:outline-none"
+                    >
+                      <IcoMarker />
+                      <span>{searchLoc || 'Location'}</span>
+                      <IcoChevronDown />
+                    </button>
+                    {locDropdownOpen && (
+                      <ul
+                        className="absolute left-0 top-full mt-3 min-w-[180px] bg-white rounded-[10px] py-2 z-30"
+                        style={{ border: 'thin solid #ececec', boxShadow: '0px 9px 26px 0px rgba(31,31,51,0.06)' }}
+                      >
+                        {LOCATION_OPTIONS.map(([v, l]) => (
+                          <li key={v}>
+                            <button
+                              type="button"
+                              onClick={() => { setSearchLoc(v); setLocDropdownOpen(false); }}
+                              className={`block w-full text-left px-5 py-2.5 text-sm transition ${
+                                searchLoc === v ? 'bg-[#0047C7] text-white' : 'text-[#636477] hover:bg-[#f1f7ff]'
+                              }`}
+                            >
+                              {l}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </div>
 
-                {/* industry dropdown */}
-                <div className="w-full sm:flex-none sm:min-w-[160px] relative">
-                  <svg width="18" height="18" fill="none" stroke="#88929b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"
-                    className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
-                  </svg>
-                  <select
-                    value={searchInd}
-                    onChange={e => setSearchInd(e.target.value)}
-                    style={{ ...inputStyle, paddingLeft:42, paddingRight:28, appearance:'none', cursor:'pointer', height:50 }}
-                  >
-                    <option value="">Industry</option>
-                    {['Software','Designing','Education','IT & Consulting'].map(i=>(
-                      <option key={i} value={i}>{i}</option>
-                    ))}
-                  </select>
-                  <svg width="12" height="12" fill="none" stroke="#88929b" strokeWidth="2" viewBox="0 0 24 24"
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <polyline points="6 9 12 15 18 9"/>
-                  </svg>
-                </div>
-
-                {/* location dropdown */}
-                <div className="w-full sm:flex-none sm:min-w-[160px] relative">
-                  <svg width="18" height="18" fill="none" stroke="#88929b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"
-                    className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/>
-                  </svg>
-                  <select
-                    value={searchLoc}
-                    onChange={e => setSearchLoc(e.target.value)}
-                    style={{ ...inputStyle, paddingLeft:42, paddingRight:28, appearance:'none', cursor:'pointer', height:50 }}
-                  >
-                    <option value="">Location</option>
-                    {[
-                      ['Hamirpur','Hamirpur, HP'],['Mohali','Mohali, PB'],['Chandigarh','Chandigarh, PB'],
-                      ['Ambala','Ambala, HR'],['Chicago','Chicago, US'],['New York','New York, US'],['Iowa','Iowa, US'],
-                    ].map(([v,l])=><option key={v} value={v}>{l}</option>)}
-                  </select>
-                  <svg width="12" height="12" fill="none" stroke="#88929b" strokeWidth="2" viewBox="0 0 24 24"
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <polyline points="6 9 12 15 18 9"/>
-                  </svg>
-                </div>
-
-                {/* Find Now button — .btn.btn-default */}
+                {/* Find Now button — floats to the right of the row */}
                 <button
-                  type="submit"
-                  className="w-full sm:w-auto"
-                  style={{
-                    flex:'0 0 auto',
-                    background:'#0047C7',
-                    color:'#fff',
-                    border:'none',
-                    borderRadius:10,
-                    padding:'14px 25px',
-                    fontSize:14,
-                    fontWeight:600,
-                    cursor:'pointer',
-                    transition:'background 0.2s',
-                    whiteSpace:'nowrap',
-                  }}
-                  onMouseEnter={e=>e.currentTarget.style.background='#0052cc'}
-                  onMouseLeave={e=>e.currentTarget.style.background='#0047C7'}
+                  type="button"
+                  onClick={handleFind}
+                  className="w-full md:w-auto bg-[#0047C7] hover:bg-[#0052cc] text-white font-medium text-sm px-7 py-3 rounded-[10px] transition duration-150 cursor-pointer whitespace-nowrap"
                 >
                   Find Now
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       </section>
