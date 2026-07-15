@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { BASE_API_URL } from '../../context/AuthContext';
+import { getWithCache } from '../../utils/apiCache';
 
 const CATEGORY_STYLES = [
   { icon: Laptop, iconBg: '#e3f2fd', iconColor: '#1e88e5' },
@@ -35,10 +36,10 @@ export const PopularCategories = () => {
     const fetchCategories = async () => {
       try {
         const [categoryResult, jobsResult] = await Promise.allSettled([
-          axios.get(`${BASE_API_URL}/masters/job-categories`),
+          getWithCache(`${BASE_API_URL}/masters/job-categories`),
           axios.get(`${BASE_API_URL}/jobs`)
         ]);
-        const categoryData = categoryResult.status === 'fulfilled' ? categoryResult.value.data : [];
+        const categoryData = categoryResult.status === 'fulfilled' ? categoryResult.value : [];
         const jobsData = jobsResult.status === 'fulfilled' ? jobsResult.value.data : [];
 
         const jobCounts = (jobsData || []).reduce((counts, job) => {

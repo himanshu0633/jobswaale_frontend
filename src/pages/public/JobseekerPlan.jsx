@@ -3,6 +3,7 @@ import axios from 'axios';
 import TrustedCompanies from './TrustedCompanies';
 import bannerPrice from "./JobSeekerPlanImage/banner-price.png";
 import { BASE_API_URL } from '../../context/AuthContext';
+import { getWithCache } from '../../utils/apiCache';
 
 const formatPrice = (cost) => `₹${Number(cost || 0).toLocaleString('en-IN')}`;
 
@@ -106,8 +107,8 @@ const JobseekerPlan = () => {
     useEffect(() => {
         const fetchPlans = async () => {
             try {
-                const res = await axios.get(`${BASE_API_URL}/masters/plans?category=Jobseeker&limit=1000`);
-                const activePlans = (res.data || [])
+                const data = await getWithCache(`${BASE_API_URL}/masters/plans?category=Jobseeker&limit=1000`);
+                const activePlans = (data || [])
                     .filter((plan) => (plan.status || 'active') === 'active')
                     .sort((a, b) => {
                         const orderA = Number.isFinite(Number(a.displayOrder)) ? Number(a.displayOrder) : Number.MAX_SAFE_INTEGER;

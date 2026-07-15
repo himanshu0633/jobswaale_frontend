@@ -4,6 +4,7 @@ import { Briefcase, MapPin, ChevronDown, Mail, ArrowRight, Search, X } from 'luc
 import TrustedCompanies from './TrustedCompanies';
 import axios from 'axios';
 import { BASE_API_URL } from '../../context/AuthContext';
+import { getWithCache } from '../../utils/apiCache';
 
 const MOCK_JOBS = [
   {
@@ -177,8 +178,8 @@ export const Jobs = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await axios.get(`${BASE_API_URL}/masters/job-categories`);
-        const activeCategories = (res.data || [])
+        const data = await getWithCache(`${BASE_API_URL}/masters/job-categories`);
+        const activeCategories = (data || [])
           .filter((category) => (category.status || 'active') === 'active')
           .sort((a, b) => {
             const sortA = Number.isFinite(Number(a.sortingNo)) ? Number(a.sortingNo) : Number.MAX_SAFE_INTEGER;

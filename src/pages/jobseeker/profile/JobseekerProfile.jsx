@@ -21,6 +21,7 @@ import {
   XCircle
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import { getWithCache } from '../../../utils/apiCache';
 
 const getRefLabel = (value, keys = []) => {
   if (!value) return '';
@@ -251,25 +252,25 @@ export const JobseekerProfile = () => {
   useEffect(() => {
     const fetchMasters = async () => {
       try {
-        const [countryRes, stateRes, districtRes, cityRes, industryRes, categoryRes, typeRes, qualificationRes] = await Promise.all([
-          axios.get(`${BASE_API_URL}/masters/countries`),
-          axios.get(`${BASE_API_URL}/masters/states`),
-          axios.get(`${BASE_API_URL}/masters/districts`),
-          axios.get(`${BASE_API_URL}/masters/cities`),
-          axios.get(`${BASE_API_URL}/masters/industry-types`),
-          axios.get(`${BASE_API_URL}/masters/job-categories`),
-          axios.get(`${BASE_API_URL}/masters/job-types`),
-          axios.get(`${BASE_API_URL}/masters/qualifications`)
+        const [countryData, stateData, districtData, cityData, industryData, categoryData, typeData, qualificationData] = await Promise.all([
+          getWithCache(`${BASE_API_URL}/masters/countries`),
+          getWithCache(`${BASE_API_URL}/masters/states`),
+          getWithCache(`${BASE_API_URL}/masters/districts`),
+          getWithCache(`${BASE_API_URL}/masters/cities`),
+          getWithCache(`${BASE_API_URL}/masters/industry-types`),
+          getWithCache(`${BASE_API_URL}/masters/job-categories`),
+          getWithCache(`${BASE_API_URL}/masters/job-types`),
+          getWithCache(`${BASE_API_URL}/masters/qualifications`)
         ]);
 
-        setCountries(countryRes.data || []);
-        setStates(stateRes.data || []);
-        setDistricts(districtRes.data || []);
-        setCities(cityRes.data || []);
-        setIndustries(industryRes.data || []);
-        setJobCategories(categoryRes.data || []);
-        setJobTypes(typeRes.data || []);
-        setQualifications(qualificationRes.data || []);
+        setCountries(countryData || []);
+        setStates(stateData || []);
+        setDistricts(districtData || []);
+        setCities(cityData || []);
+        setIndustries(industryData || []);
+        setJobCategories(categoryData || []);
+        setJobTypes(typeData || []);
+        setQualifications(qualificationData || []);
       } catch (err) {
         console.error('Fetch masters error:', err);
         setError('Failed to load dropdown data. Please refresh.');
