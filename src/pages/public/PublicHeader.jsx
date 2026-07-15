@@ -126,18 +126,18 @@ export const PublicHeader = () => {
       <div className="mx-auto flex max-w-[90rem] items-center justify-between gap-5 px-4 py-2.5 sm:px-6">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 shrink-0">
-          <img src={logoAsset} alt="JobsWaale" className="h-9 sm:h-13 w-auto object-contain" />
+          <img src={logoAsset} alt="JobsWaale" className="h-9 sm:h-10 md:h-11 lg:h-12 w-auto object-contain" />
         </Link>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-8 ml-8">
-          <Link to="/" className={`text-[0.9375rem] font-medium transition duration-150 ${isActive('/') ? 'text-blue-600' : 'text-slate-655 hover:text-blue-600'}`}>
+        <nav className="hidden lg:flex items-center gap-5 xl:gap-8 ml-4 xl:ml-8">
+          <Link to="/" className={`text-[0.9375rem] font-medium transition duration-150 whitespace-nowrap ${isActive('/') ? 'text-blue-600' : 'text-slate-655 hover:text-blue-600'}`}>
             Home
           </Link>
-          <Link to="/jobs" className={`text-[0.9375rem] font-medium transition duration-150 ${isActive('/jobs') ? 'text-blue-600' : 'text-slate-655 hover:text-blue-600'}`}>
+          <Link to="/jobs" className={`text-[0.9375rem] font-medium transition duration-150 whitespace-nowrap ${isActive('/jobs') ? 'text-blue-600' : 'text-slate-655 hover:text-blue-600'}`}>
             Jobs
           </Link>
-          <Link to="/employers" className={`text-[0.9375rem] font-medium transition duration-150 ${isActive('/employers') ? 'text-blue-600' : 'text-slate-655 hover:text-blue-600'}`}>
+          <Link to="/employers" className={`text-[0.9375rem] font-medium transition duration-150 whitespace-nowrap ${isActive('/employers') ? 'text-blue-600' : 'text-slate-655 hover:text-blue-600'}`}>
             Employers
           </Link>
           
@@ -145,7 +145,7 @@ export const PublicHeader = () => {
           <div className="relative py-2" ref={pricingRef}>
             <button
               onClick={() => setPricingDesktopOpen(!pricingDesktopOpen)}
-              className="flex items-center gap-1 text-[0.9375rem] font-medium text-slate-655 hover:text-blue-600 focus:outline-none cursor-pointer"
+              className="flex items-center gap-1 text-[0.9375rem] font-medium text-slate-655 hover:text-blue-600 focus:outline-none cursor-pointer whitespace-nowrap"
             >
               Pricing <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${pricingDesktopOpen ? 'rotate-180' : ''}`} />
             </button>
@@ -161,13 +161,13 @@ export const PublicHeader = () => {
             )}
           </div>
 
-          <Link to="/about" className={`text-[0.9375rem] font-medium transition duration-150 ${isActive('/about') ? 'text-blue-600' : 'text-slate-655 hover:text-blue-600'}`}>
+          <Link to="/about" className={`text-[0.9375rem] font-medium transition duration-150 whitespace-nowrap ${isActive('/about') ? 'text-blue-600' : 'text-slate-655 hover:text-blue-600'}`}>
             About Us
           </Link>
         </nav>
 
         {/* Desktop CTA Action Buttons */}
-        <div className="hidden md:flex items-center gap-1">
+        <div className="hidden lg:flex items-center gap-1 shrink-0">
           {isLoggedIn ? (
             <div className="relative py-2" ref={profileMenuRef}>
               <button
@@ -201,9 +201,9 @@ export const PublicHeader = () => {
                     setEmployersDesktopOpen(false);
                     setPricingDesktopOpen(false); // Close pricing dropdown when opening this
                   }}
-                  className="inline-flex items-center gap-2 bg-[rgb(13,110,253)] hover:bg-[rgb(11,94,215)] text-white font-medium text-base py-1.75 px-5 min-w-[170px] rounded-lg transition duration-150 cursor-pointer shadow-md shadow-blue-600/10"
+                  className="inline-flex items-center gap-2 bg-[rgb(13,110,253)] hover:bg-[rgb(11,94,215)] text-white font-medium text-sm xl:text-base py-2 px-4 xl:px-5 min-w-[150px] xl:min-w-[170px] rounded-lg transition duration-150 cursor-pointer shadow-md shadow-blue-600/10 whitespace-nowrap"
                 >
-                  <User className="h-3.5 w-3.5" /> For Jobseekers <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${jobseekersDesktopOpen ? 'rotate-180' : ''}`} />
+                  <User className="h-3.5 w-3.5 shrink-0" /> For Jobseekers <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${jobseekersDesktopOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {jobseekersDesktopOpen && (
                   <div className="absolute top-full right-0 mt-1.5 block bg-white border border-slate-200 rounded-xl shadow-xl py-2 w-52 z-50">
@@ -230,9 +230,9 @@ export const PublicHeader = () => {
                     setJobseekersDesktopOpen(false);
                     setPricingDesktopOpen(false); // Close pricing dropdown when opening this
                   }}
-                  className="inline-flex items-center gap-2 bg-[rgb(253,126,20)] hover:bg-[rgb(221,107,17)] text-white font-medium  text-base py-1.75 px-5 min-w-[170px] rounded-lg transition duration-150 cursor-pointer shadow-md shadow-orange-600/10"
+                  className="inline-flex items-center gap-2 bg-[rgb(253,126,20)] hover:bg-[rgb(221,107,17)] text-white font-medium text-sm xl:text-base py-2 px-4 xl:px-5 min-w-[150px] xl:min-w-[170px] rounded-lg transition duration-150 cursor-pointer shadow-md shadow-orange-600/10 whitespace-nowrap"
                 >
-                  <Briefcase className="h-3.5 w-3.5" /> For Employers <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${employersDesktopOpen ? 'rotate-180' : ''}`} />
+                  <Briefcase className="h-3.5 w-3.5 shrink-0" /> For Employers <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${employersDesktopOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {employersDesktopOpen && (
                   <div className="absolute top-full right-0 mt-1.5 block bg-white border border-slate-200 rounded-xl shadow-xl py-2 w-52 z-50">
@@ -257,7 +257,7 @@ export const PublicHeader = () => {
         {/* Mobile Hamburger Menu Button */}
         <button 
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 focus:outline-none cursor-pointer"
+          className="lg:hidden p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 focus:outline-none cursor-pointer shrink-0"
         >
           {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
@@ -265,7 +265,7 @@ export const PublicHeader = () => {
 
       {/* Mobile Navigation Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-slate-200 bg-white py-4 px-4 shadow-inner max-h-[80vh] overflow-y-auto">
+        <div className="lg:hidden border-t border-slate-200 bg-white py-4 px-4 shadow-inner max-h-[80vh] overflow-y-auto">
           <nav className="flex flex-col gap-3.5">
             {isLoggedIn ? (
               <div className="mb-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">

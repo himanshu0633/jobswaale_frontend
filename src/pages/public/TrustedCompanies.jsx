@@ -39,7 +39,7 @@ const TrustedCompanies = () => {
     <div className="section-box mt-0 py-[30px] bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
 
-        <h5 className="font-semibold text-center mb-4 text-slate-900 text-lg">
+        <h5 className="font-semibold text-center mb-4 text-slate-900 text-base sm:text-lg">
           Trusted by 500+ Leading Companies
         </h5>
 
@@ -56,14 +56,14 @@ const TrustedCompanies = () => {
           ))}
         </div>
 
-        <div className="relative px-10 sm:px-12 lg:hidden">
+        <div className="relative px-8 sm:px-10 md:px-12 lg:hidden">
           {/* Left Arrow */}
           <button 
             onClick={() => swiperRef.current?.slidePrev()}
-            className="absolute left-0 lg:-left-5 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-gray-50 p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200"
+            className="absolute left-0 lg:-left-5 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-gray-50 p-2 sm:p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200"
             aria-label="Previous companies"
           >
-            <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
@@ -105,10 +105,10 @@ const TrustedCompanies = () => {
           {/* Right Arrow */}
           <button 
             onClick={() => swiperRef.current?.slideNext()}
-            className="absolute right-0 lg:-right-5 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-gray-50 p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200"
+            className="absolute right-0 lg:-right-5 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-gray-50 p-2 sm:p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200"
             aria-label="Next companies"
           >
-            <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
             </svg>
           </button>
@@ -162,14 +162,18 @@ const TrustedCompanies = () => {
           transform: translateY(-50%) scale(0.95);
         }
 
-        /* Responsive button positioning */
-        @media (max-width: 640px) {
-          .absolute button {
-            padding: 8px;
+        /* Scale down logo cards on small screens so padding doesn't dominate the tile */
+        @media (max-width: 480px) {
+          .item-logo {
+            padding: 22px 14px 20px;
+            min-height: 84px;
           }
-          .absolute button svg {
-            width: 16px;
-            height: 16px;
+        }
+
+        @media (min-width: 481px) and (max-width: 767px) {
+          .item-logo {
+            padding: 28px 16px 26px;
+            min-height: 92px;
           }
         }
       `}</style>

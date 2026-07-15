@@ -67,7 +67,7 @@ const FEATURED_JOBS = [
 
 const FeaturedJobs = () => {
   return (
-    <section className="py-24 bg-gradient-to-b from-slate-50 to-white">
+    <section className="py-10 bg-gradient-to-b from-slate-50 to-white">
       <div className="max-w-[1500px] mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-12 gap-4">
