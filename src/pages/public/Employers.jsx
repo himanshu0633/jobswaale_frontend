@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 /* ─────────────────────────────────────────────────────────────
    DATA
@@ -70,8 +70,8 @@ const IcoSearch = () => (
     <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
   </svg>
 );
-const IcoChevronDown = () => (
-  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className="inline ml-1">
+const IcoChevronDown = ({ className = '' }) => (
+  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className={`inline ml-1 ${className}`}>
     <polyline points="6 9 12 15 18 9"/>
   </svg>
 );
@@ -85,6 +85,14 @@ const IcoChevronRight = () => (
     <polyline points="9 18 15 12 9 6"/>
   </svg>
 );
+const IcoSliders = () => (
+  <svg width="16" height="16" fill="none" stroke="#88929b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
+    <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
+    <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
+    <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>
+  </svg>
+);
 
 /* ─────────────────────────────────────────────────────────────
    EMPLOYER CARD  — mirrors .card-grid-2.card-employers exactly
@@ -94,7 +102,7 @@ const EmployerCard = ({ company }) => {
   const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(company.name)}&background=e8eaf6&color=3949ab&size=110&bold=true`;
 
   return (
-    <div className="col-lg-6 col-md-6 mb-0">
+    <div className="mb-0">
       <div
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
@@ -123,7 +131,7 @@ const EmployerCard = ({ company }) => {
                 <img
                   alt={company.name}
                   src={company.logoImg || fallbackAvatar}
-                  className="rounded-full h-[110px] w-[110px] object-cover"
+                  className="rounded-full h-[90px] w-[90px] sm:h-[110px] sm:w-[110px] object-cover"
                 />
               </figure>
             </a>
@@ -135,7 +143,7 @@ const EmployerCard = ({ company }) => {
         </div>
 
         {/* card-block-info */}
-        <div className="inline-block w-full px-7 pt-5 pb-6">
+        <div className="inline-block w-full px-5 sm:px-7 pt-5 pb-6">
           {/* card-profile */}
           <div className="text-center">
             <h5 className="m-0 mb-1.5">
@@ -245,6 +253,10 @@ export const Employers = () => {
   const [reminderEmail, setReminderEmail] = useState('');
   const [reminderDone, setReminderDone]   = useState(false);
 
+  // Mobile filter/sort toggle menu (mirrors Jobs.jsx)
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const mobileFilterRef = useRef(null);
+
   /* filter logic */
   const runFilter = (overrides = {}) => {
     const kw   = (overrides.searchKeyword ?? searchKeyword).toLowerCase();
@@ -266,6 +278,17 @@ export const Employers = () => {
 
   useEffect(() => { runFilter({ sortBy }); }, [sortBy]);
 
+  // Close the mobile filter/sort panel on outside click (mirrors Jobs.jsx)
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (mobileFilterRef.current && !mobileFilterRef.current.contains(e.target)) {
+        setMobileFilterOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleFind = e => { e.preventDefault(); runFilter(); };
   const resetFilters = () => {
     setSearchKeyword(''); setSearchInd(''); setSearchLoc('');
@@ -278,6 +301,16 @@ export const Employers = () => {
     e.preventDefault();
     setReminderDone(true); setReminderEmail('');
     setTimeout(() => setReminderDone(false), 3000);
+  };
+
+  // Applying filters from the mobile panel also closes it, same as Jobs.jsx
+  const applyMobileFilters = () => {
+    runFilter();
+    setMobileFilterOpen(false);
+  };
+  const resetMobileFilters = () => {
+    resetFilters();
+    setMobileFilterOpen(false);
   };
 
   /* shared input style */
@@ -294,19 +327,123 @@ export const Employers = () => {
     background:'#fff',
   };
 
+  const sortSelect = (
+    <div className="relative inline-block">
+      <select
+        value={sortBy}
+        onChange={e => setSortBy(e.target.value)}
+        style={{
+          border:'none', background:'transparent', fontSize:14, fontWeight:600,
+          color:'#37404e', cursor:'pointer', outline:'none', paddingRight:20, appearance:'none',
+        }}
+      >
+        <option value="newest">Newest Post</option>
+        <option value="oldest">Oldest Post</option>
+      </select>
+      <svg width="12" height="12" fill="none" stroke="#88929b" strokeWidth="2" viewBox="0 0 24 24"
+        className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+    </div>
+  );
+
+  // Shared filter-field markup, reused in both the desktop sidebar card
+  // and the mobile toggle panel so the two stay in sync automatically
+  // (both are bound to the same state). Mirrors Jobs.jsx's renderFilterFields.
+  const renderFilterFields = (idPrefix) => (
+    <>
+      {/* Location */}
+      <div className="mb-[30px]">
+        <h5 className="text-lg text-[#1f2938] font-semibold mb-[15px]">Location</h5>
+        <div className="relative">
+          <svg width="18" height="18" fill="none" stroke="#88929b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"
+            className="absolute left-3 top-1/2 -translate-y-1/2">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/>
+          </svg>
+          <input
+            type="text"
+            placeholder="Location"
+            value={sidebarLoc}
+            onChange={e => setSidebarLoc(e.target.value)}
+            style={{ ...inputStyle }}
+          />
+        </div>
+      </div>
+
+      {/* Industry Type */}
+      <div className="mb-[30px]">
+        <h5 className="text-lg text-[#1f2938] font-semibold mb-[15px]">Industry Type</h5>
+        <div className="relative">
+          <svg width="18" height="18" fill="none" stroke="#88929b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"
+            className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+            <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
+          </svg>
+          <select
+            value={sidebarInd}
+            onChange={e => setSidebarInd(e.target.value)}
+            style={{ ...inputStyle, paddingLeft:42, paddingRight:28, appearance:'none', cursor:'pointer', height:50 }}
+          >
+            <option value="">IT &amp; Consulting</option>
+            <option value="Education">Education</option>
+            <option value="Software">Software</option>
+            <option value="Designing">Designing</option>
+          </select>
+          <svg width="12" height="12" fill="none" stroke="#88929b" strokeWidth="2" viewBox="0 0 24 24"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </div>
+      </div>
+
+      {/* Job Type */}
+      <div className="mb-[30px]">
+        <h5 className="text-lg text-[#1f2938] font-semibold mb-[15px]">Job type</h5>
+        <ul className="list-none m-0 pt-[15px] pb-[5px]">
+          {[
+            {label:'Full Time Jobs',count:235},
+            {label:'Part Time Jobs',count:28},
+            {label:'Remote Jobs',count:67},
+            {label:'Freelance',count:92},
+            {label:'Temporary',count:14},
+          ].map(({label,count}) => (
+            <CheckRow key={`${idPrefix}-type-${label}`} label={label} count={count}
+              checked={sidebarTypes.includes(label)}
+              onChange={() => toggleType(label)} />
+          ))}
+        </ul>
+      </div>
+
+      {/* Experience Level */}
+      <div className="mb-[30px]">
+        <h5 className="text-lg text-[#1f2938] font-semibold mb-[15px]">Experience Level</h5>
+        <ul className="list-none m-0 pt-[15px] pb-[5px]">
+          {[
+            {label:'Expert',count:76},{label:'Senior',count:89},
+            {label:'Junior',count:54},{label:'Regular',count:23},
+            {label:'Internship',count:22},{label:'Associate',count:14},
+          ].map(({label,count}) => (
+            <CheckRow key={`${idPrefix}-exp-${label}`} label={label} count={count}
+              checked={sidebarExps.includes(label)}
+              onChange={() => toggleExp(label)} />
+          ))}
+        </ul>
+      </div>
+    </>
+  );
+
   return (
     <div className="w-full bg-white font-sans">
 
       {/* ══════════════════════════════════════════════════════════
           BANNER / BREADCRUMB  — .section-box-2 > .box-head-single.none-bg
       ══════════════════════════════════════════════════════════ */}
-      <section className="bg-[#FFF9F3] inline-block w-full py-[55px] relative">
-        <div className="max-w-[1344px] mx-auto px-4">
-          <h4 className="text-[28px] leading-[34px] font-bold text-[#1f2938] mb-0">
+      <section className="bg-[#FFF9F3] inline-block w-full py-8 sm:py-[55px] relative">
+        <div className="max-w-[1344px] mx-auto px-4 sm:px-6">
+          <h4 className="text-[24px] leading-[30px] sm:text-[28px] sm:leading-[34px] font-bold text-[#1f2938] mb-0">
             There are <strong className="text-[#ff5e14]">500+</strong> companies<br />here for you!
           </h4>
 
-          <div className="flex flex-wrap mt-[15px] mb-10 items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-[15px] mb-6 sm:mb-10">
             <div>
               <span className="text-[#88929b] text-sm">Discover your next career move, freelance gig, or internship</span>
             </div>
@@ -324,9 +461,9 @@ export const Employers = () => {
           {/* ── FILTER BAR — .box-shadow-bdrd-15.box-filters ── */}
           <div className="rounded-[15px] shadow-[0px_20px_60px_-6px_rgba(0,0,0,0.04)] bg-white p-[15px] border border-[#ececec]">
             <form onSubmit={handleFind}>
-              <div className="flex flex-wrap gap-3 items-center">
+              <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:items-center">
                 {/* keyword search */}
-                <div className="flex-1 min-w-[220px] relative">
+                <div className="w-full sm:flex-1 sm:min-w-[220px] relative">
                   <IcoSearch />
                   <input
                     type="text"
@@ -338,7 +475,7 @@ export const Employers = () => {
                 </div>
 
                 {/* industry dropdown */}
-                <div className="flex-0 min-w-[160px] relative">
+                <div className="w-full sm:flex-none sm:min-w-[160px] relative">
                   <svg width="18" height="18" fill="none" stroke="#88929b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"
                     className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
                     <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
@@ -360,7 +497,7 @@ export const Employers = () => {
                 </div>
 
                 {/* location dropdown */}
-                <div className="flex-0 min-w-[160px] relative">
+                <div className="w-full sm:flex-none sm:min-w-[160px] relative">
                   <svg width="18" height="18" fill="none" stroke="#88929b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"
                     className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/>
@@ -385,6 +522,7 @@ export const Employers = () => {
                 {/* Find Now button — .btn.btn-default */}
                 <button
                   type="submit"
+                  className="w-full sm:w-auto"
                   style={{
                     flex:'0 0 auto',
                     background:'#0047C7',
@@ -412,18 +550,21 @@ export const Employers = () => {
       {/* ══════════════════════════════════════════════════════════
           MAIN SECTION  — .section-box.mt-80.mb-80
       ══════════════════════════════════════════════════════════ */}
-      <section className="max-w-[1344px] mx-auto my-20 px-4">
-        <div className="flex flex-wrap gap-12">
+      <section className="max-w-[1344px] mx-auto my-10 sm:my-20 px-4 sm:px-6">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
 
           {/* ────────────────────────────────────────────────────
-              SIDEBAR  (col-lg-4) — rendered first in DOM but
-              visually on the left via order / flex layout
+              SIDEBAR  (col-lg-4) — full width on mobile/tablet,
+              fixed width alongside the content on large screens.
+              The filter panel itself is hidden below the lg
+              breakpoint; on mobile it's reached via the
+              "Filters & Sort" toggle above the company listings.
           ──────────────────────────────────────────────────── */}
-          <div className="flex-0 min-w-[340px] flex flex-col gap-[30px]">
+          <div className="w-full lg:w-[340px] lg:flex-shrink-0 flex flex-col gap-[30px]">
 
             {/* Email reminder — .sidebar-with-bg */}
-            <div className="bg-[rgba(81,146,255,0.12)] rounded-[10px] p-[30px]">
-              <h5 className="text-[22px] leading-[28px] font-medium text-[#1f2938] mb-2.5">Set job reminder</h5>
+            <div className="bg-[rgba(81,146,255,0.12)] rounded-[10px] p-6 sm:p-[30px] hidden md:block" >
+              <h5 className="text-[20px] leading-[26px] sm:text-[22px] sm:leading-[28px] font-medium text-[#1f2938] mb-2.5">Set job reminder</h5>
               <p className="text-base leading-[22px] text-[#999] mb-0">
                 Enter your email address and get job notification.
               </p>
@@ -457,85 +598,10 @@ export const Employers = () => {
               </form>
             </div>
 
-            {/* Filters panel — .sidebar-shadow.none-shadow */}
-            <div className="border border-[rgba(6,18,36,0.1)] p-[29px_33px] rounded-[10px] bg-white">
+            {/* Filters panel — .sidebar-shadow.none-shadow — desktop/tablet only */}
+            <div className="hidden lg:block border border-[rgba(6,18,36,0.1)] p-6 sm:p-[29px_33px] rounded-[10px] bg-white">
 
-              {/* Location */}
-              <div className="mb-[30px]">
-                <h5 className="text-lg text-[#1f2938] font-semibold mb-[15px]">Location</h5>
-                <div className="relative">
-                  <svg width="18" height="18" fill="none" stroke="#88929b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"
-                    className="absolute left-3 top-1/2 -translate-y-1/2">
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/>
-                  </svg>
-                  <input
-                    type="text"
-                    placeholder="Location"
-                    value={sidebarLoc}
-                    onChange={e => setSidebarLoc(e.target.value)}
-                    style={{ ...inputStyle }}
-                  />
-                </div>
-              </div>
-
-              {/* Industry Type */}
-              <div className="mb-[30px]">
-                <h5 className="text-lg text-[#1f2938] font-semibold mb-[15px]">Industry Type</h5>
-                <div className="relative">
-                  <svg width="18" height="18" fill="none" stroke="#88929b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"
-                    className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
-                  </svg>
-                  <select
-                    value={sidebarInd}
-                    onChange={e => setSidebarInd(e.target.value)}
-                    style={{ ...inputStyle, paddingLeft:42, paddingRight:28, appearance:'none', cursor:'pointer', height:50 }}
-                  >
-                    <option value="">IT &amp; Consulting</option>
-                    <option value="Education">Education</option>
-                    <option value="Software">Software</option>
-                    <option value="Designing">Designing</option>
-                  </select>
-                  <svg width="12" height="12" fill="none" stroke="#88929b" strokeWidth="2" viewBox="0 0 24 24"
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <polyline points="6 9 12 15 18 9"/>
-                  </svg>
-                </div>
-              </div>
-
-              {/* Job Type */}
-              <div className="mb-[30px]">
-                <h5 className="text-lg text-[#1f2938] font-semibold mb-[15px]">Job type</h5>
-                <ul className="list-none m-0 pt-[15px] pb-[5px]">
-                  {[
-                    {label:'Full Time Jobs',count:235},
-                    {label:'Part Time Jobs',count:28},
-                    {label:'Remote Jobs',count:67},
-                    {label:'Freelance',count:92},
-                    {label:'Temporary',count:14},
-                  ].map(({label,count}) => (
-                    <CheckRow key={label} label={label} count={count}
-                      checked={sidebarTypes.includes(label)}
-                      onChange={() => toggleType(label)} />
-                  ))}
-                </ul>
-              </div>
-
-              {/* Experience Level */}
-              <div className="mb-[30px]">
-                <h5 className="text-lg text-[#1f2938] font-semibold mb-[15px]">Experience Level</h5>
-                <ul className="list-none m-0 pt-[15px] pb-[5px]">
-                  {[
-                    {label:'Expert',count:76},{label:'Senior',count:89},
-                    {label:'Junior',count:54},{label:'Regular',count:23},
-                    {label:'Internship',count:22},{label:'Associate',count:14},
-                  ].map(({label,count}) => (
-                    <CheckRow key={label} label={label} count={count}
-                      checked={sidebarExps.includes(label)}
-                      onChange={() => toggleExp(label)} />
-                  ))}
-                </ul>
-              </div>
+              {renderFilterFields('desktop')}
 
               {/* buttons-filter */}
               <div className="flex gap-3">
@@ -567,7 +633,9 @@ export const Employers = () => {
             </div>
 
             {/* Recruiting banner — .sidebar-with-bg.background-primary.bg-sidebar */}
-            <div style={{
+            <div 
+              className="hidden md:block"
+              style={{
               background:'rgb(81,146,255)',
               borderRadius:10,
               padding:'30px 30px 80px',
@@ -602,32 +670,63 @@ export const Employers = () => {
           {/* ────────────────────────────────────────────────────
               CONTENT — col-lg-8  (company cards)
           ──────────────────────────────────────────────────── */}
-          <div className="flex-1 min-w-0">
+          <div className="w-full lg:flex-1 lg:min-w-0">
 
-            {/* box-filters-job: count + sort */}
+            {/* Mobile-only filter/sort toggle — sits on top of the company listings,
+                mirrors the equivalent block in Jobs.jsx */}
+            <div className="relative lg:hidden mb-4" ref={mobileFilterRef}>
+              <button
+                type="button"
+                onClick={() => setMobileFilterOpen((o) => !o)}
+                className="w-full flex items-center justify-between gap-2 bg-white rounded-[10px] px-5 py-3 text-sm font-semibold text-[#37404e]"
+                style={{ border: '1px solid rgba(6,18,36,0.1)', boxShadow: '0px 9px 26px 0px rgba(31,31,51,0.06)' }}
+              >
+                <span className="flex items-center gap-2">
+                  <IcoSliders />
+                  Filters &amp; Sort
+                </span>
+                <IcoChevronDown className={`transition-transform ${mobileFilterOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {mobileFilterOpen && (
+                <div
+                  className="absolute left-0 right-0 top-full mt-2 z-30 bg-white rounded-[10px] p-[24px] space-y-[24px] max-h-[75vh] overflow-y-auto"
+                  style={{ border: '1px solid rgba(6,18,36,0.1)', boxShadow: '0px 9px 26px 0px rgba(31,31,51,0.06)' }}
+                >
+                  {/* Sort by, included inside the mobile filter menu */}
+                  <div className="flex items-center justify-between pb-2" style={{ borderBottom: '1px solid rgba(6,18,36,0.1)' }}>
+                    <span className="text-sm font-semibold text-[#9c9ca3]">Sort by</span>
+                    {sortSelect}
+                  </div>
+
+                  {renderFilterFields('mobile')}
+
+                  <div className="flex items-center gap-3 pt-1">
+                    <button
+                      onClick={applyMobileFilters}
+                      className="flex-1 bg-[#0047C7] hover:bg-[#0052cc] text-white font-bold text-sm py-3 rounded-[10px] transition cursor-pointer"
+                    >
+                      Apply filter
+                    </button>
+                    <button
+                      onClick={resetMobileFilters}
+                      className="text-[#1f2938] hover:text-[#0047C7] font-normal text-sm py-3 transition cursor-pointer"
+                    >
+                      Reset filter
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* box-filters-job: count + sort (desktop/tablet sort control) */}
             <div className="flex justify-between items-center mt-[15px] mb-[30px]">
               <span className="text-sm text-[#37404e]">
                 Showing <strong>{filteredCompanies.length}</strong> companies
               </span>
-              <div className="flex items-center gap-2">
+              <div className="hidden lg:flex items-center gap-2">
                 <span className="text-[#9c9ca3] font-semibold text-sm">Sort by:</span>
-                <div className="relative inline-block">
-                  <select
-                    value={sortBy}
-                    onChange={e => setSortBy(e.target.value)}
-                    style={{
-                      border:'none', background:'transparent', fontSize:14, fontWeight:600,
-                      color:'#37404e', cursor:'pointer', outline:'none', paddingRight:20, appearance:'none',
-                    }}
-                  >
-                    <option value="newest">Newest Post</option>
-                    <option value="oldest">Oldest Post</option>
-                  </select>
-                  <svg width="12" height="12" fill="none" stroke="#88929b" strokeWidth="2" viewBox="0 0 24 24"
-                    className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <polyline points="6 9 12 15 18 9"/>
-                  </svg>
-                </div>
+                {sortSelect}
               </div>
             </div>
 
@@ -643,7 +742,7 @@ export const Employers = () => {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {filteredCompanies.map(company => (
                   <EmployerCard key={company.id} company={company} />
                 ))}
@@ -651,42 +750,42 @@ export const Employers = () => {
             )}
 
             {/* Pagination — .paginations */}
-{filteredCompanies.length > 0 && (
-  <div className="my-[50px] flex justify-center mr-100">
-    <nav className="flex">
-      {['Previous','1','2','3','Next'].map((p) => {
-        const isActive = p === '2';
-        const isNum = !isNaN(Number(p));
+            {filteredCompanies.length > 0 && (
+              <div className="my-8 sm:my-[50px] flex justify-center overflow-x-auto">
+                <nav className="flex">
+                  {['Previous','1','2','3','Next'].map((p) => {
+                    const isActive = p === '2';
+                    const isNum = !isNaN(Number(p));
 
-        return (
-          <a
-            key={p}
-            href="#"
-            onClick={e => e.preventDefault()}
-            style={{
-              minWidth: isNum ? 45 : 90,
-              height: 42,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '0 12px',
-              border: '1px solid #D9DDE5',
-              marginLeft: -1, // connects borders
-              fontWeight: 600,
-              fontSize: 16,
-              color: isActive ? '#0047C7' : '#37404e',
-              background: isActive ? '#E6EEFF' : '#fff',
-              textDecoration: 'none',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {p}
-          </a>
-        );
-      })}
-    </nav>
-  </div>
-)}
+                    return (
+                      <a
+                        key={p}
+                        href="#"
+                        onClick={e => e.preventDefault()}
+                        style={{
+                          minWidth: isNum ? 42 : 76,
+                          height: 42,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '0 10px',
+                          border: '1px solid #D9DDE5',
+                          marginLeft: -1, // connects borders
+                          fontWeight: 600,
+                          fontSize: 15,
+                          color: isActive ? '#0047C7' : '#37404e',
+                          background: isActive ? '#E6EEFF' : '#fff',
+                          textDecoration: 'none',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {p}
+                      </a>
+                    );
+                  })}
+                </nav>
+              </div>
+            )}
           </div>
         </div>
       </section>
