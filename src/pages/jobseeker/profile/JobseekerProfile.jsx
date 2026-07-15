@@ -233,7 +233,7 @@ export const JobseekerProfile = () => {
   const [status, setStatus] = useState('');
   const [bio, setBio] = useState('');
   const [qualification, setQualification] = useState('');
-  const [passingYear, setPassingYear] = useState('2022');
+  const [passingYear, setPassingYear] = useState('');
   const [studyField, setStudyField] = useState('');
   const [university, setUniversity] = useState('');
   const [linkedin, setLinkedin] = useState('');
@@ -241,7 +241,7 @@ export const JobseekerProfile = () => {
   const [github, setGithub] = useState('');
   
   // Custom states
-  const [gender, setGender] = useState('Male');
+  const [gender, setGender] = useState('');
   const [skills, setSkills] = useState([]);
   const [skillInput, setSkillInput] = useState('');
   const [locations, setLocations] = useState([]);
@@ -292,16 +292,16 @@ export const JobseekerProfile = () => {
         setName(seeker.name || '');
         setPhone(seeker.phone || '');
         setEmail(seeker.userId?.email || '');
-        setGender(seeker.gender || 'Male');
+        setGender(seeker.gender || '');
         setDob(seeker.dob || '');
         setCity(seeker.city || '');
         setState(seeker.state || '');
-        setCountry(seeker.country || 'India');
+        setCountry(seeker.country || '');
         setDistrict(seeker.district || '');
         setAddress(seeker.address || '');
         setPinCode(seeker.pinCode || '');
         setDesignation(seeker.designation || '');
-        setExperience(seeker.experience || 'Fresher');
+        setExperience(seeker.experience || '');
         setExpectedSalary(seeker.expectedSalary || '');
         setIndustryType(seeker.industryType?._id || getRefLabel(seeker.industryType, ['industryType', 'industryName', 'name']));
         setJobCategory(seeker.jobCategory?._id || getRefLabel(seeker.jobCategory, ['categoryName', 'name']));
@@ -311,7 +311,7 @@ export const JobseekerProfile = () => {
         setStatus(seeker.status || '');
         setBio(seeker.bio || '');
         setQualification(seeker.qualification?._id || getRefLabel(seeker.qualification, ['name']) || '');
-        setPassingYear(seeker.passingYear || '2022');
+        setPassingYear(seeker.passingYear || '');
         setStudyField(seeker.studyField || '');
         setUniversity(seeker.university || '');
         setLinkedin(seeker.linkedin || '');
@@ -507,9 +507,11 @@ export const JobseekerProfile = () => {
             <span className="flex items-center gap-1">
               <Mail className="h-3.5 w-3.5" /> {email}
             </span>
-            <span className="flex items-center gap-1">
-              <Phone className="h-3.5 w-3.5" /> {phone}
-            </span>
+            {phone && (
+              <span className="flex items-center gap-1">
+                <Phone className="h-3.5 w-3.5" /> {phone}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -581,6 +583,7 @@ export const JobseekerProfile = () => {
                   onChange={(e) => setGender(e.target.value)}
                   className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
                 >
+                  <option value="">Select gender</option>
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
                   <option value="Other">Other</option>
@@ -738,6 +741,7 @@ export const JobseekerProfile = () => {
                   onChange={(e) => setExperience(e.target.value)}
                   className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
                 >
+                  <option value="">Select experience</option>
                   <option>Fresher</option>
                   <option>1 - 2 Years</option>
                   <option>3 - 5 Years</option>
@@ -875,6 +879,7 @@ export const JobseekerProfile = () => {
                   onChange={(e) => setPassingYear(e.target.value)}
                   className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
                 >
+                  <option value="">Select year</option>
                   <option>2020</option>
                   <option>2021</option>
                   <option>2022</option>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import { GoogleLogin } from '@react-oauth/google';
 import {
   Briefcase,
   Eye,
@@ -61,10 +62,12 @@ export const Login = () => {
   const [success, setSuccess] = useState(location.state?.message || '');
   const [blacklistNotice, setBlacklistNotice] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [registrationEnabled, setRegistrationEnabled] = useState(true);
 
   const navigate = useNavigate();
   const registerPath = role === 'employer' ? '/employer-register' : '/jobseeker-register';
+  const googleClientConfigured = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID);
 
   const identifierIcon = useMemo(() => {
     return /^[0-9+() -]{3,}$/.test(identifier.trim()) ? Phone : Mail;
@@ -140,19 +143,7 @@ export const Login = () => {
         email: identifier,
         password
       });
-      const accountType = response.data?.accountType || response.data?.role;
-      if (role === 'jobseeker' && accountType !== 'jobseeker' && response.data?.role !== 'Jobseeker') {
-        setError('Please select the correct account type for this login.');
-        return;
-      }
-      if (role === 'employer' && accountType !== 'employer' && response.data?.role !== 'Employer') {
-        setError('Please select the correct account type for this login.');
-        return;
-      }
-      localStorage.setItem('publicUser', JSON.stringify(response.data));
-      if (response.data?.token) localStorage.setItem('publicToken', response.data.token);
-      setSuccess('Logged in successfully.');
-      setTimeout(() => navigate('/'), 700);
+      completePublicLogin(response.data);
     } catch (err) {
       const data = err.response?.data || {};
       if (data.accountStatus === 'blacklisted') {
@@ -168,6 +159,77 @@ export const Login = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const completePublicLogin = (loginData) => {
+    const token = loginData?.token;
+    const userData = loginData?.user || loginData;
+    const accountType = userData?.accountType || userData?.role;
+
+    if (role === 'jobseeker' && accountType !== 'jobseeker' && userData?.role !== 'Jobseeker') {
+      setError('Please select the correct account type for this login.');
+      return false;
+    }
+    if (role === 'employer' && accountType !== 'employer' && userData?.role !== 'Employer') {
+      setError('Please select the correct account type for this login.');
+      return false;
+    }
+
+    localStorage.setItem('publicUser', JSON.stringify(userData));
+    if (token) localStorage.setItem('publicToken', token);
+    setSuccess('Logged in successfully.');
+    setTimeout(() => navigate('/'), 700);
+    return true;
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError('');
+    setSuccess('');
+    setBlacklistNotice(null);
+
+    if (!googleClientConfigured) {
+      setError('Google login is not configured.');
+      return;
+    }
+
+    if (!credentialResponse?.credential) {
+      setError('Google did not return a valid login token.');
+      return;
+    }
+
+    setGoogleLoading(true);
+    try {
+      const response = await axios.post(`${BASE_API_URL}/auth/google`, {
+        token: credentialResponse.credential,
+        role
+      });
+      completePublicLogin(response.data);
+    } catch (err) {
+      const data = err.response?.data || {};
+      if (data.accountStatus === 'blacklisted') {
+        setBlacklistNotice({
+          reason: data.blacklistReason || '',
+          message: data.message || 'Your employer account has been blacklisted. Please contact admin.'
+        });
+        setError('');
+      } else {
+        setError(data.message || err.message || 'Google login failed. Please try again.');
+      }
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError('Google login failed. Please try again.');
+  };
+
+  const handleGoogleNonOAuthError = (nonOAuthError) => {
+    if (nonOAuthError?.type === 'popup_closed' || nonOAuthError?.type === 'popup_closed_by_user') {
+      setError('Google login was cancelled.');
+      return;
+    }
+    setError('Google login could not be completed.');
   };
 
   return (
@@ -353,11 +415,17 @@ export const Login = () => {
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || googleLoading}
                 className="w-full rounded-xl bg-[#0058bf] px-5 py-4 text-base font-extrabold text-white shadow-lg shadow-blue-600/10 transition hover:bg-[#004aa3] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? 'Logging in...' : 'Login to Account'}
               </button>
+
+              {googleLoading && (
+                <div className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-center text-sm font-semibold text-[#0058bf]">
+                  Completing Google login...
+                </div>
+              )}
 
               <div className="relative flex items-center justify-center py-1">
                 <div className="h-px w-full bg-slate-100" />
@@ -365,10 +433,29 @@ export const Login = () => {
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
-                <button type="button" className="flex items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700">
-                  <span className="text-lg font-extrabold text-rose-500">G</span>
-                  Google
-                </button>
+                <div className="flex min-h-[46px] items-center justify-center rounded-xl border border-slate-200 bg-white px-2 py-1">
+                  {googleClientConfigured ? (
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      onError={handleGoogleError}
+                      onNonOAuthError={handleGoogleNonOAuthError}
+                      text="continue_with"
+                      shape="rectangular"
+                      size="large"
+                      width="220"
+                      useOneTap={false}
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setError('Google login is not configured.')}
+                      className="flex items-center justify-center gap-3 text-sm font-bold text-slate-700"
+                    >
+                      <span className="text-lg font-extrabold text-rose-500">G</span>
+                      Continue with Google
+                    </button>
+                  )}
+                </div>
                 <button type="button" className="flex items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700">
                   <span className="rounded bg-blue-600 px-1.5 py-0.5 text-xs font-extrabold text-white">in</span>
                   LinkedIn
