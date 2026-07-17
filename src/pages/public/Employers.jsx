@@ -368,6 +368,30 @@ export const Employers = () => {
   return (
     <div className="w-full bg-white font-sans">
 
+      {/* Local styles for the two independently-scrollable panes.
+          Each pane only scrolls while the pointer is hovering over
+          it (native overflow-y:auto behavior), with a subtle
+          scrollbar that only shows itself on hover. */}
+      <style>{`
+        .scroll-pane {
+          scrollbar-width: thin;
+          scrollbar-color: transparent transparent;
+        }
+        .scroll-pane:hover {
+          scrollbar-color: rgba(6,18,36,0.25) transparent;
+        }
+        .scroll-pane::-webkit-scrollbar {
+          width: 6px;
+        }
+        .scroll-pane::-webkit-scrollbar-thumb {
+          background-color: transparent;
+          border-radius: 10px;
+        }
+        .scroll-pane:hover::-webkit-scrollbar-thumb {
+          background-color: rgba(6,18,36,0.25);
+        }
+      `}</style>
+
       {/* ══════════════════════════════════════════════════════════
           BANNER / BREADCRUMB  — .section-box-2 > .box-head-single.none-bg
       ══════════════════════════════════════════════════════════ */}
@@ -483,13 +507,25 @@ export const Employers = () => {
           MAIN SECTION  — .section-box.mt-80.mb-80
       ══════════════════════════════════════════════════════════ */}
       <section className="max-w-7xl mx-auto my-20 px-4 sm:px-6">
-        <div className="flex flex-wrap gap-12">
+        <div className="flex flex-wrap gap-12 items-start">
 
           {/* ────────────────────────────────────────────────────
               SIDEBAR  (col-lg-4) — rendered first in DOM but
-              visually on the left via order / flex layout
+              visually on the left via order / flex layout.
+              Independently scrollable pane: scrolls only while
+              the pointer is hovering over this column.
           ──────────────────────────────────────────────────── */}
-          <div className="flex-0 min-w-[340px] flex flex-col gap-[30px]">
+          <div
+            className="flex-0 min-w-[340px] flex flex-col gap-[30px] scroll-pane"
+            style={{
+              maxHeight: 'calc(100vh - 40px)',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              position: 'sticky',
+              top: 20,
+              paddingRight: 8,
+            }}
+          >
 
             {/* Email reminder — .sidebar-with-bg */}
             <div className="bg-[rgba(81,146,255,0.12)] rounded-[10px] p-[30px]">
@@ -671,8 +707,18 @@ export const Employers = () => {
 
           {/* ────────────────────────────────────────────────────
               CONTENT — col-lg-8  (company cards)
+              Independently scrollable pane: scrolls only while
+              the pointer is hovering over this column.
           ──────────────────────────────────────────────────── */}
-          <div className="flex-1 min-w-0">
+          <div
+            className="flex-1 min-w-0 scroll-pane"
+            style={{
+              maxHeight: 'calc(100vh - 40px)',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              paddingRight: 8,
+            }}
+          >
 
             {/* box-filters-job: count + sort */}
             <div className="flex justify-between items-center mt-[15px] mb-[30px]">
