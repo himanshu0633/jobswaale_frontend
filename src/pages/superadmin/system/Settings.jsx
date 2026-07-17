@@ -119,8 +119,8 @@ export const Settings = () => {
   const labelCls = "block text-sm font-medium text-slate-600 mb-1";
   
   const ToggleSwitch = ({ checked, onChange, label, subtext }) => (
-    <div className="flex items-start justify-between py-3 border-b border-slate-100 last:border-0">
-      <div className="flex-grow pr-4">
+    <div className="flex items-start justify-between gap-3 py-3 border-b border-slate-100 last:border-0">
+      <div className="flex-grow pr-2 sm:pr-4">
         <label className="text-sm font-semibold text-slate-700">{label}</label>
         {subtext && <p className="text-xs text-slate-400 font-normal mt-0.5">{subtext}</p>}
       </div>
@@ -142,18 +142,18 @@ export const Settings = () => {
   );
 
   const tabs = [
-    { key: 'general', label: 'General', icon: <SettingsIcon className="w-4.5 h-4.5" /> },
-    { key: 'notification', label: 'Notifications', icon: <BellRing className="w-4.5 h-4.5" /> },
-    { key: 'security', label: 'Security', icon: <ShieldCheck className="w-4.5 h-4.5" /> },
-    { key: 'email', label: 'Email', icon: <Mail className="w-4.5 h-4.5" /> }
+    { key: 'general', label: 'General', icon: <SettingsIcon className="w-4 h-4 sm:w-4.5 sm:h-4.5" /> },
+    { key: 'notification', label: 'Notifications', icon: <BellRing className="w-4 h-4 sm:w-4.5 sm:h-4.5" /> },
+    { key: 'security', label: 'Security', icon: <ShieldCheck className="w-4 h-4 sm:w-4.5 sm:h-4.5" /> },
+    { key: 'email', label: 'Email', icon: <Mail className="w-4 h-4 sm:w-4.5 sm:h-4.5" /> }
   ];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 px-3 sm:space-y-5 sm:px-0">
       {/* Breadcrumb Header */}
-      <div className="flex items-center justify-between">
-        <h4 className="text-xl font-bold text-slate-800">Settings</h4>
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 text-[0.9rem]">
+      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+        <h4 className="text-lg font-bold text-slate-800 sm:text-xl">Settings</h4>
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
           <span>JobsWaale</span>
           <span>&gt;</span>
           <span className="text-indigo-600">Settings</span>
@@ -173,16 +173,16 @@ export const Settings = () => {
             <AlertCircle className="w-4 h-4 shrink-0" />
           )}
           <span>{message.text}</span>
-          <button type="button" onClick={() => setMessage({ type: '', text: '' })} className="ml-auto rounded-full p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700">
+          <button type="button" onClick={() => setMessage({ type: '', text: '' })} className="ml-auto shrink-0 rounded-full p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700">
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
       {/* Main Settings Card */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden -ml-3 lg:-ml-5">
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
         {/* Card Header */}
-        <div className="px-5 py-4 border-b border-slate-100">
+        <div className="px-4 py-4 border-b border-slate-100 sm:px-5">
           <h4 className="text-base font-bold text-slate-800">System Settings</h4>
           <p className="text-xs text-slate-400 mt-0.5">
             Configure global system settings, notifications, security preferences, and email configuration for the platform.
@@ -190,13 +190,13 @@ export const Settings = () => {
         </div>
 
         {/* Tab Navigation */}
-        <div className="grid grid-cols-4 grid-flow-col auto-cols-max place-items-center border-b border-slate-100 px-5 overflow-x-auto">
+        <div className="flex border-b border-slate-100 px-3 overflow-x-auto sm:px-5">
           {tabs.map(tab => (
             <button
               key={tab.key}
               type="button"
               onClick={() => setActiveTab(tab.key)}
-              className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 whitespace-nowrap transition-colors ${
+              className={`flex shrink-0 items-center gap-1.5 px-3 py-2.5 text-xs font-semibold border-b-2 whitespace-nowrap transition-colors sm:gap-2 sm:px-5 sm:py-3 sm:text-sm ${
                 activeTab === tab.key
                   ? 'border-indigo-600 text-indigo-600'
                   : 'border-transparent text-slate-500 hover:text-slate-700'
@@ -209,7 +209,7 @@ export const Settings = () => {
         </div>
 
         {/* Tab Contents */}
-        <div className="p-5">
+        <div className="p-4 sm:p-5">
           {loading && (
             <div className="py-12 text-center text-sm font-semibold text-slate-500">Loading settings...</div>
           )}
@@ -339,7 +339,7 @@ export const Settings = () => {
                   type="button"
                   onClick={() => handleSave('general')}
                   disabled={saving}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-60"
+                  className="inline-flex w-full items-center justify-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-60 sm:w-auto"
                 >
                   <Save className="w-4 h-4" />
                   {saving ? 'Saving...' : 'Save General Settings'}
@@ -395,7 +395,7 @@ export const Settings = () => {
                   type="button"
                   onClick={() => handleSave('notification')}
                   disabled={saving}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-60"
+                  className="inline-flex w-full items-center justify-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-60 sm:w-auto"
                 >
                   <Save className="w-4 h-4" />
                   {saving ? 'Saving...' : 'Save Notification Settings'}
@@ -493,7 +493,7 @@ export const Settings = () => {
                   type="button"
                   onClick={() => handleSave('security')}
                   disabled={saving}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-60"
+                  className="inline-flex w-full items-center justify-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-60 sm:w-auto"
                 >
                   <Save className="w-4 h-4" />
                   {saving ? 'Saving...' : 'Save Security Settings'}
@@ -598,12 +598,12 @@ export const Settings = () => {
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-2">
+              <div className="flex flex-col gap-3 pt-2 sm:flex-row">
                 <button
                   type="button"
                   onClick={handleTestEmail}
                   disabled={testingEmail}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                  className="inline-flex w-full items-center justify-center gap-1.5 px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-50 sm:w-auto"
                 >
                   <Send className="w-4 h-4" />
                   {testingEmail ? 'Sending...' : 'Send Test Email'}
@@ -612,7 +612,7 @@ export const Settings = () => {
                   type="button"
                   onClick={() => handleSave('email')}
                   disabled={saving}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-60"
+                  className="inline-flex w-full items-center justify-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-60 sm:w-auto"
                 >
                   <Save className="w-4 h-4" />
                   {saving ? 'Saving...' : 'Save Email Configuration'}

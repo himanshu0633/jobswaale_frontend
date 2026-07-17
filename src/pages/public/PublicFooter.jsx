@@ -28,7 +28,7 @@ const GithubIcon = ({ className }) => (
 export const PublicFooter = () => {
   return (
     <footer className="bg-[#001c3d] text-white/75">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-20 pb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 pb-8">
         <div className="grid gap-8 grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
           {/* Logo & Info */}
           {/* Logo & Info */}

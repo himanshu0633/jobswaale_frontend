@@ -44,7 +44,7 @@ export const DoubleCTA = () => {
           {/* Employer CTA */}
           <div className="flex-1 w-full flex flex-col sm:flex-row items-center text-center sm:text-left gap-7">
             <div className="w-[110px] h-[90px] sm:w-[110px] sm:h-[110px] min-w-[90px] sm:min-w-[110px] rounded-full flex items-center justify-center shrink-0 bg-[radial-gradient(circle,#ff954d_0%,#FF6B00_100%)] shadow-[0_15px_35px_rgba(255,107,0,0.25)]">
-              <Briefcase className="h-9 w-9 sm:h-12 w-12 text-white" />
+              <Briefcase className="h-9 w-9 sm:h-12 sm:w-12 text-white" />
             </div>
 
             <div>

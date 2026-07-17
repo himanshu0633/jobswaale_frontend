@@ -158,13 +158,35 @@ export const EmployerJobs = () => {
     );
   }
 
+  const renderRowActions = (job) => (
+    <>
+      <Link to={`/employer/jobs/${job.id}`} title="View" className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-[#6658dd]"><Eye className="h-4 w-4" /></Link>
+      <Link to={`/employer/jobs/${job.id}/edit`} title={job.status === 'Draft' ? 'Continue Draft' : 'Edit'} className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-[#6658dd]"><Edit className="h-4 w-4" /></Link>
+      <button type="button" title="Duplicate" onClick={() => duplicateJob(job.id)} disabled={duplicatingJobId === job.id} className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-[#6658dd] disabled:opacity-60">
+        {duplicatingJobId === job.id ? <Loader className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}
+      </button>
+      {job.status === 'Closed' || job.status === 'Paused' || job.status === 'Expiring' ? (
+        <button type="button" title={job.status === 'Expiring' ? 'Renew' : 'Reopen'} onClick={() => runJobAction(job.id, job.status === 'Expiring' ? 'renew' : 'reopen')} disabled={actionState.jobId === job.id} className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-emerald-600 disabled:opacity-60">
+          {actionState.jobId === job.id && ['renew', 'reopen'].includes(actionState.action) ? <Loader className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+        </button>
+      ) : (
+        <button type="button" title={job.status === 'Draft' ? 'Publish' : 'Pause'} onClick={() => runJobAction(job.id, job.status === 'Draft' ? 'publish' : 'pause')} disabled={actionState.jobId === job.id} className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-amber-600 disabled:opacity-60">
+          {actionState.jobId === job.id && ['pause', 'publish'].includes(actionState.action) ? <Loader className="h-4 w-4 animate-spin" /> : <Pause className="h-4 w-4" />}
+        </button>
+      )}
+      <button type="button" title="Delete" onClick={() => runJobAction(job.id, 'delete')} disabled={actionState.jobId === job.id} className="rounded p-2 text-slate-500 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-60">
+        {actionState.jobId === job.id && actionState.action === 'delete' ? <Loader className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+      </button>
+    </>
+  );
+
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
+    <div className="space-y-4 px-3 sm:space-y-5 sm:px-0">
+      <div className="flex flex-col justify-between gap-2 md:flex-row md:items-center md:gap-3">
         <div>
-          <h1 className="text-xl font-extrabold text-[#3f4254]">Manage Jobs</h1>
+          <h1 className="text-lg font-extrabold text-[#3f4254] sm:text-xl">Manage Jobs</h1>
         </div>
-        <div className="flex items-center gap-2 text-sm font-bold text-slate-400">
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-400 sm:text-sm">
           <span className="text-[#3f4254]">JobsWaale</span>
           <ChevronRight className="h-4 w-4" />
           <span>Jobs</span>
@@ -184,16 +206,16 @@ export const EmployerJobs = () => {
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         {statCards.map((card) => (
-          <section key={card.key} className="rounded-md border border-slate-100 bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <span className={`flex h-12 w-12 items-center justify-center rounded-full ${card.tone}`}>
-                <card.icon className="h-5 w-5" />
+          <section key={card.key} className="rounded-md border border-slate-100 bg-white p-3 shadow-sm sm:p-5">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${card.tone}`}>
+                <card.icon className="h-4 w-4 sm:h-5 sm:w-5" />
               </span>
-              <div>
-                <p className="text-sm font-semibold text-slate-400">{card.title}</p>
-                <p className="mt-1 text-2xl font-black text-[#3f4254]">{data.stats?.[card.key] || 0}</p>
+              <div className="min-w-0">
+                <p className="truncate text-xs font-semibold text-slate-400 sm:text-sm">{card.title}</p>
+                <p className="mt-1 text-lg font-black text-[#3f4254] sm:text-2xl">{data.stats?.[card.key] || 0}</p>
               </div>
             </div>
           </section>
@@ -201,10 +223,10 @@ export const EmployerJobs = () => {
       </div>
 
       <section className="rounded-md border border-slate-100 bg-white shadow-sm">
-        <div className="flex flex-col justify-between gap-4 border-b border-dashed border-slate-200 px-5 py-4 lg:flex-row lg:items-center">
+        <div className="flex flex-col justify-between gap-4 border-b border-dashed border-slate-200 px-4 py-4 sm:px-5 lg:flex-row lg:items-center">
           <div>
-            <h2 className="text-lg font-extrabold text-[#3f4254]">Job Listings</h2>
-            <p className="mt-1 text-sm font-semibold text-slate-400">Track published, draft, expiring, and closed roles from one place.</p>
+            <h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Job Listings</h2>
+            <p className="mt-1 text-xs font-semibold text-slate-400 sm:text-sm">Track published, draft, expiring, and closed roles from one place.</p>
           </div>
           <Link to="/employer/jobs/create" className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#6658dd] px-4 text-sm font-extrabold text-white transition hover:bg-[#5848d8]">
             <Plus className="h-4 w-4" />
@@ -212,8 +234,8 @@ export const EmployerJobs = () => {
           </Link>
         </div>
 
-        <div className="p-5">
-          <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-[1.4fr_1fr_1fr_1fr_1fr_auto]">
+        <div className="p-4 sm:p-5">
+          <div className="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.4fr_1fr_1fr_1fr_1fr_auto]">
             <div>
               <label className="mb-1 block text-xs font-extrabold text-slate-500">Job Title</label>
               <div className="relative">
@@ -262,7 +284,41 @@ export const EmployerJobs = () => {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Card list — mobile only */}
+          <div className="divide-y divide-slate-100 rounded-md border border-slate-100 sm:hidden">
+            {filteredJobs.length ? filteredJobs.map((job) => (
+              <div key={job.id} className="p-4">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-[#6658dd]">
+                    <Briefcase className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="truncate text-sm font-extrabold text-slate-800">{job.title}</p>
+                      <span className={`shrink-0 rounded px-2 py-1 text-[11px] font-black ${statusTone[job.status] || statusTone.Active}`}>
+                        {job.status}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 text-xs font-semibold text-slate-400">{job.vacancies} openings</p>
+                  </div>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2 text-xs font-semibold text-slate-500">
+                  <p><span className="text-slate-400">Posted:</span> {formatDate(job.postDate)}</p>
+                  <p><span className="text-slate-400">Expiry:</span> {formatDate(job.expiry, 'Not set')}</p>
+                  <p className="truncate"><span className="text-slate-400">Location:</span> {job.location}</p>
+                  <p className="truncate"><span className="text-slate-400">Type:</span> {job.jobType}</p>
+                </div>
+                <div className="mt-3 flex justify-end gap-1 border-t border-slate-100 pt-3">
+                  {renderRowActions(job)}
+                </div>
+              </div>
+            )) : (
+              <p className="px-4 py-12 text-center text-sm font-bold text-slate-400">No jobs found.</p>
+            )}
+          </div>
+
+          {/* Table — sm and up */}
+          <div className="hidden overflow-x-auto sm:block">
             <table className="w-full min-w-[920px] text-left">
               <thead className="bg-slate-100 text-[11px] uppercase tracking-wide text-slate-500">
                 <tr>
@@ -300,23 +356,7 @@ export const EmployerJobs = () => {
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex justify-end gap-1">
-                        <Link to={`/employer/jobs/${job.id}`} title="View" className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-[#6658dd]"><Eye className="h-4 w-4" /></Link>
-                        <Link to={`/employer/jobs/${job.id}/edit`} title={job.status === 'Draft' ? 'Continue Draft' : 'Edit'} className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-[#6658dd]"><Edit className="h-4 w-4" /></Link>
-                        <button type="button" title="Duplicate" onClick={() => duplicateJob(job.id)} disabled={duplicatingJobId === job.id} className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-[#6658dd] disabled:opacity-60">
-                          {duplicatingJobId === job.id ? <Loader className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}
-                        </button>
-                        {job.status === 'Closed' || job.status === 'Paused' || job.status === 'Expiring' ? (
-                          <button type="button" title={job.status === 'Expiring' ? 'Renew' : 'Reopen'} onClick={() => runJobAction(job.id, job.status === 'Expiring' ? 'renew' : 'reopen')} disabled={actionState.jobId === job.id} className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-emerald-600 disabled:opacity-60">
-                            {actionState.jobId === job.id && ['renew', 'reopen'].includes(actionState.action) ? <Loader className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                          </button>
-                        ) : (
-                          <button type="button" title={job.status === 'Draft' ? 'Publish' : 'Pause'} onClick={() => runJobAction(job.id, job.status === 'Draft' ? 'publish' : 'pause')} disabled={actionState.jobId === job.id} className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-amber-600 disabled:opacity-60">
-                            {actionState.jobId === job.id && ['pause', 'publish'].includes(actionState.action) ? <Loader className="h-4 w-4 animate-spin" /> : <Pause className="h-4 w-4" />}
-                          </button>
-                        )}
-                        <button type="button" title="Delete" onClick={() => runJobAction(job.id, 'delete')} disabled={actionState.jobId === job.id} className="rounded p-2 text-slate-500 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-60">
-                          {actionState.jobId === job.id && actionState.action === 'delete' ? <Loader className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                        </button>
+                        {renderRowActions(job)}
                       </div>
                     </td>
                   </tr>

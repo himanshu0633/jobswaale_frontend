@@ -129,45 +129,45 @@ export const EmployerApplications = () => {
   const goToPage = (page) => setCurrentPage(Math.min(Math.max(page, 1), pagination.totalPages || 1));
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
-        <h1 className="text-xl font-extrabold text-[#3f4254]">Applications</h1>
-        <div className="flex items-center gap-2 text-sm font-bold text-slate-400"><span className="text-[#3f4254]">JobsWaale</span><ChevronRight className="h-4 w-4" /><span>Applications</span></div>
+    <div className="space-y-4 px-3 sm:space-y-5 sm:px-0">
+      <div className="flex flex-col justify-between gap-2 md:flex-row md:items-center md:gap-3">
+        <h1 className="text-lg font-extrabold text-[#3f4254] sm:text-xl">Applications</h1>
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-400 sm:text-sm"><span className="text-[#3f4254]">JobsWaale</span><ChevronRight className="h-4 w-4" /><span>Applications</span></div>
       </div>
 
       {error && <div className="rounded-md border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{error}</div>}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-5">
         {statCards.map((card) => (
-          <section key={card.key} className="rounded-md border border-slate-100 bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-4">
-              <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${card.tone}`}><card.icon className="h-5 w-5" /></span>
-              <div><p className="text-sm font-semibold text-slate-400">{card.title}</p><p className="mt-1 text-xl font-black text-[#3f4254]">{Number(data.stats?.[card.key] || 0).toLocaleString('en-IN')}</p></div>
+          <section key={card.key} className="rounded-md border border-slate-100 bg-white p-3 shadow-sm sm:p-5">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${card.tone}`}><card.icon className="h-4 w-4 sm:h-5 sm:w-5" /></span>
+              <div className="min-w-0"><p className="truncate text-xs font-semibold text-slate-400 sm:text-sm">{card.title}</p><p className="mt-1 text-base font-black text-[#3f4254] sm:text-xl">{Number(data.stats?.[card.key] || 0).toLocaleString('en-IN')}</p></div>
             </div>
           </section>
         ))}
       </div>
 
       <section className="rounded-md border border-slate-100 bg-white shadow-sm">
-        <div className="border-b border-dashed border-slate-200 px-5 py-4"><h2 className="text-lg font-extrabold text-[#3f4254]">Hiring Pipeline</h2></div>
-        <div className="grid gap-4 p-5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+        <div className="border-b border-dashed border-slate-200 px-4 py-4 sm:px-5"><h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Hiring Pipeline</h2></div>
+        <div className="grid grid-cols-2 gap-4 p-4 sm:p-5 md:grid-cols-3 xl:grid-cols-6">
           {pipelineConfig.map((item) => (
-            <div key={item.key} className="flex items-center gap-3">
-              <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${item.tone}`}><item.icon className="h-4 w-4" /></span>
-              <div><p className="text-base font-black text-[#3f4254]">{Number(data.pipeline?.[item.key] || 0).toLocaleString('en-IN')}</p><p className="text-xs font-semibold text-slate-400">{item.title}</p></div>
+            <div key={item.key} className="flex min-w-0 items-center gap-3">
+              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11 ${item.tone}`}><item.icon className="h-4 w-4" /></span>
+              <div className="min-w-0"><p className="text-sm font-black text-[#3f4254] sm:text-base">{Number(data.pipeline?.[item.key] || 0).toLocaleString('en-IN')}</p><p className="truncate text-xs font-semibold text-slate-400">{item.title}</p></div>
             </div>
           ))}
         </div>
       </section>
 
       <section className="rounded-md border border-slate-100 bg-white shadow-sm">
-        <div className="flex flex-col justify-between gap-4 border-b border-dashed border-slate-200 px-5 py-4 lg:flex-row lg:items-center">
-          <div><h2 className="text-lg font-extrabold text-[#3f4254]">Application Queue</h2><p className="mt-1 text-sm font-semibold text-slate-400">Review candidates, update stages, and move strong profiles forward.</p></div>
-          <div className="flex flex-wrap gap-2"><Link to="/employer/candidates" className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-slate-100 px-4 text-sm font-extrabold text-slate-600 transition hover:bg-slate-200"><Search className="h-4 w-4" />Find Candidates</Link><Link to="/employer/interviews" className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#6658dd] px-4 text-sm font-extrabold text-white transition hover:bg-[#5848d8]"><CalendarPlus className="h-4 w-4" />Schedule Interview</Link></div>
+        <div className="flex flex-col justify-between gap-4 border-b border-dashed border-slate-200 px-4 py-4 sm:px-5 lg:flex-row lg:items-center">
+          <div><h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Application Queue</h2><p className="mt-1 text-xs font-semibold text-slate-400 sm:text-sm">Review candidates, update stages, and move strong profiles forward.</p></div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap"><Link to="/employer/candidates" className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-slate-100 px-4 text-sm font-extrabold text-slate-600 transition hover:bg-slate-200"><Search className="h-4 w-4" />Find Candidates</Link><Link to="/employer/interviews" className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#6658dd] px-4 text-sm font-extrabold text-white transition hover:bg-[#5848d8]"><CalendarPlus className="h-4 w-4" />Schedule Interview</Link></div>
         </div>
 
-        <div className="p-5">
-          <div className="mb-5 grid gap-3 md:grid-cols-2 xl:grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto]">
+        <div className="p-4 sm:p-5">
+          <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto]">
             <div>
               <label className="mb-2 block text-xs font-extrabold text-slate-500">Search Candidate / Job</label>
               <div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input className="h-10 w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100" value={filters.search} onChange={(event) => setFilter('search', event.target.value)} placeholder="Name, email, job, location" /></div>
@@ -184,7 +184,39 @@ export const EmployerApplications = () => {
             <label className="flex items-center gap-2 text-sm font-semibold text-slate-600">Search:<input value={tableSearch} onChange={(event) => { setTableSearch(event.target.value); setCurrentPage(1); }} className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold outline-none focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100 sm:w-48" /></label>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Card list — mobile only */}
+          <div className="divide-y divide-slate-100 rounded-md border border-slate-100 sm:hidden">
+            {loading ? (
+              <div className="py-12 text-center"><Loader className="mx-auto h-7 w-7 animate-spin text-[#6658dd]" /></div>
+            ) : data.applications.length ? data.applications.map((application) => (
+              <div key={application.id} className="p-4">
+                <div className="flex items-start gap-3">
+                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${application.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>{application.initials}</span>
+                  <div className="min-w-0 flex-1">
+                    <Link to="/employer/applications" className="truncate text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{application.name}</Link>
+                    <p className="mt-0.5 truncate text-xs font-semibold text-slate-400">{application.email || application.phone}</p>
+                    <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><MapPin className="h-3 w-3 shrink-0" /><span className="truncate">{application.location}</span></p>
+                  </div>
+                  <span className={`shrink-0 rounded px-2 py-1 text-[11px] font-black ${statusTone[application.status] || statusTone.Applied}`}>{application.status}</span>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2 text-xs font-semibold text-slate-500">
+                  <p className="truncate"><span className="text-slate-400">Job:</span> {application.jobTitle}</p>
+                  <p className="truncate"><span className="text-slate-400">Type:</span> {application.jobType}</p>
+                  <p><span className="text-slate-400">Experience:</span> {application.experience}</p>
+                  <p><span className="text-slate-400">Applied:</span> {application.displayDate}</p>
+                </div>
+                <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
+                  <span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${scoreTone(application.matchScore)}`}>{application.matchScore}% match</span>
+                  <Link to="/employer/applications" className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-[#6658dd] px-3 text-xs font-extrabold text-[#6658dd] transition hover:bg-violet-50"><Eye className="h-4 w-4" />View</Link>
+                </div>
+              </div>
+            )) : (
+              <p className="px-4 py-12 text-center text-sm font-bold text-slate-400">No applications found.</p>
+            )}
+          </div>
+
+          {/* Table — sm and up */}
+          <div className="hidden overflow-x-auto sm:block">
             <table className="w-full min-w-[1080px] text-left">
               <thead className="bg-[#dbe6f6] text-[11px] uppercase text-slate-600"><tr><th className="px-5 py-3">Candidate</th><th className="px-5 py-3">Job Applied</th><th className="px-5 py-3">Experience</th><th className="px-5 py-3"><span className="inline-flex items-center gap-1">Applied Date <ChevronUp className="h-3 w-3 text-slate-400" /></span></th><th className="px-5 py-3">Match Score</th><th className="px-5 py-3">Status</th><th className="px-5 py-3 text-center">Action</th></tr></thead>
               <tbody className="divide-y divide-slate-100">
@@ -203,9 +235,9 @@ export const EmployerApplications = () => {
             </table>
           </div>
 
-          <div className="mt-5 flex flex-col justify-between gap-3 text-sm font-semibold text-slate-600 sm:flex-row sm:items-center">
+          <div className="mt-5 flex flex-col justify-between gap-3 text-xs font-semibold text-slate-600 sm:flex-row sm:items-center sm:text-sm">
             <span>Showing {pagination.total ? startIndex + 1 : 0} to {Math.min(startIndex + pagination.limit, pagination.total)} of {pagination.total} entries</span>
-            <div className="flex items-center gap-2"><button type="button" onClick={() => goToPage(1)} disabled={pagination.page === 1} className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-400 disabled:opacity-50"><ChevronsLeft className="h-4 w-4" /></button><button type="button" onClick={() => goToPage(pagination.page - 1)} disabled={pagination.page === 1} className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-400 disabled:opacity-50"><ChevronLeft className="h-4 w-4" /></button><button type="button" className="flex h-9 min-w-9 items-center justify-center rounded-md bg-[#6658dd] px-3 text-sm font-black text-white">{pagination.page}</button><button type="button" onClick={() => goToPage(pagination.page + 1)} disabled={pagination.page === pagination.totalPages} className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-400 disabled:opacity-50"><ChevronRight className="h-4 w-4" /></button><button type="button" onClick={() => goToPage(pagination.totalPages)} disabled={pagination.page === pagination.totalPages} className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-400 disabled:opacity-50"><ChevronsRight className="h-4 w-4" /></button></div>
+            <div className="flex items-center justify-center gap-2"><button type="button" onClick={() => goToPage(1)} disabled={pagination.page === 1} className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-400 disabled:opacity-50"><ChevronsLeft className="h-4 w-4" /></button><button type="button" onClick={() => goToPage(pagination.page - 1)} disabled={pagination.page === 1} className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-400 disabled:opacity-50"><ChevronLeft className="h-4 w-4" /></button><button type="button" className="flex h-9 min-w-9 items-center justify-center rounded-md bg-[#6658dd] px-3 text-sm font-black text-white">{pagination.page}</button><button type="button" onClick={() => goToPage(pagination.page + 1)} disabled={pagination.page === pagination.totalPages} className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-400 disabled:opacity-50"><ChevronRight className="h-4 w-4" /></button><button type="button" onClick={() => goToPage(pagination.totalPages)} disabled={pagination.page === pagination.totalPages} className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-400 disabled:opacity-50"><ChevronsRight className="h-4 w-4" /></button></div>
           </div>
         </div>
       </section>

@@ -1,7 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Bookmark } from 'lucide-react';
-import { BASE_API_URL } from '../../context/AuthContext';
+import React, { useState, useEffect, useRef } from 'react';
+
+/* ─────────────────────────────────────────────────────────────
+   DATA
+───────────────────────────────────────────────────────────── */
+
+import employer1 from './employerImages/employer-1.png';
+import employer2 from './employerImages/employer-2.png';
+import employer3 from './employerImages/employer-3.png';
+import employer4 from './employerImages/employer-4.png';
+import employer5 from './employerImages/employer-5.png';
+import employer6 from './employerImages/employer-6.png';
+const MOCK_EMPLOYERS = [
+  { id: 1, name: 'Invision',                  location: 'Chicago, US',       industry: 'Software',       openJobs: 12,  rating: 5.0, ratesCount: 360, logoImg: employer1, online: true  },
+  { id: 2, name: 'Bing Search',               location: 'New York, US',      industry: 'Software',       openJobs: 10,  rating: 4.8, ratesCount: 280, logoImg: employer2, online: false },
+  { id: 3, name: 'Dailymotion',               location: 'Iowa, US',          industry: 'Designing',      openJobs: 16,  rating: 4.5, ratesCount: 195, logoImg: employer3, online: false },
+  { id: 4, name: 'LinkedIn',                  location: 'Chicago, US',       industry: 'Software',       openJobs: 122, rating: 4.9, ratesCount: 540, logoImg: employer4, online: true  },
+  { id: 5, name: 'Adobe Illustrator',         location: 'San Jose, US',      industry: 'Designing',      openJobs: 23,  rating: 4.7, ratesCount: 310, logoImg: employer5, online: false },
+  { id: 6, name: 'StumbleUpon',               location: 'San Francisco, US', industry: 'Software',       openJobs: 24,  rating: 4.2, ratesCount: 120, logoImg: employer6, online: false },
+  { id: 7, name: 'Amass Education',           location: 'Hamirpur, HP',      industry: 'Education',      openJobs: 5,   rating: 4.6, ratesCount: 85,  logoImg: null, online: false },
+  { id: 8, name: 'Tata Consultancy Services', location: 'Chandigarh, PB',    industry: 'IT & Consulting',openJobs: 45,  rating: 4.4, ratesCount: 420, logoImg: null, online: false },
+];
 
 /* ─────────────────────────────────────────────────────────────
    STAR RATING  — matches .rate.small from the CSS
@@ -52,8 +70,8 @@ const IcoSearch = () => (
     <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
   </svg>
 );
-const IcoChevronDown = () => (
-  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className="inline ml-1">
+const IcoChevronDown = ({ className = '' }) => (
+  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className={`inline ml-1 ${className}`}>
     <polyline points="6 9 12 15 18 9"/>
   </svg>
 );
@@ -67,44 +85,29 @@ const IcoChevronRight = () => (
     <polyline points="9 18 15 12 9 6"/>
   </svg>
 );
+const IcoSliders = () => (
+  <svg width="16" height="16" fill="none" stroke="#88929b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
+    <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
+    <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
+    <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>
+  </svg>
+);
+const IcoX = () => (
+  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+  </svg>
+);
 
 /* ─────────────────────────────────────────────────────────────
    EMPLOYER CARD  — mirrors .card-grid-2.card-employers exactly
 ───────────────────────────────────────────────────────────── */
 const EmployerCard = ({ company }) => {
   const [hovered, setHovered] = useState(false);
-  const [saved, setSaved] = useState(Boolean(company.hasSaved));
-  const [toggling, setToggling] = useState(false);
   const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(company.name)}&background=e8eaf6&color=3949ab&size=110&bold=true`;
 
-  const handleToggleSave = async (e) => {
-    e.preventDefault();
-    if (toggling) return;
-    setToggling(true);
-    try {
-      const token = localStorage.getItem('publicToken');
-      if (!token) {
-        alert('Please log in to save employers.');
-        setToggling(false);
-        return;
-      }
-      const res = await axios.post(
-        `${BASE_API_URL}/jobseeker/saved-employers/${company.id}/toggle`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-      setSaved(Boolean(res.data?.saved));
-    } catch (err) {
-      console.error('Toggle save employer error:', err);
-    } finally {
-      setToggling(false);
-    }
-  };
-
   return (
-    <div className="col-lg-6 col-md-6 mb-0">
+    <div className="mb-0">
       <div
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
@@ -122,27 +125,18 @@ const EmployerCard = ({ company }) => {
         {/* top-right icon links */}
         <div className="absolute top-4 right-4 flex gap-2.5 z-10">
           <a href="#" className="text-[#88929b]"><IcoShield /></a>
-          <button
-            type="button"
-            onClick={handleToggleSave}
-            disabled={toggling}
-            title={saved ? "Saved" : "Save Employer"}
-            className="border-0 bg-transparent p-0 cursor-pointer transition hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ color: toggling ? '#ccc' : (saved ? '#ffb020' : '#88929b') }}
-          >
-            <Bookmark className={`h-5 w-5 ${saved ? 'fill-current' : ''}`} />
-          </button>
+          <a href="#" className="text-[#88929b]"><IcoBookmark /></a>
         </div>
 
         {/* circular logo  — matches .card-grid-2-image-rd + .online */}
         <div className="text-center pt-7 pb-0 inline-block w-full">
           <div className="relative inline-block">
-            <a href={`/employer-detail?id=${encodeURIComponent(company.id)}`}>
+            <a href="employer-detail.html">
               <figure className="relative inline-block m-0">
                 <img
                   alt={company.name}
                   src={company.logoImg || fallbackAvatar}
-                  className="rounded-full h-[110px] w-[110px] object-cover"
+                  className="rounded-full h-[90px] w-[90px] sm:h-[110px] sm:w-[110px] object-cover"
                 />
               </figure>
             </a>
@@ -154,12 +148,12 @@ const EmployerCard = ({ company }) => {
         </div>
 
         {/* card-block-info */}
-        <div className="inline-block w-full px-7 pt-5 pb-6">
+        <div className="inline-block w-full px-5 sm:px-7 pt-5 pb-6">
           {/* card-profile */}
           <div className="text-center">
             <h5 className="m-0 mb-1.5">
               <a
-                href={`/employer-detail?id=${encodeURIComponent(company.id)}`}
+                href="employer-detail.html"
                 style={{
                   fontWeight: 'bold',
                   fontSize: 18,
@@ -195,7 +189,7 @@ const EmployerCard = ({ company }) => {
           {/* open jobs button — .btn-border.btn-brand-hover */}
           <div className="text-center mt-6">
             <a
-              href={`/jobs?company=${encodeURIComponent(company.name)}`}
+              href="jobs.html"
               style={{
                 display: 'inline-block',
                 padding: '13px 28px',
@@ -260,15 +254,18 @@ export const Employers = () => {
   const [sidebarTypes, setSidebarTypes]   = useState([]);
   const [sidebarExps, setSidebarExps]     = useState([]);
   const [sortBy, setSortBy]               = useState('newest');
-  const [companies, setCompanies] = useState([]);
-  const [filteredCompanies, setFilteredCompanies] = useState([]);
-  const [loadingCompanies, setLoadingCompanies] = useState(true);
-  const [companyError, setCompanyError] = useState('');
+  const [filteredCompanies, setFilteredCompanies] = useState(MOCK_EMPLOYERS);
   const [reminderEmail, setReminderEmail] = useState('');
   const [reminderDone, setReminderDone]   = useState(false);
 
-  const industries = [...new Set(companies.map(company => company.industry).filter(Boolean))];
-  const locations = [...new Set(companies.map(company => company.location).filter(Boolean))];
+  // Top search-bar dropdown open/close state (mirrors Jobs.jsx's custom dropdowns)
+  const [indDropdownOpen, setIndDropdownOpen] = useState(false);
+  const [locDropdownOpen, setLocDropdownOpen] = useState(false);
+  const filterBarRef = useRef(null);
+
+  // Mobile filter/sort toggle menu (mirrors Jobs.jsx)
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const mobileFilterRef = useRef(null);
 
   /* filter logic */
   const runFilter = (overrides = {}) => {
@@ -279,69 +276,38 @@ export const Employers = () => {
     const sInd = overrides.sidebarInd ?? sidebarInd;
     const sort = overrides.sortBy     ?? sortBy;
 
-    let res = [...companies];
+    let res = [...MOCK_EMPLOYERS];
     if (kw)   res = res.filter(c => c.name.toLowerCase().includes(kw) || c.industry.toLowerCase().includes(kw));
     if (ind)  res = res.filter(c => c.industry.toLowerCase().includes(ind.toLowerCase()));
     if (loc)  res = res.filter(c => c.location.toLowerCase().includes(loc.toLowerCase()));
     if (sLoc) res = res.filter(c => c.location.toLowerCase().includes(sLoc.toLowerCase()));
     if (sInd) res = res.filter(c => c.industry === sInd);
-    res.sort((a, b) => {
-      const dateA = new Date(a.createdAt || 0);
-      const dateB = new Date(b.createdAt || 0);
-      if (dateA.getTime() !== dateB.getTime()) {
-        return sort === 'newest' ? dateB - dateA : dateA - dateB;
-      }
-      return sort === 'newest'
-        ? String(b.id).localeCompare(String(a.id))
-        : String(a.id).localeCompare(String(b.id));
-    });
+    res.sort((a, b) => sort === 'newest' ? b.id - a.id : a.id - b.id);
     setFilteredCompanies(res);
   };
 
+  useEffect(() => { runFilter({ sortBy }); }, [sortBy]);
+
+  // Close the top search-bar dropdowns and the mobile filter/sort panel on outside click
   useEffect(() => {
-    const fetchEmployers = async () => {
-      setLoadingCompanies(true);
-      setCompanyError('');
-      try {
-        const token = localStorage.getItem('publicToken');
-        const res = await axios.get(`${BASE_API_URL}/employers/public`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {}
-        });
-        const mapped = (res.data || []).map((item) => ({
-          id: item.id || item._id,
-          name: item.name || 'Employer',
-          location: item.location || 'Location not specified',
-          industry: item.industry || 'General',
-          openJobs: Number(item.openJobs || 0),
-          rating: Number(item.rating || 4.2),
-          ratesCount: Number(item.ratesCount || 0),
-          logoImg: item.logoImg || null,
-          online: Boolean(item.online),
-          createdAt: item.createdAt || '',
-          hasSaved: Boolean(item.hasSaved)
-        }));
-        setCompanies(mapped);
-        setFilteredCompanies(mapped);
-      } catch (err) {
-        console.error('Error fetching public employers:', err);
-        setCompanyError('Failed to load employers from database.');
-        setCompanies([]);
-        setFilteredCompanies([]);
-      } finally {
-        setLoadingCompanies(false);
+    const handleClickOutside = (e) => {
+      if (filterBarRef.current && !filterBarRef.current.contains(e.target)) {
+        setIndDropdownOpen(false);
+        setLocDropdownOpen(false);
+      }
+      if (mobileFilterRef.current && !mobileFilterRef.current.contains(e.target)) {
+        setMobileFilterOpen(false);
       }
     };
-
-    fetchEmployers();
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  useEffect(() => { runFilter({ sortBy }); }, [sortBy, companies]);
 
   const handleFind = e => { e.preventDefault(); runFilter(); };
   const resetFilters = () => {
     setSearchKeyword(''); setSearchInd(''); setSearchLoc('');
     setSidebarLoc(''); setSidebarInd(''); setSidebarTypes([]); setSidebarExps([]);
-    setFilteredCompanies(companies);
+    setFilteredCompanies(MOCK_EMPLOYERS);
   };
   const toggleType = t => setSidebarTypes(p => p.includes(t) ? p.filter(x=>x!==t) : [...p,t]);
   const toggleExp  = e => setSidebarExps (p => p.includes(e) ? p.filter(x=>x!==e) : [...p,e]);
@@ -349,6 +315,16 @@ export const Employers = () => {
     e.preventDefault();
     setReminderDone(true); setReminderEmail('');
     setTimeout(() => setReminderDone(false), 3000);
+  };
+
+  // Applying filters from the mobile panel also closes it, same as Jobs.jsx
+  const applyMobileFilters = () => {
+    runFilter();
+    setMobileFilterOpen(false);
+  };
+  const resetMobileFilters = () => {
+    resetFilters();
+    setMobileFilterOpen(false);
   };
 
   /* shared input style */
@@ -365,43 +341,129 @@ export const Employers = () => {
     background:'#fff',
   };
 
+  const sortSelect = (
+    <div className="relative inline-block">
+      <select
+        value={sortBy}
+        onChange={e => setSortBy(e.target.value)}
+        style={{
+          border:'none', background:'transparent', fontSize:14, fontWeight:600,
+          color:'#37404e', cursor:'pointer', outline:'none', paddingRight:20, appearance:'none',
+        }}
+      >
+        <option value="newest">Newest Post</option>
+        <option value="oldest">Oldest Post</option>
+      </select>
+      <svg width="12" height="12" fill="none" stroke="#88929b" strokeWidth="2" viewBox="0 0 24 24"
+        className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+    </div>
+  );
+
+  // Shared filter-field markup, reused in both the desktop sidebar card
+  // and the mobile toggle panel so the two stay in sync automatically
+  // (both are bound to the same state). Mirrors Jobs.jsx's renderFilterFields.
+  const renderFilterFields = (idPrefix) => (
+    <>
+      {/* Location */}
+      <div className="mb-[30px]">
+        <h5 className="text-lg text-[#1f2938] font-semibold mb-[15px]">Location</h5>
+        <div className="relative">
+          <svg width="18" height="18" fill="none" stroke="#88929b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"
+            className="absolute left-3 top-1/2 -translate-y-1/2">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/>
+          </svg>
+          <input
+            type="text"
+            placeholder="Location"
+            value={sidebarLoc}
+            onChange={e => setSidebarLoc(e.target.value)}
+            style={{ ...inputStyle }}
+          />
+        </div>
+      </div>
+
+      {/* Industry Type */}
+      <div className="mb-[30px]">
+        <h5 className="text-lg text-[#1f2938] font-semibold mb-[15px]">Industry Type</h5>
+        <div className="relative">
+          <svg width="18" height="18" fill="none" stroke="#88929b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"
+            className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+            <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
+          </svg>
+          <select
+            value={sidebarInd}
+            onChange={e => setSidebarInd(e.target.value)}
+            style={{ ...inputStyle, paddingLeft:42, paddingRight:28, appearance:'none', cursor:'pointer', height:50 }}
+          >
+            <option value="">IT &amp; Consulting</option>
+            <option value="Education">Education</option>
+            <option value="Software">Software</option>
+            <option value="Designing">Designing</option>
+          </select>
+          <svg width="12" height="12" fill="none" stroke="#88929b" strokeWidth="2" viewBox="0 0 24 24"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </div>
+      </div>
+
+      {/* Job Type */}
+      <div className="mb-[30px]">
+        <h5 className="text-lg text-[#1f2938] font-semibold mb-[15px]">Job type</h5>
+        <ul className="list-none m-0 pt-[15px] pb-[5px]">
+          {[
+            {label:'Full Time Jobs',count:235},
+            {label:'Part Time Jobs',count:28},
+            {label:'Remote Jobs',count:67},
+            {label:'Freelance',count:92},
+            {label:'Temporary',count:14},
+          ].map(({label,count}) => (
+            <CheckRow key={`${idPrefix}-type-${label}`} label={label} count={count}
+              checked={sidebarTypes.includes(label)}
+              onChange={() => toggleType(label)} />
+          ))}
+        </ul>
+      </div>
+
+      {/* Experience Level */}
+      <div className="mb-[30px]">
+        <h5 className="text-lg text-[#1f2938] font-semibold mb-[15px]">Experience Level</h5>
+        <ul className="list-none m-0 pt-[15px] pb-[5px]">
+          {[
+            {label:'Expert',count:76},{label:'Senior',count:89},
+            {label:'Junior',count:54},{label:'Regular',count:23},
+            {label:'Internship',count:22},{label:'Associate',count:14},
+          ].map(({label,count}) => (
+            <CheckRow key={`${idPrefix}-exp-${label}`} label={label} count={count}
+              checked={sidebarExps.includes(label)}
+              onChange={() => toggleExp(label)} />
+          ))}
+        </ul>
+      </div>
+    </>
+  );
+
+  const INDUSTRY_OPTIONS = ['Software', 'Designing', 'Education', 'IT & Consulting'];
+  const LOCATION_OPTIONS = [
+    ['Hamirpur','Hamirpur, HP'],['Mohali','Mohali, PB'],['Chandigarh','Chandigarh, PB'],
+    ['Ambala','Ambala, HR'],['Chicago','Chicago, US'],['New York','New York, US'],['Iowa','Iowa, US'],
+  ];
+
   return (
     <div className="w-full bg-white font-sans">
-
-      {/* Local styles for the two independently-scrollable panes.
-          Each pane only scrolls while the pointer is hovering over
-          it (native overflow-y:auto behavior), with a subtle
-          scrollbar that only shows itself on hover. */}
-      <style>{`
-        .scroll-pane {
-          scrollbar-width: thin;
-          scrollbar-color: transparent transparent;
-        }
-        .scroll-pane:hover {
-          scrollbar-color: rgba(6,18,36,0.25) transparent;
-        }
-        .scroll-pane::-webkit-scrollbar {
-          width: 6px;
-        }
-        .scroll-pane::-webkit-scrollbar-thumb {
-          background-color: transparent;
-          border-radius: 10px;
-        }
-        .scroll-pane:hover::-webkit-scrollbar-thumb {
-          background-color: rgba(6,18,36,0.25);
-        }
-      `}</style>
 
       {/* ══════════════════════════════════════════════════════════
           BANNER / BREADCRUMB  — .section-box-2 > .box-head-single.none-bg
       ══════════════════════════════════════════════════════════ */}
-      <section className="bg-[#FFF9F3] inline-block w-full py-[55px] relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <h4 className="text-[28px] leading-[34px] font-bold text-[#1f2938] mb-0">
+      <section className="bg-[#FFF9F3] inline-block w-full py-8 sm:py-[55px] relative">
+        <div className="max-w-[1344px] mx-auto px-4 sm:px-6">
+          <h4 className="text-[24px] leading-[30px] sm:text-[28px] sm:leading-[34px] font-bold text-[#1f2938] mb-0">
             There are <strong className="text-[#ff5e14]">500+</strong> companies<br />here for you!
           </h4>
 
-          <div className="flex flex-wrap mt-[15px] mb-10 items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-[15px] mb-6 sm:mb-10">
             <div>
               <span className="text-[#88929b] text-sm">Discover your next career move, freelance gig, or internship</span>
             </div>
@@ -416,89 +478,111 @@ export const Employers = () => {
             </ul>
           </div>
 
-          {/* ── FILTER BAR — .box-shadow-bdrd-15.box-filters ── */}
-          <div className="rounded-[15px] shadow-[0px_20px_60px_-6px_rgba(0,0,0,0.04)] bg-white p-[15px] border border-[#ececec]">
-            <form onSubmit={handleFind}>
-              <div className="flex flex-wrap gap-3 items-center">
-                {/* keyword search */}
-                <div className="flex-1 min-w-[220px] relative">
-                  <IcoSearch />
-                  <input
-                    type="text"
-                    placeholder="e.g microsoft"
-                    value={searchKeyword}
-                    onChange={e => setSearchKeyword(e.target.value)}
-                    style={{ ...inputStyle, paddingLeft:42 }}
-                  />
+          {/* ── FILTER BAR — matches Jobs.jsx's box-shadow-bdrd-15.box-filters layout ── */}
+          <div
+            ref={filterBarRef}
+            className="bg-white rounded-[15px] p-[15px]"
+            style={{ boxShadow: '0px 20px 60px -6px rgba(0,0,0,0.04)', border: 'thin solid #ececec' }}
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-center">
+
+              {/* Left column: keyword search */}
+              <div className="flex flex-wrap items-center gap-4">
+                <form onSubmit={handleFind} className="flex-1 min-w-[200px]">
+                  <div className="relative">
+                    <IcoSearch />
+                    <input
+                      type="text"
+                      placeholder="e.g microsoft"
+                      value={searchKeyword}
+                      onChange={e => setSearchKeyword(e.target.value)}
+                      className="w-full border-0 pl-9 pr-2 py-3 text-[#37404e] placeholder-[#88929b] text-sm focus:outline-none bg-transparent"
+                    />
+                  </div>
+                </form>
+              </div>
+
+              {/* Right column: industry dropdown, location dropdown, Find Now button */}
+              <div className="flex items-center flex-wrap gap-3 lg:justify-between">
+                <div className="flex items-center flex-wrap gap-3">
+
+                  {/* Industry custom dropdown */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => { setIndDropdownOpen(o => !o); setLocDropdownOpen(false); }}
+                      className="flex items-center gap-2 text-sm text-[#37404e] px-1 py-2 cursor-pointer focus:outline-none"
+                    >
+                      <IcoBriefcase />
+                      <span>{searchInd || 'Industry'}</span>
+                      <IcoChevronDown />
+                    </button>
+                    {indDropdownOpen && (
+                      <ul
+                        className="absolute left-0 top-full mt-3 min-w-[180px] bg-white rounded-[10px] py-2 z-30"
+                        style={{ border: 'thin solid #ececec', boxShadow: '0px 9px 26px 0px rgba(31,31,51,0.06)' }}
+                      >
+                        {INDUSTRY_OPTIONS.map(opt => (
+                          <li key={opt}>
+                            <button
+                              type="button"
+                              onClick={() => { setSearchInd(opt); setIndDropdownOpen(false); }}
+                              className={`block w-full text-left px-5 py-2.5 text-sm transition ${
+                                searchInd === opt ? 'bg-[#0047C7] text-white' : 'text-[#636477] hover:bg-[#f1f7ff]'
+                              }`}
+                            >
+                              {opt}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
+                  {/* Location custom dropdown */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => { setLocDropdownOpen(o => !o); setIndDropdownOpen(false); }}
+                      className="flex items-center gap-2 text-sm text-[#37404e] px-1 py-2 cursor-pointer focus:outline-none"
+                    >
+                      <IcoMarker />
+                      <span>{searchLoc || 'Location'}</span>
+                      <IcoChevronDown />
+                    </button>
+                    {locDropdownOpen && (
+                      <ul
+                        className="absolute left-0 top-full mt-3 min-w-[180px] bg-white rounded-[10px] py-2 z-30"
+                        style={{ border: 'thin solid #ececec', boxShadow: '0px 9px 26px 0px rgba(31,31,51,0.06)' }}
+                      >
+                        {LOCATION_OPTIONS.map(([v, l]) => (
+                          <li key={v}>
+                            <button
+                              type="button"
+                              onClick={() => { setSearchLoc(v); setLocDropdownOpen(false); }}
+                              className={`block w-full text-left px-5 py-2.5 text-sm transition ${
+                                searchLoc === v ? 'bg-[#0047C7] text-white' : 'text-[#636477] hover:bg-[#f1f7ff]'
+                              }`}
+                            >
+                              {l}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </div>
 
-                {/* industry dropdown */}
-                <div className="flex-0 min-w-[160px] relative">
-                  <svg width="18" height="18" fill="none" stroke="#88929b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"
-                    className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
-                  </svg>
-                  <select
-                    value={searchInd}
-                    onChange={e => setSearchInd(e.target.value)}
-                    style={{ ...inputStyle, paddingLeft:42, paddingRight:28, appearance:'none', cursor:'pointer', height:50 }}
-                  >
-                    <option value="">Industry</option>
-                    {industries.map(i=>(
-                      <option key={i} value={i}>{i}</option>
-                    ))}
-                  </select>
-                  <svg width="12" height="12" fill="none" stroke="#88929b" strokeWidth="2" viewBox="0 0 24 24"
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <polyline points="6 9 12 15 18 9"/>
-                  </svg>
-                </div>
-
-                {/* location dropdown */}
-                <div className="flex-0 min-w-[160px] relative">
-                  <svg width="18" height="18" fill="none" stroke="#88929b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"
-                    className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/>
-                  </svg>
-                  <select
-                    value={searchLoc}
-                    onChange={e => setSearchLoc(e.target.value)}
-                    style={{ ...inputStyle, paddingLeft:42, paddingRight:28, appearance:'none', cursor:'pointer', height:50 }}
-                  >
-                    <option value="">Location</option>
-                    {locations.map(location => (
-                      <option key={location} value={location}>{location}</option>
-                    ))}
-                  </select>
-                  <svg width="12" height="12" fill="none" stroke="#88929b" strokeWidth="2" viewBox="0 0 24 24"
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <polyline points="6 9 12 15 18 9"/>
-                  </svg>
-                </div>
-
-                {/* Find Now button — .btn.btn-default */}
+                {/* Find Now button — floats to the right of the row */}
                 <button
-                  type="submit"
-                  style={{
-                    flex:'0 0 auto',
-                    background:'#0047C7',
-                    color:'#fff',
-                    border:'none',
-                    borderRadius:10,
-                    padding:'14px 25px',
-                    fontSize:14,
-                    fontWeight:600,
-                    cursor:'pointer',
-                    transition:'background 0.2s',
-                    whiteSpace:'nowrap',
-                  }}
-                  onMouseEnter={e=>e.currentTarget.style.background='#0052cc'}
-                  onMouseLeave={e=>e.currentTarget.style.background='#0047C7'}
+                  type="button"
+                  onClick={handleFind}
+                  className="w-full md:w-auto bg-[#0047C7] hover:bg-[#0052cc] text-white font-medium text-sm px-7 py-3 rounded-[10px] transition duration-150 cursor-pointer whitespace-nowrap"
                 >
                   Find Now
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       </section>
@@ -506,30 +590,21 @@ export const Employers = () => {
       {/* ══════════════════════════════════════════════════════════
           MAIN SECTION  — .section-box.mt-80.mb-80
       ══════════════════════════════════════════════════════════ */}
-      <section className="max-w-7xl mx-auto my-20 px-4 sm:px-6">
-        <div className="flex flex-wrap gap-12 items-start">
+      <section className="max-w-[1344px] mx-auto my-10 sm:my-20 px-4 sm:px-6">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
 
           {/* ────────────────────────────────────────────────────
-              SIDEBAR  (col-lg-4) — rendered first in DOM but
-              visually on the left via order / flex layout.
-              Independently scrollable pane: scrolls only while
-              the pointer is hovering over this column.
+              SIDEBAR  (col-lg-4) — full width on mobile/tablet,
+              fixed width alongside the content on large screens.
+              The filter panel itself is hidden below the lg
+              breakpoint; on mobile it's reached via the
+              "Filters & Sort" toggle above the company listings.
           ──────────────────────────────────────────────────── */}
-          <div
-            className="flex-0 min-w-[340px] flex flex-col gap-[30px] scroll-pane"
-            style={{
-              maxHeight: 'calc(100vh - 40px)',
-              overflowY: 'auto',
-              overflowX: 'hidden',
-              position: 'sticky',
-              top: 20,
-              paddingRight: 8,
-            }}
-          >
+          <div className="w-full lg:w-[340px] lg:flex-shrink-0 flex flex-col gap-[30px]">
 
             {/* Email reminder — .sidebar-with-bg */}
-            <div className="bg-[rgba(81,146,255,0.12)] rounded-[10px] p-[30px]">
-              <h5 className="text-[22px] leading-[28px] font-medium text-[#1f2938] mb-2.5">Set job reminder</h5>
+            <div className="bg-[rgba(81,146,255,0.12)] rounded-[10px] p-6 sm:p-[30px] hidden md:block" >
+              <h5 className="text-[20px] leading-[26px] sm:text-[22px] sm:leading-[28px] font-medium text-[#1f2938] mb-2.5">Set job reminder</h5>
               <p className="text-base leading-[22px] text-[#999] mb-0">
                 Enter your email address and get job notification.
               </p>
@@ -563,85 +638,10 @@ export const Employers = () => {
               </form>
             </div>
 
-            {/* Filters panel — .sidebar-shadow.none-shadow */}
-            <div className="border border-[rgba(6,18,36,0.1)] p-[29px_33px] rounded-[10px] bg-white">
+            {/* Filters panel — .sidebar-shadow.none-shadow — desktop/tablet only */}
+            <div className="hidden lg:block border border-[rgba(6,18,36,0.1)] p-6 sm:p-[29px_33px] rounded-[10px] bg-white">
 
-              {/* Location */}
-              <div className="mb-[30px]">
-                <h5 className="text-lg text-[#1f2938] font-semibold mb-[15px]">Location</h5>
-                <div className="relative">
-                  <svg width="18" height="18" fill="none" stroke="#88929b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"
-                    className="absolute left-3 top-1/2 -translate-y-1/2">
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/>
-                  </svg>
-                  <input
-                    type="text"
-                    placeholder="Location"
-                    value={sidebarLoc}
-                    onChange={e => setSidebarLoc(e.target.value)}
-                    style={{ ...inputStyle }}
-                  />
-                </div>
-              </div>
-
-              {/* Industry Type */}
-              <div className="mb-[30px]">
-                <h5 className="text-lg text-[#1f2938] font-semibold mb-[15px]">Industry Type</h5>
-                <div className="relative">
-                  <svg width="18" height="18" fill="none" stroke="#88929b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"
-                    className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
-                  </svg>
-                  <select
-                    value={sidebarInd}
-                    onChange={e => setSidebarInd(e.target.value)}
-                    style={{ ...inputStyle, paddingLeft:42, paddingRight:28, appearance:'none', cursor:'pointer', height:50 }}
-                  >
-                    <option value="">IT &amp; Consulting</option>
-                    {industries.map(industry => (
-                      <option key={industry} value={industry}>{industry}</option>
-                    ))}
-                  </select>
-                  <svg width="12" height="12" fill="none" stroke="#88929b" strokeWidth="2" viewBox="0 0 24 24"
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <polyline points="6 9 12 15 18 9"/>
-                  </svg>
-                </div>
-              </div>
-
-              {/* Job Type */}
-              <div className="mb-[30px]">
-                <h5 className="text-lg text-[#1f2938] font-semibold mb-[15px]">Job type</h5>
-                <ul className="list-none m-0 pt-[15px] pb-[5px]">
-                  {[
-                    {label:'Full Time Jobs',count:235},
-                    {label:'Part Time Jobs',count:28},
-                    {label:'Remote Jobs',count:67},
-                    {label:'Freelance',count:92},
-                    {label:'Temporary',count:14},
-                  ].map(({label,count}) => (
-                    <CheckRow key={label} label={label} count={count}
-                      checked={sidebarTypes.includes(label)}
-                      onChange={() => toggleType(label)} />
-                  ))}
-                </ul>
-              </div>
-
-              {/* Experience Level */}
-              <div className="mb-[30px]">
-                <h5 className="text-lg text-[#1f2938] font-semibold mb-[15px]">Experience Level</h5>
-                <ul className="list-none m-0 pt-[15px] pb-[5px]">
-                  {[
-                    {label:'Expert',count:76},{label:'Senior',count:89},
-                    {label:'Junior',count:54},{label:'Regular',count:23},
-                    {label:'Internship',count:22},{label:'Associate',count:14},
-                  ].map(({label,count}) => (
-                    <CheckRow key={label} label={label} count={count}
-                      checked={sidebarExps.includes(label)}
-                      onChange={() => toggleExp(label)} />
-                  ))}
-                </ul>
-              </div>
+              {renderFilterFields('desktop')}
 
               {/* buttons-filter */}
               <div className="flex gap-3">
@@ -673,7 +673,9 @@ export const Employers = () => {
             </div>
 
             {/* Recruiting banner — .sidebar-with-bg.background-primary.bg-sidebar */}
-            <div style={{
+            <div 
+              className="hidden md:block"
+              style={{
               background:'rgb(81,146,255)',
               borderRadius:10,
               padding:'30px 30px 80px',
@@ -707,77 +709,69 @@ export const Employers = () => {
 
           {/* ────────────────────────────────────────────────────
               CONTENT — col-lg-8  (company cards)
-              Independently scrollable pane: scrolls only while
-              the pointer is hovering over this column.
           ──────────────────────────────────────────────────── */}
-          <div
-            className="flex-1 min-w-0 scroll-pane"
-            style={{
-              maxHeight: 'calc(100vh - 40px)',
-              overflowY: 'auto',
-              overflowX: 'hidden',
-              paddingRight: 8,
-            }}
-          >
+          <div className="w-full lg:flex-1 lg:min-w-0">
 
-            {/* box-filters-job: count + sort */}
+            {/* Mobile-only filter/sort toggle — sits on top of the company listings,
+                mirrors the equivalent block in Jobs.jsx */}
+            <div className="relative lg:hidden mb-4" ref={mobileFilterRef}>
+              <button
+                type="button"
+                onClick={() => setMobileFilterOpen((o) => !o)}
+                className="w-full flex items-center justify-between gap-2 bg-white rounded-[10px] px-5 py-3 text-sm font-semibold text-[#37404e]"
+                style={{ border: '1px solid rgba(6,18,36,0.1)', boxShadow: '0px 9px 26px 0px rgba(31,31,51,0.06)' }}
+              >
+                <span className="flex items-center gap-2">
+                  <IcoSliders />
+                  Filters &amp; Sort
+                </span>
+                <IcoChevronDown className={`transition-transform ${mobileFilterOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {mobileFilterOpen && (
+                <div
+                  className="absolute left-0 right-0 top-full mt-2 z-30 bg-white rounded-[10px] p-[24px] space-y-[24px] max-h-[75vh] overflow-y-auto"
+                  style={{ border: '1px solid rgba(6,18,36,0.1)', boxShadow: '0px 9px 26px 0px rgba(31,31,51,0.06)' }}
+                >
+                  {/* Sort by, included inside the mobile filter menu */}
+                  <div className="flex items-center justify-between pb-2" style={{ borderBottom: '1px solid rgba(6,18,36,0.1)' }}>
+                    <span className="text-sm font-semibold text-[#9c9ca3]">Sort by</span>
+                    {sortSelect}
+                  </div>
+
+                  {renderFilterFields('mobile')}
+
+                  <div className="flex items-center gap-3 pt-1">
+                    <button
+                      onClick={applyMobileFilters}
+                      className="flex-1 bg-[#0047C7] hover:bg-[#0052cc] text-white font-bold text-sm py-3 rounded-[10px] transition cursor-pointer"
+                    >
+                      Apply filter
+                    </button>
+                    <button
+                      onClick={resetMobileFilters}
+                      className="text-[#1f2938] hover:text-[#0047C7] font-normal text-sm py-3 transition cursor-pointer"
+                    >
+                      Reset filter
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* box-filters-job: count + sort (desktop/tablet sort control) */}
             <div className="flex justify-between items-center mt-[15px] mb-[30px]">
               <span className="text-sm text-[#37404e]">
                 Showing <strong>{filteredCompanies.length}</strong> companies
               </span>
-              <div className="flex items-center gap-2">
+              <div className="hidden lg:flex items-center gap-2">
                 <span className="text-[#9c9ca3] font-semibold text-sm">Sort by:</span>
-                <div className="relative inline-block">
-                  <select
-                    value={sortBy}
-                    onChange={e => setSortBy(e.target.value)}
-                    style={{
-                      border:'none', background:'transparent', fontSize:14, fontWeight:600,
-                      color:'#37404e', cursor:'pointer', outline:'none', paddingRight:20, appearance:'none',
-                    }}
-                  >
-                    <option value="newest">Newest Post</option>
-                    <option value="oldest">Oldest Post</option>
-                  </select>
-                  <svg width="12" height="12" fill="none" stroke="#88929b" strokeWidth="2" viewBox="0 0 24 24"
-                    className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <polyline points="6 9 12 15 18 9"/>
-                  </svg>
-                </div>
+                {sortSelect}
               </div>
             </div>
 
             {/* company card grid — row.g-4 */}
-            {loadingCompanies ? (
-              <div className="grid grid-cols-2 gap-6 animate-pulse w-full">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="border border-[rgba(6,18,36,0.1)] rounded-[10px] bg-white p-7 flex flex-col min-h-[320px] items-center text-center relative">
-                    {/* Top right icon placeholders */}
-                    <div className="absolute top-4 right-4 flex gap-2">
-                      <div className="h-5 w-5 rounded bg-slate-200" />
-                      <div className="h-5 w-5 rounded bg-slate-200" />
-                    </div>
-                    {/* Circular Logo */}
-                    <div className="h-[110px] w-[110px] rounded-full bg-slate-200 mb-5" />
-                    {/* Name */}
-                    <div className="h-5 w-40 bg-slate-200 rounded mb-3" />
-                    {/* Stars */}
-                    <div className="h-4 w-28 bg-slate-200 rounded mb-4" />
-                    {/* Location + Industry row */}
-                    <div className="grid grid-cols-2 gap-4 w-full mt-2">
-                      <div className="h-4 bg-slate-200 rounded w-full" />
-                      <div className="h-4 bg-slate-200 rounded w-full" />
-                    </div>
-                    {/* Open jobs button */}
-                    <div className="h-11 w-32 bg-slate-200 rounded-lg mt-6" />
-                  </div>
-                ))}
-              </div>
-            ) : companyError ? (
-              <div className="text-center py-[60px] px-5 border border-[#ececec] rounded-[10px]">
-                <p className="text-rose-600 font-semibold text-sm">{companyError}</p>
-              </div>
-            ) : filteredCompanies.length === 0 ? (
+            {filteredCompanies.length === 0 ? (
               <div className="text-center py-[60px] px-5 border border-[#ececec] rounded-[10px]">
                 <p className="text-[#88929b] font-semibold text-sm">No companies found matching your filters.</p>
                 <button
@@ -788,7 +782,7 @@ export const Employers = () => {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {filteredCompanies.map(company => (
                   <EmployerCard key={company.id} company={company} />
                 ))}
@@ -796,42 +790,42 @@ export const Employers = () => {
             )}
 
             {/* Pagination — .paginations */}
-{filteredCompanies.length > 0 && (
-  <div className="my-[50px] flex justify-center mr-100">
-    <nav className="flex">
-      {['Previous','1','Next'].map((p) => {
-        const isActive = p === '1';
-        const isNum = !isNaN(Number(p));
+            {filteredCompanies.length > 0 && (
+              <div className="my-8 sm:my-[50px] flex justify-center overflow-x-auto">
+                <nav className="flex">
+                  {['Previous','1','2','3','Next'].map((p) => {
+                    const isActive = p === '2';
+                    const isNum = !isNaN(Number(p));
 
-        return (
-          <a
-            key={p}
-            href="#"
-            onClick={e => e.preventDefault()}
-            style={{
-              minWidth: isNum ? 45 : 90,
-              height: 42,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '0 12px',
-              border: '1px solid #D9DDE5',
-              marginLeft: -1, // connects borders
-              fontWeight: 600,
-              fontSize: 16,
-              color: isActive ? '#0047C7' : '#37404e',
-              background: isActive ? '#E6EEFF' : '#fff',
-              textDecoration: 'none',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {p}
-          </a>
-        );
-      })}
-    </nav>
-  </div>
-)}
+                    return (
+                      <a
+                        key={p}
+                        href="#"
+                        onClick={e => e.preventDefault()}
+                        style={{
+                          minWidth: isNum ? 42 : 76,
+                          height: 42,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '0 10px',
+                          border: '1px solid #D9DDE5',
+                          marginLeft: -1, // connects borders
+                          fontWeight: 600,
+                          fontSize: 15,
+                          color: isActive ? '#0047C7' : '#37404e',
+                          background: isActive ? '#E6EEFF' : '#fff',
+                          textDecoration: 'none',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {p}
+                      </a>
+                    );
+                  })}
+                </nav>
+              </div>
+            )}
           </div>
         </div>
       </section>

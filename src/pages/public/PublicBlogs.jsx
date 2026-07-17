@@ -44,7 +44,7 @@ export const PublicBlogs = () => {
 
       {/* Breadcrumb */}
       <div className="bg-[#fff9f3] py-5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1344px] mx-auto px-4 sm:px-6 lg:px-8">
           <ul className="flex items-center list-none p-0">
             <li>
               <Link to="/" className="text-base text-[#1f2938] hover:text-[#0047C7] no-underline">
@@ -59,16 +59,16 @@ export const PublicBlogs = () => {
       </div>
 
       {/* Archive Header */}
-      <div className="pt-[50px] pb-[30px] text-center">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h3 className="text-[46px] font-bold text-[#1f2938] mb-[30px] w-3/4 mx-auto leading-tight">
+      <div className="pt-8 pb-6 sm:pt-10 sm:pb-8 lg:pt-[50px] lg:pb-[30px] text-center">
+        <div className="max-w-[1344px] mx-auto px-4 sm:px-6 lg:px-8">
+          <h3 className="text-[26px] leading-[32px] sm:text-[34px] sm:leading-[42px] lg:text-[46px] font-bold text-[#1f2938] mb-6 sm:mb-[30px] w-full sm:w-3/4 mx-auto leading-tight">
             Relevant news and more for you. Welcome to our blog
           </h3>
-          <div className="flex flex-wrap justify-center gap-2">
+          <div className="flex flex-wrap justify-center gap-2 px-2">
             {tags.map((tag) => (
               <button
                 key={tag}
-                className="px-[18px] py-[10px] bg-[rgba(81,146,255,0.12)] rounded-[50px] text-sm text-[#727272] border-none cursor-pointer hover:bg-[#0047C7] hover:text-white transition-colors duration-200"
+                className="px-[14px] py-[8px] sm:px-[18px] sm:py-[10px] bg-[rgba(81,146,255,0.12)] rounded-[50px] text-xs sm:text-sm text-[#727272] border-none cursor-pointer hover:bg-[#0047C7] hover:text-white transition-colors duration-200"
               >
                 {tag}
               </button>
@@ -78,22 +78,22 @@ export const PublicBlogs = () => {
       </div>
 
       {/* Post Loop Grid */}
-      <main className="flex-grow mb-[80px]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="flex-grow mb-12 sm:mb-[80px]">
+        <div className="max-w-[1344px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
             {/* Left: Blog Posts */}
             <div className="lg:col-span-8">
-              <div className="grid grid-cols-1 gap-[30px]">
+              <div className="grid grid-cols-1 gap-5 sm:gap-[30px]">
 
                 {/* Featured Large Card */}
-                <div className="rounded-[15px] border border-[#ececec] p-[30px] bg-white hover:shadow-[0_9px_26px_rgba(31,31,51,0.06)] transition-all duration-200">
+                <div className="rounded-[15px] border border-[#ececec] p-5 sm:p-[30px] bg-white hover:shadow-[0_9px_26px_rgba(31,31,51,0.06)] transition-all duration-200">
                   <figure className="rounded-[15px] overflow-hidden mb-[15px] m-0">
                     <a href="blog-single.html">
                       <img alt="Job Interview Tips" src={blogThumb1} className="w-full rounded-[15px]" />
                     </a>
                   </figure>
-                  <div className="flex items-center gap-6 text-[#88929b] text-sm mb-[15px]">
+                  <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-[#88929b] text-sm mb-[15px]">
                     <span className="flex items-center gap-[5px]">
                       <User className="h-4 w-4" /> Admin
                     </span>
@@ -101,7 +101,7 @@ export const PublicBlogs = () => {
                       <Calendar className="h-4 w-4" /> 06 Sep 2025
                     </span>
                   </div>
-                  <h3 className="text-[24px] font-bold leading-[1.33] text-[#1f2938] mb-[15px]">
+                  <h3 className="text-[20px] sm:text-[24px] font-bold leading-[1.33] text-[#1f2938] mb-[15px]">
                     <a href="blog-single.html" className="text-[#1f2938] no-underline hover:text-[#0047C7]">
                       21 Job Interview Tips: How To Make a Great Impression
                     </a>
@@ -111,10 +111,10 @@ export const PublicBlogs = () => {
                     magnam atque excepturi perspiciatis omnis voluptas ullam nam, sunt temporibus fuga vero!
                     Adipisci perspiciatis necessitatibus reprehenderit repellat.
                   </p>
-                  <div className="mt-[30px]">
+                  <div className="mt-6 sm:mt-[30px]">
                     <a
                       href="blog-single.html"
-                      className="inline-block border border-[rgba(0,71,199,1)] px-[22px] py-[14px] rounded-[10px] bg-white text-[#111112] text-base no-underline hover:bg-[#0047C7] hover:text-white transition-colors duration-200"
+                      className="inline-block border border-[rgba(0,71,199,1)] px-[18px] py-[12px] sm:px-[22px] sm:py-[14px] rounded-[10px] bg-white text-[#111112] text-sm sm:text-base no-underline hover:bg-[#0047C7] hover:text-white transition-colors duration-200"
                     >
                       Keep reading
                     </a>
@@ -122,18 +122,18 @@ export const PublicBlogs = () => {
                 </div>
 
                 {/* 2-column small cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-[30px]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-[30px]">
                   {smallCards.map((card, index) => (
                     <div
                       key={index}
-                      className="rounded-[15px] border border-[#ececec] p-[30px] bg-white hover:shadow-[0_9px_26px_rgba(31,31,51,0.06)] hover:-translate-y-[3px] transition-all duration-200"
+                      className="rounded-[15px] border border-[#ececec] p-5 sm:p-[30px] bg-white hover:shadow-[0_9px_26px_rgba(31,31,51,0.06)] hover:-translate-y-[3px] transition-all duration-200"
                     >
                       <figure className="rounded-[15px] overflow-hidden mb-[15px] m-0">
                         <a href="blog-single.html">
                           <img alt={card.title} src={card.img} className="w-full rounded-[15px]" />
                         </a>
                       </figure>
-                      <div className="flex items-center gap-6 text-[#88929b] text-sm mb-[15px]">
+                      <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-[#88929b] text-sm mb-[15px]">
                         <span className="flex items-center gap-[5px]">
                           <User className="h-4 w-4" /> Admin
                         </span>
@@ -141,15 +141,15 @@ export const PublicBlogs = () => {
                           <Calendar className="h-4 w-4" /> 06 September
                         </span>
                       </div>
-                      <h3 className="text-[18px] font-bold leading-[1.33] text-[#1f2938] mb-[15px]">
+                      <h3 className="text-[17px] sm:text-[18px] font-bold leading-[1.33] text-[#1f2938] mb-[15px]">
                         <a href="blog-single.html" className="text-[#1f2938] no-underline hover:text-[#0047C7]">
                           {card.title}
                         </a>
                       </h3>
-                      <div className="mt-[30px]">
+                      <div className="mt-6 sm:mt-[30px]">
                         <a
                           href="blog-single.html"
-                          className="inline-block border border-[rgba(0,71,199,1)] px-[22px] py-[14px] rounded-[10px] bg-white text-[#111112] text-base no-underline hover:bg-[#0047C7] hover:text-white transition-colors duration-200"
+                          className="inline-block border border-[rgba(0,71,199,1)] px-[18px] py-[12px] sm:px-[22px] sm:py-[14px] rounded-[10px] bg-white text-[#111112] text-sm sm:text-base no-underline hover:bg-[#0047C7] hover:text-white transition-colors duration-200"
                         >
                           Keep reading
                         </a>
@@ -160,11 +160,12 @@ export const PublicBlogs = () => {
 
               </div>
 
-              {/* Pagination */}
-              <div className="mt-5 mb-[50px]">
-                <ul className="flex items-center list-none p-0 gap-1">
+              {/* Pagination — horizontally scrollable on narrow screens so it never
+                  gets cramped or clipped */}
+              <div className="mt-5 mb-8 sm:mb-[50px] overflow-x-auto">
+                <ul className="flex items-center list-none p-0 gap-1 w-max mx-auto sm:w-auto sm:mx-0">
                   <li>
-                    <a href="#" className="flex items-center justify-center w-10 h-10 text-[#88929b] text-2xl no-underline hover:text-[#0047C7]">
+                    <a href="#" className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 text-[#88929b] text-2xl no-underline hover:text-[#0047C7]">
                       &lsaquo;
                     </a>
                   </li>
@@ -172,7 +173,7 @@ export const PublicBlogs = () => {
                     <li key={n}>
                       <a
                         href="#"
-                        className={`relative flex items-center justify-center w-9 h-9 font-semibold text-[#37404e] text-base no-underline hover:font-bold ${
+                        className={`relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 font-semibold text-[#37404e] text-sm sm:text-base no-underline hover:font-bold ${
                           n === 6
                             ? 'font-bold before:content-[""] before:absolute before:w-7 before:h-7 before:bg-[#0047C7] before:opacity-30 before:rounded-lg before:-z-10 before:top-[4px] before:left-[1px]'
                             : ''
@@ -183,7 +184,7 @@ export const PublicBlogs = () => {
                     </li>
                   ))}
                   <li>
-                    <a href="#" className="flex items-center justify-center w-10 h-10 text-[#88929b] text-2xl no-underline hover:text-[#0047C7]">
+                    <a href="#" className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 text-[#88929b] text-2xl no-underline hover:text-[#0047C7]">
                       &rsaquo;
                     </a>
                   </li>
@@ -193,17 +194,17 @@ export const PublicBlogs = () => {
             </div>
 
             {/* Right: Sidebar */}
-            <div className="lg:col-span-4 col-md-12 col-sm-12 lg:pl-10 mt-[30px] lg:mt-0">
+            <div className="lg:col-span-4 lg:pl-10 mt-2 lg:mt-0">
 
               {/* Search Widget */}
-              <div className="mb-[40px]">
+              <div className="mb-8 sm:mb-[40px]">
                 <form onSubmit={handleSearch} className="relative">
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search…"
-                    className="border border-[#ececec] rounded-[10px] h-16 w-full pl-5 pr-14 text-base text-[#37404e] placeholder-[#88929b] outline-none focus:border-[#0047C7] transition-colors"
+                    className="border border-[#ececec] rounded-[10px] h-14 sm:h-16 w-full pl-5 pr-14 text-base text-[#37404e] placeholder-[#88929b] outline-none focus:border-[#0047C7] transition-colors"
                   />
                   <button
                     type="submit"
@@ -215,8 +216,8 @@ export const PublicBlogs = () => {
               </div>
 
               {/* Categories Widget */}
-              <div className="border border-black/10 rounded-[10px] shadow-[0_9px_26px_rgba(31,31,51,0.06)] bg-[#f4f6fa] px-[33px] py-[29px]">
-                <h5 className="text-base font-semibold border-b border-[#ececec] pb-[10px] mb-[30px] text-[#1f2938]">
+              <div className="border border-black/10 rounded-[10px] shadow-[0_9px_26px_rgba(31,31,51,0.06)] bg-[#f4f6fa] px-6 py-6 sm:px-[33px] sm:py-[29px]">
+                <h5 className="text-base font-semibold border-b border-[#ececec] pb-[10px] mb-6 sm:mb-[30px] text-[#1f2938]">
                   Category
                 </h5>
                 <ul className="list-none p-0">

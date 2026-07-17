@@ -25,66 +25,11 @@ const formatDate = (value, fallback = '-') => {
   return new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(value));
 };
 
-const EmployerSubscriptionSkeleton = () => (
-  <div className="space-y-6 animate-pulse" style={{ fontFamily: "'Inter', sans-serif" }}>
-    {/* Title & Breadcrumb */}
-    <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
-      <div className="space-y-2">
-        <div className="h-7 w-56 bg-slate-200 rounded" />
-        <div className="h-4 w-96 bg-slate-200 rounded" />
-      </div>
-      <div className="h-4 w-40 bg-slate-200 rounded" />
-    </div>
-
-    {/* Plan Banner */}
-    <div className="rounded-lg border border-slate-100 bg-white p-6 shadow-sm">
-      <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
-        <div className="flex items-start gap-4">
-          <div className="h-14 w-14 rounded-full bg-slate-200 shrink-0" />
-          <div className="space-y-3 flex-grow">
-            <div className="flex gap-2">
-              <div className="h-5 w-32 bg-slate-200 rounded" />
-              <div className="h-5 w-16 bg-slate-200 rounded-full" />
-            </div>
-            <div className="h-4 w-48 bg-slate-200 rounded" />
-            <div className="pt-3 flex gap-6 flex-wrap">
-              {[1, 2, 3].map((x) => (
-                <div key={x} className="h-10 w-24 bg-slate-200 rounded" />
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <div className="h-11 w-32 bg-slate-200 rounded-lg" />
-          <div className="h-11 w-32 bg-slate-200 rounded-lg" />
-        </div>
-      </div>
-    </div>
-
-    {/* Usage Stats Grid */}
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      {[1, 2, 3, 4].map((x) => (
-        <div key={x} className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm flex items-center gap-4">
-          <div className="h-12 w-12 rounded-full bg-slate-200 shrink-0" />
-          <div className="space-y-2 flex-grow">
-            <div className="h-3 w-16 bg-slate-200 rounded" />
-            <div className="h-5 w-24 bg-slate-200 rounded" />
-          </div>
-        </div>
-      ))}
-    </div>
-
-    {/* Pricing plans block */}
-    <div className="rounded-lg border border-slate-100 bg-white shadow-sm p-6 space-y-4">
-      <div className="h-6 w-44 bg-slate-200 rounded" />
-      <div className="space-y-2">
-        {[1, 2, 3].map((x) => (
-          <div key={x} className="h-14 w-full bg-slate-100 rounded" />
-        ))}
-      </div>
-    </div>
-  </div>
-);
+const statusTone = (status) => {
+  if (status === 'Success') return 'bg-emerald-50 text-emerald-600';
+  if (status === 'Pending') return 'bg-amber-50 text-amber-600';
+  return 'bg-rose-50 text-rose-600';
+};
 
 export const EmployerSubscription = () => {
   const [data, setData] = useState(null);
@@ -134,7 +79,11 @@ export const EmployerSubscription = () => {
   };
 
   if (loading) {
-    return <EmployerSubscriptionSkeleton />;
+    return (
+      <div className="flex min-h-[450px] items-center justify-center">
+        <Loader className="h-9 w-9 animate-spin text-[#6658dd]" />
+      </div>
+    );
   }
 
   const sub = data?.subscription || { planName: 'Free', status: 'Active', validUntil: null, jobsUsed: 0, jobLimit: 50, remainingCredits: 50, utilization: 0, applicationsCount: 0, applicationsLimit: 500, teamMembersCount: 1, teamMembersLimit: 10, daysRemaining: 0 };
@@ -148,14 +97,14 @@ export const EmployerSubscription = () => {
   const summaryPaid = Number(latestInvoice?.paidAmount ?? Math.max(summaryAmount - summaryDiscount, 0));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 px-3 sm:space-y-6 sm:px-0">
       {/* Title */}
-      <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
+      <div className="flex flex-col justify-between gap-2 md:flex-row md:items-center md:gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#3f4254]">Subscription & Billing</h1>
-          <p className="mt-1 text-sm font-semibold text-slate-400">Manage your subscription packages, billing methods, and download transaction invoices.</p>
+          <h1 className="text-lg font-extrabold text-[#3f4254] sm:text-2xl">Subscription & Billing</h1>
+          <p className="mt-1 text-xs font-semibold text-slate-400 sm:text-sm">Manage your subscription packages, billing methods, and download transaction invoices.</p>
         </div>
-        <div className="flex items-center gap-2 text-sm font-bold text-slate-400">
+        <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-slate-400 sm:text-sm">
           <span className="text-[#3f4254]">JobsWaale</span>
           <span className="text-slate-300">/</span>
           <span>Company</span>
@@ -167,27 +116,27 @@ export const EmployerSubscription = () => {
       {/* Notifications */}
       {error && (
         <div className="rounded-lg border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700 flex items-center gap-2">
-          <AlertCircle className="h-5 w-5 text-rose-500" />
+          <AlertCircle className="h-5 w-5 shrink-0 text-rose-500" />
           <span>{error}</span>
         </div>
       )}
       {success && (
         <div className="rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 flex items-center gap-2">
-          <CheckCircle className="h-5 w-5 text-emerald-500" />
+          <CheckCircle className="h-5 w-5 shrink-0 text-emerald-500" />
           <span>{success}</span>
         </div>
       )}
 
       {/* SECTION 1: PLAN BANNER */}
-      <div className="rounded-lg border border-slate-100 bg-white p-6 shadow-sm">
+      <div className="rounded-lg border border-slate-100 bg-white p-4 shadow-sm sm:p-6">
         <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
-          <div className="flex items-start gap-4">
-            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-50 text-amber-500 shrink-0 shadow-sm">
-              <Crown className="h-8 w-8" />
+          <div className="flex items-start gap-3 sm:gap-4">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-500 shadow-sm sm:h-14 sm:w-14">
+              <Crown className="h-6 w-6 sm:h-8 sm:w-8" />
             </span>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <h5 className="text-lg font-extrabold text-[#3f4254]">{sub.planName}</h5>
+            <div className="min-w-0 space-y-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h5 className="text-base font-extrabold text-[#3f4254] sm:text-lg">{sub.planName}</h5>
                 <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-600">
                   {sub.status || 'Active'}
                 </span>
@@ -196,23 +145,23 @@ export const EmployerSubscription = () => {
                 Valid until: <span className="text-[#3f4254]">{formatDate(sub.validUntil, 'Dec 31, 2026')}</span>
               </p>
 
-              <div className="pt-3 flex items-center gap-6 flex-wrap text-sm">
+              <div className="pt-3 grid grid-cols-2 gap-4 sm:flex sm:flex-wrap sm:items-center sm:gap-6 text-sm">
                 <div>
                   <span className="text-[10px] font-bold text-slate-400 block">Jobs Used</span>
                   <span className="font-extrabold text-[#3f4254]">{sub.jobsUsed} <span className="font-medium text-slate-400">/ {sub.jobLimit}</span></span>
                 </div>
-                <div className="h-8 w-px bg-slate-100"></div>
+                <div className="hidden h-8 w-px bg-slate-100 sm:block"></div>
                 <div>
                   <span className="text-[10px] font-bold text-slate-400 block">Applications</span>
                   <span className="font-extrabold text-[#3f4254]">{sub.applicationsCount} <span className="font-medium text-slate-400">/ {sub.applicationsLimit}</span></span>
                 </div>
-                <div className="h-8 w-px bg-slate-100"></div>
+                <div className="hidden h-8 w-px bg-slate-100 sm:block"></div>
                 <div>
                   <span className="text-[10px] font-bold text-slate-400 block">Team Members</span>
                   <span className="font-extrabold text-[#3f4254]">{sub.teamMembersCount} <span className="font-medium text-slate-400">/ {sub.teamMembersLimit}</span></span>
                 </div>
-                <div className="h-8 w-px bg-slate-100"></div>
-                <div className="w-36">
+                <div className="hidden h-8 w-px bg-slate-100 sm:block"></div>
+                <div className="col-span-2 w-full sm:w-36">
                   <span className="text-[10px] font-bold text-slate-400 block mb-1">Utilization</span>
                   <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
                     <div className="h-full bg-[#6658dd]" style={{ width: `${sub.utilization}%` }}></div>
@@ -223,7 +172,7 @@ export const EmployerSubscription = () => {
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <a href="#plans-pricing" className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#6658dd] px-4.5 py-2.5 text-sm font-extrabold text-white transition hover:bg-[#5848d8]">
               <Crown className="h-4.5 w-4.5" />
               Upgrade Plan
@@ -240,21 +189,21 @@ export const EmployerSubscription = () => {
       </div>
 
       {/* SECTION 2: USAGE STATS GRID */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         {[
           { title: 'Active Jobs', value: stats.activeJobs, subtitle: '+3 posted this month', icon: Briefcase, color: 'bg-indigo-50 text-indigo-500' },
           { title: 'Applications Received', value: stats.applications, subtitle: '+48 this week', icon: FileText, color: 'bg-emerald-50 text-emerald-500' },
           { title: 'Team Members', value: `${stats.teamMembers} / 10`, subtitle: 'included in plan', icon: Users, color: 'bg-sky-50 text-sky-500' },
           { title: 'Days Remaining', value: stats.daysRemaining || 0, subtitle: 'until renewal date', icon: Clock, color: 'bg-amber-50 text-amber-500' }
         ].map((stat, index) => (
-          <div key={index} className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm flex items-center gap-4">
-            <span className={`flex h-12 w-12 items-center justify-center rounded-full ${stat.color}`}>
-              <stat.icon className="h-6 w-6" />
+          <div key={index} className="rounded-lg border border-slate-100 bg-white p-3 shadow-sm flex items-center gap-2 sm:p-5 sm:gap-4">
+            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${stat.color}`}>
+              <stat.icon className="h-4 w-4 sm:h-6 sm:w-6" />
             </span>
-            <div>
-              <p className="text-xs font-bold text-slate-400">{stat.title}</p>
-              <p className="mt-0.5 text-xl font-black text-[#3f4254]">{stat.value}</p>
-              <p className="text-[10px] font-bold text-slate-400 mt-0.5">{stat.subtitle}</p>
+            <div className="min-w-0">
+              <p className="truncate text-xs font-bold text-slate-400">{stat.title}</p>
+              <p className="mt-0.5 text-base font-black text-[#3f4254] sm:text-xl">{stat.value}</p>
+              <p className="truncate text-[10px] font-bold text-slate-400 mt-0.5">{stat.subtitle}</p>
             </div>
           </div>
         ))}
@@ -262,11 +211,63 @@ export const EmployerSubscription = () => {
 
       {/* SECTION 3: PRICING PLANS TABLE */}
       <div id="plans-pricing" className="rounded-lg border border-slate-100 bg-white shadow-sm overflow-hidden">
-        <div className="border-b border-slate-100 p-5 bg-slate-50/50">
+        <div className="border-b border-slate-100 p-4 bg-slate-50/50 sm:p-5">
           <h3 className="font-extrabold text-[#3f4254] text-base">Choose Your Plan</h3>
           <p className="text-xs font-semibold text-slate-400 mt-1">Select the pricing package that matches your recruiting scale. Upgrade or modify anytime.</p>
         </div>
-        <div className="p-5 overflow-x-auto">
+
+        {/* Card list — mobile only */}
+        <div className="divide-y divide-slate-100 p-4 sm:hidden">
+          {plans.length === 0 ? (
+            <p className="py-8 text-center text-sm font-bold text-slate-400">No active employer plans are available.</p>
+          ) : plans.map((p) => {
+            const isCurrent = sub.currentPlanId === p._id;
+            const isSubmitting = subscribingPlanId === p._id;
+            return (
+              <div key={p._id} className="py-4 first:pt-0 last:pb-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-extrabold text-[#3f4254]">{p.planName}</p>
+                    {p.showBadge && p.badge && <span className="mt-1 inline-flex rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold text-amber-800">{p.badge}</span>}
+                    {p.planSubtitle && <p className="mt-1 text-xs font-bold text-slate-400">{p.planSubtitle}</p>}
+                  </div>
+                  <span className="shrink-0 font-black text-[#6658dd]">₹{p.cost.toLocaleString('en-IN')}</span>
+                </div>
+
+                <div className="mt-2 grid grid-cols-2 gap-2 text-xs font-bold text-slate-500">
+                  <p>{p.unlockCount || 0} Unlocks</p>
+                  <p>{p.freeJobPosts} Job Posts</p>
+                </div>
+
+                {p.employerFeatures?.length > 0 && (
+                  <ul className="mt-2 list-disc space-y-0.5 pl-4 text-xs leading-relaxed text-slate-500">
+                    {p.employerFeatures.map((feat, fIdx) => <li key={fIdx}>{feat}</li>)}
+                  </ul>
+                )}
+
+                <div className="mt-3">
+                  {isCurrent ? (
+                    <button disabled className="w-full rounded-lg bg-amber-50 border border-amber-200 py-2 text-xs font-extrabold text-amber-700 cursor-not-allowed">
+                      Current Plan
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleChoosePlan(p)}
+                      disabled={Boolean(subscribingPlanId)}
+                      className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#6658dd] py-2 text-xs font-extrabold text-white shadow-sm hover:bg-[#5848d8] transition disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isSubmitting && <Loader className="h-3.5 w-3.5 animate-spin" />}
+                      {isSubmitting ? 'Activating' : 'Choose Plan'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Table — sm and up */}
+        <div className="hidden p-5 overflow-x-auto sm:block">
           <table className="w-full text-nowrap text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-100 text-xs font-black text-slate-400 uppercase tracking-wider bg-slate-50/50">
@@ -330,9 +331,9 @@ export const EmployerSubscription = () => {
       </div>
 
       {/* SECTION 4: BILLING METRICS */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 md:grid-cols-3">
         {/* Payment Record Card */}
-        <div className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between space-y-4">
+        <div className="rounded-lg border border-slate-100 bg-white p-4 shadow-sm flex flex-col justify-between space-y-4 sm:p-5">
           <div className="flex justify-between items-center">
             <h4 className="font-extrabold text-[#3f4254] text-sm flex items-center gap-1.5">
               <CreditCard className="h-4.5 w-4.5 text-slate-400" />
@@ -342,20 +343,20 @@ export const EmployerSubscription = () => {
 
           <div className="space-y-3 flex-grow pt-2">
             {latestInvoice ? (
-              <div className="rounded-lg p-3 bg-slate-50 border border-slate-100 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-11 rounded border border-slate-200 bg-white flex items-center justify-center text-[10px] font-black text-slate-500">
+              <div className="rounded-lg p-3 bg-slate-50 border border-slate-100 flex items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <div className="h-8 w-11 shrink-0 rounded border border-slate-200 bg-white flex items-center justify-center text-[10px] font-black text-slate-500">
                     {latestInvoice.paymentMethod || 'Pay'}
                   </div>
-                  <div>
-                    <span className="text-xs font-extrabold text-[#3f4254] block">{latestInvoice.paymentId}</span>
-                    <span className="text-[10px] font-bold text-slate-400 block">
+                  <div className="min-w-0">
+                    <span className="truncate text-xs font-extrabold text-[#3f4254] block">{latestInvoice.paymentId}</span>
+                    <span className="truncate text-[10px] font-bold text-slate-400 block">
                       {latestInvoice.paymentGateway || 'Gateway'} | {formatDate(latestInvoice.paymentDate || latestInvoice.createDate)}
                     </span>
                   </div>
                 </div>
 
-                <span className="rounded bg-emerald-50 px-2 py-0.5 text-[9px] font-bold text-emerald-700">
+                <span className="shrink-0 rounded bg-emerald-50 px-2 py-0.5 text-[9px] font-bold text-emerald-700">
                   {latestInvoice.paymentStatus}
                 </span>
               </div>
@@ -368,11 +369,11 @@ export const EmployerSubscription = () => {
         </div>
 
         {/* Next Payment Card */}
-        <div className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between space-y-4">
+        <div className="rounded-lg border border-slate-100 bg-white p-4 shadow-sm flex flex-col justify-between space-y-4 sm:p-5">
           <h4 className="font-extrabold text-[#3f4254] text-sm">Next Payment</h4>
           
           <div className="text-center py-3 flex-grow flex flex-col justify-center">
-            <p className="text-2xl font-black text-[#3f4254]">₹{Number(currentPlan?.cost || 0).toLocaleString('en-IN')}</p>
+            <p className="text-xl font-black text-[#3f4254] sm:text-2xl">₹{Number(currentPlan?.cost || 0).toLocaleString('en-IN')}</p>
             <p className="text-xs font-bold text-slate-400 mt-1">{sub.planName}</p>
             <p className="text-xs font-extrabold text-slate-500 mt-2">Valid until <span className="text-[#3f4254]">{formatDate(sub.validUntil)}</span></p>
           </div>
@@ -386,7 +387,7 @@ export const EmployerSubscription = () => {
         </div>
 
         {/* Invoice Summary Card */}
-        <div className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between space-y-3">
+        <div className="rounded-lg border border-slate-100 bg-white p-4 shadow-sm flex flex-col justify-between space-y-3 sm:p-5">
           <h4 className="font-extrabold text-[#3f4254] text-sm">Invoice Summary</h4>
 
           <div className="space-y-2 text-xs font-bold text-slate-500 flex-grow pt-2">
@@ -421,14 +422,45 @@ export const EmployerSubscription = () => {
 
       {/* SECTION 5: BILLING HISTORY */}
       <div className="rounded-lg border border-slate-100 bg-white shadow-sm overflow-hidden">
-        <div className="border-b border-slate-100 p-5 bg-slate-50/50 flex justify-between items-center">
+        <div className="border-b border-slate-100 p-4 bg-slate-50/50 flex justify-between items-center sm:p-5">
           <div>
             <h3 className="font-extrabold text-[#3f4254] text-base">Billing History</h3>
             <p className="text-xs font-semibold text-slate-400 mt-1">Review your past transaction records and retrieve past invoice files.</p>
           </div>
         </div>
 
-        <div className="p-5 overflow-x-auto">
+        {/* Card list — mobile only */}
+        <div className="divide-y divide-slate-100 p-4 sm:hidden">
+          {invoices.length === 0 ? (
+            <p className="py-8 text-center text-sm font-bold text-slate-400">No billing history found.</p>
+          ) : invoices.map((inv) => (
+            <div key={inv._id} className="py-3 first:pt-0 last:pb-0">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-extrabold text-[#6658dd]">{inv.invoiceNo || inv.paymentId}</p>
+                  <p className="mt-0.5 text-xs font-bold text-slate-400">{formatDate(inv.createDate || inv.paymentDate)}</p>
+                </div>
+                <span className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold ${statusTone(inv.paymentStatus || 'Success')}`}>
+                  {inv.paymentStatus || 'Success'}
+                </span>
+              </div>
+              <div className="mt-2 flex items-center justify-between text-xs font-semibold text-[#3f4254]">
+                <p className="truncate font-bold">{inv.planName}</p>
+                <p className="shrink-0 font-black">₹{inv.paidAmount?.toLocaleString('en-IN')}</p>
+              </div>
+              <button
+                onClick={() => setSuccess(`Invoice ${inv.invoiceNo || inv.paymentId} is available in billing records.`)}
+                className="mt-3 inline-flex w-full items-center justify-center gap-1 rounded bg-slate-50 border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Download PDF
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Table — sm and up */}
+        <div className="hidden p-5 overflow-x-auto sm:block">
           <table className="w-full text-nowrap text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-100 text-xs font-black text-slate-400 uppercase tracking-wider bg-slate-50/50">
@@ -454,13 +486,7 @@ export const EmployerSubscription = () => {
                   <td className="py-3.5 px-4 font-bold">{inv.planName}</td>
                   <td className="py-3.5 px-4 font-black">₹{inv.paidAmount?.toLocaleString('en-IN')}</td>
                   <td className="py-3.5 px-4">
-                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold ${
-                      inv.paymentStatus === 'Success' 
-                        ? 'bg-emerald-50 text-emerald-600'
-                        : inv.paymentStatus === 'Pending'
-                        ? 'bg-amber-50 text-amber-600'
-                        : 'bg-rose-50 text-rose-600'
-                    }`}>
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold ${statusTone(inv.paymentStatus || 'Success')}`}>
                       {inv.paymentStatus || 'Success'}
                     </span>
                   </td>

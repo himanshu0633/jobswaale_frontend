@@ -89,7 +89,7 @@ const DonutChart = ({ sources = [], total = 0 }) => {
 
   return (
     <div className="flex flex-col items-center">
-      <div className="relative h-48 w-48">
+      <div className="relative h-40 w-40 sm:h-48 sm:w-48">
         <svg viewBox="0 0 190 190" className="-rotate-90">
           <circle cx="95" cy="95" r={radius} fill="none" stroke="#eef2f7" strokeWidth="28" />
           {sources.map((source, index) => {
@@ -113,8 +113,8 @@ const DonutChart = ({ sources = [], total = 0 }) => {
           })}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-black text-[#3f4254]">{total}</span>
-          <span className="text-sm font-bold text-slate-400">Total</span>
+          <span className="text-xl font-black text-[#3f4254] sm:text-2xl">{total}</span>
+          <span className="text-xs font-bold text-slate-400 sm:text-sm">Total</span>
         </div>
       </div>
     </div>
@@ -274,37 +274,37 @@ export const EmployerReports = () => {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 px-3 sm:space-y-5 sm:px-0">
       <style>{`
         @keyframes reportFadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes reportGrowY { from { transform: scaleY(0); } to { transform: scaleY(1); } }
       `}</style>
 
-      <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
-        <h1 className="text-xl font-extrabold text-[#3f4254]">Reports & Analytics</h1>
-        <div className="flex items-center gap-2 text-sm font-bold text-slate-400"><span className="text-[#3f4254]">JobsWaale</span><ChevronRight className="h-4 w-4" /><span>Reports & Analytics</span></div>
+      <div className="flex flex-col justify-between gap-2 md:flex-row md:items-center md:gap-3">
+        <h1 className="text-lg font-extrabold text-[#3f4254] sm:text-xl">Reports & Analytics</h1>
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-400 sm:text-sm"><span className="text-[#3f4254]">JobsWaale</span><ChevronRight className="h-4 w-4" /><span>Reports & Analytics</span></div>
       </div>
 
       {error && <div className="rounded-md border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{error}</div>}
 
       <Card>
-        <div className="border-b border-dashed border-slate-200 px-5 py-4"><h2 className="text-lg font-extrabold text-[#3f4254]">Filter</h2></div>
-        <div className="grid gap-3 p-5 md:grid-cols-[1fr_1fr_auto]">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <input type="date" value={range.from} onChange={(event) => setRange((current) => ({ ...current, from: event.target.value }))} className="h-10 rounded-md border border-slate-200 px-3 text-sm font-bold text-slate-600 outline-none focus:border-[#6658dd]" />
-            <input type="date" value={range.to} onChange={(event) => setRange((current) => ({ ...current, to: event.target.value }))} className="h-10 rounded-md border border-slate-200 px-3 text-sm font-bold text-slate-600 outline-none focus:border-[#6658dd]" />
+        <div className="border-b border-dashed border-slate-200 px-4 py-4 sm:px-5"><h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Filter</h2></div>
+        <div className="grid gap-3 p-4 sm:p-5 md:grid-cols-[1fr_1fr_auto]">
+          <div className="grid grid-cols-2 gap-3">
+            <input type="date" value={range.from} onChange={(event) => setRange((current) => ({ ...current, from: event.target.value }))} className="h-10 w-full rounded-md border border-slate-200 px-2 text-xs font-bold text-slate-600 outline-none focus:border-[#6658dd] sm:px-3 sm:text-sm" />
+            <input type="date" value={range.to} onChange={(event) => setRange((current) => ({ ...current, to: event.target.value }))} className="h-10 w-full rounded-md border border-slate-200 px-2 text-xs font-bold text-slate-600 outline-none focus:border-[#6658dd] sm:px-3 sm:text-sm" />
           </div>
-          <div className="flex h-10 items-center gap-2 rounded-md bg-slate-100 px-4 text-sm font-bold text-slate-500"><Filter className="h-4 w-4" />{data.range?.label || 'Selected range'}</div>
+          <div className="flex h-10 items-center gap-2 rounded-md bg-slate-100 px-4 text-xs font-bold text-slate-500 sm:text-sm"><Filter className="h-4 w-4 shrink-0" /><span className="truncate">{data.range?.label || 'Selected range'}</span></div>
           <button type="button" onClick={handleExcelExport} className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#6658dd] px-5 text-sm font-extrabold text-white transition hover:bg-[#5848d8]"><Download className="h-4 w-4" />Export</button>
         </div>
       </Card>
 
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
         {statCards.map((card, index) => (
           <Card key={card.key} delay={index * 65}>
-            <div className="flex items-center gap-5 p-5">
-              <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${card.tone}`}><card.icon className="h-5 w-5" /></span>
-              <div><p className="text-sm font-semibold text-slate-400">{card.title}</p><p className="mt-1 text-xl font-black text-[#3f4254]">{Number(data.stats?.[card.key] || 0).toLocaleString('en-IN')}{card.suffix || ''}</p><p className={`mt-1 text-xs font-black ${card.down ? 'text-rose-500' : 'text-emerald-500'}`}>{card.trend}</p></div>
+            <div className="flex items-center gap-2 p-3 sm:gap-5 sm:p-5">
+              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${card.tone}`}><card.icon className="h-4 w-4 sm:h-5 sm:w-5" /></span>
+              <div className="min-w-0"><p className="truncate text-xs font-semibold text-slate-400 sm:text-sm">{card.title}</p><p className="mt-1 text-base font-black text-[#3f4254] sm:text-xl">{Number(data.stats?.[card.key] || 0).toLocaleString('en-IN')}{card.suffix || ''}</p><p className={`mt-1 text-[11px] font-black sm:text-xs ${card.down ? 'text-rose-500' : 'text-emerald-500'}`}>{card.trend}</p></div>
             </div>
           </Card>
         ))}
@@ -312,34 +312,36 @@ export const EmployerReports = () => {
 
       <div className="grid gap-5 xl:grid-cols-[2fr_1fr]">
         <Card delay={120}>
-          <div className="border-b border-dashed border-slate-200 px-5 py-4"><h2 className="text-lg font-extrabold text-[#3f4254]">Applications Overview</h2><p className="text-sm font-semibold text-slate-400">Monthly breakdown by application status</p></div>
-          <div className="p-5">
-            <div className="flex h-[340px] items-end gap-7 border-b border-l border-slate-200 px-6 py-4">
-              {(data.monthlyOverview || []).map((month, monthIndex) => (
-                <div key={month.month} className="flex h-full flex-1 flex-col justify-end">
-                  <div className="flex min-h-0 w-full flex-col justify-end overflow-hidden rounded-t-sm">
-                    {statusConfig.map((status, statusIndex) => {
-                      const value = Number(month[status.key] || 0);
-                      const height = Math.max((value / maxMonthly) * 300, value ? 5 : 0);
-                      return <div key={status.key} title={`${status.label}: ${value}`} style={{ height, backgroundColor: status.color, transformOrigin: 'bottom', animation: `reportGrowY 700ms ease-out ${monthIndex * 90 + statusIndex * 25}ms both` }} />;
-                    })}
+          <div className="border-b border-dashed border-slate-200 px-4 py-4 sm:px-5"><h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Applications Overview</h2><p className="text-xs font-semibold text-slate-400 sm:text-sm">Monthly breakdown by application status</p></div>
+          <div className="p-4 sm:p-5">
+            <div className="overflow-x-auto">
+              <div className="flex h-[260px] min-w-[520px] items-end gap-4 border-b border-l border-slate-200 px-4 py-4 sm:h-[340px] sm:min-w-0 sm:gap-7 sm:px-6">
+                {(data.monthlyOverview || []).map((month, monthIndex) => (
+                  <div key={month.month} className="flex h-full flex-1 flex-col justify-end">
+                    <div className="flex min-h-0 w-full flex-col justify-end overflow-hidden rounded-t-sm">
+                      {statusConfig.map((status, statusIndex) => {
+                        const value = Number(month[status.key] || 0);
+                        const height = Math.max((value / maxMonthly) * 300, value ? 5 : 0);
+                        return <div key={status.key} title={`${status.label}: ${value}`} style={{ height, backgroundColor: status.color, transformOrigin: 'bottom', animation: `reportGrowY 700ms ease-out ${monthIndex * 90 + statusIndex * 25}ms both` }} />;
+                      })}
+                    </div>
+                    <span className="mt-3 text-center text-[11px] font-bold text-slate-500 sm:text-xs">{month.month}</span>
                   </div>
-                  <span className="mt-3 text-center text-xs font-bold text-slate-500">{month.month}</span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-            <div className="mt-4 flex flex-wrap justify-center gap-4">
-              {statusConfig.map((item) => <span key={item.key} className="flex items-center gap-2 text-xs font-bold text-slate-500"><span className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />{item.label}</span>)}
+            <div className="mt-4 flex flex-wrap justify-center gap-3 sm:gap-4">
+              {statusConfig.map((item) => <span key={item.key} className="flex items-center gap-2 text-[11px] font-bold text-slate-500 sm:text-xs"><span className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />{item.label}</span>)}
             </div>
           </div>
         </Card>
 
         <Card delay={180}>
-          <div className="border-b border-dashed border-slate-200 px-5 py-4"><h2 className="text-lg font-extrabold text-[#3f4254]">Application Sources</h2><p className="text-sm font-semibold text-slate-400">Where candidates are coming from</p></div>
-          <div className="p-5">
+          <div className="border-b border-dashed border-slate-200 px-4 py-4 sm:px-5"><h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Application Sources</h2><p className="text-xs font-semibold text-slate-400 sm:text-sm">Where candidates are coming from</p></div>
+          <div className="p-4 sm:p-5">
             <DonutChart sources={data.sources || []} total={sourceTotal} />
             <div className="mt-5 space-y-3">
-              {(data.sources || []).map((source, index) => <div key={source.name} className="flex items-center justify-between text-sm font-bold text-slate-600"><span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors[index % colors.length] }} />{source.name}</span><span>{source.value} ({source.percent}%)</span></div>)}
+              {(data.sources || []).map((source, index) => <div key={source.name} className="flex items-center justify-between text-xs font-bold text-slate-600 sm:text-sm"><span className="flex min-w-0 items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: colors[index % colors.length] }} /><span className="truncate">{source.name}</span></span><span className="shrink-0">{source.value} ({source.percent}%)</span></div>)}
               {!data.sources?.length && <p className="py-8 text-center text-sm font-bold text-slate-400">No source data found.</p>}
             </div>
           </div>
@@ -348,26 +350,26 @@ export const EmployerReports = () => {
 
       <div className="grid gap-5 xl:grid-cols-2">
         <Card delay={220}>
-          <div className="border-b border-dashed border-slate-200 px-5 py-4"><h2 className="text-lg font-extrabold text-[#3f4254]">Hiring Funnel</h2><p className="text-sm font-semibold text-slate-400">Conversion rates across hiring stages</p></div>
-          <div className="space-y-5 p-5">
+          <div className="border-b border-dashed border-slate-200 px-4 py-4 sm:px-5"><h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Hiring Funnel</h2><p className="text-xs font-semibold text-slate-400 sm:text-sm">Conversion rates across hiring stages</p></div>
+          <div className="space-y-4 p-4 sm:space-y-5 sm:p-5">
             {(data.funnel || []).map((item, index) => (
-              <div key={item.key} className="grid grid-cols-[110px_1fr_90px] items-center gap-3">
-                <span className="text-sm font-extrabold text-slate-600">{item.title}</span>
-                <div className="h-7 overflow-hidden rounded bg-slate-100"><div className="flex h-full items-center justify-end rounded bg-[#3b82f6] pr-2 text-xs font-black text-white transition-all duration-700" style={{ width: `${Math.max((item.value / funnelMax) * 100, item.value ? 7 : 0)}%`, transitionDelay: `${index * 90}ms` }}>{item.value}</div></div>
-                <span className="text-xs font-black text-slate-500">{item.percent}%</span>
+              <div key={item.key} className="grid grid-cols-[72px_1fr_44px] items-center gap-2 sm:grid-cols-[110px_1fr_90px] sm:gap-3">
+                <span className="truncate text-xs font-extrabold text-slate-600 sm:text-sm">{item.title}</span>
+                <div className="h-6 overflow-hidden rounded bg-slate-100 sm:h-7"><div className="flex h-full items-center justify-end rounded bg-[#3b82f6] pr-2 text-[11px] font-black text-white transition-all duration-700 sm:text-xs" style={{ width: `${Math.max((item.value / funnelMax) * 100, item.value ? 7 : 0)}%`, transitionDelay: `${index * 90}ms` }}>{item.value}</div></div>
+                <span className="text-[11px] font-black text-slate-500 sm:text-xs">{item.percent}%</span>
               </div>
             ))}
           </div>
         </Card>
 
         <Card delay={260}>
-          <div className="flex items-center justify-between border-b border-dashed border-slate-200 px-5 py-4"><div><h2 className="text-lg font-extrabold text-[#3f4254]">Recent Activity</h2></div><button className="rounded-md border border-slate-200 px-3 py-2 text-xs font-bold text-slate-500">All Activity</button></div>
-          <div className="divide-y divide-slate-100 p-5">
+          <div className="flex items-center justify-between border-b border-dashed border-slate-200 px-4 py-4 sm:px-5"><div><h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Recent Activity</h2></div><button className="rounded-md border border-slate-200 px-3 py-2 text-xs font-bold text-slate-500">All Activity</button></div>
+          <div className="divide-y divide-slate-100 p-4 sm:p-5">
             {(data.recentActivity || []).map((item, index) => (
               <div key={item.id || index} className="flex items-start gap-3 py-3" style={{ animation: `reportFadeUp 500ms ease-out ${index * 70}ms both` }}>
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-50 text-[#6658dd]"><RefreshCcw className="h-4 w-4" /></span>
                 <div className="min-w-0 flex-1"><p className="text-sm font-extrabold text-[#3f4254]">{item.title}</p><p className="mt-0.5 truncate text-xs font-semibold text-slate-400">{item.description}</p></div>
-                <span className="text-xs font-bold text-slate-400">{item.time}</span>
+                <span className="shrink-0 text-xs font-bold text-slate-400">{item.time}</span>
               </div>
             ))}
             {!data.recentActivity?.length && <p className="py-8 text-center text-sm font-bold text-slate-400">No recent activity found.</p>}
@@ -376,8 +378,33 @@ export const EmployerReports = () => {
       </div>
 
       <Card delay={300}>
-        <div className="flex items-center justify-between border-b border-dashed border-slate-200 px-5 py-4"><div><h2 className="text-lg font-extrabold text-[#3f4254]">Top Job Postings</h2><p className="text-sm font-semibold text-slate-400">Performance metrics by job</p></div><Link to="/employer/jobs" className="text-sm font-extrabold text-[#6658dd]">View All Jobs</Link></div>
-        <div className="overflow-x-auto p-5">
+        <div className="flex items-center justify-between border-b border-dashed border-slate-200 px-4 py-4 sm:px-5"><div><h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Top Job Postings</h2><p className="text-xs font-semibold text-slate-400 sm:text-sm">Performance metrics by job</p></div><Link to="/employer/jobs" className="text-xs font-extrabold text-[#6658dd] sm:text-sm">View All Jobs</Link></div>
+
+        {/* Card list — mobile only */}
+        <div className="divide-y divide-slate-100 p-4 sm:hidden">
+          {(data.topJobs || []).map((job) => (
+            <div key={job.id} className="py-3 first:pt-0 last:pb-0">
+              <div className="flex items-center gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-50 text-[#6658dd]"><Briefcase className="h-4 w-4" /></span>
+                <p className="min-w-0 flex-1 truncate text-sm font-extrabold text-[#3f4254]">{job.title}</p>
+                <span className="shrink-0 rounded bg-emerald-50 px-2 py-1 text-[11px] font-black text-emerald-500">{job.conversionRate}%</span>
+              </div>
+              <div className="mt-2 grid grid-cols-3 gap-2 text-xs font-semibold text-slate-500">
+                <p><span className="text-slate-400">Apps:</span> {job.applications}</p>
+                <p><span className="text-slate-400">Shortlist:</span> {job.shortlisted}</p>
+                <p><span className="text-slate-400">Hired:</span> {job.hired}</p>
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="h-1.5 flex-1 overflow-hidden rounded bg-slate-100"><span className="block h-full rounded bg-[#6658dd]" style={{ width: `${job.interviewRate}%` }} /></span>
+                <span className="text-xs font-bold text-slate-600">{job.interviewRate}% interview rate</span>
+              </div>
+            </div>
+          ))}
+          {!data.topJobs?.length && <p className="py-8 text-center text-sm font-bold text-slate-400">No job performance data found.</p>}
+        </div>
+
+        {/* Table — sm and up */}
+        <div className="hidden overflow-x-auto p-5 sm:block">
           <table className="w-full min-w-[850px] text-left">
             <thead className="bg-[#dbe6f6] text-[11px] uppercase text-slate-600"><tr><th className="px-5 py-3">Job Title</th><th className="px-5 py-3">Applications</th><th className="px-5 py-3">Shortlisted</th><th className="px-5 py-3">Interview Rate</th><th className="px-5 py-3">Hired</th><th className="px-5 py-3">Conv. %</th></tr></thead>
             <tbody className="divide-y divide-slate-100">
@@ -389,9 +416,9 @@ export const EmployerReports = () => {
       </Card>
 
       <Card delay={340}>
-        <div className="flex flex-col justify-between gap-4 p-5 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-4"><span className="flex h-12 w-12 items-center justify-center rounded-full bg-violet-50 text-[#6658dd]"><Download className="h-6 w-6" /></span><div><h2 className="text-base font-extrabold text-[#3f4254]">Download Reports</h2><p className="text-sm font-semibold text-slate-400">Export your hiring data for offline analysis or presentations.</p></div></div>
-          <div className="flex flex-wrap gap-2"><button type="button" onClick={handlePdfExport} className="inline-flex h-10 items-center gap-2 rounded-md border-2 border-blue-600 bg-slate-100 px-4 text-sm font-extrabold text-slate-600 transition hover:bg-blue-50 hover:text-blue-700"><FileDown className="h-4 w-4" />PDF</button><button type="button" onClick={handleExcelExport} className="inline-flex h-10 items-center gap-2 rounded-md bg-slate-100 px-4 text-sm font-extrabold text-slate-600 transition hover:bg-slate-200"><FileSpreadsheet className="h-4 w-4" />Excel</button><button type="button" onClick={handleScheduleExport} className="inline-flex h-10 items-center gap-2 rounded-md bg-[#6658dd] px-4 text-sm font-extrabold text-white transition hover:bg-[#5848d8]"><Grid2X2 className="h-4 w-4" />Schedule</button></div>
+        <div className="flex flex-col justify-between gap-4 p-4 sm:p-5 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-3 sm:gap-4"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-50 text-[#6658dd] sm:h-12 sm:w-12"><Download className="h-5 w-5 sm:h-6 sm:w-6" /></span><div><h2 className="text-sm font-extrabold text-[#3f4254] sm:text-base">Download Reports</h2><p className="text-xs font-semibold text-slate-400 sm:text-sm">Export your hiring data for offline analysis or presentations.</p></div></div>
+          <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap"><button type="button" onClick={handlePdfExport} className="inline-flex h-10 items-center justify-center gap-2 rounded-md border-2 border-blue-600 bg-slate-100 px-2 text-xs font-extrabold text-slate-600 transition hover:bg-blue-50 hover:text-blue-700 sm:px-4 sm:text-sm"><FileDown className="h-4 w-4" /><span className="hidden xs:inline sm:inline">PDF</span></button><button type="button" onClick={handleExcelExport} className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-slate-100 px-2 text-xs font-extrabold text-slate-600 transition hover:bg-slate-200 sm:px-4 sm:text-sm"><FileSpreadsheet className="h-4 w-4" /><span className="hidden xs:inline sm:inline">Excel</span></button><button type="button" onClick={handleScheduleExport} className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#6658dd] px-2 text-xs font-extrabold text-white transition hover:bg-[#5848d8] sm:px-4 sm:text-sm"><Grid2X2 className="h-4 w-4" /><span className="hidden xs:inline sm:inline">Schedule</span></button></div>
         </div>
       </Card>
     </div>

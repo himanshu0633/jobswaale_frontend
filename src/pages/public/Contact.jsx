@@ -53,8 +53,8 @@ export const Contact = () => {
   };
 
   return (
-    <main className="min-h-screen py-8">
-      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 mt-24 md:mt-8 mb-20">
+    <main className="min-h-screen py-0">
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 mt-0 md:mt-8 mb-20">
         <div className="flex flex-wrap">
           <div className="w-full xl:w-10/12 lg:w-full mx-auto">
             <section className="mb-12">
@@ -75,7 +75,7 @@ export const Contact = () => {
                     </p>
 
                     {/* Contact Info */}
-                    <div className="flex flex-wrap -mx-4 mt-12">
+                    <div className="flex flex-wrap -mx-4 mt-9">
                       <div className="w-full md:w-1/3 px-4 text-center">
                         <Phone
                           className="w-10 h-10 text-yellow-500 mx-auto mb-3"

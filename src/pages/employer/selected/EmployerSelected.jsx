@@ -60,6 +60,23 @@ const SelectField = ({ label, value, onChange, children }) => (
   </div>
 );
 
+const OfferActions = ({ candidate, isUpdating, isOpen, onToggle, buttonClassName = 'flex h-9 w-9 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-[#6658dd]', menuClassName = 'absolute right-0 z-20 mt-1.5 w-52 rounded-md border border-slate-100 bg-white py-1 shadow-lg', onUpdate }) => (
+  <div className="relative inline-block text-left">
+    <button type="button" disabled={isUpdating} onClick={onToggle} className={buttonClassName}>
+      {isUpdating ? <Loader className="h-4 w-4 animate-spin" /> : <MoreVertical className="h-4 w-4" />}
+    </button>
+    {isOpen && (
+      <div className={menuClassName}>
+        <Link to="/employer/applications" className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"><FileText className="h-4 w-4 text-slate-500" />View Application</Link>
+        <button type="button" onClick={() => onUpdate(candidate, 'Offer Sent')} className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"><Send className="h-4 w-4 text-[#6658dd]" />Mark Offer Sent</button>
+        <button type="button" onClick={() => onUpdate(candidate, 'Offer Accepted')} className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"><CheckCircle2 className="h-4 w-4 text-cyan-500" />Mark Accepted</button>
+        <button type="button" onClick={() => onUpdate(candidate, 'Hired')} className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"><Briefcase className="h-4 w-4 text-emerald-500" />Mark Hired</button>
+        <button type="button" onClick={() => onUpdate(candidate, 'Offer Declined')} className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm font-semibold text-rose-600 hover:bg-rose-50"><UserX className="h-4 w-4" />Mark Declined</button>
+      </div>
+    )}
+  </div>
+);
+
 export const EmployerSelected = () => {
   const [filters, setFilters] = useState(initialFilters);
   const [tableSearch, setTableSearch] = useState('');
@@ -151,42 +168,45 @@ export const EmployerSelected = () => {
   };
 
   const pagination = data.pagination || { page: currentPage, limit: pageSize, total: 0, totalPages: 1 };
-  const startIndex = pagination.total ? (pagination.page - 1) * pagination.limit : 0;
-  const goToPage = (page) => setCurrentPage(Math.min(Math.max(page, 1), pagination.totalPages || 1));
+  const totalPages = pagination.totalPages || 1;
+  const safePage = pagination.page || 1;
+  const startIndex = pagination.total ? (safePage - 1) * pagination.limit : 0;
+  const goToPage = (page) => setCurrentPage(Math.min(Math.max(page, 1), totalPages));
   const optionFilters = data.filters || { jobTitles: [] };
   const stats = data.stats || {};
+  const visibleRows = data.selected || [];
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
-        <h1 className="text-xl font-extrabold text-[#3f4254]">Selected Candidates</h1>
-        <div className="flex items-center gap-2 text-sm font-bold text-slate-400"><span className="text-[#3f4254]">JobsWaale</span><ChevronRight className="h-4 w-4" /><span>Selected</span></div>
+    <div className="space-y-4 px-3 sm:space-y-5 sm:px-0">
+      <div className="flex flex-col justify-between gap-2 md:flex-row md:items-center md:gap-3">
+        <h1 className="text-lg font-extrabold text-[#3f4254] sm:text-xl">Selected Candidates</h1>
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-400 sm:text-sm"><span className="text-[#3f4254]">JobsWaale</span><ChevronRight className="h-4 w-4" /><span>Selected</span></div>
       </div>
 
       {error && <div className="rounded-md border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{error}</div>}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-5">
         {statCards.map((card) => (
-          <section key={card.key} className="rounded-md border border-slate-100 bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-4">
-              <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${card.tone}`}><card.icon className="h-5 w-5" /></span>
-              <div><p className="text-sm font-semibold text-slate-400">{card.title}</p><p className="mt-1 text-xl font-black text-[#3f4254]">{Number(stats[card.key] || 0).toLocaleString('en-IN')}</p></div>
+          <section key={card.key} className="rounded-md border border-slate-100 bg-white p-3 shadow-sm sm:p-5">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${card.tone}`}><card.icon className="h-4 w-4 sm:h-5 sm:w-5" /></span>
+              <div className="min-w-0"><p className="truncate text-xs font-semibold text-slate-400 sm:text-sm">{card.title}</p><p className="mt-1 text-base font-black text-[#3f4254] sm:text-xl">{Number(stats[card.key] || 0).toLocaleString('en-IN')}</p></div>
             </div>
           </section>
         ))}
       </div>
 
       <section className="rounded-md border border-slate-100 bg-white shadow-sm">
-        <div className="flex flex-col justify-between gap-4 border-b border-dashed border-slate-200 px-5 py-4 lg:flex-row lg:items-center">
-          <div><h2 className="text-lg font-extrabold text-[#3f4254]">Selected Candidates</h2><p className="mt-1 text-sm font-semibold text-slate-400">Manage selected candidates, send offer letters, and track offer acceptance status.</p></div>
+        <div className="flex flex-col justify-between gap-4 border-b border-dashed border-slate-200 px-4 py-4 sm:px-5 lg:flex-row lg:items-center">
+          <div><h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Selected Candidates</h2><p className="mt-1 text-xs font-semibold text-slate-400 sm:text-sm">Manage selected candidates, send offer letters, and track offer acceptance status.</p></div>
           <div className="flex flex-wrap gap-2">
             <Link to="/employer/interviews" className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#6658dd] px-4 text-sm font-extrabold text-white transition hover:bg-[#5848d8]"><MailCheck className="h-4 w-4" />All Interviews</Link>
             <Link to="/employer/applications" className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-slate-100 px-4 text-sm font-extrabold text-slate-600 transition hover:bg-slate-200"><FileText className="h-4 w-4" />All Applications</Link>
           </div>
         </div>
 
-        <div className="p-5">
-          <div className="mb-5 grid gap-3 md:grid-cols-2 xl:grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto]">
+        <div className="p-4 sm:p-5">
+          <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto]">
             <div>
               <label className="mb-2 block text-xs font-extrabold text-slate-500">Search Candidate / Job</label>
               <div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input className="h-10 w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100" value={filters.search} onChange={(event) => setFilter('search', event.target.value)} placeholder="Name, email, job, location" /></div>
@@ -203,11 +223,51 @@ export const EmployerSelected = () => {
             <label className="flex items-center gap-2 text-sm font-semibold text-slate-600">Search:<input value={tableSearch} onChange={(event) => { setTableSearch(event.target.value); setCurrentPage(1); }} className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold outline-none focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100 sm:w-48" /></label>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Card list — mobile only */}
+          <div className="divide-y divide-slate-100 rounded-md border border-slate-100 sm:hidden">
+            {loading ? (
+              <div className="py-12 text-center"><Loader className="mx-auto h-7 w-7 animate-spin text-[#6658dd]" /></div>
+            ) : visibleRows.length ? visibleRows.map((candidate) => (
+              <div key={candidate.id} className="p-4">
+                <div className="flex items-start gap-3">
+                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${candidate.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>{candidate.initials}</span>
+                  <div className="min-w-0 flex-1">
+                    <Link to="/employer/applications" className="truncate text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{candidate.name}</Link>
+                    <p className="mt-0.5 truncate text-xs font-semibold text-slate-400">{candidate.email}</p>
+                    <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><MapPin className="h-3 w-3 shrink-0" />{candidate.location}</p>
+                  </div>
+                  <span className={`shrink-0 rounded px-2 py-1 text-[11px] font-black ${statusTone[candidate.offerStatus] || 'bg-slate-100 text-slate-600'}`}>{candidate.offerStatus}</span>
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-2 text-xs font-semibold text-slate-500">
+                  <p className="truncate"><span className="text-slate-400">Job:</span> {candidate.jobTitle}</p>
+                  <p className="truncate"><span className="text-slate-400">Type:</span> {candidate.jobType}</p>
+                  <p><span className="text-slate-400">Selected:</span> {candidate.displayDate || '-'}</p>
+                  <p><span className="text-slate-400">Salary:</span> {candidate.salaryText}</p>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
+                  <span className={`inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-black ${scoreTone(candidate.interviewScore || 0)}`}>Score: {candidate.interviewScore || 0}%</span>
+                  <OfferActions
+                    candidate={candidate}
+                    isUpdating={updatingId === candidate.id}
+                    isOpen={openDropdownId === candidate.id}
+                    onToggle={() => setOpenDropdownId(openDropdownId === candidate.id ? '' : candidate.id)}
+                    onUpdate={updateOfferStatus}
+                  />
+                </div>
+              </div>
+            )) : (
+              <p className="px-4 py-12 text-center text-sm font-bold text-slate-400">No selected candidates found.</p>
+            )}
+          </div>
+
+          {/* Table — sm and up */}
+          <div className="hidden overflow-x-auto sm:block">
             <table className="w-full min-w-[1120px] text-left">
               <thead className="bg-[#dbe6f6] text-[11px] uppercase text-slate-600"><tr><th className="px-5 py-3">Candidate</th><th className="px-5 py-3">Job Applied</th><th className="px-5 py-3"><span className="inline-flex items-center gap-1">Selection Date <ChevronUp className="h-3 w-3 text-slate-400" /></span></th><th className="px-5 py-3">Interview Score</th><th className="px-5 py-3">Offer Status</th><th className="px-5 py-3">Salary Offered</th><th className="px-5 py-3 text-center">Action</th></tr></thead>
               <tbody className="divide-y divide-slate-100">
-                {loading ? <tr><td colSpan="7" className="px-5 py-12 text-center"><Loader className="mx-auto h-7 w-7 animate-spin text-[#6658dd]" /></td></tr> : data.selected.length ? data.selected.map((candidate) => (
+                {loading ? <tr><td colSpan="7" className="px-5 py-12 text-center"><Loader className="mx-auto h-7 w-7 animate-spin text-[#6658dd]" /></td></tr> : visibleRows.length ? visibleRows.map((candidate) => (
                   <tr key={candidate.id} className="transition hover:bg-slate-50">
                     <td className="px-5 py-4"><div className="flex items-center gap-3"><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${candidate.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>{candidate.initials}</span><div><Link to="/employer/applications" className="text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{candidate.name}</Link><p className="mt-0.5 text-xs font-semibold text-slate-400">{candidate.email}</p><p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><MapPin className="h-3 w-3" />{candidate.location}</p></div></div></td>
                     <td className="px-5 py-4"><p className="text-sm font-extrabold text-[#3f4254]">{candidate.jobTitle}</p><p className="mt-0.5 text-xs font-semibold text-slate-400">{candidate.jobType}</p></td>
@@ -216,20 +276,13 @@ export const EmployerSelected = () => {
                     <td className="px-5 py-4"><span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${statusTone[candidate.offerStatus] || 'bg-slate-100 text-slate-600'}`}>{candidate.offerStatus}</span></td>
                     <td className="px-5 py-4 text-sm font-extrabold text-[#3f4254]">{candidate.salaryText}</td>
                     <td className="px-5 py-4 text-center">
-                      <div className="relative inline-block text-left">
-                        <button type="button" disabled={updatingId === candidate.id} onClick={() => setOpenDropdownId(openDropdownId === candidate.id ? '' : candidate.id)} className="flex h-9 w-9 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-[#6658dd]">
-                          {updatingId === candidate.id ? <Loader className="h-4 w-4 animate-spin" /> : <MoreVertical className="h-4 w-4" />}
-                        </button>
-                        {openDropdownId === candidate.id && (
-                          <div className="absolute right-0 z-20 mt-1.5 w-52 rounded-md border border-slate-100 bg-white py-1 shadow-lg">
-                            <Link to="/employer/applications" className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"><FileText className="h-4 w-4 text-slate-500" />View Application</Link>
-                            <button type="button" onClick={() => updateOfferStatus(candidate, 'Offer Sent')} className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"><Send className="h-4 w-4 text-[#6658dd]" />Mark Offer Sent</button>
-                            <button type="button" onClick={() => updateOfferStatus(candidate, 'Offer Accepted')} className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"><CheckCircle2 className="h-4 w-4 text-cyan-500" />Mark Accepted</button>
-                            <button type="button" onClick={() => updateOfferStatus(candidate, 'Hired')} className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"><Briefcase className="h-4 w-4 text-emerald-500" />Mark Hired</button>
-                            <button type="button" onClick={() => updateOfferStatus(candidate, 'Offer Declined')} className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm font-semibold text-rose-600 hover:bg-rose-50"><UserX className="h-4 w-4" />Mark Declined</button>
-                          </div>
-                        )}
-                      </div>
+                      <OfferActions
+                        candidate={candidate}
+                        isUpdating={updatingId === candidate.id}
+                        isOpen={openDropdownId === candidate.id}
+                        onToggle={() => setOpenDropdownId(openDropdownId === candidate.id ? '' : candidate.id)}
+                        onUpdate={updateOfferStatus}
+                      />
                     </td>
                   </tr>
                 )) : <tr><td colSpan="7" className="px-5 py-12 text-center text-sm font-bold text-slate-400">No selected candidates found.</td></tr>}
@@ -237,9 +290,9 @@ export const EmployerSelected = () => {
             </table>
           </div>
 
-          <div className="mt-5 flex flex-col justify-between gap-3 text-sm font-semibold text-slate-600 sm:flex-row sm:items-center">
+          <div className="mt-5 flex flex-col justify-between gap-3 text-xs font-semibold text-slate-600 sm:flex-row sm:items-center sm:text-sm">
             <span>Showing {pagination.total ? startIndex + 1 : 0} to {Math.min(startIndex + pagination.limit, pagination.total)} of {pagination.total} entries</span>
-            <div className="flex items-center gap-2"><button type="button" onClick={() => goToPage(1)} disabled={pagination.page === 1} className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-400 disabled:opacity-50"><ChevronsLeft className="h-4 w-4" /></button><button type="button" onClick={() => goToPage(pagination.page - 1)} disabled={pagination.page === 1} className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-400 disabled:opacity-50"><ChevronLeft className="h-4 w-4" /></button><button type="button" className="flex h-9 min-w-9 items-center justify-center rounded-md bg-[#6658dd] px-3 text-sm font-black text-white">{pagination.page}</button><button type="button" onClick={() => goToPage(pagination.page + 1)} disabled={pagination.page === pagination.totalPages} className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-400 disabled:opacity-50"><ChevronRight className="h-4 w-4" /></button><button type="button" onClick={() => goToPage(pagination.totalPages)} disabled={pagination.page === pagination.totalPages} className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-400 disabled:opacity-50"><ChevronsRight className="h-4 w-4" /></button></div>
+            <div className="flex items-center justify-center gap-2"><button type="button" onClick={() => goToPage(1)} disabled={safePage === 1} className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-400 disabled:opacity-50"><ChevronsLeft className="h-4 w-4" /></button><button type="button" onClick={() => goToPage(safePage - 1)} disabled={safePage === 1} className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-400 disabled:opacity-50"><ChevronLeft className="h-4 w-4" /></button><button type="button" className="flex h-9 min-w-9 items-center justify-center rounded-md bg-[#6658dd] px-3 text-sm font-black text-white">{safePage}</button><button type="button" onClick={() => goToPage(safePage + 1)} disabled={safePage === totalPages} className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-400 disabled:opacity-50"><ChevronRight className="h-4 w-4" /></button><button type="button" onClick={() => goToPage(totalPages)} disabled={safePage === totalPages} className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-400 disabled:opacity-50"><ChevronsRight className="h-4 w-4" /></button></div>
           </div>
         </div>
       </section>
