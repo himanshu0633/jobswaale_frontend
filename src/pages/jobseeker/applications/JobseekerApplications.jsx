@@ -4,6 +4,7 @@ import {
   CalendarCheck,
   CheckCircle,
   MapPin,
+  MessageCircle,
   Send,
   XCircle
 } from 'lucide-react';
@@ -40,6 +41,8 @@ const statusLabels = {
   interview: 'Interview',
   rejected: 'Rejected'
 };
+
+const canJobseekerMessage = (status) => ['shortlisted', 'interview', 'offered'].includes(String(status || '').toLowerCase());
 
 export const JobseekerApplications = () => {
   const [appliedJobs, setAppliedJobs] = useState([]);
@@ -185,18 +188,29 @@ export const JobseekerApplications = () => {
               {statusLabels[job.status] || job.status}
             </span>
 
-            <Link
-              to={`/jobs/${job.jobId}`}
-              className={`shrink-0 rounded-md px-4 py-2 text-center text-sm font-bold transition ${
-                job.status === 'interview'
-                  ? 'bg-[#0047C7] text-white hover:bg-[#00389c]'
-                  : job.status === 'rejected'
-                  ? 'border border-slate-200 text-slate-400 hover:bg-slate-50'
-                  : 'border border-[#0047C7] text-[#0047C7] hover:bg-blue-50'
-              }`}
-            >
-              {job.status === 'interview' ? 'View Details' : 'View'}
-            </Link>
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <Link
+                to={`/jobs/${job.jobId}`}
+                className={`rounded-md px-4 py-2 text-center text-sm font-bold transition ${
+                  job.status === 'interview'
+                    ? 'bg-[#0047C7] text-white hover:bg-[#00389c]'
+                    : job.status === 'rejected'
+                    ? 'border border-slate-200 text-slate-400 hover:bg-slate-50'
+                    : 'border border-[#0047C7] text-[#0047C7] hover:bg-blue-50'
+                }`}
+              >
+                {job.status === 'interview' ? 'View Details' : 'View'}
+              </Link>
+              {canJobseekerMessage(job.status) && (
+                <Link
+                  to={`/jobseeker/messages?application=${job.id}`}
+                  className="inline-flex items-center justify-center gap-2 rounded-md border border-sky-200 px-4 py-2 text-sm font-bold text-sky-600 transition hover:bg-sky-50"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Message
+                </Link>
+              )}
+            </div>
           </div>
         ))}
       </div>

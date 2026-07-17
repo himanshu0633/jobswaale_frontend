@@ -8,7 +8,6 @@ import {
   CalendarPlus,
   Check,
   Download,
-  FileText,
   Mail,
   MapPin,
   MessageCircle,
@@ -263,7 +262,7 @@ const EmployerApplicationDetails = () => {
             </div>
             <div className="mt-4 grid gap-2">
               <Link to={`/employer/candidateProfile/${candidate.id}`} className="inline-flex items-center justify-center gap-2 rounded-md bg-[#6658dd] px-3 py-2 text-xs font-extrabold text-white"><User className="h-4 w-4" /> View Full Profile</Link>
-              <Link to="/employer/messages" className="inline-flex items-center justify-center gap-2 rounded-md border border-sky-200 px-3 py-2 text-xs font-extrabold text-sky-600 hover:bg-sky-50"><MessageCircle className="h-4 w-4" /> Send Message</Link>
+              <Link to={`/employer/messages?application=${application.id}`} className="inline-flex items-center justify-center gap-2 rounded-md border border-sky-200 px-3 py-2 text-xs font-extrabold text-sky-600 hover:bg-sky-50"><MessageCircle className="h-4 w-4" /> Send Message</Link>
             </div>
           </Card>
 

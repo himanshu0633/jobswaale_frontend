@@ -239,6 +239,7 @@ export const JobseekerProfile = () => {
   const [linkedin, setLinkedin] = useState('');
   const [portfolio, setPortfolio] = useState('');
   const [github, setGithub] = useState('');
+  const [profileCompletionScore, setProfileCompletionScore] = useState(0);
   
   // Custom states
   const [gender, setGender] = useState('');
@@ -317,6 +318,7 @@ export const JobseekerProfile = () => {
         setLinkedin(seeker.linkedin || '');
         setPortfolio(seeker.portfolio || '');
         setGithub(seeker.github || '');
+        setProfileCompletionScore(Number(seeker.profileCompletionScore || 0));
         setSkills(seeker.skills || []);
         setRelocate(seeker.relocate || 'yes');
         
@@ -427,9 +429,10 @@ export const JobseekerProfile = () => {
         preferredLocation: locations.join(', ')
       };
 
-      await axios.put(`${BASE_API_URL}/jobseeker/profile`, payload, {
+      const response = await axios.put(`${BASE_API_URL}/jobseeker/profile`, payload, {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
+      setProfileCompletionScore(Number(response.data?.seeker?.profileCompletionScore || profileCompletionScore));
 
       setSaved(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -513,6 +516,21 @@ export const JobseekerProfile = () => {
               </span>
             )}
           </div>
+        </div>
+        <div className="w-full rounded-md border border-slate-100 bg-slate-50 p-4 sm:ml-auto sm:w-56">
+          <div className="mb-2 flex items-center justify-between text-xs font-black text-slate-500">
+            <span>Profile score</span>
+            <span className="text-[#0047C7]">{profileCompletionScore}%</span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-white">
+            <div
+              className="h-full rounded-full bg-[#0047C7] transition-all"
+              style={{ width: `${Math.min(Math.max(profileCompletionScore, 0), 100)}%` }}
+            />
+          </div>
+          <p className="mt-2 text-[11px] font-bold text-slate-400">
+            Complete more details to improve visibility.
+          </p>
         </div>
       </div>
 

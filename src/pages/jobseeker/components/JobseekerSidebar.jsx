@@ -13,6 +13,7 @@ import {
   User
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import { useMessageSocket } from '../../../context/MessageSocketContext';
 import logoasset from '../../../assets/logo.png';
 
 const mainMenu = [
@@ -48,10 +49,12 @@ const getJobseekerUser = () => {
 
 export const JobseekerSidebar = ({ isOpen, toggleSidebar }) => {
   const location = useLocation();
+  const { unreadCount } = useMessageSocket();
   const user = getJobseekerUser();
   const [profile, setProfile] = useState({
     name: user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Job Seeker',
     role: 'Job Seeker',
+    profileCompletionScore: 0,
     counts: {}
   });
 
@@ -101,7 +104,7 @@ export const JobseekerSidebar = ({ isOpen, toggleSidebar }) => {
   const NavItem = ({ item }) => {
     const Icon = item.icon;
     const active = isActive(item);
-    const badgeValue = item.badgeKey ? profile.counts?.[item.badgeKey] : null;
+    const badgeValue = item.badgeKey === 'messages' ? unreadCount : item.badgeKey ? profile.counts?.[item.badgeKey] : null;
 
     return (
       <Link
@@ -117,7 +120,7 @@ export const JobseekerSidebar = ({ isOpen, toggleSidebar }) => {
         <span className="whitespace-nowrap">{item.label}</span>
         {Boolean(badgeValue) && (
           <span className="ml-auto rounded-full bg-[#FF6B00] px-2.5 py-0.5 text-[0.7rem] font-medium text-white">
-            {badgeValue}
+            {badgeValue > 99 ? '99+' : badgeValue}
           </span>
         )}
       </Link>
@@ -154,6 +157,18 @@ export const JobseekerSidebar = ({ isOpen, toggleSidebar }) => {
           <div className="min-w-0 overflow-hidden">
             <div className="truncate text-sm font-semibold text-white">{profile.name}</div>
             <div className="text-xs text-white/60">{profile.role || 'Job Seeker'}</div>
+            <div className="mt-2">
+              <div className="mb-1 flex items-center justify-between text-[11px] font-bold text-white/55">
+                <span>Profile score</span>
+                <span>{Number(profile.profileCompletionScore || 0)}%</span>
+              </div>
+              <div className="h-1.5 overflow-hidden rounded-full bg-white/15">
+                <div
+                  className="h-full rounded-full bg-[#FF6B00] transition-all"
+                  style={{ width: `${Math.min(Math.max(Number(profile.profileCompletionScore || 0), 0), 100)}%` }}
+                />
+              </div>
+            </div>
           </div>
         </div>
 

@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
+import { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import axios from 'axios';
 
 const AuthContext = createContext();
@@ -103,10 +103,11 @@ export const AuthProvider = ({ children }) => {
         const hasAdminToken = Boolean(localStorage.getItem('token'));
         const hasPublicToken = Boolean(localStorage.getItem('publicToken'));
         const isAdminRequest = requestUrl.includes('/admin/') || window.location.pathname.startsWith('/admin');
+        const isPublicPortalRequest = requestUrl.includes('/jobseeker/') || requestUrl.includes('/employer/');
 
         if (!isAuthRoute && hasAdminToken && isAdminRequest && isAuthExpiredError(error)) {
           logoutAndRedirect();
-        } else if (!isAuthRoute && hasPublicToken && isAuthExpiredError(error)) {
+        } else if (!isAuthRoute && hasPublicToken && isPublicPortalRequest && isAuthExpiredError(error)) {
           logoutPublicAndRedirect();
         }
 

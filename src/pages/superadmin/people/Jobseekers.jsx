@@ -15,6 +15,8 @@ import {
   Trash2,
   LayoutDashboard,
   ChevronRight,
+  History,
+  X,
 } from 'lucide-react';
 import ResponsiveCardList from '../../../components/ResponsiveCardList';
 
@@ -40,6 +42,7 @@ export const Jobseekers = () => {
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('latest');
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [historyModal, setHistoryModal] = useState({ open: false, loading: false, error: '', data: null });
   const navigate = useNavigate();
 
   const showMessage = (type, text) => {
@@ -133,6 +136,23 @@ export const Jobseekers = () => {
     }
   };
 
+  const openHistory = async (item) => {
+    setHistoryModal({ open: true, loading: true, error: '', data: null });
+    try {
+      const response = await axios.get(`${BASE_API_URL}/jobseekers/${item._id}/applications`);
+      setHistoryModal({ open: true, loading: false, error: '', data: response.data });
+    } catch (err) {
+      setHistoryModal({
+        open: true,
+        loading: false,
+        error: err.response?.data?.message || 'Application history could not be loaded.',
+        data: null
+      });
+    }
+  };
+
+  const closeHistory = () => setHistoryModal({ open: false, loading: false, error: '', data: null });
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -143,6 +163,86 @@ export const Jobseekers = () => {
 
   return (
     <div className="min-w-0 space-y-5">
+      {historyModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4">
+          <div className="max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+              <div>
+                <h2 className="text-lg font-extrabold text-slate-800">Application History</h2>
+                <p className="mt-1 text-xs font-semibold text-slate-400">
+                  {historyModal.data?.jobseeker?.name || 'Jobseeker'} {historyModal.data?.jobseeker?.email ? `· ${historyModal.data.jobseeker.email}` : ''}
+                </p>
+              </div>
+              <button type="button" onClick={closeHistory} className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Close history">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="max-h-[calc(88vh-76px)] overflow-y-auto p-5">
+              {historyModal.loading ? (
+                <div className="flex min-h-64 items-center justify-center">
+                  <Loader className="h-8 w-8 animate-spin text-indigo-600" />
+                </div>
+              ) : historyModal.error ? (
+                <div className="rounded-lg border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{historyModal.error}</div>
+              ) : (
+                <>
+                  <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+                    {[
+                      ['Total', historyModal.data?.stats?.total || 0],
+                      ['Applied', historyModal.data?.stats?.applied || 0],
+                      ['Shortlisted', historyModal.data?.stats?.shortlisted || 0],
+                      ['Interview', historyModal.data?.stats?.interview || 0],
+                      ['Offered', historyModal.data?.stats?.offered || 0],
+                      ['Rejected', historyModal.data?.stats?.rejected || 0],
+                    ].map(([label, value]) => (
+                      <div key={label} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                        <p className="text-xs font-bold text-slate-400">{label}</p>
+                        <p className="mt-1 text-xl font-black text-slate-800">{value}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[900px] text-left text-sm">
+                      <thead className="bg-slate-50 text-xs uppercase text-slate-400">
+                        <tr>
+                          <th className="px-4 py-3">Employer</th>
+                          <th className="px-4 py-3">Job</th>
+                          <th className="px-4 py-3">Applied</th>
+                          <th className="px-4 py-3">Application Status</th>
+                          <th className="px-4 py-3">Job Status</th>
+                          <th className="px-4 py-3">Match</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {(historyModal.data?.history || []).length ? historyModal.data.history.map((row) => (
+                          <tr key={row.id}>
+                            <td className="px-4 py-3">
+                              <div className="font-bold text-slate-800">{row.employerName}</div>
+                              <div className="text-xs text-slate-400">{row.employerEmail || '—'}</div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="font-bold text-slate-800">{row.jobTitle}</div>
+                              <div className="text-xs text-slate-400">{row.jobLocation || '—'}</div>
+                            </td>
+                            <td className="px-4 py-3 text-slate-600">{row.appliedDisplayDate}</td>
+                            <td className="px-4 py-3"><span className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-600">{row.applicationStatus}</span></td>
+                            <td className="px-4 py-3 text-slate-600">{row.jobStatus || '—'}</td>
+                            <td className="px-4 py-3 font-black text-indigo-600">{row.matchScore}%</td>
+                          </tr>
+                        )) : (
+                          <tr><td colSpan="6" className="px-4 py-10 text-center text-sm font-bold text-slate-400">No applications found for this jobseeker.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Breadcrumb Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -280,10 +380,18 @@ export const Jobseekers = () => {
                         <button onClick={() => navigate(`/admin/jobseekers/edit/${item._id}`)} className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
                           <Edit2 className="w-4 h-4" />
                         </button>
+                        <button onClick={() => openHistory(item)} className="w-8 h-8 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center">
+                          <History className="w-4 h-4" />
+                        </button>
                         <button onClick={() => handleDelete(item._id)} className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </>
+                    )}
+                    {item.profileIncomplete && (
+                      <button onClick={() => openHistory(item)} className="w-8 h-8 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center">
+                        <History className="w-4 h-4" />
+                      </button>
                     )}
                   </div>
                 </div>
@@ -383,7 +491,16 @@ export const Jobseekers = () => {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5">
                           {item.profileIncomplete ? (
-                            <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-600">Profile pending</span>
+                            <>
+                              <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-600">Profile pending</span>
+                              <button
+                                onClick={() => openHistory(item)}
+                                title="Application History"
+                                className="w-7 h-7 rounded-full flex items-center justify-center bg-sky-50 hover:bg-sky-100 text-sky-600 transition-colors"
+                              >
+                                <History className="w-3.5 h-3.5" />
+                              </button>
+                            </>
                           ) : (
                             <>
                               {item.resume && (
@@ -421,6 +538,13 @@ export const Jobseekers = () => {
                                 className="w-7 h-7 rounded-full flex items-center justify-center bg-emerald-50 hover:bg-emerald-100 text-emerald-600 transition-colors"
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => openHistory(item)}
+                                title="Application History"
+                                className="w-7 h-7 rounded-full flex items-center justify-center bg-sky-50 hover:bg-sky-100 text-sky-600 transition-colors"
+                              >
+                                <History className="w-3.5 h-3.5" />
                               </button>
                               <button
                                 onClick={() => handleDelete(item._id)}

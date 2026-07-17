@@ -1,8 +1,11 @@
+/* eslint-disable react-refresh/only-export-components */
 import { useMemo, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import JobseekerFooter from './components/JobseekerFooter';
 import JobseekerHeader from './components/JobseekerHeader';
 import JobseekerSidebar from './components/JobseekerSidebar';
+import { MessageSocketProvider } from '../../context/MessageSocketContext';
+import ProfileCompletionPopup from '../../components/ProfileCompletionPopup';
 
 const getPublicUser = () => {
   try {
@@ -13,10 +16,12 @@ const getPublicUser = () => {
 };
 
 export const isJobseekerUser = (user) => {
-  const accountType = String(user?.accountType || '').trim().toLowerCase();
-  const role = String(user?.role || '').trim().toLowerCase();
+  const normalize = (value) => String(value || '').trim().toLowerCase().replace(/\s+/g, '');
+  const accountType = normalize(user?.accountType);
+  const role = normalize(user?.role);
+  const roleName = normalize(user?.roleName);
   if (accountType) return accountType === 'jobseeker';
-  return role === 'jobseeker';
+  return role === 'jobseeker' || roleName === 'jobseeker';
 };
 
 export const JobseekerProtectedRoute = () => {
@@ -65,33 +70,36 @@ export const JobseekerLayout = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
-      <JobseekerHeader
-        toggleSidebar={handleToggleSidebar}
-        title={pageTitle}
-        isCollapsed={sidebarCollapsed}
-      />
-
-      <div className="relative flex min-w-0 flex-1 ">
-        <JobseekerSidebar
-          isOpen={sidebarOpenMobile}
+    <MessageSocketProvider role="jobseeker">
+      <div className="flex min-h-screen flex-col bg-slate-50">
+        <JobseekerHeader
+          toggleSidebar={handleToggleSidebar}
+          title={pageTitle}
           isCollapsed={sidebarCollapsed}
-          toggleSidebar={() => setSidebarOpenMobile(false)}
         />
 
-        <div
-          className={`flex min-w-0 flex-grow flex-col bg-[#f5f6f8] transition-all duration-300 ${
-            sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'
-          }`}
-        >
-          <main className="min-w-0 flex-grow overflow-x-hidden p-4 md:p-5 lg:p-6">
-            <Outlet />
-          </main>
+        <div className="relative flex min-w-0 flex-1 ">
+          <ProfileCompletionPopup portal="jobseeker" />
+          <JobseekerSidebar
+            isOpen={sidebarOpenMobile}
+            isCollapsed={sidebarCollapsed}
+            toggleSidebar={() => setSidebarOpenMobile(false)}
+          />
 
-          <JobseekerFooter />
+          <div
+            className={`flex min-w-0 flex-grow flex-col bg-[#f5f6f8] transition-all duration-300 ${
+              sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'
+            }`}
+          >
+            <main className="min-w-0 flex-grow overflow-x-hidden p-4 md:p-5 lg:p-6">
+              <Outlet />
+            </main>
+
+            <JobseekerFooter />
+          </div>
         </div>
       </div>
-    </div>
+    </MessageSocketProvider>
   );
 };
 

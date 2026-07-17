@@ -1,4 +1,3 @@
-import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 
 const getPublicUser = () => {
@@ -10,17 +9,21 @@ const getPublicUser = () => {
 };
 
 export const isEmployerUser = (user) => {
-  const accountType = String(user?.accountType || '').trim().toLowerCase();
-  const role = String(user?.role || '').trim().toLowerCase();
+  const normalize = (value) => String(value || '').trim().toLowerCase().replace(/\s+/g, '');
+  const accountType = normalize(user?.accountType);
+  const role = normalize(user?.role);
+  const roleName = normalize(user?.roleName);
   if (accountType) return accountType === 'employer';
-  return role === 'employer';
+  return role === 'employer' || roleName === 'employer';
 };
 
 export const isJobseekerUser = (user) => {
-  const accountType = String(user?.accountType || '').trim().toLowerCase();
-  const role = String(user?.role || '').trim().toLowerCase();
+  const normalize = (value) => String(value || '').trim().toLowerCase().replace(/\s+/g, '');
+  const accountType = normalize(user?.accountType);
+  const role = normalize(user?.role);
+  const roleName = normalize(user?.roleName);
   if (accountType) return accountType === 'jobseeker';
-  return role === 'jobseeker';
+  return role === 'jobseeker' || roleName === 'jobseeker';
 };
 
 export const EmployerProtectedRoute = () => {

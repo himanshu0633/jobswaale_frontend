@@ -16,6 +16,7 @@ import {
   Loader,
   MailCheck,
   MapPin,
+  MessageCircle,
   Search,
   UserCheck,
   UserX,
@@ -195,7 +196,7 @@ export const EmployerApplications = () => {
                     <td className="px-5 py-4 text-sm font-semibold text-slate-600">{application.displayDate}</td>
                     <td className="px-5 py-4"><span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${scoreTone(application.matchScore)}`}>{application.matchScore}%</span></td>
                     <td className="px-5 py-4"><span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${statusTone[application.status] || statusTone.Applied}`}>{application.status}</span></td>
-                    <td className="px-5 py-4 text-center"><Link to={`/employer/applications/${application.id}`} className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-[#6658dd] px-3 text-xs font-extrabold text-[#6658dd] transition hover:bg-violet-50"><Eye className="h-4 w-4" />View</Link></td>
+                    <td className="px-5 py-4 text-center"><div className="inline-flex items-center gap-2"><Link to={`/employer/applications/${application.id}`} className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-[#6658dd] px-3 text-xs font-extrabold text-[#6658dd] transition hover:bg-violet-50"><Eye className="h-4 w-4" />View</Link><Link to={`/employer/messages?application=${application.id}`} className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-sky-200 px-3 text-xs font-extrabold text-sky-600 transition hover:bg-sky-50"><MessageCircle className="h-4 w-4" />Message</Link></div></td>
                   </tr>
                 )) : <tr><td colSpan="7" className="px-5 py-12 text-center text-sm font-bold text-slate-400">No applications found.</td></tr>}
               </tbody>

@@ -1,414 +1,633 @@
-import { useEffect, useRef, useState } from 'react';
+/* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import axios from 'axios';
 import {
   ArrowLeft,
-  Camera,
-  MoreVertical,
+  Briefcase,
+  FileText,
+  Image as ImageIcon,
+  Loader,
+  Lock,
   Paperclip,
-  Phone,
+  Reply,
   Search,
-  Send
+  Send,
+  X
 } from 'lucide-react';
+import { BASE_API_URL } from '../../../context/AuthContext';
+import { useMessageSocket } from '../../../context/MessageSocketContext';
 
-const initialConversations = [
-  {
-    id: 1,
-    name: 'Priya Sharma',
-    role: 'HR Manager at Microsoft',
-    color: '#e63946',
-    initials: 'PS',
-    time: '2 min ago',
-    unread: 2,
-    messages: [
-      { id: 1, sender: 'received', text: 'Hi Rahul! Thank you for applying to Frontend Developer at Microsoft.', time: '10:15 AM' },
-      { id: 2, sender: 'sent', text: "Thank you! I'm very excited about this opportunity.", time: '10:18 AM' },
-      { id: 3, sender: 'received', text: "Great! We've reviewed your portfolio and would like to schedule an interview. Are you available this Friday at 11:00 AM?", time: '10:20 AM' },
-      { id: 4, sender: 'sent', text: 'Yes, Friday at 11:00 AM works perfectly for me. Should I prepare for any specific topics?', time: '10:22 AM' },
-      { id: 5, sender: 'received', text: "The interview will cover React, JavaScript fundamentals, and a small coding exercise. You'll receive a calendar invite with the meeting link shortly.", time: '10:25 AM' },
-      { id: 6, sender: 'received', text: 'Looking forward to speaking with you!', time: '10:26 AM' },
-      { id: 7, sender: 'sent', text: 'Perfect, thank you! Looking forward to it too. 😊', time: '10:30 AM' }
-    ]
-  },
-  {
-    id: 2,
-    name: 'Amit Verma',
-    role: 'Recruiter at TCS',
-    color: '#1d70b8',
-    initials: 'AV',
-    time: '1 hour ago',
-    unread: 1,
-    messages: [
-      { id: 1, sender: 'received', text: "We've reviewed your profile and would like to move forward with the next round.", time: '9:10 AM' }
-    ]
-  },
-  {
-    id: 3,
-    name: 'Neha Gupta',
-    role: 'Talent Acquisition at Amazon',
-    color: '#8e44ad',
-    initials: 'NG',
-    time: '3 hours ago',
-    unread: 0,
-    messages: [
-      { id: 1, sender: 'received', text: "Thank you for applying. We'll get back to you soon.", time: '7:45 AM' }
-    ]
-  },
-  {
-    id: 4,
-    name: 'Ravi Singh',
-    role: 'HR at Wipro',
-    color: '#e67e22',
-    initials: 'RS',
-    time: 'Yesterday',
-    unread: 0,
-    messages: [
-      { id: 1, sender: 'received', text: 'Can you confirm your availability for tomorrow?', time: 'Yesterday' }
-    ]
-  },
-  {
-    id: 5,
-    name: 'Sneha Patel',
-    role: 'HR Coordinator at Infosys',
-    color: '#2e7d32',
-    initials: 'SP',
-    time: '2 days ago',
-    unread: 0,
-    messages: [
-      { id: 1, sender: 'received', text: 'Unfortunately, the position has been filled...', time: '2 days ago' }
-    ]
-  }
-];
-
-
-const getTimeNow = () => {
-  const now = new Date();
-  const hours = now.getHours().toString().padStart(2, '0');
-  const minutes = now.getMinutes().toString().padStart(2, '0');
-  return `${hours}:${minutes}`;
+const getTokenHeaders = () => {
+  const token = localStorage.getItem('publicToken');
+  return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
+const portalConfig = {
+  jobseeker: {
+    endpoint: `${BASE_API_URL}/jobseeker/messages`,
+    emptyTitle: 'No conversations yet',
+    emptyText: 'Messages open after an employer shortlists you, schedules an interview, or selects you.'
+  },
+  employer: {
+    endpoint: `${BASE_API_URL}/employer/messages`,
+    emptyTitle: 'No candidate conversations yet',
+    emptyText: 'Conversations appear for candidates who applied to your active jobs.'
+  }
+};
 
-export const JobseekerChat = () => {
-  const [conversations, setConversations] = useState(initialConversations);
-  const [activeId, setActiveId] = useState(initialConversations[0].id);
+const sortThreadsByRecentMessage = (threads = []) => (
+  [...threads].sort((a, b) => new Date(b.lastMessageAt || 0) - new Date(a.lastMessageAt || 0))
+);
+
+const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024;
+const ALLOWED_ATTACHMENT_TYPES = new Set([
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp'
+]);
+const ALLOWED_ATTACHMENT_EXTENSIONS = new Set(['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'gif', 'webp']);
+
+const formatFileSize = (bytes = 0) => {
+  if (!bytes) return '';
+  if (bytes < 1024 * 1024) return `${Math.ceil(bytes / 1024)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+};
+
+export const JobseekerChat = ({ portal = 'jobseeker' }) => {
+  const config = portalConfig[portal] || portalConfig.jobseeker;
+  const { socket, refreshUnread } = useMessageSocket();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [threads, setThreads] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [activeId, setActiveId] = useState('');
   const [search, setSearch] = useState('');
+  const [jobFilter, setJobFilter] = useState('');
   const [chatInput, setChatInput] = useState('');
   const [mobileView, setMobileView] = useState('list');
+  const [loadingThreads, setLoadingThreads] = useState(true);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
+  const [typing, setTyping] = useState(null);
+  const [replyTo, setReplyTo] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const incomingTypingTimerRef = useRef(null);
+  const outgoingTypingTimerRef = useRef(null);
 
-  const activeConversation = conversations.find(c => c.id === activeId);
+  const activeConversation = threads.find(thread => String(thread.id) === String(activeId));
 
-  const filteredConversations = conversations.filter(c => {
+  const filteredThreads = useMemo(() => {
     const q = search.toLowerCase().trim();
-    if (!q) return true;
-    const lastMessage = c.messages[c.messages.length - 1]?.text || '';
-    return (
-      c.name.toLowerCase().includes(q) ||
-      lastMessage.toLowerCase().includes(q)
-    );
-  });
+    return threads.filter(thread => {
+      const matchesJob = !jobFilter || String(thread.jobId) === String(jobFilter);
+      const matchesSearch = !q || (
+        thread.name.toLowerCase().includes(q) ||
+        thread.jobTitle.toLowerCase().includes(q) ||
+        thread.lastMessage.toLowerCase().includes(q)
+      );
+      return matchesJob && matchesSearch;
+    });
+  }, [threads, search, jobFilter]);
 
+  const jobOptions = useMemo(() => {
+    const map = new Map();
+    threads.forEach(thread => {
+      if (thread.jobId && !map.has(String(thread.jobId))) {
+        map.set(String(thread.jobId), thread.jobTitle);
+      }
+    });
+    return [...map.entries()].map(([id, title]) => ({ id, title }));
+  }, [threads]);
+
+  const loadThreads = async (preferredId = activeId) => {
+    setLoadingThreads(true);
+    setError('');
+    try {
+      const response = await axios.get(config.endpoint, { headers: getTokenHeaders() });
+      const nextThreads = sortThreadsByRecentMessage(response.data?.threads || []);
+      setThreads(nextThreads);
+      const nextActive = nextThreads.some(thread => String(thread.id) === String(preferredId))
+        ? preferredId
+        : '';
+      setActiveId(nextActive);
+      if (nextActive) {
+        setSearchParams({ application: nextActive });
+      } else if (searchParams.get('application')) {
+        setSearchParams({});
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Messages could not be loaded.');
+    } finally {
+      setLoadingThreads(false);
+    }
+  };
+
+  const loadMessages = async (applicationId) => {
+    if (!applicationId) {
+      setMessages([]);
+      return;
+    }
+
+    setLoadingMessages(true);
+    setError('');
+    try {
+      const response = await axios.get(`${config.endpoint}/${applicationId}`, { headers: getTokenHeaders() });
+      setMessages(response.data?.messages || []);
+      setThreads(current => sortThreadsByRecentMessage(current.map(thread => (
+        String(thread.id) === String(applicationId)
+          ? { ...thread, ...(response.data?.thread || {}), unread: 0 }
+          : thread
+      ))));
+    } catch (err) {
+      setError(err.response?.data?.message || 'Conversation could not be loaded.');
+      setMessages([]);
+    } finally {
+      setLoadingMessages(false);
+    }
+  };
+
+  useEffect(() => {
+    loadThreads('');
+  }, [portal]);
+
+  useEffect(() => {
+    loadMessages(activeId);
+    setReplyTo(null);
+    setSelectedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }, [activeId]);
+
+  useEffect(() => {
+    if (!socket || !activeId) return undefined;
+    socket.emit('message:join', { applicationId: activeId });
+
+    return () => {
+      socket.emit('message:leave', { applicationId: activeId });
+    };
+  }, [socket, activeId]);
+
+  useEffect(() => {
+    if (!socket) return undefined;
+
+    const handleNewMessage = (payload) => {
+      if (String(payload?.applicationId) !== String(activeId)) {
+        setThreads(current => sortThreadsByRecentMessage(current.map(thread => (
+          String(thread.id) === String(payload?.applicationId)
+            ? { ...thread, ...(payload.thread || {}) }
+            : thread
+        ))));
+        return;
+      }
+
+      if (payload?.message) {
+        setMessages(current => (
+          current.some(message => String(message.id) === String(payload.message.id))
+            ? current
+            : [...current, payload.message]
+        ));
+      }
+      if (payload?.thread) {
+        setThreads(current => sortThreadsByRecentMessage(current.map(thread => (
+          String(thread.id) === String(payload.applicationId)
+            ? { ...thread, ...payload.thread, unread: 0 }
+            : thread
+        ))));
+      }
+      setTyping(null);
+      loadMessages(payload.applicationId);
+    };
+
+    const handleTyping = (payload) => {
+      if (String(payload?.applicationId) !== String(activeId)) return;
+      if (payload?.actor === portal) return;
+      setTyping(payload?.isTyping ? payload.actor : null);
+      if (payload?.isTyping) {
+        window.clearTimeout(incomingTypingTimerRef.current);
+        incomingTypingTimerRef.current = window.setTimeout(() => setTyping(null), 2500);
+      }
+    };
+
+    socket.on('message:new', handleNewMessage);
+    socket.on('message:typing', handleTyping);
+
+    return () => {
+      socket.off('message:new', handleNewMessage);
+      socket.off('message:typing', handleTyping);
+    };
+  }, [socket, activeId, portal]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ block: 'end' });
-  }, [activeId, activeConversation?.messages.length]);
+  }, [activeId, messages.length]);
 
+  useEffect(() => () => {
+    window.clearTimeout(incomingTypingTimerRef.current);
+    window.clearTimeout(outgoingTypingTimerRef.current);
+  }, []);
 
   const openChat = (id) => {
     setActiveId(id);
-    setConversations(prev =>
-      prev.map(c => (c.id === id ? { ...c, unread: 0 } : c))
-    );
+    setSearchParams({ application: id });
     setMobileView('chat');
   };
 
-
-  const sendMessage = () => {
+  const sendMessage = async () => {
     const text = chatInput.trim();
-    if (!text) return;
+    if ((!text && !selectedFile) || !activeConversation?.canMessage || sending) return;
 
-    const newMessage = {
-      id: Date.now(),
-      sender: 'sent',
-      text,
-      time: getTimeNow()
-    };
+    setSending(true);
+    setError('');
+    try {
+      socket?.emit('message:typing', { applicationId: activeConversation.id, isTyping: false });
+      const payload = new FormData();
+      payload.append('message', text);
+      if (replyTo?.id) payload.append('replyTo', replyTo.id);
+      if (selectedFile) payload.append('attachment', selectedFile);
 
-    setConversations(prev =>
-      prev.map(c =>
-        c.id === activeId
-          ? { ...c, messages: [...c.messages, newMessage] }
-          : c
-      )
-    );
-    setChatInput('');
-
-    // Simulate a reply
-    setTimeout(() => {
-      const reply = {
-        id: Date.now() + 1,
-        sender: 'received',
-        text: "Thank you for your message. We'll get back to you shortly.",
-        time: getTimeNow()
-      };
-
-      setConversations(prev =>
-        prev.map(c =>
-          c.id === activeId
-            ? { ...c, messages: [...c.messages, reply] }
-            : c
-        )
+      const response = await axios.post(
+        `${config.endpoint}/${activeConversation.id}`,
+        payload,
+        { headers: getTokenHeaders() }
       );
-    }, 1500);
+      setMessages(current => [...current, response.data.message]);
+      setThreads(current => sortThreadsByRecentMessage(current.map(thread => (
+        String(thread.id) === String(activeConversation.id)
+          ? { ...thread, ...(response.data.thread || {}) }
+          : thread
+      ))));
+      setChatInput('');
+      setSelectedFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      setReplyTo(null);
+      refreshUnread();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Message could not be sent.');
+    } finally {
+      setSending(false);
+    }
   };
 
+  const emitTyping = (value) => {
+    setChatInput(value);
+    if (!socket || !activeConversation?.canMessage) return;
 
-  const handleInputKeyDown = (e) => {
-    if (e.key === 'Enter') sendMessage();
+    socket.emit('message:typing', {
+      applicationId: activeConversation.id,
+      isTyping: Boolean(value.trim())
+    });
+
+    window.clearTimeout(outgoingTypingTimerRef.current);
+    outgoingTypingTimerRef.current = window.setTimeout(() => {
+      socket.emit('message:typing', { applicationId: activeConversation.id, isTyping: false });
+    }, 1200);
   };
 
+  const handleAttachmentChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const extension = file.name.split('.').pop()?.toLowerCase() || '';
+
+    if (!ALLOWED_ATTACHMENT_TYPES.has(file.type) && !ALLOWED_ATTACHMENT_EXTENSIONS.has(extension)) {
+      setError('Only PDF, DOC, DOCX, and image files are allowed.');
+      event.target.value = '';
+      return;
+    }
+
+    if (file.size > MAX_ATTACHMENT_SIZE) {
+      setError('Attachment cannot exceed 10 MB.');
+      event.target.value = '';
+      return;
+    }
+
+    setError('');
+    setSelectedFile(file);
+  };
+
+  const handleInputKeyDown = (event) => {
+    if (event.key === 'Enter') sendMessage();
+  };
+
+  const getReplyAuthor = (message) => {
+    if (!message) return '';
+    if (message.sender === 'sent') return 'You';
+    return portal === 'employer' ? 'Jobseeker' : 'Employer';
+  };
+
+  const renderReplyPreview = (reply, inSentBubble = false) => {
+    if (!reply) return null;
+    const author = reply.sender === 'sent'
+      ? 'You'
+      : portal === 'employer' ? 'Jobseeker' : 'Employer';
+
+    return (
+      <div className={`mb-2 max-w-full rounded-lg border-l-4 px-3 py-2 text-xs ${
+        inSentBubble
+          ? 'border-white/70 bg-white/15 text-white/90'
+          : 'border-[#0047C7] bg-slate-50 text-slate-600'
+      }`}>
+        <div className={`mb-0.5 font-black ${inSentBubble ? 'text-white' : 'text-[#0047C7]'}`}>{author}</div>
+        <div className="line-clamp-2 break-words">{reply.text}</div>
+      </div>
+    );
+  };
+
+  const renderAttachment = (attachment, inSentBubble = false) => {
+    if (!attachment?.url) return null;
+    const isImage = attachment.fileType === 'image' || String(attachment.mimeType || '').startsWith('image/');
+    const label = attachment.originalName || 'Attachment';
+
+    if (isImage) {
+      return (
+        <a href={attachment.url} target="_blank" rel="noreferrer" className="mt-2 block overflow-hidden rounded-xl">
+          <img src={attachment.url} alt={label} className="max-h-64 w-full max-w-[320px] object-cover" />
+        </a>
+      );
+    }
+
+    return (
+      <a
+        href={attachment.url}
+        target="_blank"
+        rel="noreferrer"
+        className={`mt-2 flex max-w-[320px] items-center gap-3 rounded-xl border px-3 py-2 text-xs font-bold transition ${
+          inSentBubble
+            ? 'border-white/25 bg-white/15 text-white hover:bg-white/20'
+            : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
+        }`}
+      >
+        <FileText className="h-5 w-5 shrink-0" />
+        <span className="min-w-0 flex-1 truncate">{label}</span>
+      </a>
+    );
+  };
 
   return (
-    <div className="flex h-[calc(100vh-160px)] min-h-[500px] overflow-hidden rounded-xl border border-[#e2e8f0] bg-white max-md:relative max-md:h-[calc(100vh-140px)] max-md:min-h-[400px]">
+    <div className="space-y-3">
+      {error && (
+        <div className="rounded-md border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
+          {error}
+        </div>
+      )}
 
-
-      {/* Conversation List */}
-
-      <div
-        className={`w-full shrink-0 flex-col border-r border-[#e2e8f0] md:flex md:w-[340px] ${
-          mobileView === 'list' ? 'flex' : 'hidden'
-        } max-md:absolute max-md:inset-0 max-md:z-[5] max-md:bg-white`}
-      >
-
-        <div className="border-b border-[#e2e8f0] p-4">
-
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-[0.8rem] top-1/2 h-4 w-4 -translate-y-1/2 text-[#94a3b8]" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search conversations..."
-              className="w-full rounded-[10px] border border-[#e2e8f0] bg-[#f8fafc] py-[0.6rem] pl-[2.4rem] pr-4 text-[0.85rem] text-[#0f172a] outline-none transition-colors focus:border-[#0047C7]"
-            />
+      <div className="flex h-[calc(100vh-160px)] min-h-[500px] overflow-hidden rounded-xl border border-[#e2e8f0] bg-white max-md:relative max-md:h-[calc(100vh-140px)] max-md:min-h-[400px]">
+        <div
+          className={`w-full shrink-0 flex-col border-r border-[#e2e8f0] md:flex md:w-[360px] ${
+            mobileView === 'list' ? 'flex' : 'hidden'
+          } max-md:absolute max-md:inset-0 max-md:z-[5] max-md:bg-white`}
+        >
+          <div className="border-b border-[#e2e8f0] p-4">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-[0.8rem] top-1/2 h-4 w-4 -translate-y-1/2 text-[#94a3b8]" />
+              <input
+                type="text"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search by name, job, or message..."
+                className="w-full rounded-[10px] border border-[#e2e8f0] bg-[#f8fafc] py-[0.6rem] pl-[2.4rem] pr-4 text-[0.85rem] text-[#0f172a] outline-none transition-colors focus:border-[#0047C7]"
+              />
+            </div>
+            <select
+              value={jobFilter}
+              onChange={(event) => setJobFilter(event.target.value)}
+              className="mt-3 w-full rounded-[10px] border border-[#e2e8f0] bg-white px-3 py-[0.6rem] text-[0.85rem] font-semibold text-[#475569] outline-none transition-colors focus:border-[#0047C7]"
+            >
+              <option value="">All jobs</option>
+              {jobOptions.map(job => <option key={job.id} value={job.id}>{job.title}</option>)}
+            </select>
           </div>
 
-        </div>
-
-        <div className="flex-1 overflow-y-auto">
-
-          {filteredConversations.length === 0 && (
-            <div className="p-6 text-center text-sm font-semibold text-[#94a3b8]">
-              No conversations found.
-            </div>
-          )}
-
-          {filteredConversations.map(conv => (
-
-            <button
-              key={conv.id}
-              type="button"
-              onClick={() => openChat(conv.id)}
-              className={`flex w-full items-center gap-3 border-b border-[#e2e8f0] px-4 py-[0.85rem] text-left transition-colors ${
-                conv.id === activeId ? 'bg-[#eef2ff]' : 'hover:bg-[#f8fafc]'
-              }`}
-            >
-
-              <div
-                className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full text-base font-bold text-white"
-                style={{ background: conv.color }}
-              >
-                {conv.initials}
+          <div className="flex-1 overflow-y-auto">
+            {loadingThreads ? (
+              <div className="flex h-full items-center justify-center">
+                <Loader className="h-7 w-7 animate-spin text-[#0047C7]" />
               </div>
-
-              <div className="min-w-0 flex-1 overflow-hidden">
-
-                <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-[0.9rem] font-semibold text-[#0f172a]">
-                    {conv.name}
-                  </span>
-                  <span className="shrink-0 text-[0.7rem] font-normal text-[#94a3b8]">
-                    {conv.time}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between gap-2 overflow-hidden text-ellipsis">
-                  <span className="truncate text-[0.82rem] text-[#94a3b8]">
-                    {conv.messages[conv.messages.length - 1]?.text}
-                  </span>
-                  {conv.unread > 0 && (
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#0047C7] text-[0.6rem] font-bold text-white">
-                      {conv.unread}
-                    </span>
-                  )}
-                </div>
-
+            ) : filteredThreads.length === 0 ? (
+              <div className="p-6 text-center">
+                <p className="text-sm font-extrabold text-[#0f172a]">{config.emptyTitle}</p>
+                <p className="mt-2 text-xs font-semibold leading-5 text-[#94a3b8]">{config.emptyText}</p>
               </div>
-
-            </button>
-
-          ))}
-
-        </div>
-
-      </div>
-
-
-
-
-      {/* Chat Main Window */}
-
-      <div
-        className={`flex-1 flex-col md:flex ${
-          mobileView === 'chat' ? 'flex' : 'hidden'
-        } max-md:w-full`}
-      >
-
-        {activeConversation ? (
-
-          <>
-
-            {/* Chat Header */}
-
-            <div className="flex items-center justify-between border-b border-[#e2e8f0] px-5 py-[0.85rem]">
-
-              <div className="flex items-center gap-3">
-
+            ) : (
+              filteredThreads.map(thread => (
                 <button
+                  key={thread.id}
                   type="button"
-                  onClick={() => setMobileView('list')}
-                  className="text-[1.2rem] text-[#0f172a] md:hidden"
-                  aria-label="Back to conversations"
+                  onClick={() => openChat(thread.id)}
+                  className={`flex w-full items-center gap-3 border-b border-[#e2e8f0] px-4 py-[0.85rem] text-left transition-colors ${
+                    String(thread.id) === String(activeId) ? 'bg-[#eef2ff]' : 'hover:bg-[#f8fafc]'
+                  }`}
                 >
-                  <ArrowLeft className="h-5 w-5" />
-                </button>
-
-                <div
-                  className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full text-[0.85rem] font-bold text-white"
-                  style={{ background: activeConversation.color }}
-                >
-                  {activeConversation.initials}
-                </div>
-
-                <div>
-                  <div className="text-[0.95rem] font-semibold text-[#0f172a]">
-                    {activeConversation.name}
+                  <div className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full bg-[#0047C7] text-base font-bold text-white">
+                    {thread.initials || 'U'}
                   </div>
-                  <div className="text-[0.75rem] text-[#10b981]">
-                    Online
+
+                  <div className="min-w-0 flex-1 overflow-hidden">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate text-[0.9rem] font-semibold text-[#0f172a]">{thread.name}</span>
+                      <span className="shrink-0 text-[0.68rem] font-normal text-[#94a3b8]">{thread.time}</span>
+                    </div>
+                    <div className="mt-0.5 flex items-center gap-1 text-[0.72rem] font-bold text-[#0047C7]">
+                      <Briefcase className="h-3 w-3 shrink-0" />
+                      <span className="truncate">{thread.jobTitle}</span>
+                    </div>
+                    <div className="mt-0.5 flex items-center justify-between gap-2 overflow-hidden text-ellipsis">
+                      <span className="truncate text-[0.82rem] text-[#94a3b8]">{thread.lastMessage}</span>
+                      {thread.unread > 0 && (
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#0047C7] text-[0.6rem] font-bold text-white">
+                          {thread.unread}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className={`flex-1 flex-col md:flex ${mobileView === 'chat' ? 'flex' : 'hidden'} max-md:w-full`}>
+          {activeConversation ? (
+            <>
+              <div className="flex items-center justify-between border-b border-[#e2e8f0] px-5 py-[0.85rem]">
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setMobileView('list')}
+                    className="text-[1.2rem] text-[#0f172a] md:hidden"
+                    aria-label="Back to conversations"
+                  >
+                    <ArrowLeft className="h-5 w-5" />
+                  </button>
+
+                  <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-[#0047C7] text-[0.85rem] font-bold text-white">
+                    {activeConversation.initials || 'U'}
+                  </div>
+
+                  <div>
+                    <div className="text-[0.95rem] font-semibold text-[#0f172a]">{activeConversation.name}</div>
+                    <div className="flex items-center gap-1 text-[0.75rem] font-semibold text-[#64748b]">
+                      <Briefcase className="h-3.5 w-3.5" />
+                      {activeConversation.jobTitle}
+                    </div>
                   </div>
                 </div>
-
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button type="button" title="Call" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e2e8f0] bg-white text-[#475569] transition-all hover:border-[#0047C7] hover:text-[#0047C7]">
-                  <Phone className="h-4 w-4" />
-                </button>
-                <button type="button" title="Video" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e2e8f0] bg-white text-[#475569] transition-all hover:border-[#0047C7] hover:text-[#0047C7]">
-                  <Camera className="h-4 w-4" />
-                </button>
-                <button type="button" title="More options" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e2e8f0] bg-white text-[#475569] transition-all hover:border-[#0047C7] hover:text-[#0047C7]">
-                  <MoreVertical className="h-4 w-4" />
-                </button>
-              </div>
-
-            </div>
-
-
-            {/* Messages */}
-
-            <div className="flex flex-1 flex-col gap-4 overflow-y-auto bg-[#f8fafc] p-5">
-
-              <div className="flex justify-center">
-                <span className="rounded-full border border-[#e2e8f0] bg-[#f8fafc] px-4 py-[0.2rem] text-[0.75rem] text-[#94a3b8]">
-                  Today
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-500">
+                  {activeConversation.status}
                 </span>
               </div>
 
-              {activeConversation.messages.map(msg => (
-
-                <div
-                  key={msg.id}
-                  className={`flex max-w-[70%] flex-col max-md:max-w-[85%] ${msg.sender === 'sent' ? 'self-end items-end' : 'self-start items-start'}`}
-                >
-
-                  <div
-                    className={`rounded-2xl px-4 py-[0.7rem] text-[0.88rem] leading-relaxed ${
-                      msg.sender === 'sent'
-                        ? 'rounded-br-[4px] bg-[#0047C7] text-white'
-                        : 'rounded-bl-[4px] border border-[#e2e8f0] bg-white text-[#0f172a]'
-                    }`}
-                  >
-                    {msg.text}
+              <div className="flex flex-1 flex-col gap-4 overflow-y-auto bg-[#f8fafc] p-5">
+                {loadingMessages ? (
+                  <div className="flex flex-1 items-center justify-center">
+                    <Loader className="h-7 w-7 animate-spin text-[#0047C7]" />
                   </div>
+                ) : messages.length === 0 ? (
+                  <div className="flex flex-1 items-center justify-center text-center">
+                    <div>
+                      <p className="text-sm font-extrabold text-[#0f172a]">No messages yet</p>
+                      <p className="mt-1 text-xs font-semibold text-[#94a3b8]">Start the conversation for this job application.</p>
+                    </div>
+                  </div>
+                ) : (
+                  messages.map(message => (
+                    <div
+                      key={message.id}
+                      className={`group flex max-w-[70%] flex-col max-md:max-w-[85%] ${message.sender === 'sent' ? 'self-end items-end' : 'self-start items-start'}`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setReplyTo(message)}
+                        className="mb-1 inline-flex items-center gap-1 rounded-full bg-white px-2 py-1 text-[0.65rem] font-bold text-[#64748b] opacity-100 shadow-sm ring-1 ring-slate-100 transition hover:text-[#0047C7] md:opacity-0 md:group-hover:opacity-100"
+                      >
+                        <Reply className="h-3 w-3" />
+                        Reply
+                      </button>
+                      <div
+                        className={`rounded-2xl px-4 py-[0.7rem] text-[0.88rem] leading-relaxed ${
+                          message.sender === 'sent'
+                            ? 'rounded-br-[4px] bg-[#0047C7] text-white'
+                            : 'rounded-bl-[4px] border border-[#e2e8f0] bg-white text-[#0f172a]'
+                        }`}
+                      >
+                        {renderReplyPreview(message.replyTo, message.sender === 'sent')}
+                        {message.text && <div className="break-words">{message.text}</div>}
+                        {renderAttachment(message.attachment, message.sender === 'sent')}
+                      </div>
+                      <span className={`mt-1 px-1 text-[0.65rem] ${message.sender === 'sent' ? 'text-black/40' : 'text-[#94a3b8]'}`}>
+                        {message.time}
+                      </span>
+                    </div>
+                  ))
+                )}
+                <div ref={messagesEndRef} />
+              </div>
 
-                  <span
-                    className={`mt-1 px-1 text-[0.65rem] ${
-                      msg.sender === 'sent' ? 'text-black/40' : 'text-[#94a3b8]'
-                    }`}
+              <div className="border-t border-[#e2e8f0] bg-white px-5 py-4">
+                {typing && (
+                  <div className="mb-2 text-xs font-bold text-[#64748b]">
+                    {typing === 'employer' ? 'Employer' : 'Jobseeker'} is typing...
+                  </div>
+                )}
+                {replyTo && (
+                  <div className="mb-3 flex items-start justify-between gap-3 rounded-xl border border-[#dbeafe] bg-[#eff6ff] px-3 py-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1 text-xs font-black text-[#0047C7]">
+                        <Reply className="h-3.5 w-3.5" />
+                        Replying to {getReplyAuthor(replyTo)}
+                      </div>
+                      <div className="mt-1 line-clamp-2 text-xs font-semibold text-[#64748b]">{replyTo.text}</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setReplyTo(null)}
+                      className="rounded-full p-1 text-[#64748b] transition hover:bg-white hover:text-[#0f172a]"
+                      aria-label="Cancel reply"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+                {!activeConversation.canMessage && (
+                  <div className="mb-3 flex items-center gap-2 rounded-md border border-amber-100 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700">
+                    <Lock className="h-4 w-4" />
+                    {activeConversation.disabledReason || 'Messaging is closed for this application.'}
+                  </div>
+                )}
+                {selectedFile && (
+                  <div className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                    <div className="flex min-w-0 items-center gap-2 text-xs font-bold text-slate-600">
+                      {selectedFile.type.startsWith('image/') ? <ImageIcon className="h-4 w-4 shrink-0" /> : <FileText className="h-4 w-4 shrink-0" />}
+                      <span className="truncate">{selectedFile.name}</span>
+                      <span className="shrink-0 text-slate-400">{formatFileSize(selectedFile.size)}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedFile(null);
+                        if (fileInputRef.current) fileInputRef.current.value = '';
+                      }}
+                      className="rounded-full p-1 text-[#64748b] transition hover:bg-white hover:text-[#0f172a]"
+                      aria-label="Remove attachment"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+                <div className="flex items-center gap-2.5">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,.doc,.docx,image/jpeg,image/png,image/gif,image/webp"
+                    className="hidden"
+                    onChange={handleAttachmentChange}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={!activeConversation.canMessage || sending}
+                    title="Attach file"
+                    className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full border border-[#e2e8f0] bg-white text-[#64748b] transition-colors hover:border-[#0047C7] hover:text-[#0047C7] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {msg.time}
-                  </span>
-
+                    <Paperclip className="h-[1.1rem] w-[1.1rem]" />
+                  </button>
+                  <input
+                    type="text"
+                    value={chatInput}
+                    disabled={!activeConversation.canMessage || sending}
+                    onChange={(event) => emitTyping(event.target.value)}
+                    onKeyDown={handleInputKeyDown}
+                    placeholder={activeConversation.canMessage ? 'Type your message...' : 'Messaging unavailable'}
+                    className="flex-1 rounded-full border border-[#e2e8f0] px-4 py-[0.65rem] text-[0.88rem] text-[#0f172a] outline-none transition-colors focus:border-[#0047C7] disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={sendMessage}
+                    disabled={!activeConversation.canMessage || sending || (!chatInput.trim() && !selectedFile)}
+                    title="Send message"
+                    className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-[#0047C7] text-white transition-colors hover:bg-[#0039a3] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {sending ? <Loader className="h-[1.1rem] w-[1.1rem] animate-spin" /> : <Send className="h-[1.1rem] w-[1.1rem]" />}
+                  </button>
                 </div>
-
-              ))}
-
-              <div ref={messagesEndRef} />
-
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-1 flex-col items-center justify-center p-8 text-center text-[#94a3b8]">
+              <h5 className="mb-2 font-bold text-[#0f172a]">No conversation selected</h5>
+              <p className="max-w-[300px] text-[0.9rem]">Select a conversation to view job-specific messages.</p>
             </div>
-
-
-            {/* Chat Input */}
-
-            <div className="flex items-center gap-2.5 border-t border-[#e2e8f0] bg-white px-5 py-4">
-
-              <button
-                type="button"
-                title="Attach file"
-                className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full border border-[#e2e8f0] bg-white text-[#94a3b8] transition-all hover:border-[#0047C7] hover:text-[#0047C7]"
-              >
-                <Paperclip className="h-4 w-4" />
-              </button>
-
-              <input
-                type="text"
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={handleInputKeyDown}
-                placeholder="Type your message..."
-                className="flex-1 rounded-full border border-[#e2e8f0] px-4 py-[0.65rem] text-[0.88rem] text-[#0f172a] outline-none transition-colors focus:border-[#0047C7]"
-              />
-
-              <button
-                type="button"
-                onClick={sendMessage}
-                title="Send message"
-                className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-[#0047C7] text-white transition-colors hover:bg-[#0039a3]"
-              >
-                <Send className="h-[1.1rem] w-[1.1rem]" />
-              </button>
-
-            </div>
-
-          </>
-
-        ) : (
-
-          <div className="flex flex-1 flex-col items-center justify-center p-8 text-center text-[#94a3b8]">
-            <div className="mb-4 text-[4rem] opacity-40">💬</div>
-            <h5 className="mb-2 font-bold text-[#0f172a]">No conversation selected</h5>
-            <p className="max-w-[300px] text-[0.9rem]">Select a conversation to start chatting.</p>
-          </div>
-
-        )}
-
+          )}
+        </div>
       </div>
-
     </div>
   );
 };
-
 
 export default JobseekerChat;

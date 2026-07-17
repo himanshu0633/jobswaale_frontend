@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import {
@@ -19,9 +20,9 @@ import {
   X,
   Loader,
   BadgeAlert,
-  CalendarDays,
   Gem,
-  CheckCircle2
+  CheckCircle2,
+  Upload
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 
@@ -85,6 +86,7 @@ export const EmployerCompanyProfile = () => {
 
   // Editing form states
   const [editForm, setEditForm] = useState({});
+  const [logoUploading, setLogoUploading] = useState(false);
   const [memberForm, setMemberForm] = useState({ name: '', role: '', accessLevel: 'Member' });
   const [editingMemberIndex, setEditingMemberIndex] = useState(null);
 
@@ -117,6 +119,42 @@ export const EmployerCompanyProfile = () => {
       await loadProfile();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update profile.');
+    }
+  };
+
+  const handleLogoUpload = async (file) => {
+    if (!file) return;
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+    const extension = file.name.split('.').pop()?.toLowerCase() || '';
+
+    if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(extension)) {
+      setError('Only JPG, PNG, GIF, and WEBP logo images are allowed.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Logo image cannot exceed 5 MB.');
+      return;
+    }
+
+    setLogoUploading(true);
+    setError('');
+    setSuccessMessage('');
+
+    try {
+      const formData = new FormData();
+      formData.append('logo', file);
+      const response = await axios.post(`${BASE_API_URL}/employer/profile/logo`, formData, {
+        headers: getTokenHeaders()
+      });
+      setEditForm((current) => ({ ...current, logo: response.data?.logo || '' }));
+      setProfile((current) => current ? { ...current, logo: response.data?.logo || '' } : current);
+      setSuccessMessage('Logo uploaded successfully!');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Logo could not be uploaded.');
+    } finally {
+      setLogoUploading(false);
     }
   };
 
@@ -179,6 +217,9 @@ export const EmployerCompanyProfile = () => {
 
   const stats = profile?.stats || { activeJobs: 0, hired: 0, profileViews: 5230, rating: 4.2 };
   const subscription = profile?.subscription || { planName: 'Free', status: 'Active', validUntil: null, jobsUsed: 0, jobLimit: 50, remainingCredits: 50, utilization: 0 };
+  const valueTextClass = (value) => (
+    value ? 'text-sm font-extrabold text-[#3f4254]' : 'text-sm font-semibold text-slate-400'
+  );
 
   return (
     <div className="space-y-6">
@@ -272,7 +313,7 @@ export const EmployerCompanyProfile = () => {
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-xl font-extrabold text-[#3f4254]">{profile.companyName || 'TechCorp India'}</h2>
+                <h2 className={`text-xl font-extrabold ${profile.companyName ? 'text-[#3f4254]' : 'text-slate-400'}`}>{profile.companyName || 'Not Provided'}</h2>
                 {profile.isVerified && (
                   <span className="inline-flex items-center rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-600">
                     Verified
@@ -284,15 +325,28 @@ export const EmployerCompanyProfile = () => {
               </div>
               <p className="mt-1 text-sm font-semibold text-slate-400 flex items-center gap-1.5">
                 <Briefcase className="h-4 w-4 text-slate-400" />
-                {profile.industryType?.industryType || 'Information Technology & Services'}
+                {profile.industryType?.industryType || 'Not Provided'}
               </p>
               <p className="mt-0.5 text-sm font-semibold text-slate-400 flex items-center gap-1.5">
                 <Users className="h-4 w-4 text-slate-400" />
-                {profile.companySize || '501-1000'} Employees
+                {profile.companySize || 'Not Provided'}
               </p>
             </div>
           </div>
-          <div>
+          <div className="flex flex-col items-stretch gap-3 sm:min-w-56">
+            <div className="rounded-md border border-slate-100 bg-slate-50 p-4">
+              <div className="mb-2 flex items-center justify-between text-xs font-black text-slate-500">
+                <span>Profile score</span>
+                <span className="text-[#6658dd]">{Number(profile.profileCompletionScore || 0)}%</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-white">
+                <div
+                  className="h-full rounded-full bg-[#6658dd] transition-all"
+                  style={{ width: `${Math.min(Math.max(Number(profile.profileCompletionScore || 0), 0), 100)}%` }}
+                />
+              </div>
+          
+            </div>
             <button
               onClick={() => {
                 setEditForm({ ...profile });
@@ -363,27 +417,27 @@ export const EmployerCompanyProfile = () => {
               <div className="md:col-span-2 space-y-6">
                 <div>
                   <label className="text-[11px] font-black text-slate-400 uppercase tracking-wider block mb-2">About Company</label>
-                  <p className="text-sm font-semibold text-slate-600 leading-relaxed whitespace-pre-line">
-                    {profile.description || 'Provide a compelling description of your company, core focus, and corporate values.'}
+                  <p className={`text-sm font-semibold leading-relaxed whitespace-pre-line ${profile.description ? 'text-slate-600' : 'text-slate-400'}`}>
+                    {profile.description || 'Not Provided'}
                   </p>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label className="text-[11px] font-black text-slate-400 uppercase tracking-wider block">Company Tagline</label>
-                    <p className="mt-1 text-sm font-extrabold text-[#3f4254]">{profile.tagline || 'Building Digital Futures'}</p>
+                    <p className={`mt-1 ${valueTextClass(profile.tagline)}`}>{profile.tagline || 'Not Provided'}</p>
                   </div>
                   <div>
                     <label className="text-[11px] font-black text-slate-400 uppercase tracking-wider block">Founded Year</label>
-                    <p className="mt-1 text-sm font-extrabold text-[#3f4254]">{profile.foundedYear || '2010'}</p>
+                    <p className={`mt-1 ${valueTextClass(profile.foundedYear)}`}>{profile.foundedYear || 'Not Provided'}</p>
                   </div>
                   <div>
                     <label className="text-[11px] font-black text-slate-400 uppercase tracking-wider block">Industry</label>
-                    <p className="mt-1 text-sm font-extrabold text-[#3f4254]">{profile.industryType?.industryType || 'Information Technology & Services'}</p>
+                    <p className={`mt-1 ${valueTextClass(profile.industryType?.industryType)}`}>{profile.industryType?.industryType || 'Not Provided'}</p>
                   </div>
                   <div>
                     <label className="text-[11px] font-black text-slate-400 uppercase tracking-wider block">Company Size</label>
-                    <p className="mt-1 text-sm font-extrabold text-[#3f4254]">{profile.companySize || '501-1000'} Employees</p>
+                    <p className={`mt-1 ${valueTextClass(profile.companySize)}`}>{profile.companySize || 'Not Provided'}</p>
                   </div>
                 </div>
 
@@ -395,27 +449,27 @@ export const EmployerCompanyProfile = () => {
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <span className="text-xs font-bold text-slate-400 block">Country</span>
-                      <span className="text-sm font-extrabold text-[#3f4254]">{profile.country || 'India'}</span>
+                      <span className={valueTextClass(profile.country)}>{profile.country || 'Not Provided'}</span>
                     </div>
                     <div>
                       <span className="text-xs font-bold text-slate-400 block">State</span>
-                      <span className="text-sm font-extrabold text-[#3f4254]">{profile.state || 'Karnataka'}</span>
+                      <span className={valueTextClass(profile.state)}>{profile.state || 'Not Provided'}</span>
                     </div>
                     <div>
                       <span className="text-xs font-bold text-slate-400 block">City</span>
-                      <span className="text-sm font-extrabold text-[#3f4254]">{profile.city || 'Bangalore'}</span>
+                      <span className={valueTextClass(profile.city)}>{profile.city || 'Not Provided'}</span>
                     </div>
                     <div>
                       <span className="text-xs font-bold text-slate-400 block">Pincode</span>
-                      <span className="text-sm font-extrabold text-[#3f4254]">{profile.pinCode || '560001'}</span>
+                      <span className={valueTextClass(profile.pinCode)}>{profile.pinCode || 'Not Provided'}</span>
                     </div>
                     <div className="sm:col-span-2">
                       <span className="text-xs font-bold text-slate-400 block">Full Address</span>
-                      <span className="text-sm font-extrabold text-[#3f4254]">{profile.address || 'Not Provided'}</span>
+                      <span className={valueTextClass(profile.address)}>{profile.address || 'Not Provided'}</span>
                     </div>
                     <div>
                       <span className="text-xs font-bold text-slate-400 block">GST / VAT Number</span>
-                      <span className="text-sm font-extrabold text-[#3f4254]">{profile.gstNumber || 'Not Provided'}</span>
+                      <span className={valueTextClass(profile.gstNumber)}>{profile.gstNumber || 'Not Provided'}</span>
                     </div>
                   </div>
                 </div>
@@ -431,9 +485,13 @@ export const EmployerCompanyProfile = () => {
                       <Globe className="h-4 w-4 text-slate-400 shrink-0" />
                       <div>
                         <span className="font-bold text-slate-400 block">Website</span>
-                        <a href={profile.website} target="_blank" rel="noopener noreferrer" className="font-extrabold text-[#6658dd] hover:underline">
-                          {profile.website || 'https://www.company.com'}
-                        </a>
+                        {profile.website ? (
+                          <a href={profile.website} target="_blank" rel="noopener noreferrer" className="font-extrabold text-[#6658dd] hover:underline">
+                            {profile.website}
+                          </a>
+                        ) : (
+                          <span className="text-sm font-semibold text-slate-400">Not Provided</span>
+                        )}
                       </div>
                     </div>
 
@@ -441,7 +499,7 @@ export const EmployerCompanyProfile = () => {
                       <Mail className="h-4 w-4 text-slate-400 shrink-0" />
                       <div>
                         <span className="font-bold text-slate-400 block">Email</span>
-                        <span className="font-extrabold text-[#3f4254]">{profile.email || 'contact@company.com'}</span>
+                        <span className={valueTextClass(profile.email)}>{profile.email || 'Not Provided'}</span>
                       </div>
                     </div>
 
@@ -449,7 +507,7 @@ export const EmployerCompanyProfile = () => {
                       <Phone className="h-4 w-4 text-slate-400 shrink-0" />
                       <div>
                         <span className="font-bold text-slate-400 block">Phone</span>
-                        <span className="font-extrabold text-[#3f4254]">{profile.phone || 'Not Provided'}</span>
+                        <span className={valueTextClass(profile.phone)}>{profile.phone || 'Not Provided'}</span>
                       </div>
                     </div>
 
@@ -457,7 +515,7 @@ export const EmployerCompanyProfile = () => {
                       <MapPin className="h-4 w-4 text-slate-400 shrink-0" />
                       <div>
                         <span className="font-bold text-slate-400 block">Location</span>
-                        <span className="font-extrabold text-[#3f4254]">{profile.city ? `${profile.city}, ${profile.state}` : 'Not Provided'}</span>
+                        <span className={valueTextClass(profile.city)}>{profile.city ? `${profile.city}, ${profile.state}` : 'Not Provided'}</span>
                       </div>
                     </div>
                   </div>
@@ -680,13 +738,35 @@ export const EmployerCompanyProfile = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-black text-slate-500 mb-1">Logo Image URL</label>
-                  <input
-                    type="text"
-                    className="w-full rounded border border-slate-200 px-3 py-2 text-sm text-[#3f4254] focus:border-[#6658dd] outline-none"
-                    value={editForm.logo || ''}
-                    onChange={(e) => setEditForm({ ...editForm, logo: e.target.value })}
-                  />
+                  <label className="block text-xs font-black text-slate-500 mb-1">Company Logo</label>
+                  <div className="flex items-center gap-3 rounded border border-slate-200 bg-white px-3 py-2">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md bg-slate-100 text-xs font-black text-slate-400">
+                      {editForm.logo ? (
+                        <img src={editForm.logo} alt="Company logo preview" className="h-full w-full object-contain" />
+                      ) : (
+                        'Logo'
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-[#f3f0ff] px-3 py-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-[#ebe7ff]">
+                        {logoUploading ? <Loader className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                        {logoUploading ? 'Uploading...' : 'Upload logo'}
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/gif,image/webp"
+                          disabled={logoUploading}
+                          className="hidden"
+                          onChange={(e) => {
+                            handleLogoUpload(e.target.files?.[0]);
+                            e.target.value = '';
+                          }}
+                        />
+                      </label>
+                      <p className="mt-1 truncate text-[0.68rem] font-semibold text-slate-400">
+                        JPG, PNG, GIF, WEBP up to 5 MB
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 

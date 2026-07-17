@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
   ArrowRight,
@@ -93,7 +93,7 @@ const getAssetUrl = (value) => {
   return `${apiOrigin}${value.startsWith('/') ? '' : '/'}${value}`;
 };
 
-const SearchableSelect = ({ label, value, options, search, onSearch, onSelect, placeholder, disabled }) => {
+const SearchableSelect = ({ label, value, options, search, onSearch, onSelect, placeholder, disabled, invalid }) => {
   const [isOpen, setIsOpen] = useState(false);
   const filteredOptions = options.filter((item) => item.name.toLowerCase().includes(search.trim().toLowerCase()));
   const selectedOption = options.find((item) => item.value === value);
@@ -102,9 +102,9 @@ const SearchableSelect = ({ label, value, options, search, onSearch, onSelect, p
   return (
     <div>
       <label className="mb-1.5 block text-xs font-extrabold text-slate-600">{label}</label>
-      <div className={`rounded-md border border-slate-200 bg-white p-2 ${disabled ? 'opacity-60' : ''}`}>
+      <div className={`rounded-md border bg-white p-2 ${invalid ? '!border-rose-500 !ring-2 !ring-rose-200' : 'border-slate-200'} ${disabled ? 'opacity-60' : ''}`}>
         <input
-          className="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 outline-none transition focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100"
+          className={`w-full rounded-md border bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 outline-none transition focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100 ${invalid ? '!border-rose-400 !bg-rose-50' : 'border-slate-200'}`}
           value={displayValue}
           onChange={(e) => {
             onSearch(e.target.value);
@@ -150,6 +150,7 @@ export const EmployerPostJob = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [missingFields, setMissingFields] = useState([]);
   const [meta, setMeta] = useState({ employer: {}, categories: [], jobTypes: [], qualifications: [], countries: [], states: [], districts: [], locations: [] });
   const [form, setForm] = useState(emptyForm);
   const [preview, setPreview] = useState(emptyPreview);
@@ -263,7 +264,10 @@ export const EmployerPostJob = () => {
     return () => window.clearTimeout(timeoutId);
   }, [form, loading]);
 
-  const setValue = (key, value) => setForm((current) => ({ ...current, [key]: value }));
+  const setValue = (key, value) => {
+    setForm((current) => ({ ...current, [key]: value }));
+    setMissingFields((current) => current.filter((field) => field !== key));
+  };
   const toggleLocation = (locationName) => {
     setForm((current) => {
       const selectedLocations = current.location || [];
@@ -273,10 +277,12 @@ export const EmployerPostJob = () => {
 
       return { ...current, location: nextLocations };
     });
+    setMissingFields((current) => current.filter((field) => field !== 'location'));
     setCityDropdownOpen(false);
   };
   const selectCountry = (countryId) => {
     setForm((current) => ({ ...current, country: countryId, state: '', district: '', location: [] }));
+    setMissingFields((current) => current.filter((field) => !['country'].includes(field)));
     setStateSearch('');
     setDistrictSearch('');
     setLocationSearch('');
@@ -284,17 +290,21 @@ export const EmployerPostJob = () => {
   };
   const selectState = (stateId) => {
     setForm((current) => ({ ...current, state: stateId, district: '', location: [] }));
+    setMissingFields((current) => current.filter((field) => !['state'].includes(field)));
     setDistrictSearch('');
     setLocationSearch('');
     setCityDropdownOpen(false);
   };
   const selectDistrict = (districtId) => {
     setForm((current) => ({ ...current, district: districtId, location: [] }));
+    setMissingFields((current) => current.filter((field) => !['district'].includes(field)));
     setLocationSearch('');
     setCityDropdownOpen(false);
   };
   const inputClass = 'w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none transition focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100';
+  const fieldClass = (key) => `${inputClass} ${missingFields.includes(key) ? '!border-2 !border-rose-500 !bg-rose-50 !ring-2 !ring-rose-200 focus:!border-rose-500 focus:!ring-rose-200' : ''}`;
   const labelClass = 'mb-1.5 block text-xs font-extrabold text-slate-600';
+  const isMissing = (key) => missingFields.includes(key);
   const countryOptions = meta.countries.map((item) => ({ value: item.cid, name: item.name }));
   const stateOptions = meta.states.filter((item) => !form.country || item.cid === form.country).map((item) => ({ value: item.sid, name: item.name }));
   const districtOptions = meta.districts.filter((item) => !form.state || item.sid === form.state).map((item) => ({ value: item.did, name: item.name }));
@@ -316,12 +326,17 @@ export const EmployerPostJob = () => {
       ['skills'],
       []
     ];
-    const missing = requiredByStep[step].some((key) => !String(form[key] || '').trim());
-    if (missing) {
+    const stepMissingFields = requiredByStep[step].filter((key) => {
+      const value = form[key];
+      return Array.isArray(value) ? value.length === 0 : !String(value || '').trim();
+    });
+    setMissingFields(stepMissingFields);
+    if (stepMissingFields.length) {
       setMessage({ type: 'error', text: 'Please fill required fields before continuing.' });
       return false;
     }
     setMessage({ type: '', text: '' });
+    setMissingFields([]);
     return true;
   };
 
@@ -330,9 +345,11 @@ export const EmployerPostJob = () => {
   };
 
   const submitJob = async (status = 'publish') => {
-    if (!form.jobTitle || !form.jobCategory || !form.jobType || !form.vacancies || !form.description) {
+    const submitMissingFields = ['jobTitle', 'jobCategory', 'jobType', 'vacancies', 'description'].filter((key) => !String(form[key] || '').trim());
+    if (submitMissingFields.length) {
+      setMissingFields(submitMissingFields);
       setMessage({ type: 'error', text: 'Please complete required job information.' });
-      setStep(0);
+      setStep(submitMissingFields.includes('description') ? 1 : 0);
       return;
     }
 
@@ -452,10 +469,10 @@ export const EmployerPostJob = () => {
               <section className="rounded-md border border-slate-100 bg-white shadow-sm">
                 <div className="border-b border-slate-100 px-5 py-4"><h2 className="text-base font-extrabold text-[#3f4254]">Basic Job Information</h2></div>
                 <div className="grid gap-4 p-5 md:grid-cols-2">
-                  <div><label className={labelClass}>Job Title *</label><input className={inputClass} value={form.jobTitle} onChange={(e) => setValue('jobTitle', e.target.value)} placeholder="e.g. Software Developer" /></div>
-                  <div><label className={labelClass}>Job Category *</label><select className={inputClass} value={form.jobCategory} onChange={(e) => setValue('jobCategory', e.target.value)}><option value="">Select Category</option>{meta.categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
-                  <div><label className={labelClass}>Employment Type *</label><select className={inputClass} value={form.jobType} onChange={(e) => setValue('jobType', e.target.value)}><option value="">Select Employment Type</option>{meta.jobTypes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
-                  <div><label className={labelClass}>Experience Level *</label><select className={inputClass} value={form.experience} onChange={(e) => setValue('experience', e.target.value)}><option value="">Select Experience</option><option>Fresher</option><option>1 - 2 Years</option><option>2 - 5 Years</option><option>5+ Years</option></select></div>
+                  <div><label className={labelClass}>Job Title *</label><input className={fieldClass('jobTitle')} value={form.jobTitle} onChange={(e) => setValue('jobTitle', e.target.value)} placeholder="e.g. Software Developer" /></div>
+                  <div><label className={labelClass}>Job Category *</label><select className={fieldClass('jobCategory')} value={form.jobCategory} onChange={(e) => setValue('jobCategory', e.target.value)}><option value="">Select Category</option>{meta.categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
+                  <div><label className={labelClass}>Employment Type *</label><select className={fieldClass('jobType')} value={form.jobType} onChange={(e) => setValue('jobType', e.target.value)}><option value="">Select Employment Type</option>{meta.jobTypes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
+                  <div><label className={labelClass}>Experience Level *</label><select className={fieldClass('experience')} value={form.experience} onChange={(e) => setValue('experience', e.target.value)}><option value="">Select Experience</option><option>Fresher</option><option>1 - 2 Years</option><option>2 - 5 Years</option><option>5+ Years</option></select></div>
                   <div className="md:col-span-2">
                     <label className={labelClass}>Work Mode *</label>
                     <div className="grid gap-2 md:grid-cols-3">
@@ -475,6 +492,7 @@ export const EmployerPostJob = () => {
                         onSearch={setCountrySearch}
                         onSelect={selectCountry}
                         placeholder="Search country..."
+                        invalid={isMissing('country')}
                       />
                       <SearchableSelect
                         label="State"
@@ -485,6 +503,7 @@ export const EmployerPostJob = () => {
                         onSelect={selectState}
                         placeholder="Search state..."
                         disabled={!form.country}
+                        invalid={isMissing('state')}
                       />
                       <SearchableSelect
                         label="District"
@@ -495,14 +514,15 @@ export const EmployerPostJob = () => {
                         onSelect={selectDistrict}
                         placeholder="Search district..."
                         disabled={!form.state}
+                        invalid={isMissing('district')}
                       />
                     </div>
-                    <div className="rounded-md border border-slate-200 bg-white p-3">
+                    <div className={`rounded-md border bg-white p-3 ${isMissing('location') ? '!border-rose-500 !ring-2 !ring-rose-200' : 'border-slate-200'}`}>
                       <label className={labelClass}>City</label>
                       <div className="relative">
                         <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                         <input
-                          className="w-full rounded-md border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100"
+                          className={`w-full rounded-md border bg-slate-50 py-2 pl-9 pr-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100 ${isMissing('location') ? '!border-rose-400 !bg-rose-50' : 'border-slate-200'}`}
                           value={locationSearch}
                           onChange={(e) => {
                             setLocationSearch(e.target.value);
@@ -555,10 +575,10 @@ export const EmployerPostJob = () => {
                     </div>
                     <p className="mt-1 text-xs font-semibold text-slate-400">Country, state, district, and city are managed by superadmin masters.</p>
                   </div>
-                  <div><label className={labelClass}>No. of Openings *</label><input type="number" min="1" className={inputClass} value={form.vacancies} onChange={(e) => setValue('vacancies', e.target.value)} /></div>
+                  <div><label className={labelClass}>No. of Openings *</label><input type="number" min="1" className={fieldClass('vacancies')} value={form.vacancies} onChange={(e) => setValue('vacancies', e.target.value)} /></div>
                   <div className="grid gap-2 md:grid-cols-3">
-                    <div><label className={labelClass}>Min Salary *</label><input type="number" className={inputClass} value={form.minSalary} onChange={(e) => setValue('minSalary', e.target.value)} /></div>
-                    <div><label className={labelClass}>Max Salary *</label><input type="number" className={inputClass} value={form.maxSalary} onChange={(e) => setValue('maxSalary', e.target.value)} /></div>
+                    <div><label className={labelClass}>Min Salary *</label><input type="number" className={fieldClass('minSalary')} value={form.minSalary} onChange={(e) => setValue('minSalary', e.target.value)} /></div>
+                    <div><label className={labelClass}>Max Salary *</label><input type="number" className={fieldClass('maxSalary')} value={form.maxSalary} onChange={(e) => setValue('maxSalary', e.target.value)} /></div>
                     <div><label className={labelClass}>Unit</label><select className={inputClass} value={form.salaryUnit} onChange={(e) => setValue('salaryUnit', e.target.value)}><option>P.A.</option><option>Monthly</option></select></div>
                   </div>
                 </div>
@@ -581,8 +601,8 @@ export const EmployerPostJob = () => {
             <section className="rounded-md border border-slate-100 bg-white shadow-sm">
               <div className="border-b border-slate-100 px-5 py-4"><h2 className="text-base font-extrabold text-[#3f4254]">Job Description</h2></div>
               <div className="space-y-4 p-5">
-                <div><label className={labelClass}>Short Summary *</label><textarea className={inputClass} rows="3" value={form.jobSummary} onChange={(e) => setValue('jobSummary', e.target.value)} /></div>
-                <div><label className={labelClass}>Detailed Job Description *</label><textarea className={inputClass} rows="8" value={form.description} onChange={(e) => setValue('description', e.target.value)} /></div>
+                <div><label className={labelClass}>Short Summary *</label><textarea className={fieldClass('jobSummary')} rows="3" value={form.jobSummary} onChange={(e) => setValue('jobSummary', e.target.value)} /></div>
+                <div><label className={labelClass}>Detailed Job Description *</label><textarea className={fieldClass('description')} rows="8" value={form.description} onChange={(e) => setValue('description', e.target.value)} /></div>
                 <div><label className={labelClass}>Responsibilities</label><textarea className={inputClass} rows="6" value={form.responsibilities} onChange={(e) => setValue('responsibilities', e.target.value)} /></div>
               </div>
             </section>
@@ -594,7 +614,7 @@ export const EmployerPostJob = () => {
               <div className="grid gap-4 p-5 md:grid-cols-2">
                 <div><label className={labelClass}>Qualification</label><select className={inputClass} value={form.qualification} onChange={(e) => setValue('qualification', e.target.value)}><option value="">Select Qualification</option>{meta.qualifications.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
                 <div><label className={labelClass}>Required Experience</label><select className={inputClass} value={form.requiredExperience} onChange={(e) => setValue('requiredExperience', e.target.value)}><option value="">Select Experience</option><option>Fresher</option><option>1 - 2 Years</option><option>2 - 5 Years</option><option>5+ Years</option></select></div>
-                <div className="md:col-span-2"><label className={labelClass}>Key Skills *</label><input className={inputClass} value={form.skills} onChange={(e) => setValue('skills', e.target.value)} placeholder="JavaScript, React.js, HTML" /></div>
+                <div className="md:col-span-2"><label className={labelClass}>Key Skills *</label><input className={fieldClass('skills')} value={form.skills} onChange={(e) => setValue('skills', e.target.value)} placeholder="JavaScript, React.js, HTML" /></div>
                 <div><label className={labelClass}>Language Preference</label><input className={inputClass} value={form.language} onChange={(e) => setValue('language', e.target.value)} /></div>
                 <div><label className={labelClass}>Candidate Location Preference</label><select className={inputClass} value={form.candidateLocation} onChange={(e) => setValue('candidateLocation', e.target.value)}><option>Open to all locations</option><option>Same city only</option><option>Same state only</option></select></div>
                 <div className="md:col-span-2"><label className={labelClass}>Screening Questions</label><textarea className={inputClass} rows="4" value={form.screeningQuestions} onChange={(e) => setValue('screeningQuestions', e.target.value)} /></div>

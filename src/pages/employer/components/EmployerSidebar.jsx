@@ -17,9 +17,11 @@ import {
   Settings,
   Star,
   UserCheck,
-  UserPlus
+  UserPlus,
+  UserRoundCheck
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import { useMessageSocket } from '../../../context/MessageSocketContext';
 
 const mainMenu = [
   { to: '/employer', icon: Grid2X2, label: 'Dashboard', exact: true },
@@ -34,12 +36,13 @@ const mainMenu = [
     ]
   },
   { to: '/employer/applications', icon: FileText, label: 'Applications' },
+  { to: '/employer/applicant-history', icon: UserRoundCheck, label: 'Applicants History' },
   { to: '/employer/shortlisted', icon: UserCheck, label: 'Shortlisted' },
   { to: '/employer/interviews', icon: CalendarCheck, label: 'Interviews' },
   { to: '/employer/selected', icon: UserPlus, label: 'Selected' },
   { to: '/employer/candidates', icon: Search, label: 'Search Candidates' },
   { to: '/employer/reports', icon: Grid2X2, label: 'Reports' },
-  { to: '/employer/messages', icon: MessageCircle, label: 'Messages', badge: '3' }
+  { to: '/employer/messages', icon: MessageCircle, label: 'Messages' }
 ];
 
 const companyMenu = [
@@ -60,11 +63,13 @@ const getEmployerUser = () => {
 
 export const EmployerSidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
   const location = useLocation();
+  const { unreadCount } = useMessageSocket();
   const user = getEmployerUser();
   const [profile, setProfile] = useState({
     name: user?.companyName || user?.firstName || 'Employer',
     planName: 'No Plan',
-    isVerified: false
+    isVerified: false,
+    profileCompletionScore: 0
   });
   const [openMenus, setOpenMenus] = useState({ jobs: true });
 
@@ -112,6 +117,7 @@ export const EmployerSidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
     const active = isActive(item) || isChildActive(item);
     const menuKey = item.label.toLowerCase().replace(/\s+/g, '-');
     const isMenuOpen = Boolean(openMenus[menuKey]);
+    const badgeValue = item.to === '/employer/messages' ? unreadCount : item.badge;
 
     if (item.children) {
       return (
@@ -170,9 +176,9 @@ export const EmployerSidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
         {!isCollapsed && (
           <>
             {Suffix && <Suffix className="h-4 w-4 text-slate-500" />}
-            {item.badge && (
+            {Boolean(badgeValue) && (
               <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[11px] font-black text-white">
-                {item.badge}
+                {badgeValue > 99 ? '99+' : badgeValue}
               </span>
             )}
           </>
@@ -210,6 +216,18 @@ export const EmployerSidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
                 }`}>
                   <BadgeCheck className="h-3.5 w-3.5" />
                   {profile.isVerified ? 'Verified' : 'Unverified'}
+                </div>
+                <div className="mt-3">
+                  <div className="mb-1 flex items-center justify-between text-[11px] font-black text-slate-400">
+                    <span>Profile score</span>
+                    <span>{Number(profile.profileCompletionScore || 0)}%</span>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className="h-full rounded-full bg-[#6658dd] transition-all"
+                      style={{ width: `${Math.min(Math.max(Number(profile.profileCompletionScore || 0), 0), 100)}%` }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

@@ -46,6 +46,24 @@ const RoleButton = ({ active, icon: Icon, label, onClick }) => (
   </button>
 );
 
+const getPublicRedirectPath = (userData, fallbackRole = 'jobseeker') => {
+  const accountType = String(userData?.accountType || '').trim().toLowerCase();
+  const userRole = String(userData?.role || '').trim().toLowerCase();
+  const selectedRole = String(fallbackRole || '').trim().toLowerCase();
+
+  if (accountType === 'employer' || userRole === 'employer') return '/employer';
+  if (accountType === 'jobseeker' || userRole === 'jobseeker') return '/jobseeker';
+  return selectedRole === 'employer' ? '/employer' : '/jobseeker';
+};
+
+const getStoredPublicUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem('publicUser') || 'null');
+  } catch {
+    return null;
+  }
+};
+
 export const Login = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
@@ -90,6 +108,15 @@ export const Login = () => {
     };
     loadPublicSettings();
   }, []);
+
+  useEffect(() => {
+    const storedUser = getStoredPublicUser();
+    const storedToken = localStorage.getItem('publicToken');
+
+    if (storedUser && storedToken) {
+      navigate(getPublicRedirectPath(storedUser, role), { replace: true });
+    }
+  }, [navigate, role]);
 
   useEffect(() => {
     if (location.state?.message) {
@@ -164,13 +191,13 @@ export const Login = () => {
   const completePublicLogin = (loginData) => {
     const token = loginData?.token;
     const userData = loginData?.user || loginData;
-    const accountType = userData?.accountType || userData?.role;
+    const accountType = String(userData?.accountType || userData?.role || '').trim().toLowerCase();
 
-    if (role === 'jobseeker' && accountType !== 'jobseeker' && userData?.role !== 'Jobseeker') {
+    if (role === 'jobseeker' && accountType !== 'jobseeker') {
       setError('Please select the correct account type for this login.');
       return false;
     }
-    if (role === 'employer' && accountType !== 'employer' && userData?.role !== 'Employer') {
+    if (role === 'employer' && accountType !== 'employer') {
       setError('Please select the correct account type for this login.');
       return false;
     }
@@ -178,7 +205,7 @@ export const Login = () => {
     localStorage.setItem('publicUser', JSON.stringify(userData));
     if (token) localStorage.setItem('publicToken', token);
     setSuccess('Logged in successfully.');
-    setTimeout(() => navigate('/'), 700);
+    setTimeout(() => navigate(getPublicRedirectPath(userData, role), { replace: true }), 700);
     return true;
   };
 

@@ -38,10 +38,12 @@ const EmployerSearchCandidates = lazy(() => import('./pages/employer/candidates/
 const EmployerCandidateProfile = lazy(() => import('./pages/employer/candidates/EmployerCandidateProfile'));
 const EmployerApplications = lazy(() => import('./pages/employer/applications/EmployerApplications'));
 const EmployerApplicationDetails = lazy(() => import('./pages/employer/applications/EmployerApplicationDetails'));
+const EmployerApplicantHistory = lazy(() => import('./pages/employer/applicants/EmployerApplicantHistory'));
 const EmployerShortlisted = lazy(() => import('./pages/employer/candidates/EmployerShortlisted'));
 const EmployerInterviews = lazy(() => import('./pages/employer/interviews/EmployerInterviews'));
 const EmployerPortalReports = lazy(() => import('./pages/employer/reports/EmployerReports'));
 const EmployerSelected = lazy(() => import('./pages/employer/selected/EmployerSelected'));
+const EmployerMessages = lazy(() => import('./pages/employer/messages/EmployerMessages'));
 
 // Jobseeker Portal
 const JobseekerLayout = lazy(() => import('./pages/jobseeker/JobseekerLayout'));
@@ -345,6 +347,7 @@ function App() {
               <Route path="jobs/:id" element={<EmployerJobDetails />} />
               <Route path="applications" element={<EmployerApplications />} />
               <Route path="applications/:id" element={<EmployerApplicationDetails />} />
+              <Route path="applicant-history" element={<EmployerApplicantHistory />} />
               <Route path="shortlisted" element={<EmployerShortlisted />} />
               <Route path="interviews" element={<EmployerInterviews />} />
               <Route path="selected" element={<EmployerSelected />} />
@@ -354,7 +357,7 @@ function App() {
               <Route path="payments" element={<EmployerPlaceholder title="Payments" />} />
               <Route path="subscription" element={<EmployerSubscription />} />
               <Route path="talent-pool" element={<EmployerTalentPool />} />
-              <Route path="messages" element={<EmployerPlaceholder title="Messages" />} />
+              <Route path="messages" element={<EmployerMessages />} />
               <Route path="reports" element={<EmployerPortalReports />} />
               <Route path="settings" element={<EmployerSettings />} />
               <Route path="support" element={<EmployerSupport />} />
