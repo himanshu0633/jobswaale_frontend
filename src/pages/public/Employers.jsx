@@ -458,7 +458,7 @@ export const Employers = () => {
           BANNER / BREADCRUMB  — .section-box-2 > .box-head-single.none-bg
       ══════════════════════════════════════════════════════════ */}
       <section className="bg-[#FFF9F3] inline-block w-full py-8 sm:py-[55px] relative">
-        <div className="max-w-[1344px] mx-auto px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <h4 className="text-[24px] leading-[30px] sm:text-[28px] sm:leading-[34px] font-bold text-[#1f2938] mb-0">
             There are <strong className="text-[#ff5e14]">500+</strong> companies<br />here for you!
           </h4>
@@ -590,7 +590,7 @@ export const Employers = () => {
       {/* ══════════════════════════════════════════════════════════
           MAIN SECTION  — .section-box.mt-80.mb-80
       ══════════════════════════════════════════════════════════ */}
-      <section className="max-w-[1344px] mx-auto my-10 sm:my-20 px-4 sm:px-6">
+      <section className="max-w-7xl mx-auto my-10 sm:my-20 px-4 sm:px-6">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
 
           {/* ────────────────────────────────────────────────────

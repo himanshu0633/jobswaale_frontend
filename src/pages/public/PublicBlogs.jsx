@@ -44,7 +44,7 @@ export const PublicBlogs = () => {
 
       {/* Breadcrumb */}
       <div className="bg-[#fff9f3] py-5">
-        <div className="max-w-[1344px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <ul className="flex items-center list-none p-0">
             <li>
               <Link to="/" className="text-base text-[#1f2938] hover:text-[#0047C7] no-underline">
@@ -60,7 +60,7 @@ export const PublicBlogs = () => {
 
       {/* Archive Header */}
       <div className="pt-8 pb-6 sm:pt-10 sm:pb-8 lg:pt-[50px] lg:pb-[30px] text-center">
-        <div className="max-w-[1344px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h3 className="text-[26px] leading-[32px] sm:text-[34px] sm:leading-[42px] lg:text-[46px] font-bold text-[#1f2938] mb-6 sm:mb-[30px] w-full sm:w-3/4 mx-auto leading-tight">
             Relevant news and more for you. Welcome to our blog
           </h3>
@@ -79,7 +79,7 @@ export const PublicBlogs = () => {
 
       {/* Post Loop Grid */}
       <main className="flex-grow mb-12 sm:mb-[80px]">
-        <div className="max-w-[1344px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
             {/* Left: Blog Posts */}

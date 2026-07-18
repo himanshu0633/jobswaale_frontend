@@ -26,7 +26,7 @@ const About = () => {
     <div className="w-full bg-white overflow-x-hidden ">
       {/* Hero Banner Section */}
       <section className="bg-[#fff9f3] border-b border-[#fff9f3] relative overflow-hidden rounded-bl-[40px] rounded-br-[40px] sm:rounded-bl-[60px] sm:rounded-br-[60px] lg:rounded-bl-[100px] lg:rounded-br-[100px] pb-16 pt-12 sm:pb-24 sm:pt-16 lg:pb-40 lg:pt-20">
-        <div className="max-w-[1770px] mx-auto px-4 sm:px-6 lg:pl-[60px] lg:pr-[80px]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid gap-8 lg:gap-12 lg:grid-cols-12 items-center">
             {/* Left Column */}
             <div className="lg:col-span-7 space-y-5 sm:space-y-6 lg:py-[20px] lg:pr-[60px] text-center lg:text-left">
@@ -92,7 +92,7 @@ const About = () => {
 
       {/* Core Features Grid Section */}
       <section className="pt-12 sm:pt-16 lg:pt-[90px] pb-10 bg-white">
-        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 ">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ">
           <div className="max-w-7xl mx-auto">
             <div className="grid gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {/* Feature 1 */}

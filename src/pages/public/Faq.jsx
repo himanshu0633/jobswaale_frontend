@@ -104,7 +104,7 @@ const AccordionItem = ({ faq, index, isOpen, toggle, isLeft }) => {
     <main className="min-h-screen bg-white">
       {/* Page Header */}
       <section className="py-12">
-        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="w-full md:w-1/2 mx-auto text-center">
             <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-8">
               FAQs
