@@ -366,7 +366,7 @@ export const Jobs = () => {
     <div className="w-full bg-white" style={{ fontFamily: "'Inter', sans-serif" }}>
       {/* Top Banner Section — heading, breadcrumb, and filter card all live inside the cream banner */}
       <section className="bg-[#FFF9F3] py-[40px] relative overflow-hidden">
-        <div className="max-w-[1350px] mx-auto px-4 sm:px-6 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
 
           {/* Heading row */}
           <h1 className="text-[28px] leading-[34px] sm:text-4xl sm:leading-tight font-bold text-[#1f2938]">
@@ -513,7 +513,7 @@ export const Jobs = () => {
 
       {/* Main Grid Content — HTML uses row.flex-row-reverse with listings as col-lg-8 first in source
           (so it renders on the right) and sidebar as col-lg-4 second (renders on the left) */}
-      <section className="max-w-[1350px] mx-auto px-4 sm:px-6 pt-12 pb-16">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-12 pb-16">
         <div className="grid gap-8 lg:grid-cols-12">
 
           {/* Job listings column — renders on the RIGHT to match the HTML's flex-row-reverse layout */}

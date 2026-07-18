@@ -115,7 +115,7 @@ export const Support = () => {
     <main className="min-h-screen bg-white">
       {/* Page Header */}
       <section className="py-12">
-        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="w-full md:w-1/2 mx-auto text-center">
             <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-8">
               Support Center
@@ -130,7 +130,7 @@ export const Support = () => {
 
       {/* Support Categories */}
       <section className="py-4">
-        <div className="max-w-[1350px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {supportCategories.map(({ icon: Icon, title, description, to }) => (
               <Link
@@ -155,7 +155,7 @@ export const Support = () => {
 
       {/* Quick Contact Info */}
       <section className="py-16 md:py-20">
-        <div className="max-w-[1350px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="w-full xl:w-3/4 mx-auto text-center">
             <span className="text-blue-600 font-semibold text-sm uppercase tracking-wider">
               Get in touch
@@ -203,7 +203,7 @@ export const Support = () => {
 
       {/* FAQ / Quick Help Section */}
       <section className="py-16 md:py-20 bg-gray-50">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-wrap items-end mb-12">
             <div className="w-full lg:w-5/12">
               <span className="text-blue-600 font-semibold text-sm uppercase tracking-wider">
@@ -238,7 +238,7 @@ export const Support = () => {
 
       {/* Still Need Help CTA */}
       <section className="py-16 md:py-20">
-        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="rounded-2xl bg-[#0047C7] px-6 py-14 sm:px-16 sm:py-16 text-center relative overflow-hidden">
             <MessageCircle className="w-10 h-10 text-white/80 mx-auto mb-5" strokeWidth={2} />
             <h3 className="text-2xl sm:text-4xl font-bold text-white mb-4">

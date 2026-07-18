@@ -8,7 +8,7 @@ const JobseekerPlan = () => {
 
             {/* Pricing Plans Section */}
             <section className="mt-2 sm:mt-16 mb-1 py-1 inline-block w-full overflow-hidden ">
-                <div className="max-w-[1344px] mx-auto px-4 sm:px-6">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6">
 
                     {/* Section Heading */}
                     <div className="w-full lg:w-1/2 mx-auto text-center mb-6 sm:mb-8">
@@ -227,7 +227,7 @@ const JobseekerPlan = () => {
 
             {/* Invest in Yourself Section */}
             <section className="py-10 mt-0 sm:mt-0 inline-block w-full overflow-hidden">
-                <div className="max-w-[1344px] mx-auto px-4 sm:px-6">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6">
                     <div className="flex flex-wrap -mx-3">
 
                         {/* Left Image */}
@@ -266,7 +266,7 @@ const JobseekerPlan = () => {
 
             {/* CTA Blue Banner Section */}
             <section className="bg-[#ecf4ff] py-10 sm:py-[78px] mt-12 sm:mt-24 mb-12 inline-block w-full overflow-hidden">
-                <div className="max-w-[1344px] mx-auto px-4 sm:px-6">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6">
                     <h3 className="text-[26px] leading-[32px] sm:text-[36px] sm:leading-[44px] lg:text-[44px] lg:leading-[54px] font-bold text-[#1f2938] mb-5">
                         Your Career Deserves More<br className="hidden sm:block" /> Than Just Applications
                     </h3>

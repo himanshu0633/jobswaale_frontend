@@ -54,7 +54,7 @@ export const Contact = () => {
 
   return (
     <main className="min-h-screen py-0">
-      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 mt-0 md:mt-8 mb-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-0 md:mt-8 mb-20">
         <div className="flex flex-wrap">
           <div className="w-full xl:w-10/12 lg:w-full mx-auto">
             <section className="mb-12">
