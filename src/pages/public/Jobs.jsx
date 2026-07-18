@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { Briefcase, MapPin, ChevronDown, Mail, ArrowRight, Search, X, SlidersHorizontal } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Briefcase, MapPin, ChevronDown, Mail, ArrowRight, Search, X } from 'lucide-react';
 import TrustedCompanies from './TrustedCompanies';
+import axios from 'axios';
+import { BASE_API_URL } from '../../context/AuthContext';
+import { getWithCache } from '../../utils/apiCache';
 
 const MOCK_JOBS = [
   {
@@ -115,6 +118,10 @@ const MOCK_JOBS = [
 ];
 
 export const Jobs = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const queryCategory = searchParams.get('category') || '';
+  const queryCompany = searchParams.get('company') || '';
+
   // Search state (top bar)
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searchType, setSearchType] = useState('');
@@ -130,17 +137,72 @@ export const Jobs = () => {
   const [sidebarTypes, setSidebarTypes] = useState([]);
   const [sidebarExps, setSidebarExps] = useState([]);
 
-  // Mobile filter/sort toggle menu
-  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
-  const mobileFilterRef = useRef(null);
-
   // Active filter state
-  const [filteredJobs, setFilteredJobs] = useState(MOCK_JOBS);
+  const [dbJobs, setDbJobs] = useState([]);
+  const [filteredJobs, setFilteredJobs] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [sortBy, setSortBy] = useState('newest');
   const [reminderEmail, setReminderEmail] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  // Fetch jobs from database on mount
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const res = await axios.get(`${BASE_API_URL}/jobs`);
+        const mappedJobs = (res.data || []).map(j => ({
+          id: j.slug || j._id,
+          title: j.jobTitle,
+          company: j.companyName,
+          location: `${j.city}, ${j.state}`,
+          salary: j.salary || (j.minSalary && j.maxSalary ? `₹${j.minSalary} - ${j.maxSalary}` : 'Not Specified'),
+          type: j.jobType?.jobType || j.workMode || 'Full Time',
+          category: j.jobCategory?.categoryName || 'IT & Software',
+          experience: j.experience,
+          logoLetter: j.companyName ? j.companyName.charAt(0).toUpperCase() : 'J',
+          logoBg: ['bg-red-500', 'bg-blue-600', 'bg-emerald-500', 'bg-purple-500', 'bg-amber-500'][Math.floor(Math.random() * 5)]
+        }));
+        setDbJobs(mappedJobs);
+        setFilteredJobs(mappedJobs);
+      } catch (err) {
+        console.error('Fetch jobs error:', err);
+        setError('Failed to fetch jobs from database.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJobs();
+  }, []);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await getWithCache(`${BASE_API_URL}/masters/job-categories`);
+        const activeCategories = (data || [])
+          .filter((category) => (category.status || 'active') === 'active')
+          .sort((a, b) => {
+            const sortA = Number.isFinite(Number(a.sortingNo)) ? Number(a.sortingNo) : Number.MAX_SAFE_INTEGER;
+            const sortB = Number.isFinite(Number(b.sortingNo)) ? Number(b.sortingNo) : Number.MAX_SAFE_INTEGER;
+            if (sortA !== sortB) return sortA - sortB;
+            return (a.categoryName || '').localeCompare(b.categoryName || '');
+          });
+        setCategories(activeCategories);
+      } catch (err) {
+        console.error('Fetch categories error:', err);
+        setCategories([]);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    setSidebarCat(queryCategory);
+  }, [queryCategory]);
 
   const filterJobs = () => {
-    let result = [...MOCK_JOBS];
+    let result = [...dbJobs];
 
     // Top search bar filters
     if (searchKeyword.trim() !== '') {
@@ -174,8 +236,13 @@ export const Jobs = () => {
     if (sidebarLoc.trim() !== '') {
       result = result.filter((j) => j.location.toLowerCase().includes(sidebarLoc.toLowerCase()));
     }
-    if (sidebarCat) {
-      result = result.filter((j) => j.category === sidebarCat);
+    const selectedCategory = sidebarCat || queryCategory;
+    if (selectedCategory) {
+      result = result.filter((j) => j.category === selectedCategory);
+    }
+    if (queryCompany) {
+      const company = queryCompany.trim().toLowerCase();
+      result = result.filter((j) => String(j.company || '').trim().toLowerCase() === company);
     }
     if (sidebarTypes.length > 0) {
       result = result.filter((j) => sidebarTypes.includes(j.type));
@@ -186,9 +253,9 @@ export const Jobs = () => {
 
     // Sort
     if (sortBy === 'newest') {
-      result.sort((a, b) => b.id - a.id);
+      result.sort((a, b) => String(b.id).localeCompare(String(a.id)));
     } else {
-      result.sort((a, b) => a.id - b.id);
+      result.sort((a, b) => String(a.id).localeCompare(String(b.id)));
     }
 
     setFilteredJobs(result);
@@ -196,16 +263,13 @@ export const Jobs = () => {
 
   useEffect(() => {
     filterJobs();
-  }, [sortBy]);
+  }, [dbJobs, sortBy, queryCategory, queryCompany]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (filterBarRef.current && !filterBarRef.current.contains(e.target)) {
         setTypeDropdownOpen(false);
         setLocDropdownOpen(false);
-      }
-      if (mobileFilterRef.current && !mobileFilterRef.current.contains(e.target)) {
-        setMobileFilterOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -218,10 +282,19 @@ export const Jobs = () => {
 
   const applySidebarFilters = () => {
     filterJobs();
-    setMobileFilterOpen(false);
+  };
+
+  const handleSidebarCategoryChange = (value) => {
+    setSidebarCat(value);
+    if (queryCategory) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('category');
+      setSearchParams(nextParams);
+    }
   };
 
   const resetSidebarFilters = () => {
+    setSearchParams({});
     setSidebarLoc('');
     setSidebarCat('');
     setSidebarTypes([]);
@@ -230,7 +303,7 @@ export const Jobs = () => {
     setSearchType('');
     setSearchLoc('');
     setTagFilter('');
-    setFilteredJobs(MOCK_JOBS);
+    setFilteredJobs(dbJobs);
   };
 
   const handleSidebarTypeToggle = (type) => {
@@ -251,121 +324,10 @@ export const Jobs = () => {
     setReminderEmail('');
   };
 
-  // Shared filter-field markup, reused in both the desktop sidebar card
-  // and the mobile toggle panel so the two stay in sync automatically
-  // (both are bound to the same state).
-  const renderFilterFields = (idPrefix) => (
-    <>
-      {/* Location Input */}
-      <div className="space-y-3">
-        <h4 className="text-[18px] font-semibold text-[#1f2938]">Location</h4>
-        <div className="relative flex items-center">
-          <MapPin className="absolute left-[15px] h-[18px] w-[18px] text-[#88929b]" />
-          <input
-            type="text"
-            placeholder="Location"
-            value={sidebarLoc}
-            onChange={(e) => setSidebarLoc(e.target.value)}
-            className="w-full border border-[rgba(6,18,36,0.1)] rounded-[10px] pl-11 pr-4 py-3 text-sm text-[#37404e] placeholder-[#88929b] focus:outline-none focus:border-[#0047C7] transition"
-          />
-        </div>
-      </div>
-
-      {/* Category selector */}
-      <div className="space-y-3">
-        <h4 className="text-[18px] font-semibold text-[#1f2938]">Category</h4>
-        <div className="relative flex items-center">
-          <Briefcase className="absolute left-[15px] h-[18px] w-[18px] text-[#88929b] pointer-events-none" />
-          <select
-            value={sidebarCat}
-            onChange={(e) => setSidebarCat(e.target.value)}
-            className="w-full border border-[rgba(6,18,36,0.1)] rounded-[10px] pl-11 pr-10 py-3 text-sm text-[#88929b] focus:outline-none focus:border-[#0047C7] transition appearance-none cursor-pointer"
-          >
-            <option value="">All Categories</option>
-            <option value="IT & Software">IT & Software</option>
-            <option value="Designing">Designing</option>
-            <option value="Accounts & Finance">Accounts & Finance</option>
-            <option value="Customer Support">Customer Support</option>
-            <option value="Sales & Marketing">Sales & Marketing</option>
-            <option value="HR & Admin">HR & Admin</option>
-          </select>
-          <ChevronDown className="absolute right-[15px] h-4 w-4 text-[#88929b] pointer-events-none" />
-        </div>
-      </div>
-
-      {/* Job type checklist */}
-      <div className="space-y-3">
-        <h4 className="text-[18px] font-semibold text-[#1f2938]">Job type</h4>
-        <div className="space-y-3 pt-1">
-          {[
-            ['Full Time', 235],
-            ['Part Time', 28],
-            ['Remote', 67],
-            ['Freelance', 92]
-          ].map(([t, count]) => (
-            <label key={`${idPrefix}-type-${t}`} className="flex items-center justify-between gap-2.5 text-sm text-[#37404e] cursor-pointer select-none">
-              <span className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={sidebarTypes.includes(t)}
-                  onChange={() => handleSidebarTypeToggle(t)}
-                  className="h-[18px] w-[18px] rounded-[4px] border-2 border-[#d1d1d1] text-[#0047C7] focus:ring-[#0047C7] cursor-pointer"
-                />
-                {t}
-              </span>
-              <span className="text-xs px-2 py-1 rounded-[5px] text-[#9c9ca3]" style={{ backgroundColor: 'rgba(156,156,163,0.18)' }}>
-                {count}
-              </span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Experience level checklist */}
-      <div className="space-y-3">
-        <h4 className="text-[18px] font-semibold text-[#1f2938]">Experience Level</h4>
-        <div className="space-y-3 pt-1">
-          {[
-            ['Junior', 54],
-            ['Regular', 23],
-            ['Senior', 89],
-            ['Expert', 76]
-          ].map(([exp, count]) => (
-            <label key={`${idPrefix}-exp-${exp}`} className="flex items-center justify-between gap-2.5 text-sm text-[#37404e] cursor-pointer select-none">
-              <span className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={sidebarExps.includes(exp)}
-                  onChange={() => handleSidebarExpToggle(exp)}
-                  className="h-[18px] w-[18px] rounded-[4px] border-2 border-[#d1d1d1] text-[#0047C7] focus:ring-[#0047C7] cursor-pointer"
-                />
-                {exp}
-              </span>
-              <span className="text-xs px-2 py-1 rounded-[5px] text-[#9c9ca3]" style={{ backgroundColor: 'rgba(156,156,163,0.18)' }}>
-                {count}
-              </span>
-            </label>
-          ))}
-        </div>
-      </div>
-    </>
-  );
-
-  const sortSelect = (
-    <select
-      value={sortBy}
-      onChange={(e) => setSortBy(e.target.value)}
-      className="text-sm font-semibold text-[#37404e] bg-transparent border-0 focus:outline-none cursor-pointer"
-    >
-      <option value="newest">Newest Post</option>
-      <option value="oldest">Oldest Post</option>
-    </select>
-  );
-
   return (
     <div className="w-full bg-white" style={{ fontFamily: "'Inter', sans-serif" }}>
       {/* Top Banner Section — heading, breadcrumb, and filter card all live inside the cream banner */}
-      <section className="bg-[#FFF9F3] py-[40px] relative overflow-hidden">
+      <section className="bg-[#FFF9F3] py-[55px] relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
 
           {/* Heading row */}
@@ -499,12 +461,12 @@ export const Jobs = () => {
 
                 {/* Find Now button — floats to the right of the row */}
                 <button
-  type="button"
-  onClick={handleFindNow}
-  className="w-full md:w-auto bg-[#0047C7] hover:bg-[#0052cc] text-white font-medium text-sm px-7 py-3 rounded-[10px] transition duration-150 cursor-pointer whitespace-nowrap"
->
-  Find Now
-</button>
+                  type="button"
+                  onClick={handleFindNow}
+                  className="bg-[#0047C7] hover:bg-[#0052cc] text-white font-medium text-sm px-7 py-3 rounded-[10px] transition duration-150 cursor-pointer whitespace-nowrap"
+                >
+                  Find Now
+                </button>
               </div>
             </div>
           </div>
@@ -513,72 +475,52 @@ export const Jobs = () => {
 
       {/* Main Grid Content — HTML uses row.flex-row-reverse with listings as col-lg-8 first in source
           (so it renders on the right) and sidebar as col-lg-4 second (renders on the left) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-12 pb-16">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-20 pb-16">
         <div className="grid gap-8 lg:grid-cols-12">
 
           {/* Job listings column — renders on the RIGHT to match the HTML's flex-row-reverse layout */}
           <div className="lg:col-span-8 space-y-6 order-1 lg:order-2">
-
-            {/* Mobile-only filter/sort toggle — sits on top of the job listings */}
-            <div className="relative lg:hidden" ref={mobileFilterRef}>
-              <button
-                type="button"
-                onClick={() => setMobileFilterOpen((o) => !o)}
-                className="w-full flex items-center justify-between gap-2 bg-white rounded-[10px] px-5 py-3 text-sm font-semibold text-[#37404e]"
-                style={{ border: '1px solid rgba(6,18,36,0.1)', boxShadow: '0px 9px 26px 0px rgba(31,31,51,0.06)' }}
-              >
-                <span className="flex items-center gap-2">
-                  <SlidersHorizontal className="h-4 w-4 text-[#88929b]" />
-                  Filters &amp; Sort
-                </span>
-                <ChevronDown className={`h-4 w-4 text-[#88929b] transition-transform ${mobileFilterOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              {mobileFilterOpen && (
-                <div
-                  className="absolute left-0 right-0 top-full mt-2 z-30 bg-white rounded-[10px] p-[24px] space-y-[24px] max-h-[75vh] overflow-y-auto"
-                  style={{ border: '1px solid rgba(6,18,36,0.1)', boxShadow: '0px 9px 26px 0px rgba(31,31,51,0.06)' }}
-                >
-                  {/* Sort by, included inside the mobile filter menu */}
-                  <div className="flex items-center justify-between pb-2" style={{ borderBottom: '1px solid rgba(6,18,36,0.1)' }}>
-                    <span className="text-sm font-semibold text-[#9c9ca3]">Sort by</span>
-                    {sortSelect}
-                  </div>
-
-                  {renderFilterFields('mobile')}
-
-                  <div className="flex items-center gap-3 pt-1">
-                    <button
-                      onClick={applySidebarFilters}
-                      className="flex-1 bg-[#0047C7] hover:bg-[#0052cc] text-white font-bold text-sm py-3 rounded-[10px] transition cursor-pointer"
-                    >
-                      Apply filter
-                    </button>
-                    <button
-                      onClick={() => { resetSidebarFilters(); setMobileFilterOpen(false); }}
-                      className="text-[#1f2938] hover:text-[#0047C7] font-normal text-sm py-3 transition cursor-pointer"
-                    >
-                      Reset filter
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
 
             {/* Header / Info bar */}
             <div className="flex items-center justify-between pb-2">
               <span className="text-sm text-[#37404e]">
                 Showing <strong className="text-[#37404e]">{filteredJobs.length}</strong> jobs
               </span>
-              <div className="hidden lg:flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <span className="text-sm font-semibold text-[#9c9ca3]">Sort by:</span>
-                {sortSelect}
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="text-sm font-semibold text-[#37404e] bg-transparent border-0 focus:outline-none cursor-pointer"
+                >
+                  <option value="newest">Newest Post</option>
+                  <option value="oldest">Oldest Post</option>
+                </select>
               </div>
             </div>
 
             {/* Grid of Job Cards */}
-            {filteredJobs.length === 0 ? (
-              <div className="text-center py-16 rounded-[12px] bg-[#f4f6fa]" style={{ border: '0.88px solid rgba(6,18,36,0.1)' }}>
+            {loading ? (
+              <div className="grid gap-4 sm:grid-cols-2 animate-pulse w-full col-span-2">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="border border-[#e8ecf3] rounded-[10px] bg-white p-[1.8rem] flex flex-col min-h-[180px]">
+                    <div className="flex items-start">
+                      <div className="w-12 h-12 rounded-full bg-slate-200 shrink-0" />
+                      <div className="ms-4 space-y-2 flex-grow">
+                        <div className="h-4 w-3/4 bg-slate-200 rounded" />
+                        <div className="h-3 w-1/2 bg-slate-200 rounded" />
+                        <div className="h-3 w-1/3 bg-slate-200 rounded mt-3" />
+                      </div>
+                    </div>
+                    <div className="border-t border-[#eef1f6] pt-4 mt-auto flex items-center justify-between" style={{ marginTop: '7%' }}>
+                      <div className="h-4 w-20 bg-slate-200 rounded" />
+                      <div className="h-6 w-16 bg-slate-200 rounded-full" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredJobs.length === 0 ? (
+              <div className="text-center py-16 rounded-[12px] bg-[#f4f6fa] w-full col-span-2" style={{ border: '0.88px solid rgba(6,18,36,0.1)' }}>
                 <p className="text-[#88929b] font-medium text-sm">No jobs found matching your filters.</p>
                 <button
                   onClick={resetSidebarFilters}
@@ -626,7 +568,7 @@ export const Jobs = () => {
 
             {/* Pagination Controls */}
             {filteredJobs.length > 0 && (
-              <div className="flex items-center pt-10 ml-9">
+              <div className="flex items-center pt-10">
                 <nav className="flex items-center gap-1">
                   <button className="px-3 py-2 text-sm font-semibold text-[#37404e] hover:font-bold transition cursor-pointer">Previous</button>
                   <button className="px-3.5 py-2 rounded-[8px] text-sm font-bold text-[#37404e]" style={{ backgroundColor: 'rgba(0,71,199,0.3)' }}>1</button>
@@ -664,11 +606,100 @@ export const Jobs = () => {
               </form>
             </div>
 
-            {/* Sidebar filters list — hidden on mobile; the mobile Filters & Sort toggle above the
-                job listings covers this content on small screens */}
-            <div className="hidden lg:block rounded-[10px] bg-white p-[29px_33px] space-y-[30px]" style={{ border: '1px solid rgba(6,18,36,0.1)', boxShadow: '0px 9px 26px 0px rgba(31,31,51,0.06)' }}>
+            {/* Sidebar filters list */}
+            <div className="rounded-[10px] bg-white p-[29px_33px] space-y-[30px]" style={{ border: '1px solid rgba(6,18,36,0.1)', boxShadow: '0px 9px 26px 0px rgba(31,31,51,0.06)' }}>
 
-              {renderFilterFields('desktop')}
+              {/* Location Input */}
+              <div className="space-y-3">
+                <h4 className="text-[18px] font-semibold text-[#1f2938]">Location</h4>
+                <div className="relative flex items-center">
+                  <MapPin className="absolute left-[15px] h-[18px] w-[18px] text-[#88929b]" />
+                  <input
+                    type="text"
+                    placeholder="Location"
+                    value={sidebarLoc}
+                    onChange={(e) => setSidebarLoc(e.target.value)}
+                    className="w-full border border-[rgba(6,18,36,0.1)] rounded-[10px] pl-11 pr-4 py-3 text-sm text-[#37404e] placeholder-[#88929b] focus:outline-none focus:border-[#0047C7] transition"
+                  />
+                </div>
+              </div>
+
+              {/* Category selector */}
+              <div className="space-y-3">
+                <h4 className="text-[18px] font-semibold text-[#1f2938]">Category</h4>
+                <div className="relative flex items-center">
+                  <Briefcase className="absolute left-[15px] h-[18px] w-[18px] text-[#88929b] pointer-events-none" />
+                  <select
+                    value={sidebarCat}
+                    onChange={(e) => handleSidebarCategoryChange(e.target.value)}
+                    className="w-full border border-[rgba(6,18,36,0.1)] rounded-[10px] pl-11 pr-10 py-3 text-sm text-[#88929b] focus:outline-none focus:border-[#0047C7] transition appearance-none cursor-pointer"
+                  >
+                    <option value="">All Categories</option>
+                    {categories.map((category) => (
+                      <option key={category._id || category.id || category.categoryName} value={category.categoryName}>
+                        {category.categoryName}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-[15px] h-4 w-4 text-[#88929b] pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Job type checklist */}
+              <div className="space-y-3">
+                <h4 className="text-[18px] font-semibold text-[#1f2938]">Job type</h4>
+                <div className="space-y-3 pt-1">
+                  {[
+                    ['Full Time', 235],
+                    ['Part Time', 28],
+                    ['Remote', 67],
+                    ['Freelance', 92]
+                  ].map(([t, count]) => (
+                    <label key={t} className="flex items-center justify-between gap-2.5 text-sm text-[#37404e] cursor-pointer select-none">
+                      <span className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={sidebarTypes.includes(t)}
+                          onChange={() => handleSidebarTypeToggle(t)}
+                          className="h-[18px] w-[18px] rounded-[4px] border-2 border-[#d1d1d1] text-[#0047C7] focus:ring-[#0047C7] cursor-pointer"
+                        />
+                        {t}
+                      </span>
+                      <span className="text-xs px-2 py-1 rounded-[5px] text-[#9c9ca3]" style={{ backgroundColor: 'rgba(156,156,163,0.18)' }}>
+                        {count}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Experience level checklist */}
+              <div className="space-y-3">
+                <h4 className="text-[18px] font-semibold text-[#1f2938]">Experience Level</h4>
+                <div className="space-y-3 pt-1">
+                  {[
+                    ['Junior', 54],
+                    ['Regular', 23],
+                    ['Senior', 89],
+                    ['Expert', 76]
+                  ].map(([exp, count]) => (
+                    <label key={exp} className="flex items-center justify-between gap-2.5 text-sm text-[#37404e] cursor-pointer select-none">
+                      <span className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={sidebarExps.includes(exp)}
+                          onChange={() => handleSidebarExpToggle(exp)}
+                          className="h-[18px] w-[18px] rounded-[4px] border-2 border-[#d1d1d1] text-[#0047C7] focus:ring-[#0047C7] cursor-pointer"
+                        />
+                        {exp}
+                      </span>
+                      <span className="text-xs px-2 py-1 rounded-[5px] text-[#9c9ca3]" style={{ backgroundColor: 'rgba(156,156,163,0.18)' }}>
+                        {count}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
 
               {/* Sidebar filter actions */}
               <div className="flex items-center gap-3">

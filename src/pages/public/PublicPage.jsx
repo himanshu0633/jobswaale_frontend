@@ -11,7 +11,6 @@ import EmployerPlan from './EmployerPlan';
 import JobseekerPlan from './JobseekerPlan';
 import About from './About';
 import Contact from './Contact';
-import Support from './Support';
 import PrivacyPolicy from './PrivacyPolicy';
 import TermsConditions from './TermsConditions';
 import Faq from './Faq';
@@ -79,8 +78,6 @@ export const PublicPage = () => {
         return <About />;
       case 'contact':
         return <Contact />;
-      case 'support':
-        return <Support />;
       case 'faq':
         return <Faq />;
       case 'privacy-policy':
