@@ -272,7 +272,7 @@ export const EmployerCompanyProfile = () => {
               
               <div className="pt-2 flex items-center gap-4 flex-wrap text-sm">
                 <div>
-                  <span className="text-xs font-bold text-slate-400 block">Jobs Used</span>
+                  <span className="text-xs font-bold text-slate-400 block">Current Plan Jobs</span>
                   <span className="font-extrabold text-[#3f4254]">{subscription.jobsUsed} <span className="font-medium text-slate-400">/ {subscription.jobLimit}</span></span>
                 </div>
                 <div className="h-8 w-px bg-slate-100"></div>

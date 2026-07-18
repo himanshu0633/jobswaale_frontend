@@ -86,8 +86,8 @@ export const EmployerSubscription = () => {
     );
   }
 
-  const sub = data?.subscription || { planName: 'Free', status: 'Active', validUntil: null, jobsUsed: 0, jobLimit: 50, remainingCredits: 50, utilization: 0, applicationsCount: 0, applicationsLimit: 500, teamMembersCount: 1, teamMembersLimit: 10, daysRemaining: 0 };
-  const stats = data?.stats || { activeJobs: 0, applications: 0, teamMembers: 1, daysRemaining: 0 };
+  const sub = data?.subscription || { planName: 'Free', status: 'Active', validUntil: null, jobsUsed: 0, totalJobs: 0, jobLimit: 50, remainingCredits: 50, utilization: 0, applicationsCount: 0, applicationsLimit: 500, teamMembersCount: 1, teamMembersLimit: 10, daysRemaining: 0 };
+  const stats = data?.stats || { activeJobs: 0, totalJobs: 0, applications: 0, teamMembers: 1, daysRemaining: 0 };
   const plans = data?.availablePlans || [];
   const invoices = data?.billingHistory || [];
   const latestInvoice = invoices[0] || null;
@@ -147,7 +147,7 @@ export const EmployerSubscription = () => {
 
               <div className="pt-3 grid grid-cols-2 gap-4 sm:flex sm:flex-wrap sm:items-center sm:gap-6 text-sm">
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 block">Jobs Used</span>
+                  <span className="text-[10px] font-bold text-slate-400 block">Current Plan Jobs</span>
                   <span className="font-extrabold text-[#3f4254]">{sub.jobsUsed} <span className="font-medium text-slate-400">/ {sub.jobLimit}</span></span>
                 </div>
                 <div className="hidden h-8 w-px bg-slate-100 sm:block"></div>
@@ -191,7 +191,7 @@ export const EmployerSubscription = () => {
       {/* SECTION 2: USAGE STATS GRID */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         {[
-          { title: 'Active Jobs', value: stats.activeJobs, subtitle: '+3 posted this month', icon: Briefcase, color: 'bg-indigo-50 text-indigo-500' },
+          { title: 'Total Job Posts', value: stats.totalJobs ?? sub.totalJobs ?? 0, subtitle: 'across all subscriptions', icon: Briefcase, color: 'bg-indigo-50 text-indigo-500' },
           { title: 'Applications Received', value: stats.applications, subtitle: '+48 this week', icon: FileText, color: 'bg-emerald-50 text-emerald-500' },
           { title: 'Team Members', value: `${stats.teamMembers} / 10`, subtitle: 'included in plan', icon: Users, color: 'bg-sky-50 text-sky-500' },
           { title: 'Days Remaining', value: stats.daysRemaining || 0, subtitle: 'until renewal date', icon: Clock, color: 'bg-amber-50 text-amber-500' }

@@ -140,7 +140,7 @@ export const EmployerDashboard = () => {
               </p>
               <div className="mt-4 grid grid-cols-2 gap-4 sm:max-w-[680px] sm:grid-cols-[95px_125px_300px] sm:gap-5">
                 <div>
-                  <p className="text-xs font-bold text-slate-400 sm:text-sm">Jobs Used</p>
+                  <p className="text-xs font-bold text-slate-400 sm:text-sm">Current Plan Jobs</p>
                   <p className="mt-1 text-sm font-extrabold text-[#3f4254]">{subscription.jobsUsed || 0} <span className="text-slate-400">/ {subscription.jobLimit || 0}</span></p>
                 </div>
                 <div>

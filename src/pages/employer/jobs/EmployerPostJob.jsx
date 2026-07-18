@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
+  AlertCircle,
   ArrowLeft,
   ArrowRight,
   Briefcase,
@@ -151,6 +152,7 @@ export const EmployerPostJob = () => {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [missingFields, setMissingFields] = useState([]);
+  const [upgradePopup, setUpgradePopup] = useState({ open: false, remainingCredits: null });
   const [meta, setMeta] = useState({ employer: {}, categories: [], jobTypes: [], qualifications: [], countries: [], states: [], districts: [], locations: [] });
   const [form, setForm] = useState(emptyForm);
   const [preview, setPreview] = useState(emptyPreview);
@@ -164,13 +166,18 @@ export const EmployerPostJob = () => {
     const loadFormData = async () => {
       setLoading(true);
       try {
-        const [formResponse, jobResponse] = await Promise.all([
+        const [formResponse, jobResponse, subscriptionResponse] = await Promise.all([
           axios.get(`${BASE_API_URL}/employer/job-form`, { headers: getTokenHeaders() }),
-          isEditMode ? axios.get(`${BASE_API_URL}/employer/jobs/${editJobId}`, { headers: getTokenHeaders() }) : Promise.resolve(null)
+          isEditMode ? axios.get(`${BASE_API_URL}/employer/jobs/${editJobId}`, { headers: getTokenHeaders() }) : Promise.resolve(null),
+          isEditMode ? Promise.resolve(null) : axios.get(`${BASE_API_URL}/employer/subscription-details`, { headers: getTokenHeaders() })
         ]);
         const formData = formResponse.data || {};
         const jobForm = jobResponse?.data?.form;
+        const remainingCredits = Number(subscriptionResponse?.data?.subscription?.remainingCredits ?? 0);
         setMeta(formData);
+        if (!isEditMode && remainingCredits <= 0) {
+          setUpgradePopup({ open: true, remainingCredits });
+        }
 
         const employerCity = formData?.employer?.city || '';
         const initialLocations = jobForm
@@ -320,6 +327,8 @@ export const EmployerPostJob = () => {
   const selectedLocationMeta = meta.locations.find((item) => item.name === form.location[0]) || {};
 
   const validateStep = () => {
+    if (upgradePopup.open) return false;
+
     const requiredByStep = [
       ['jobTitle', 'jobCategory', 'jobType', 'experience', 'country', 'state', 'district', 'vacancies', 'location', 'minSalary', 'maxSalary'],
       ['jobSummary', 'description'],
@@ -345,6 +354,11 @@ export const EmployerPostJob = () => {
   };
 
   const submitJob = async (status = 'publish') => {
+    if (!isEditMode && upgradePopup.open) {
+      setMessage({ type: 'error', text: 'Please upgrade your subscription before posting a job.' });
+      return;
+    }
+
     const submitMissingFields = ['jobTitle', 'jobCategory', 'jobType', 'vacancies', 'description'].filter((key) => !String(form[key] || '').trim());
     if (submitMissingFields.length) {
       setMissingFields(submitMissingFields);
@@ -407,6 +421,9 @@ export const EmployerPostJob = () => {
       setMessage({ type: 'success', text: isEditMode ? 'Job updated successfully.' : status === 'draft' ? 'Draft saved successfully.' : 'Job published successfully.' });
       setTimeout(() => navigate('/employer/jobs'), 900);
     } catch (err) {
+      if (!isEditMode && err.response?.status === 403) {
+        setUpgradePopup({ open: true, remainingCredits: 0 });
+      }
       setMessage({ type: 'error', text: err.response?.data?.message || 'Unable to save job.' });
     } finally {
       setSubmitting(false);
@@ -440,6 +457,40 @@ export const EmployerPostJob = () => {
       {message.text && (
         <div className={`rounded-md border px-4 py-3 text-sm font-bold ${message.type === 'success' ? 'border-emerald-100 bg-emerald-50 text-emerald-700' : 'border-rose-100 bg-rose-50 text-rose-700'}`}>
           {message.text}
+        </div>
+      )}
+
+      {upgradePopup.open && !isEditMode && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4">
+          <div className="w-full max-w-md rounded-lg border border-slate-100 bg-white shadow-2xl">
+            <div className="flex items-start gap-3 border-b border-slate-100 px-5 py-4">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-500">
+                <AlertCircle className="h-6 w-6" />
+              </span>
+              <div>
+                <h2 className="text-lg font-extrabold text-[#3f4254]">Upgrade subscription required</h2>
+                <p className="mt-1 text-sm font-semibold text-slate-500">
+                  Your remaining credits are 0. Please upgrade your subscription before posting a job.
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col-reverse gap-3 px-5 py-4 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => navigate('/employer/jobs')}
+                className="inline-flex h-10 items-center justify-center rounded-md border border-slate-200 px-4 text-sm font-extrabold text-slate-600 transition hover:bg-slate-50"
+              >
+                Go Back
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/employer/subscription')}
+                className="inline-flex h-10 items-center justify-center rounded-md bg-[#6658dd] px-4 text-sm font-extrabold text-white shadow-md shadow-indigo-500/20 transition hover:bg-[#5848d8]"
+              >
+                Upgrade Subscription
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

@@ -192,14 +192,12 @@ export const JobseekerApplications = () => {
               <Link
                 to={`/jobs/${job.jobId}`}
                 className={`rounded-md px-4 py-2 text-center text-sm font-bold transition ${
-                  job.status === 'interview'
-                    ? 'bg-[#0047C7] text-white hover:bg-[#00389c]'
-                    : job.status === 'rejected'
+                  job.status === 'rejected'
                     ? 'border border-slate-200 text-slate-400 hover:bg-slate-50'
                     : 'border border-[#0047C7] text-[#0047C7] hover:bg-blue-50'
                 }`}
               >
-                {job.status === 'interview' ? 'View Details' : 'View'}
+                View Details
               </Link>
               {canJobseekerMessage(job.status) && (
                 <Link
