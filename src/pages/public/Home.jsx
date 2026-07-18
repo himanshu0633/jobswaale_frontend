@@ -31,7 +31,7 @@ export const Home = () => {
   return (
     <div className="w-full">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-white py-7 lg:py-20">
+      <section className="relative overflow-hidden bg-white py-16 lg:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid gap-12 lg:grid-cols-12 items-center">
 
@@ -149,81 +149,56 @@ export const Home = () => {
         </div>
       </section>
 
-     {/* Floating Stats Bar */}
-<section className="relative z-10">
-  <div className="max-w-7xl mx-auto px-4 sm:px-6">
-    <div className="bg-white border border-slate-200 rounded-2xl p-6 lg:p-8 shadow-[0_10px_35px_rgba(0,0,0,0.05)]">
+      {/* Floating Stats Bar */}
+      <section className="relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-[0_10px_35px_rgba(0,0,0,0.05)]">
+            <div className="grid gap-6 grid-cols-2 lg:grid-cols-4">
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-8 gap-x-6">
+              <div className="flex items-center gap-4">
+                <div className="w-[54px] h-[54px] rounded-full bg-[#F2F6FF] text-[#0047C7] flex items-center justify-center shrink-0">
+                  <Briefcase className="h-6 w-6" />
+                </div>
+                <div>
+                  <div className="text-xl font-bold text-[#0047C7]">2,000+</div>
+                  <div className="text-sm text-slate-500">Open Jobs</div>
+                </div>
+              </div>
 
-        {/* Open Jobs */}
-        <div className="flex flex-col items-center text-center lg:flex-row lg:items-center lg:text-left lg:gap-4">
-          <div className="w-[54px] h-[54px] rounded-full bg-[#F2F6FF] text-[#0047C7] flex items-center justify-center shrink-0 mb-3 lg:mb-0">
-            <Briefcase className="h-6 w-6" />
-          </div>
+              <div className="flex items-center gap-4 md:border-l md:border-slate-100 md:pl-6">
+                <div className="w-[54px] h-[54px] rounded-full bg-[#e8f5e9] text-[#2e7d32] flex items-center justify-center shrink-0">
+                  <Building2 className="h-6 w-6" />
+                </div>
+                <div>
+                  <div className="text-xl font-bold text-[#0047C7]">500+</div>
+                  <div className="text-sm text-slate-500">Top Companies</div>
+                </div>
+              </div>
 
-          <div>
-            <div className="text-2xl font-bold text-[#0047C7] leading-none">
-              2,000+
-            </div>
-            <div className="mt-2 text-sm text-slate-500">
-              Open Jobs
-            </div>
-          </div>
-        </div>
+              <div className="flex items-center gap-4 md:border-l md:border-slate-100 md:pl-6">
+                <div className="w-[54px] h-[54px] rounded-full bg-[#f3e5f5] text-[#7b1fa2] flex items-center justify-center shrink-0">
+                  <Users className="h-6 w-6" />
+                </div>
+                <div>
+                  <div className="text-xl font-bold text-[#0047C7]">15,000+</div>
+                  <div className="text-sm text-slate-500">Job Seekers</div>
+                </div>
+              </div>
 
-        {/* Top Companies */}
-        <div className="flex flex-col items-center text-center lg:flex-row lg:items-center lg:text-left lg:gap-4 lg:border-l lg:border-slate-100 lg:pl-6">
-          <div className="w-[54px] h-[54px] rounded-full bg-[#e8f5e9] text-[#2e7d32] flex items-center justify-center shrink-0 mb-3 lg:mb-0">
-            <Building2 className="h-6 w-6" />
-          </div>
+              <div className="flex items-center gap-4 md:border-l md:border-slate-100 md:pl-6">
+                <div className="w-[54px] h-[54px] rounded-full bg-[#FFF4EB] text-[#FF6B00] flex items-center justify-center shrink-0">
+                  <MapPin className="h-6 w-6" />
+                </div>
+                <div>
+                  <div className="text-xl font-bold text-[#0047C7]">50+</div>
+                  <div className="text-sm text-slate-500">Cities Covered</div>
+                </div>
+              </div>
 
-          <div>
-            <div className="text-2xl font-bold text-[#0047C7] leading-none">
-              500+
-            </div>
-            <div className="mt-2 text-sm text-slate-500">
-              Top Companies
-            </div>
-          </div>
-        </div>
-
-        {/* Job Seekers */}
-        <div className="flex flex-col items-center text-center lg:flex-row lg:items-center lg:text-left lg:gap-4 lg:border-l lg:border-slate-100 lg:pl-6">
-          <div className="w-[54px] h-[54px] rounded-full bg-[#f3e5f5] text-[#7b1fa2] flex items-center justify-center shrink-0 mb-3 lg:mb-0">
-            <Users className="h-6 w-6" />
-          </div>
-
-          <div>
-            <div className="text-2xl font-bold text-[#0047C7] leading-none">
-              15,000+
-            </div>
-            <div className="mt-2 text-sm text-slate-500">
-              Job Seekers
             </div>
           </div>
         </div>
-
-        {/* Cities Covered */}
-        <div className="flex flex-col items-center text-center lg:flex-row lg:items-center lg:text-left lg:gap-4 lg:border-l lg:border-slate-100 lg:pl-6">
-          <div className="w-[54px] h-[54px] rounded-full bg-[#FFF4EB] text-[#FF6B00] flex items-center justify-center shrink-0 mb-3 lg:mb-0">
-            <MapPin className="h-6 w-6" />
-          </div>
-
-          <div>
-            <div className="text-2xl font-bold text-[#0047C7] leading-none">
-              50+
-            </div>
-            <div className="mt-2 text-sm text-slate-500">
-              Cities Covered
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-</section>
+      </section>
 
       <DoubleCTA />
       <PopularCategories />
