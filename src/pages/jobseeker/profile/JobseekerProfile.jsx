@@ -47,6 +47,7 @@ const getJobTypeValue = (type) => type?._id || type?.id || '';
 const getJobTypeLabel = (type) => type?.jobType || type?.name || type?.id || '';
 const getQualificationValue = (qualification) => qualification?._id || qualification?.id || '';
 const getQualificationLabel = (qualification) => qualification?.name || qualification?.id || '';
+const experienceOptions = ['Fresher', ...Array.from({ length: 10 }, (_, index) => `${index + 1}+ Years`)];
 
 const findByValueOrLabel = (items, value, getValue, getLabel) => {
   const current = normalizeText(value);
@@ -231,6 +232,7 @@ export const JobseekerProfile = () => {
   const [currentPlan, setCurrentPlan] = useState('');
   const [planValidity, setPlanValidity] = useState('');
   const [status, setStatus] = useState('');
+  const [jobSearchStatus, setJobSearchStatus] = useState('looking');
   const [bio, setBio] = useState('');
   const [qualification, setQualification] = useState('');
   const [passingYear, setPassingYear] = useState('');
@@ -310,6 +312,7 @@ export const JobseekerProfile = () => {
         setCurrentPlan(getRefLabel(seeker.currentPlan, ['planName', 'name']));
         setPlanValidity(seeker.planValidity ? new Date(seeker.planValidity).toISOString().split('T')[0] : '');
         setStatus(seeker.status || '');
+        setJobSearchStatus(seeker.jobSearchStatus || 'looking');
         setBio(seeker.bio || '');
         setQualification(seeker.qualification?._id || getRefLabel(seeker.qualification, ['name']) || '');
         setPassingYear(seeker.passingYear || '');
@@ -426,6 +429,7 @@ export const JobseekerProfile = () => {
         passingYear,
         studyField,
         university,
+        jobSearchStatus,
         preferredLocation: locations.join(', ')
       };
 
@@ -760,11 +764,7 @@ export const JobseekerProfile = () => {
                   className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
                 >
                   <option value="">Select experience</option>
-                  <option>Fresher</option>
-                  <option>1 - 2 Years</option>
-                  <option>3 - 5 Years</option>
-                  <option>5 - 10 Years</option>
-                  <option>10+ Years</option>
+                  {experienceOptions.map((item) => <option key={item} value={item}>{item}</option>)}
                 </select>
               </div>
 
@@ -779,6 +779,20 @@ export const JobseekerProfile = () => {
                   placeholder="e.g. 30000 / Month"
                   className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
                 />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-bold text-slate-600">
+                  Job Search Status
+                </label>
+                <select
+                  value={jobSearchStatus}
+                  onChange={(e) => setJobSearchStatus(e.target.value)}
+                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
+                >
+                  <option value="looking">Looking for job</option>
+                  <option value="not-looking">Not looking</option>
+                </select>
               </div>
 
               <SearchableSelect

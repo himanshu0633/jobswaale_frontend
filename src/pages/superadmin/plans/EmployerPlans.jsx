@@ -25,6 +25,7 @@ const emptyForm = {
   cost: '',
   unlockCount: '',
   freeJobPosts: '',
+  autoMailLimit: '',
   showBadge: false,
   badge: '',
   employerFeatures: ['Direct Contact Access', 'Employer Dashboard', 'Priority Support', 'Candidate Tracking'],
@@ -223,6 +224,7 @@ export const EmployerPlanListings = () => {
                 <th className="px-4 py-3.5 font-extrabold">Plan Type</th>
                 <th className="px-4 py-3.5 font-extrabold">Price (Rs.)</th>
                 <th className="px-4 py-3.5 font-extrabold">Unlock Count</th>
+                <th className="px-4 py-3.5 font-extrabold">Auto Mail Limit</th>
                 <th className="px-4 py-3.5 font-extrabold">Badge</th>
                 <th className="px-4 py-3.5 font-extrabold">Sort Order</th>
                 <th className="px-4 py-3.5 font-extrabold">Status</th>
@@ -232,7 +234,7 @@ export const EmployerPlanListings = () => {
             <tbody className="divide-y divide-slate-100 text-slate-600">
               {list.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="px-6 py-8 text-center text-slate-400">No matching records found.</td>
+                  <td colSpan="10" className="px-6 py-8 text-center text-slate-400">No matching records found.</td>
                 </tr>
               ) : (
                 list.map((item, index) => (
@@ -242,6 +244,7 @@ export const EmployerPlanListings = () => {
                     <td className="px-4 py-4">{item.planValidity}</td>
                     <td className="px-4 py-4">{formatPrice(item.cost)}</td>
                     <td className="px-4 py-4">{item.unlockCount || '-'}</td>
+                    <td className="px-4 py-4">{item.autoMailLimit || 0}</td>
                     <td className="px-4 py-4"><PlanBadge value={item.badge} /></td>
                     <td className="px-4 py-4">{item.displayOrder}</td>
                     <td className="px-4 py-4"><StatusBadge status={item.status} /></td>
@@ -340,6 +343,7 @@ export const EmployerPlanForm = () => {
           cost: String(plan.cost ?? ''),
           unlockCount: plan.unlockCount || '',
           freeJobPosts: String(plan.freeJobPosts ?? ''),
+          autoMailLimit: String(plan.autoMailLimit ?? ''),
           showBadge: Boolean(plan.showBadge),
           badge: plan.badge || '',
           employerFeatures: plan.employerFeatures?.length ? plan.employerFeatures : emptyForm.employerFeatures,
@@ -379,6 +383,7 @@ export const EmployerPlanForm = () => {
       cost: Number(form.cost),
       unlockCount: form.unlockCount,
       freeJobPosts: Number(form.freeJobPosts) || 0,
+      autoMailLimit: Number(form.autoMailLimit) || 0,
       showBadge: form.showBadge,
       badge: form.badge,
       planSubtitle: form.planSubtitle,
@@ -459,7 +464,7 @@ export const EmployerPlanForm = () => {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
               <FormSection title="Basic Information">
-                <div className="grid gap-5 lg:grid-cols-3">
+                <div className="grid gap-5 lg:grid-cols-4">
                   <div className="lg:col-span-1">
                     <label className="block text-sm font-bold text-slate-600 mb-2">Plan Name <span className="text-rose-500">*</span></label>
                     <input value={form.planName} onChange={(event) => setForm({ ...form, planName: event.target.value })} placeholder="e.g. Basic, Pro, Enterprise" className="w-full px-3.5 py-2.5 border border-slate-200 rounded-md text-sm focus:outline-none focus:border-indigo-500" />
@@ -515,6 +520,10 @@ export const EmployerPlanForm = () => {
                   <div>
                     <label className="block text-sm font-bold text-slate-600 mb-2">Free Job Posts</label>
                     <input inputMode="numeric" value={form.freeJobPosts} onChange={(event) => setForm({ ...form, freeJobPosts: onlyDigits(event.target.value) })} placeholder="e.g. 10" className="w-full px-3.5 py-2.5 border border-slate-200 rounded-md text-sm focus:outline-none focus:border-indigo-500" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-600 mb-2">Auto Mail Limit</label>
+                    <input inputMode="numeric" value={form.autoMailLimit} onChange={(event) => setForm({ ...form, autoMailLimit: onlyDigits(event.target.value) })} placeholder="e.g. 100" className="w-full px-3.5 py-2.5 border border-slate-200 rounded-md text-sm focus:outline-none focus:border-indigo-500" />
                   </div>
                 </div>
               </FormSection>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import axios from 'axios';
 import {
   ArrowUpRight,
   BadgeCheck,
@@ -12,8 +13,17 @@ import {
   Sparkles,
   Target,
   Users,
-  X
+  X,
+  AlertCircle,
+  CheckCircle,
+  Loader
 } from 'lucide-react';
+import { BASE_API_URL } from '../../../context/AuthContext';
+
+const getTokenHeaders = () => {
+  const token = localStorage.getItem('publicToken');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
 /* ----------------------------- content ----------------------------- */
 
@@ -33,79 +43,6 @@ const benefits = [
     title: 'Career growth',
     text: 'Certified training and job-assurance support that move your career forward, not sideways.'
   }
-];
-
-const plans = [
-  {
-    key: 'free',
-    name: 'Free',
-    price: '₹0',
-    period: 'lifetime',
-    desc: 'Start your journey with us',
-    current: true,
-    popular: false,
-    features: [
-      { text: 'Candidate profile registration', state: 'check' },
-      { text: 'Profile support', state: 'check' },
-      { text: 'Limited job offers', state: 'minus' },
-      { text: 'Job alerts & vacancy updates', state: 'cross' },
-      { text: 'Profile forwarded to companies', state: 'cross' }
-    ]
-  },
-  {
-    key: 'basic',
-    name: 'Basic',
-    price: '₹500',
-    period: 'one time',
-    desc: 'Register & get started',
-    current: false,
-    popular: false,
-    features: [
-      { text: 'Candidate profile registration', state: 'check' },
-      { text: 'Profile support', state: 'check' },
-      { text: 'Limited job offers', state: 'check' },
-      { text: 'Job alerts & vacancy updates', state: 'check' },
-      { text: 'Profile forwarded to suitable companies', state: 'check' }
-    ]
-  },
-  {
-    key: 'pro',
-    name: 'Pro',
-    price: '₹1,000',
-    period: 'one time',
-    desc: 'Placement support',
-    current: false,
-    popular: true,
-    features: [
-      { text: 'Multiple interview opportunities', state: 'check' },
-      { text: 'Telephonic & face-to-face interview support', state: 'check' },
-      { text: 'Priority profile forwarding', state: 'check' },
-      { text: 'Guidance for accounts, billing & backend jobs', state: 'check' },
-      { text: 'Regular job updates & career support', state: 'check' }
-    ]
-  },
-  {
-    key: 'premium',
-    name: 'Premium',
-    price: '₹5,000',
-    period: 'one time',
-    desc: 'Advanced career support',
-    current: false,
-    popular: false,
-    features: [
-      { text: 'Priority access to WFH & office jobs', state: 'check' },
-      { text: 'Multiple interview opportunities', state: 'check' },
-      { text: 'Maximum interview & placement support', state: 'check' },
-      { text: 'Training on computer basics & accounting', state: 'check' },
-      { text: 'Government certified training', state: 'check' },
-      { text: 'Job assurance support', state: 'check' }
-    ]
-  }
-];
-
-const billingHistory = [
-  { date: '15 Jan 2026', plan: 'Free Plan', amount: '₹0', method: '—', status: 'Paid' },
-  { date: '10 Dec 2025', plan: 'Free Plan (Registered)', amount: '₹0', method: '—', status: 'Paid' }
 ];
 
 const featureIcon = {
@@ -129,8 +66,30 @@ const FontLoader = () => (
 /* ------------------------------ component ------------------------------ */
 
 export const JobseekerSubscription = () => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [subscribing, setSubscribing] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [pendingPlan, setPendingPlan] = useState(null);
   const [activeCard, setActiveCard] = useState(0);
+
+  const loadSubscription = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await axios.get(`${BASE_API_URL}/jobseeker/subscription`, { headers: getTokenHeaders() });
+      setData(response.data);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Subscription details could not be loaded.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSubscription();
+  }, []);
 
   useEffect(() => {
     if (pendingPlan) {
@@ -139,7 +98,27 @@ export const JobseekerSubscription = () => {
     }
   }, [pendingPlan]);
 
-  const confirmUpgrade = () => setPendingPlan(null);
+  const confirmUpgrade = async () => {
+    if (!pendingPlan) return;
+    setError('');
+    setSuccess('');
+    setSubscribing(true);
+    try {
+      const response = await axios.post(
+        `${BASE_API_URL}/jobseeker/subscription/select-plan`,
+        { planId: pendingPlan.id },
+        { headers: getTokenHeaders() }
+      );
+      setSuccess(response.data?.message || `Successfully upgraded to ${pendingPlan.name} Plan`);
+      setPendingPlan(null);
+      await loadSubscription();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Plan upgrade failed. Please try again.');
+      setPendingPlan(null);
+    } finally {
+      setSubscribing(false);
+    }
+  };
 
   const scrollToCard = (index) => {
     const el = document.getElementById(`plan-card-${index}`);
@@ -147,11 +126,42 @@ export const JobseekerSubscription = () => {
     setActiveCard(index);
   };
 
+  if (loading) {
+    return (
+      <div className="jsw-root min-h-screen bg-[#F5F7FB] flex items-center justify-center">
+        <Loader className="h-9 w-9 animate-spin text-[#0047C7]" />
+      </div>
+    );
+  }
+
+  const activePlan = data?.activePlan || {
+    name: 'Free Plan',
+    price: '₹0',
+    period: 'lifetime',
+    validity: 'Valid for lifetime · No expiry'
+  };
+  const plans = data?.plans || [];
+  const billingHistory = data?.billingHistory || [];
+
   return (
     <div className="jsw-root min-h-screen bg-[#F5F7FB] pb-16">
       <FontLoader />
 
       <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-6 sm:pt-10 lg:px-8">
+
+        {/* Notifications */}
+        {error && (
+          <div className="mb-6 rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700 flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 shrink-0 text-rose-500" />
+            <span>{error}</span>
+          </div>
+        )}
+        {success && (
+          <div className="mb-6 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 flex items-center gap-2">
+            <CheckCircle className="h-5 w-5 shrink-0 text-emerald-500" />
+            <span>{success}</span>
+          </div>
+        )}
 
         {/* ---------------- Current Plan Hero ---------------- */}
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#001c3d] via-[#00265a] to-[#0047C7] p-6 text-white shadow-[0_20px_50px_-15px_rgba(0,28,61,0.5)] sm:p-8 md:p-10">
@@ -173,17 +183,17 @@ export const JobseekerSubscription = () => {
                   Active plan
                 </div>
                 <div className="jsw-display text-2xl font-bold leading-tight sm:text-[1.7rem]">
-                  Free Plan
+                  {activePlan.name}
                 </div>
                 <div className="mt-1 text-[0.8rem] text-white/60">
-                  Valid for lifetime · No expiry
+                  {activePlan.validity}
                 </div>
               </div>
             </div>
 
             <div className="flex flex-col items-center gap-3 border-t border-white/10 pt-5 text-center md:items-end md:border-t-0 md:border-l md:pt-0 md:pl-8 md:text-right">
               <div className="jsw-display text-3xl font-extrabold sm:text-4xl">
-                ₹0 <span className="text-sm font-medium text-white/60">/ lifetime</span>
+                {activePlan.price} <span className="text-sm font-medium text-white/60">/ {activePlan.period}</span>
               </div>
               <a
                 href="#plansSection"
@@ -441,17 +451,20 @@ export const JobseekerSubscription = () => {
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <button
                 type="button"
+                disabled={subscribing}
                 onClick={() => setPendingPlan(null)}
-                className="rounded-xl border border-[#e6eaf2] px-4 py-2.5 text-sm font-bold text-[#8592a6] transition-colors hover:bg-[#f8fafc]"
+                className="rounded-xl border border-[#e6eaf2] px-4 py-2.5 text-sm font-bold text-[#8592a6] transition-colors hover:bg-[#f8fafc] disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="button"
+                disabled={subscribing}
                 onClick={confirmUpgrade}
-                className="rounded-xl bg-[#0047C7] px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#0039a3]"
+                className="rounded-xl bg-[#0047C7] px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#0039a3] disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                Continue to payment
+                {subscribing && <Loader className="h-4 w-4 animate-spin" />}
+                {subscribing ? 'Processing...' : 'Continue to payment'}
               </button>
             </div>
           </div>

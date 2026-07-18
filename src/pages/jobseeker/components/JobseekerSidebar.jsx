@@ -54,9 +54,11 @@ export const JobseekerSidebar = ({ isOpen, toggleSidebar }) => {
   const [profile, setProfile] = useState({
     name: user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Job Seeker',
     role: 'Job Seeker',
+    jobSearchStatus: 'looking',
     profileCompletionScore: 0,
     counts: {}
   });
+  const [savingStatus, setSavingStatus] = useState(false);
 
   const isActive = (item) => (item.exact ? location.pathname === item.to : location.pathname.startsWith(item.to));
 
@@ -92,6 +94,30 @@ export const JobseekerSidebar = ({ isOpen, toggleSidebar }) => {
   }, [user?.firstName, user?.lastName]);
 
   const initials = getInitials(profile.name) || 'JS';
+  const isLookingForJob = profile.jobSearchStatus !== 'not-looking';
+
+  const handleJobSearchStatusToggle = async () => {
+    if (savingStatus) return;
+    const nextStatus = isLookingForJob ? 'not-looking' : 'looking';
+    const previousStatus = profile.jobSearchStatus || 'looking';
+    const token = localStorage.getItem('publicToken');
+
+    setSavingStatus(true);
+    setProfile((current) => ({ ...current, jobSearchStatus: nextStatus }));
+
+    try {
+      await axios.put(
+        `${BASE_API_URL}/jobseeker/profile`,
+        { jobSearchStatus: nextStatus },
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+      );
+    } catch {
+      setProfile((current) => ({ ...current, jobSearchStatus: previousStatus }));
+      window.alert('Job search status update nahi ho paaya. Please try again.');
+    } finally {
+      setSavingStatus(false);
+    }
+  };
 
   const handleLogout = () => {
     if (window.confirm('Are you sure you want to logout?')) {
@@ -154,7 +180,7 @@ export const JobseekerSidebar = ({ isOpen, toggleSidebar }) => {
           <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-[#FF6B00] text-sm font-bold text-white">
             {initials}
           </div>
-          <div className="min-w-0 overflow-hidden">
+          <div className="min-w-0 flex-1 overflow-hidden">
             <div className="truncate text-sm font-semibold text-white">{profile.name}</div>
             <div className="text-xs text-white/60">{profile.role || 'Job Seeker'}</div>
             <div className="mt-2">
@@ -170,6 +196,25 @@ export const JobseekerSidebar = ({ isOpen, toggleSidebar }) => {
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="border-b border-white/[0.08] px-5 py-4">
+          <button
+            type="button"
+            onClick={handleJobSearchStatusToggle}
+            disabled={savingStatus}
+            className="flex w-full items-center justify-between gap-3 rounded-lg bg-white/[0.06] px-3 py-2.5 text-left transition hover:bg-white/[0.1] disabled:opacity-70"
+          >
+            <span className="min-w-0">
+              <span className="block text-xs font-bold text-white">Job Search Status</span>
+              <span className={`mt-0.5 block text-[11px] font-semibold ${isLookingForJob ? 'text-emerald-300' : 'text-white/50'}`}>
+                {isLookingForJob ? 'Looking for job' : 'Not looking'}
+              </span>
+            </span>
+            <span className={`relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors ${isLookingForJob ? 'bg-emerald-500' : 'bg-white/20'}`}>
+              <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${isLookingForJob ? 'translate-x-5' : 'translate-x-0.5'}`} />
+            </span>
+          </button>
         </div>
 
         {/* Navigation */}

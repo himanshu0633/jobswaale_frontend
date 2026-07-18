@@ -35,6 +35,8 @@ const steps = [
   { title: 'Preview & Publish', subtitle: 'Review and publish' }
 ];
 
+const experienceOptions = ['Fresher', ...Array.from({ length: 10 }, (_, index) => `${index + 1}+ Years`)];
+
 const emptyForm = {
   jobTitle: '',
   jobCategory: '',
@@ -74,7 +76,7 @@ const emptyPreview = {
   companyLogo: '',
   location: 'Bangalore, Karnataka',
   employmentType: 'Full Time',
-  experience: '2 - 5 Years',
+  experience: '2+ Years',
   salary: 'Salary not specified',
   workMode: 'Office',
   openings: 2,
@@ -523,7 +525,7 @@ export const EmployerPostJob = () => {
                   <div><label className={labelClass}>Job Title *</label><input className={fieldClass('jobTitle')} value={form.jobTitle} onChange={(e) => setValue('jobTitle', e.target.value)} placeholder="e.g. Software Developer" /></div>
                   <div><label className={labelClass}>Job Category *</label><select className={fieldClass('jobCategory')} value={form.jobCategory} onChange={(e) => setValue('jobCategory', e.target.value)}><option value="">Select Category</option>{meta.categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
                   <div><label className={labelClass}>Employment Type *</label><select className={fieldClass('jobType')} value={form.jobType} onChange={(e) => setValue('jobType', e.target.value)}><option value="">Select Employment Type</option>{meta.jobTypes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
-                  <div><label className={labelClass}>Experience Level *</label><select className={fieldClass('experience')} value={form.experience} onChange={(e) => setValue('experience', e.target.value)}><option value="">Select Experience</option><option>Fresher</option><option>1 - 2 Years</option><option>2 - 5 Years</option><option>5+ Years</option></select></div>
+                  <div><label className={labelClass}>Experience Level *</label><select className={fieldClass('experience')} value={form.experience} onChange={(e) => setValue('experience', e.target.value)}><option value="">Select Experience</option>{experienceOptions.map((item) => <option key={item} value={item}>{item}</option>)}</select></div>
                   <div className="md:col-span-2">
                     <label className={labelClass}>Work Mode *</label>
                     <div className="grid gap-2 md:grid-cols-3">
@@ -664,7 +666,7 @@ export const EmployerPostJob = () => {
               <div className="border-b border-slate-100 px-5 py-4"><h2 className="text-base font-extrabold text-[#3f4254]">Requirements</h2></div>
               <div className="grid gap-4 p-5 md:grid-cols-2">
                 <div><label className={labelClass}>Qualification</label><select className={inputClass} value={form.qualification} onChange={(e) => setValue('qualification', e.target.value)}><option value="">Select Qualification</option>{meta.qualifications.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
-                <div><label className={labelClass}>Required Experience</label><select className={inputClass} value={form.requiredExperience} onChange={(e) => setValue('requiredExperience', e.target.value)}><option value="">Select Experience</option><option>Fresher</option><option>1 - 2 Years</option><option>2 - 5 Years</option><option>5+ Years</option></select></div>
+                <div><label className={labelClass}>Required Experience</label><select className={inputClass} value={form.requiredExperience} onChange={(e) => setValue('requiredExperience', e.target.value)}><option value="">Select Experience</option>{experienceOptions.map((item) => <option key={item} value={item}>{item}</option>)}</select></div>
                 <div className="md:col-span-2"><label className={labelClass}>Key Skills *</label><input className={fieldClass('skills')} value={form.skills} onChange={(e) => setValue('skills', e.target.value)} placeholder="JavaScript, React.js, HTML" /></div>
                 <div><label className={labelClass}>Language Preference</label><input className={inputClass} value={form.language} onChange={(e) => setValue('language', e.target.value)} /></div>
                 <div><label className={labelClass}>Candidate Location Preference</label><select className={inputClass} value={form.candidateLocation} onChange={(e) => setValue('candidateLocation', e.target.value)}><option>Open to all locations</option><option>Same city only</option><option>Same state only</option></select></div>
