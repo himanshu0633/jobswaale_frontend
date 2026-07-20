@@ -25,7 +25,7 @@ import {
 } from 'ckeditor5';
 import 'ckeditor5/ckeditor5.css';
 import { BASE_API_URL } from '../../../context/AuthContext';
-import { getNextMasterId, onlyDigits, toWholeNumber } from '../../../utils/masterForm';
+import { getNextMasterId, getNextSortNo, onlyDigits, toWholeNumber } from '../../../utils/masterForm';
 import { 
   Plus, 
   Edit2, 
@@ -103,6 +103,15 @@ export const Blog = () => {
   const getNextId = async () => {
     try {
       return await getNextMasterId(axios, `${BASE_API_URL}/cms/blogs`, 'id');
+    } catch (err) {
+      console.error(err);
+      return '';
+    }
+  };
+
+  const getNextSort = async () => {
+    try {
+      return await getNextSortNo(axios, `${BASE_API_URL}/cms/blogs`, 'sortingNo');
     } catch (err) {
       console.error(err);
       return '';
@@ -368,9 +377,10 @@ export const Blog = () => {
               <button
                 onClick={async () => {
                   setEditingId(null);
-                  const nextId = await getNextId();
+                  const [nextId, nextSort] = await Promise.all([getNextId(), getNextSort()]);
                   const nextForm = createBlankForm();
                   nextForm.id = nextId;
+                  nextForm.sortingNo = nextSort;
                   setForm(nextForm);
                   setAlert({ type: '', text: '' });
                   setView('form');

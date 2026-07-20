@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BASE_API_URL } from '../../../context/AuthContext';
-import { onlyDigits, toWholeNumber } from '../../../utils/masterForm';
+import { getNextSortNo, onlyDigits, toWholeNumber } from '../../../utils/masterForm';
 import ResponsiveCardList from '../../../components/ResponsiveCardList';
 import { 
   Plus, 
@@ -50,6 +50,27 @@ export const PlanMaster = () => {
     }
   };
 
+  const getNextDisplayOrder = async () => {
+    try {
+      return await getNextSortNo(axios, `${BASE_API_URL}/masters/plans?category=Jobseeker`, 'displayOrder');
+    } catch (err) {
+      console.error(err);
+      return '';
+    }
+  };
+
+  const resetAddForm = async () => {
+    const nextDisplayOrder = await getNextDisplayOrder();
+    setForm({
+      planName: '',
+      planType: 'Free',
+      cost: '',
+      planValidity: 'One Time',
+      displayOrder: nextDisplayOrder,
+      status: 'active'
+    });
+  };
+
   // Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -81,6 +102,12 @@ export const PlanMaster = () => {
     fetchList();
   }, [currentPage, entriesPerPage, search]);
 
+  useEffect(() => {
+    if (!editingId && !form.displayOrder) {
+      resetAddForm();
+    }
+  }, [editingId]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const { planName, planType, cost, planValidity, displayOrder, status } = form;
@@ -111,16 +138,9 @@ export const PlanMaster = () => {
           status
         });
         showAlert('success', 'Success! Record added/updated successfully.');
-        setTimeout(() => {
+        setTimeout(async () => {
           setEditingId(null);
-          setForm({ 
-            planName: '', 
-            planType: 'Free', 
-            cost: '', 
-            planValidity: 'One Time', 
-            displayOrder: '', 
-            status: 'active'
-          });
+          await resetAddForm();
           fetchList(); // reload table
         }, 1500);
       } else {
@@ -135,15 +155,8 @@ export const PlanMaster = () => {
           status
         });
         showAlert('success', 'Success! Record added/updated successfully.');
-        setForm({ 
-          planName: '', 
-          planType: 'Free', 
-          cost: '', 
-          planValidity: 'One Time', 
-          displayOrder: '', 
-          status: 'active'
-        });
-        setTimeout(() => {
+        setTimeout(async () => {
+          await resetAddForm();
           fetchList(); // reload table
         }, 1500);
       }
@@ -364,16 +377,9 @@ export const PlanMaster = () => {
               {editingId && (
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
                     setEditingId(null);
-                    setForm({ 
-                      planName: '', 
-                      planType: 'Free', 
-                      cost: '', 
-                      planValidity: 'One Time', 
-                      displayOrder: '', 
-                      status: 'active'
-                    });
+                    await resetAddForm();
                   }}
                   className="px-6 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg text-sm transition-colors"
                 >

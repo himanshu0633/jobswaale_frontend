@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import JobCategoryCard from './JobCategoryCard';
 import axios from 'axios';
 import { BASE_API_URL } from '../../../context/AuthContext';
-import { getNextMasterId, onlyDigits, toWholeNumber } from '../../../utils/masterForm';
+import { getNextMasterId, getNextSortNo, onlyDigits, toWholeNumber } from '../../../utils/masterForm';
 import { 
   Plus, 
   Edit2, 
@@ -51,6 +51,15 @@ export const JobCategory = () => {
   const getNextId = async () => {
     try {
       return await getNextMasterId(axios, `${BASE_API_URL}/masters/job-categories`, 'id');
+    } catch (err) {
+      console.error(err);
+      return '';
+    }
+  };
+
+  const getNextSort = async () => {
+    try {
+      return await getNextSortNo(axios, `${BASE_API_URL}/masters/job-categories`, 'sortingNo');
     } catch (err) {
       console.error(err);
       return '';
@@ -211,8 +220,8 @@ export const JobCategory = () => {
             <button
               onClick={async () => {
                 setEditingId(null);
-                const nextId = await getNextId();
-                setForm({ id: nextId, categoryName: '', sortingNo: '', status: 'active' });
+                const [nextId, nextSort] = await Promise.all([getNextId(), getNextSort()]);
+                setForm({ id: nextId, categoryName: '', sortingNo: nextSort, status: 'active' });
                 setAlert({ type: '', text: '' });
                 setView('form');
               }}

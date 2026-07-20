@@ -210,9 +210,18 @@ export const CMSPages = () => {
     setAlert({ type: '', text: '' });
   };
 
+  const getNextPageSort = () => {
+    const maxSort = pages.reduce((max, page) => {
+      const num = Number(page.sortingOrder);
+      return Number.isFinite(num) && num > max ? num : max;
+    }, 0);
+    return maxSort + 1;
+  };
+
   const handleNew = () => {
     setEditingId(null);
     const next = createBlankForm();
+    next.sortingOrder = getNextPageSort();
     setForm(next);
     setView('form');
     setAlert({ type: '', text: '' });

@@ -15,7 +15,7 @@ import {
   X
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
-import { onlyDigits, toWholeNumber } from '../../../utils/masterForm';
+import { getNextSortNo, onlyDigits, toWholeNumber } from '../../../utils/masterForm';
 import ResponsiveCardList from '../../../components/ResponsiveCardList';
 
 const emptyForm = {
@@ -325,9 +325,22 @@ export const EmployerPlanForm = () => {
   const [saving, setSaving] = useState(false);
   const [alert, setAlert] = useState({ type: '', text: '' });
 
+  const getNextDisplayOrder = async () => {
+    try {
+      return await getNextSortNo(axios, `${BASE_API_URL}/masters/plans?category=Employer`, 'displayOrder');
+    } catch (err) {
+      console.error(err);
+      return '';
+    }
+  };
+
   useEffect(() => {
     const fetchPlan = async () => {
-      if (!id) return;
+      if (!id) {
+        const nextDisplayOrder = await getNextDisplayOrder();
+        setForm(prev => ({ ...prev, displayOrder: prev.displayOrder || nextDisplayOrder }));
+        return;
+      }
       setLoading(true);
       try {
         const response = await axios.get(`${BASE_API_URL}/masters/plans?category=Employer&limit=1000`);

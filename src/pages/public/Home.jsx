@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import {
   Search,
   MapPin,
@@ -11,6 +12,7 @@ import {
   ChevronDown,
   CheckCircle2
 } from 'lucide-react';
+import { BASE_API_URL } from '../../context/AuthContext';
 
 // Import modular homepage sections
 import DoubleCTA from './DoubleCTA';
@@ -18,14 +20,91 @@ import PopularCategories from './PopularCategories';
 import FeaturedJobs from './FeaturedJobs';
 import TrustedCompanies from './TrustedCompanies';
 
+const getJobLocationLabels = (job) => {
+  const labels = [];
+  const cityState = [job.city, job.state].map(value => String(value || '').trim()).filter(Boolean).join(', ');
+  if (cityState) labels.push(cityState);
+  if (Array.isArray(job.jobLocations)) {
+    job.jobLocations.forEach((location) => {
+      const cleanLocation = String(location || '').trim();
+      if (cleanLocation) labels.push(cleanLocation);
+    });
+  }
+  return labels;
+};
+
 export const Home = () => {
   const navigate = useNavigate();
   const [searchTitle, setSearchTitle] = useState('');
   const [searchLoc, setSearchLoc] = useState('');
+  const [categories, setCategories] = useState([]);
+  const [locations, setLocations] = useState([]);
+
+  useEffect(() => {
+    const fetchHeroFilters = async () => {
+      try {
+        const res = await axios.get(`${BASE_API_URL}/jobs`);
+        const jobs = res.data || [];
+        const categoriesByName = jobs.reduce((acc, job) => {
+          const categoryName = String(job.jobCategory?.categoryName || '').trim();
+          if (!categoryName) return acc;
+          const current = acc.get(categoryName) || {
+            categoryName,
+            sortingNo: Number(job.jobCategory?.sortingNo),
+            count: 0
+          };
+          current.count += 1;
+          acc.set(categoryName, current);
+          return acc;
+        }, new Map());
+
+        const postedCategories = Array.from(categoriesByName.values())
+          .sort((a, b) => {
+            const sortA = Number.isFinite(a.sortingNo) ? a.sortingNo : Number.MAX_SAFE_INTEGER;
+            const sortB = Number.isFinite(b.sortingNo) ? b.sortingNo : Number.MAX_SAFE_INTEGER;
+            if (sortA !== sortB) return sortA - sortB;
+            if (b.count !== a.count) return b.count - a.count;
+            return a.categoryName.localeCompare(b.categoryName);
+          });
+        setCategories(postedCategories.slice(0, 6));
+
+        const postedLocations = Array.from(new Set(jobs.flatMap(getJobLocationLabels)))
+          .sort((a, b) => a.localeCompare(b));
+        setLocations(postedLocations);
+      } catch (err) {
+        console.error('Fetch home job filters error:', err);
+        setCategories([]);
+        setLocations([]);
+      }
+    };
+
+    fetchHeroFilters();
+  }, []);
+
+  const getPublicUser = () => {
+    try {
+      return JSON.parse(localStorage.getItem('publicUser') || 'null');
+    } catch {
+      return null;
+    }
+  };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    navigate(`/login?search=${encodeURIComponent(searchTitle)}&location=${encodeURIComponent(searchLoc)}`);
+    const params = new URLSearchParams();
+    if (searchTitle.trim()) params.set('q', searchTitle.trim());
+    if (searchLoc.trim()) params.set('location', searchLoc.trim());
+    navigate(`/jobs${params.toString() ? `?${params.toString()}` : ''}`);
+  };
+
+  const handleAccountChoice = (role, targetPath) => {
+    const user = getPublicUser();
+    const token = localStorage.getItem('publicToken');
+    if (user && token) {
+      navigate(targetPath);
+      return;
+    }
+    navigate(`/login?role=${role}&redirect=${encodeURIComponent(targetPath)}`);
   };
 
   return (
@@ -76,8 +155,9 @@ export const Home = () => {
                     className="w-full bg-transparent border-0 px-4 py-3 text-slate-800 text-[0.95rem] focus:outline-none focus:ring-0 appearance-none cursor-pointer"
                   >
                     <option value="">Location</option>
-                    <option value="Hamirpur">Hamirpur</option>
-                    <option value="Chandigarh">Chandigarh</option>
+                    {locations.map((location) => (
+                      <option key={location} value={location}>{location}</option>
+                    ))}
                   </select>
                   <ChevronDown className="absolute right-4 h-4 w-4 text-slate-400 pointer-events-none" />
                 </div>
@@ -92,11 +172,15 @@ export const Home = () => {
               {/* Trending Searches */}
               <div className="flex flex-wrap items-center gap-1.5 pt-2 text-sm text-slate-500">
                 <span className="mr-1">Trending Searches:</span>
-                <Link to="/login?q=sales" className="px-3 py-1.5 rounded-md bg-[#F2F6FF] text-[#0047C7] hover:bg-[#0047C7] hover:text-white transition">#Sales</Link>
-                <Link to="/login?q=marketing" className="px-3 py-1.5 rounded-md bg-[#F2F6FF] text-[#0047C7] hover:bg-[#0047C7] hover:text-white transition">#Marketing</Link>
-                <Link to="/login?q=it" className="px-3 py-1.5 rounded-md bg-[#F2F6FF] text-[#0047C7] hover:bg-[#0047C7] hover:text-white transition">#IT</Link>
-                <Link to="/login?q=accounts" className="px-3 py-1.5 rounded-md bg-[#F2F6FF] text-[#0047C7] hover:bg-[#0047C7] hover:text-white transition">#Accounts</Link>
-                <Link to="/login?q=engineering" className="px-3 py-1.5 rounded-md bg-[#F2F6FF] text-[#0047C7] hover:bg-[#0047C7] hover:text-white transition">#Engineering</Link>
+                {categories.map((category) => (
+                  <Link
+                    key={category._id || category.id || category.categoryName}
+                    to={`/jobs?category=${encodeURIComponent(category.categoryName)}`}
+                    className="px-3 py-1.5 rounded-md bg-[#F2F6FF] text-[#0047C7] hover:bg-[#0047C7] hover:text-white transition"
+                  >
+                    #{category.categoryName}
+                  </Link>
+                ))}
               </div>
             </div>
 
@@ -106,15 +190,16 @@ export const Home = () => {
                 <h3 className="text-lg font-semibold text-slate-900 text-center mb-2">Choose Your Account Type</h3>
 
                 {/* Job Seeker Choice */}
-                <Link
-                  to="/jobs"
-                  className="group flex items-center justify-between p-6 rounded-xl bg-[#F2F6FF] border border-transparent hover:border-[#0047C7] transition-all duration-300 hover:-translate-y-0.5 shadow-[0_0_1px_rgba(0,0,0,0.26)]"
+                <button
+                  type="button"
+                  onClick={() => handleAccountChoice('jobseeker', '/jobs')}
+                  className="group flex min-h-[126px] w-full items-center justify-between gap-4 p-6 rounded-xl bg-[#F2F6FF] border border-transparent hover:border-[#0047C7] transition-all duration-300 hover:-translate-y-0.5 shadow-[0_0_1px_rgba(0,0,0,0.26)]"
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex min-w-0 flex-1 items-center gap-4">
                     <div className="w-[60px] h-[60px] rounded-full bg-[#D9DFFA] flex items-center justify-center shrink-0">
                       <User className="h-6 w-6 text-[#0047C7]" />
                     </div>
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <h4 className="font-semibold text-[#0047C7] text-[21px]">Job Seeker</h4>
                       <p className="text-sm text-slate-700 mt-1">Find jobs, build profile and get hired.</p>
                     </div>
@@ -122,18 +207,19 @@ export const Home = () => {
                   <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-slate-500 shadow-[0_0_1px_rgba(0,0,0,0.2)] group-hover:translate-x-1 transition-transform shrink-0">
                     <ArrowRight className="h-[18px] w-[18px]" />
                   </div>
-                </Link>
+                </button>
 
                 {/* Employer Choice */}
-                <Link
-                  to="/contact"
-                  className="group flex items-center justify-between p-6 rounded-xl bg-[#FFF4EB] border border-transparent hover:border-[#FF6B00] transition-all duration-300 hover:-translate-y-0.5 shadow-[0_0_1px_rgba(0,0,0,0.26)]"
+                <button
+                  type="button"
+                  onClick={() => handleAccountChoice('employer', '/employers')}
+                  className="group flex min-h-[126px] w-full items-center justify-between gap-4 p-6 rounded-xl bg-[#FFF4EB] border border-transparent hover:border-[#FF6B00] transition-all duration-300 hover:-translate-y-0.5 shadow-[0_0_1px_rgba(0,0,0,0.26)]"
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex min-w-0 flex-1 items-center gap-4">
                     <div className="w-[60px] h-[60px] rounded-full bg-[#FDE8D4] flex items-center justify-center shrink-0">
                       <Briefcase className="h-6 w-6 text-[#FF6B00]" />
                     </div>
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <h4 className="font-semibold text-[#FF6B00] text-[21px]">Employer</h4>
                       <p className="text-sm text-slate-700 mt-1">Post jobs, find talent and grow your team.</p>
                     </div>
@@ -141,7 +227,7 @@ export const Home = () => {
                   <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-slate-500 shadow-[0_0_1px_rgba(0,0,0,0.2)] group-hover:translate-x-1 transition-transform shrink-0">
                     <ArrowRight className="h-[18px] w-[18px]" />
                   </div>
-                </Link>
+                </button>
               </div>
             </div>
 

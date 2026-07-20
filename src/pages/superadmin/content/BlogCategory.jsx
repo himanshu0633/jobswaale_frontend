@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BASE_API_URL } from '../../../context/AuthContext';
-import { getNextMasterId, onlyDigits, toWholeNumber } from '../../../utils/masterForm';
+import { getNextMasterId, getNextSortNo, onlyDigits, toWholeNumber } from '../../../utils/masterForm';
 import { 
   Plus, 
   Edit2, 
@@ -50,6 +50,15 @@ export const BlogCategory = () => {
   const getNextId = async () => {
     try {
       return await getNextMasterId(axios, `${BASE_API_URL}/cms/blog-categories`, 'id');
+    } catch (err) {
+      console.error(err);
+      return '';
+    }
+  };
+
+  const getNextSort = async () => {
+    try {
+      return await getNextSortNo(axios, `${BASE_API_URL}/cms/blog-categories`, 'sortingNo');
     } catch (err) {
       console.error(err);
       return '';
@@ -211,8 +220,8 @@ export const BlogCategory = () => {
               <button
                 onClick={async () => {
                   setEditingId(null);
-                  const nextId = await getNextId();
-                  setForm({ id: nextId, name: '', sortingNo: '', status: 'active' });
+                  const [nextId, nextSort] = await Promise.all([getNextId(), getNextSort()]);
+                  setForm({ id: nextId, name: '', sortingNo: nextSort, status: 'active' });
                   setAlert({ type: '', text: '' });
                   setView('form');
                 }}

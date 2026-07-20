@@ -117,10 +117,26 @@ const MOCK_JOBS = [
   }
 ];
 
+const getJobLocationLabels = (job) => {
+  const labels = [];
+  const cityState = [job.city, job.state].map(value => String(value || '').trim()).filter(Boolean).join(', ');
+  if (cityState) labels.push(cityState);
+  if (Array.isArray(job.jobLocations)) {
+    job.jobLocations.forEach((location) => {
+      const cleanLocation = String(location || '').trim();
+      if (cleanLocation) labels.push(cleanLocation);
+    });
+  }
+  return labels;
+};
+
 export const Jobs = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryCategory = searchParams.get('category') || '';
   const queryCompany = searchParams.get('company') || '';
+  const queryEmployer = searchParams.get('employer') || '';
+  const querySearch = searchParams.get('q') || '';
+  const queryLocation = searchParams.get('location') || '';
 
   // Search state (top bar)
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -141,6 +157,7 @@ export const Jobs = () => {
   const [dbJobs, setDbJobs] = useState([]);
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [locations, setLocations] = useState([]);
   const [sortBy, setSortBy] = useState('newest');
   const [reminderEmail, setReminderEmail] = useState('');
   const [loading, setLoading] = useState(true);
@@ -150,12 +167,14 @@ export const Jobs = () => {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const res = await axios.get(`${BASE_API_URL}/jobs`);
+        const params = new URLSearchParams();
+        if (queryEmployer) params.set('employer', queryEmployer);
+        const res = await axios.get(`${BASE_API_URL}/jobs${params.toString() ? `?${params.toString()}` : ''}`);
         const mappedJobs = (res.data || []).map(j => ({
           id: j.slug || j._id,
           title: j.jobTitle,
           company: j.companyName,
-          location: `${j.city}, ${j.state}`,
+          location: getJobLocationLabels(j)[0] || 'Location not specified',
           salary: j.salary || (j.minSalary && j.maxSalary ? `₹${j.minSalary} - ${j.maxSalary}` : 'Not Specified'),
           type: j.jobType?.jobType || j.workMode || 'Full Time',
           category: j.jobCategory?.categoryName || 'IT & Software',
@@ -165,6 +184,7 @@ export const Jobs = () => {
         }));
         setDbJobs(mappedJobs);
         setFilteredJobs(mappedJobs);
+        setLocations(Array.from(new Set(mappedJobs.map(job => job.location).filter(location => location && location !== 'Location not specified'))).sort((a, b) => a.localeCompare(b)));
       } catch (err) {
         console.error('Fetch jobs error:', err);
         setError('Failed to fetch jobs from database.');
@@ -173,7 +193,7 @@ export const Jobs = () => {
       }
     };
     fetchJobs();
-  }, []);
+  }, [queryEmployer]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -201,17 +221,27 @@ export const Jobs = () => {
     setSidebarCat(queryCategory);
   }, [queryCategory]);
 
+  useEffect(() => {
+    setSearchKeyword(querySearch);
+  }, [querySearch]);
+
+  useEffect(() => {
+    setSearchLoc(queryLocation);
+  }, [queryLocation]);
+
   const filterJobs = () => {
     let result = [...dbJobs];
 
     // Top search bar filters
-    if (searchKeyword.trim() !== '') {
-      const kw = searchKeyword.toLowerCase();
+    const activeKeyword = (searchKeyword || querySearch).trim();
+    const activeLocation = (searchLoc || queryLocation).trim();
+    if (activeKeyword !== '') {
+      const kw = activeKeyword.toLowerCase();
       result = result.filter(
         (j) =>
-          j.title.toLowerCase().includes(kw) ||
-          j.company.toLowerCase().includes(kw) ||
-          j.category.toLowerCase().includes(kw)
+          String(j.title || '').toLowerCase().includes(kw) ||
+          String(j.company || '').toLowerCase().includes(kw) ||
+          String(j.category || '').toLowerCase().includes(kw)
       );
     }
     if (tagFilter.trim() !== '') {
@@ -228,8 +258,8 @@ export const Jobs = () => {
       const mapped = (typeMap[searchType] || searchType).toLowerCase();
       result = result.filter((j) => j.type.toLowerCase() === mapped);
     }
-    if (searchLoc) {
-      result = result.filter((j) => j.location.toLowerCase().includes(searchLoc.toLowerCase()));
+    if (activeLocation) {
+      result = result.filter((j) => String(j.location || '').toLowerCase().includes(activeLocation.toLowerCase()));
     }
 
     // Sidebar filters
@@ -263,7 +293,7 @@ export const Jobs = () => {
 
   useEffect(() => {
     filterJobs();
-  }, [dbJobs, sortBy, queryCategory, queryCompany]);
+  }, [dbJobs, sortBy, queryCategory, queryCompany, queryEmployer, querySearch, queryLocation]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -277,7 +307,12 @@ export const Jobs = () => {
   }, []);
 
   const handleFindNow = () => {
-    filterJobs();
+    const nextParams = new URLSearchParams(searchParams);
+    if (searchKeyword.trim()) nextParams.set('q', searchKeyword.trim());
+    else nextParams.delete('q');
+    if (searchLoc.trim()) nextParams.set('location', searchLoc.trim());
+    else nextParams.delete('location');
+    setSearchParams(nextParams);
   };
 
   const applySidebarFilters = () => {
@@ -327,7 +362,7 @@ export const Jobs = () => {
   return (
     <div className="w-full bg-white" style={{ fontFamily: "'Inter', sans-serif" }}>
       {/* Top Banner Section — heading, breadcrumb, and filter card all live inside the cream banner */}
-      <section className="bg-[#FFF9F3] py-[55px] relative overflow-hidden">
+      <section className="bg-[#FFF9F3] py-[55px] relative overflow-visible">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
 
           {/* Heading row */}
@@ -358,7 +393,10 @@ export const Jobs = () => {
               {/* Left column: keyword search (its own form) + removable tag pill below */}
               <div className="flex flex-wrap items-center gap-4">
                 <form
-                  onSubmit={(e) => e.preventDefault()}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleFindNow();
+                  }}
                   className="flex-1 min-w-[200px]"
                 >
                   <div className="relative">
@@ -405,17 +443,17 @@ export const Jobs = () => {
                     </button>
                     {typeDropdownOpen && (
                       <ul
-                        className="absolute left-0 top-full mt-3 min-w-[160px] bg-white rounded-[10px] py-2 z-30"
-                        style={{ border: 'thin solid #ececec', boxShadow: '0px 9px 26px 0px rgba(31,31,51,0.06)' }}
+                        className="absolute left-0 top-full mt-3 w-48 max-h-64 overflow-y-auto bg-white rounded-[10px] py-2 z-50"
+                        style={{ border: 'thin solid #ececec', boxShadow: '0px 12px 30px 0px rgba(31,31,51,0.12)' }}
                       >
                         {['Full time', 'Part time', 'Freelancer', 'Online work'].map((opt) => (
-                          <li key={opt}>
+                          <li key={opt} className="px-2 py-1">
                             <button
                               type="button"
                               onClick={() => { setSearchType(opt); setTypeDropdownOpen(false); }}
-                              className={`block w-full text-left px-5 py-2.5 text-sm transition ${
-                                searchType === opt ? 'bg-[#0047C7] text-white' : 'text-[#636477] hover:bg-[#f1f7ff]'
-                              }`}
+                              className={`flex min-h-10 w-full items-center rounded-md text-left px-4 text-sm leading-5 ${
+                                searchType === opt ? 'bg-[#0047C7] text-white' : 'text-[#636477]'
+                              } focus:outline-none focus:ring-0 focus-visible:outline-none`}
                             >
                               {opt}
                             </button>
@@ -433,22 +471,22 @@ export const Jobs = () => {
                       className="flex items-center gap-2 text-sm text-[#37404e] px-1 py-2 cursor-pointer focus:outline-none"
                     >
                       <MapPin className="h-4 w-4 text-[#88929b]" />
-                      <span>{searchLoc || 'Hamirpur, HP'}</span>
+                      <span>{searchLoc || 'Location'}</span>
                       <ChevronDown className="h-3.5 w-3.5 text-[#88929b]" />
                     </button>
                     {locDropdownOpen && (
                       <ul
-                        className="absolute left-0 top-full mt-3 min-w-[180px] bg-white rounded-[10px] py-2 z-30"
-                        style={{ border: 'thin solid #ececec', boxShadow: '0px 9px 26px 0px rgba(31,31,51,0.06)' }}
+                        className="absolute left-0 top-full mt-3 w-64 max-h-72 overflow-y-auto bg-white rounded-[10px] py-2 z-50"
+                        style={{ border: 'thin solid #ececec', boxShadow: '0px 12px 30px 0px rgba(31,31,51,0.12)' }}
                       >
-                        {['Mohali, PB', 'Chandigarh, PB', 'Ambala, HR'].map((opt) => (
-                          <li key={opt}>
+                        {locations.map((opt) => (
+                          <li key={opt} className="px-2 py-1">
                             <button
                               type="button"
                               onClick={() => { setSearchLoc(opt); setLocDropdownOpen(false); }}
-                              className={`block w-full text-left px-5 py-2.5 text-sm transition ${
-                                searchLoc === opt ? 'bg-[#0047C7] text-white' : 'text-[#636477] hover:bg-[#f1f7ff]'
-                              }`}
+                              className={`flex min-h-10 w-full items-center rounded-md text-left px-4 text-sm leading-5 ${
+                                searchLoc === opt ? 'bg-[#0047C7] text-white' : 'text-[#636477]'
+                              } focus:outline-none focus:ring-0 focus-visible:outline-none`}
                             >
                               {opt}
                             </button>

@@ -195,7 +195,7 @@ const EmployerCard = ({ company }) => {
           {/* open jobs button — .btn-border.btn-brand-hover */}
           <div className="text-center mt-6">
             <a
-              href={`/jobs?company=${encodeURIComponent(company.name)}`}
+              href={`/jobs?employer=${encodeURIComponent(company.id)}`}
               style={{
                 display: 'inline-block',
                 padding: '13px 28px',

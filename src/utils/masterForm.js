@@ -9,6 +9,16 @@ export const getNextMasterId = async (axiosInstance, url, idField) => {
   return String(maxId + 1);
 };
 
+export const getNextSortNo = async (axiosInstance, url, sortField = 'sortingNo') => {
+  const response = await axiosInstance.get(url);
+  const rows = Array.isArray(response.data) ? response.data : response.data.docs || [];
+  const maxSort = rows.reduce((max, item) => {
+    const num = Number(item[sortField]);
+    return Number.isFinite(num) && num > max ? num : max;
+  }, 0);
+  return String(maxSort + 1);
+};
+
 export const onlyDigits = (value) => value.replace(/\D/g, '');
 
 export const toWholeNumber = (value) => Number(onlyDigits(String(value))) || 0;

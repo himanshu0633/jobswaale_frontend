@@ -56,6 +56,13 @@ const getPublicRedirectPath = (userData, fallbackRole = 'jobseeker') => {
   return selectedRole === 'employer' ? '/employer' : '/jobseeker';
 };
 
+const getSafeRedirectPath = (value) => {
+  const redirectPath = String(value || '').trim();
+  if (!redirectPath.startsWith('/') || redirectPath.startsWith('//')) return '';
+  if (redirectPath.startsWith('/admin') || redirectPath.startsWith('/superadmin-login')) return '';
+  return redirectPath;
+};
+
 const getStoredPublicUser = () => {
   try {
     return JSON.parse(localStorage.getItem('publicUser') || 'null');
@@ -67,6 +74,7 @@ const getStoredPublicUser = () => {
 export const Login = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
+  const safeRedirectPath = getSafeRedirectPath(searchParams.get('redirect'));
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState(searchParams.get('role') === 'employer' ? 'employer' : 'jobseeker');
@@ -114,9 +122,9 @@ export const Login = () => {
     const storedToken = localStorage.getItem('publicToken');
 
     if (storedUser && storedToken) {
-      navigate(getPublicRedirectPath(storedUser, role), { replace: true });
+      navigate(safeRedirectPath || getPublicRedirectPath(storedUser, role), { replace: true });
     }
-  }, [navigate, role]);
+  }, [navigate, role, safeRedirectPath]);
 
   useEffect(() => {
     if (location.state?.message) {
@@ -205,7 +213,7 @@ export const Login = () => {
     localStorage.setItem('publicUser', JSON.stringify(userData));
     if (token) localStorage.setItem('publicToken', token);
     setSuccess('Logged in successfully.');
-    setTimeout(() => navigate(getPublicRedirectPath(userData, role), { replace: true }), 700);
+    setTimeout(() => navigate(safeRedirectPath || getPublicRedirectPath(userData, role), { replace: true }), 700);
     return true;
   };
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios'
 import { BASE_API_URL } from '../../../context/AuthContext';
-import { getNextMasterId, onlyDigits, toWholeNumber } from '../../../utils/masterForm';
+import { getNextMasterId, getNextSortNo, onlyDigits, toWholeNumber } from '../../../utils/masterForm';
 import ResponsiveCardList from '../../../components/ResponsiveCardList'
 import { 
   Plus, 
@@ -52,11 +52,20 @@ export const FeatureMaster = () => {
     }
   };
 
+  const getNextSort = async () => {
+    try {
+      return await getNextSortNo(axios, `${BASE_API_URL}/masters/features`, 'displayOrder');
+    } catch (err) {
+      console.error(err);
+      return '';
+    }
+  };
+
   // Set initial default ID for add mode on load
   const loadDefaultId = async () => {
     if (!editingId) {
-      const nextId = await getNextId();
-      setForm(prev => ({ ...prev, id: nextId }));
+      const [nextId, nextSort] = await Promise.all([getNextId(), getNextSort()]);
+      setForm(prev => ({ ...prev, id: nextId, displayOrder: prev.displayOrder || nextSort }));
     }
   };
 
@@ -119,8 +128,8 @@ export const FeatureMaster = () => {
         showAlert('success', 'Success! Record added/updated successfully.');
         setTimeout(async () => {
           setEditingId(null);
-          const nextId = await getNextId();
-          setForm({ id: nextId, featureName: '', displayOrder: '', status: 'active' });
+          const [nextId, nextSort] = await Promise.all([getNextId(), getNextSort()]);
+          setForm({ id: nextId, featureName: '', displayOrder: nextSort, status: 'active' });
           fetchList(); // reload table
         }, 1500);
       } else {
@@ -132,8 +141,8 @@ export const FeatureMaster = () => {
           status
         });
         showAlert('success', 'Success! Record added/updated successfully.');
-        const nextId = await getNextId();
-        setForm({ id: nextId, featureName: '', displayOrder: '', status: 'active' });
+        const [nextId, nextSort] = await Promise.all([getNextId(), getNextSort()]);
+        setForm({ id: nextId, featureName: '', displayOrder: nextSort, status: 'active' });
         setTimeout(() => {
           fetchList(); // reload table
         }, 1500);
@@ -307,8 +316,8 @@ export const FeatureMaster = () => {
                   type="button"
                   onClick={async () => {
                     setEditingId(null);
-                    const nextId = await getNextId();
-                    setForm({ id: nextId, featureName: '', displayOrder: '', status: 'active' });
+                    const [nextId, nextSort] = await Promise.all([getNextId(), getNextSort()]);
+                    setForm({ id: nextId, featureName: '', displayOrder: nextSort, status: 'active' });
                   }}
                   className="px-6 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg text-sm transition-colors"
                 >
@@ -382,7 +391,7 @@ export const FeatureMaster = () => {
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <div className="text-xs text-slate-500">Sort: {item.sortingNo}</div>
+                  <div className="text-xs text-slate-500">Sort: {item.displayOrder}</div>
                   <div className="flex items-center gap-2">
                     <button onClick={() => handleEdit(item)} className="w-8 h-8 bg-teal-500 hover:bg-teal-600 text-white rounded-full flex items-center justify-center">
                       <Edit2 className="w-4 h-4" />

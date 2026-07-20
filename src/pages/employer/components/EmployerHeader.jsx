@@ -55,7 +55,7 @@ export const EmployerHeader = ({ toggleSidebar, isCollapsed }) => {
     >
       <div className="flex h-full min-w-0 items-center gap-2 sm:gap-4 lg:gap-[30px]">
         <div className="flex h-full shrink-0 items-center lg:w-[220px]">
-          <Link to="/employer" className="flex items-center">
+          <Link to="/" className="flex items-center">
             <img src={logo} alt="JobsWaale" className="h-auto w-auto max-h-8 shrink-0 sm:max-h-[42px]" />
           </Link>
         </div>
