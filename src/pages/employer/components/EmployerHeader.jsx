@@ -32,6 +32,9 @@ export const EmployerHeader = ({ toggleSidebar, isCollapsed }) => {
   useEffect(() => {
     document.documentElement.dataset.employerTheme = theme;
     localStorage.setItem('employerTheme', theme);
+    return () => {
+      delete document.documentElement.dataset.employerTheme;
+    };
   }, [theme]);
 
   const toggleFullscreen = () => {
@@ -50,8 +53,11 @@ export const EmployerHeader = ({ toggleSidebar, isCollapsed }) => {
 
   return (
     <header
-      className="fixed left-0 right-0 top-0 z-50 flex h-14 items-center justify-between gap-2 border-b border-slate-600 px-3 text-slate-100 shadow-sm sm:h-[66px] sm:gap-4 sm:px-6 lg:px-10"
-      style={{ backgroundColor: '#303a44' }}
+      className={`portal-header fixed left-0 right-0 top-0 z-50 flex h-14 items-center justify-between gap-2 border-b px-3 shadow-sm transition-colors sm:h-[66px] sm:gap-4 sm:px-6 lg:px-10 ${
+        theme === 'dark'
+          ? 'border-slate-700 bg-[#303a44] text-slate-100'
+          : 'border-slate-200 bg-white text-slate-700'
+      }`}
     >
       <div className="flex h-full min-w-0 items-center gap-2 sm:gap-4 lg:gap-[30px]">
         <div className="flex h-full shrink-0 items-center lg:w-[220px]">
@@ -63,7 +69,11 @@ export const EmployerHeader = ({ toggleSidebar, isCollapsed }) => {
         <button
           type="button"
           onClick={toggleSidebar}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-dashed border-slate-500/70 bg-slate-700/20 text-slate-200 transition-colors hover:bg-slate-700 hover:text-white sm:h-[38px] sm:w-[38px]"
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-dashed transition-colors sm:h-[38px] sm:w-[38px] ${
+            theme === 'dark'
+              ? 'border-slate-500/70 bg-slate-700/20 text-slate-200 hover:bg-slate-700 hover:text-white'
+              : 'border-slate-300 bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+          }`}
           aria-label="Toggle sidebar"
         >
           <Menu className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
@@ -85,26 +95,31 @@ export const EmployerHeader = ({ toggleSidebar, isCollapsed }) => {
           <input
             type="text"
             placeholder="Quick Search..."
-            className="h-9 w-full rounded-full border border-slate-600/30 bg-slate-600/30 py-2 pr-4 pl-[42px] text-[13px] font-semibold text-slate-100 outline-none placeholder:text-slate-400 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400"
+            className={`h-9 w-full rounded-full border py-2 pr-4 pl-[42px] text-[13px] font-semibold outline-none placeholder:text-slate-400 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 ${
+              theme === 'dark'
+                ? 'border-slate-600/30 bg-slate-600/30 text-slate-100'
+                : 'border-slate-200 bg-slate-50 text-slate-800'
+            }`}
           />
         </div>
 
         <div className="hidden items-center gap-1 md:flex lg:gap-3">
-          <button type="button" className="rounded-lg p-2 text-slate-300 transition-colors hover:bg-slate-700 hover:text-white" aria-label="Apps">
+          <button type="button" className={`rounded-lg p-2 transition-colors ${theme === 'dark' ? 'text-slate-300 hover:bg-slate-700 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'}`} aria-label="Apps">
             <Grid2X2 className="h-4.5 w-4.5" />
           </button>
           <button
             type="button"
             onClick={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}
-            className="rounded-lg p-2 text-slate-300 transition-colors hover:bg-slate-700 hover:text-white"
-            aria-label="Toggle theme"
+            className={`rounded-lg p-2 transition-colors ${theme === 'dark' ? 'text-slate-300 hover:bg-slate-700 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'}`}
+            aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+            title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
           >
             {theme === 'dark' ? <Sun className="h-4.5 w-4.5" /> : <Moon className="h-4.5 w-4.5" />}
           </button>
-          <button type="button" onClick={toggleFullscreen} className="hidden rounded-lg p-2 text-slate-300 transition-colors hover:bg-slate-700 hover:text-white lg:block" aria-label="Fullscreen">
+          <button type="button" onClick={toggleFullscreen} className={`hidden rounded-lg p-2 transition-colors lg:block ${theme === 'dark' ? 'text-slate-300 hover:bg-slate-700 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'}`} aria-label="Fullscreen">
             <Maximize className="h-4.5 w-4.5" />
           </button>
-          <button type="button" className="hidden rounded-lg p-2 text-slate-300 transition-colors hover:bg-slate-700 hover:text-white lg:block" aria-label="Theme settings">
+          <button type="button" className={`hidden rounded-lg p-2 transition-colors lg:block ${theme === 'dark' ? 'text-slate-300 hover:bg-slate-700 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'}`} aria-label="Theme settings">
             <Palette className="h-4.5 w-4.5" />
           </button>
         </div>
@@ -113,14 +128,14 @@ export const EmployerHeader = ({ toggleSidebar, isCollapsed }) => {
           <button
             type="button"
             onClick={() => setDropdownOpen((current) => !current)}
-            className="flex items-center gap-2 rounded-lg p-1 transition-colors hover:bg-slate-700/70 sm:gap-3"
+            className={`flex items-center gap-2 rounded-lg p-1 transition-colors sm:gap-3 ${theme === 'dark' ? 'hover:bg-slate-700/70' : 'hover:bg-slate-100'}`}
           >
             <img
               src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=120"
               alt="profile"
               className="h-7 w-7 shrink-0 rounded-full border-2 border-emerald-400 object-cover sm:h-8 sm:w-8"
             />
-            <span className="hidden items-center gap-1 text-sm font-extrabold text-slate-300 md:flex">
+            <span className={`hidden items-center gap-1 text-sm font-extrabold md:flex ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
               <span className="max-w-24 truncate lg:max-w-32">{displayName}</span>
               <ChevronDown className="h-4 w-4 text-slate-400" />
             </span>

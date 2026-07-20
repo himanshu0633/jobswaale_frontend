@@ -121,6 +121,7 @@ export const PublicHeader = () => {
     if (path === '/') return location.pathname === '/';
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
+  const isPricingActive = isActive('/jobseeker-plan') || isActive('/employer-plan');
 
   return (
     <header className="fixed inset-x-0 top-0 z-[60] w-full border-b border-slate-200/50 bg-white/80 backdrop-blur-md shadow-sm">
@@ -146,16 +147,16 @@ export const PublicHeader = () => {
           <div className="relative py-2" ref={pricingRef}>
             <button
               onClick={() => setPricingDesktopOpen(!pricingDesktopOpen)}
-              className="flex items-center gap-1 text-[0.9375rem] font-medium text-slate-655 hover:text-blue-600 focus:outline-none cursor-pointer whitespace-nowrap"
+              className={`flex items-center gap-1 text-[0.9375rem] font-medium hover:text-blue-600 focus:outline-none cursor-pointer whitespace-nowrap ${isPricingActive ? 'text-blue-600' : 'text-slate-655'}`}
             >
               Pricing <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${pricingDesktopOpen ? 'rotate-180' : ''}`} />
             </button>
             {pricingDesktopOpen && (
               <div className="absolute top-full left-0 mt-1 block bg-white border border-slate-200 rounded-lg shadow-lg py-2 w-48 z-50">
-                <Link to="/jobseeker-plan" className="block px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition">
+                <Link to="/jobseeker-plan" className={`block px-4 py-2 text-xs font-bold hover:bg-slate-50 transition ${isActive('/jobseeker-plan') ? 'text-blue-600' : 'text-slate-700'}`}>
                   Jobseeker Plan
                 </Link>
-                <Link to="/employer-plan" className="block px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition">
+                <Link to="/employer-plan" className={`block px-4 py-2 text-xs font-bold hover:bg-slate-50 transition ${isActive('/employer-plan') ? 'text-blue-600' : 'text-slate-700'}`}>
                   Employer Plan
                 </Link>
               </div>
@@ -303,15 +304,15 @@ export const PublicHeader = () => {
             <div>
               <button 
                 onClick={() => setPricingMobileOpen(!pricingMobileOpen)}
-                className="flex items-center justify-between w-full text-sm font-bold py-1 text-slate-655 focus:outline-none cursor-pointer"
+                className={`flex items-center justify-between w-full text-sm font-bold py-1 focus:outline-none cursor-pointer ${isPricingActive ? 'text-blue-600' : 'text-slate-655'}`}
               >
                 <span>Pricing</span>
                 <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${pricingMobileOpen ? 'rotate-180' : ''}`} />
               </button>
               {pricingMobileOpen && (
                 <div className="pl-4 mt-2 flex flex-col gap-2.5 border-l border-slate-100">
-                  <Link to="/jobseeker-plan" className="text-xs font-bold text-slate-550 py-1">Jobseeker Plan</Link>
-                  <Link to="/employer-plan" className="text-xs font-bold text-slate-550 py-1">Employer Plan</Link>
+                  <Link to="/jobseeker-plan" className={`text-xs font-bold py-1 ${isActive('/jobseeker-plan') ? 'text-blue-600' : 'text-slate-550'}`}>Jobseeker Plan</Link>
+                  <Link to="/employer-plan" className={`text-xs font-bold py-1 ${isActive('/employer-plan') ? 'text-blue-600' : 'text-slate-550'}`}>Employer Plan</Link>
                 </div>
               )}
             </div>

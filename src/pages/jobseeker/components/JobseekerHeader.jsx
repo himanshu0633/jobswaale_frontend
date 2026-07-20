@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Bell, ChevronDown, LogOut, Menu, Settings, Star, User } from 'lucide-react';
+import { Bell, ChevronDown, LogOut, Menu, Moon, Settings, Star, Sun, User } from 'lucide-react';
 
 const getJobseekerUser = () => {
   try {
@@ -23,6 +23,7 @@ export const JobseekerHeader = ({ toggleSidebar, title, isCollapsed }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [theme, setTheme] = useState(() => localStorage.getItem('jobseekerTheme') || 'light');
   const user = getJobseekerUser();
   const displayName = user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Rahul Kumar';
   const plan = user?.planName || 'Free Plan';
@@ -52,9 +53,21 @@ export const JobseekerHeader = ({ toggleSidebar, title, isCollapsed }) => {
     }
   };
 
+  useEffect(() => {
+    document.documentElement.dataset.jobseekerTheme = theme;
+    localStorage.setItem('jobseekerTheme', theme);
+    return () => {
+      delete document.documentElement.dataset.jobseekerTheme;
+    };
+  }, [theme]);
+
   return (
     <header
-      className={`sticky top-0 z-[1030] flex h-16 items-center justify-between border-b border-[#e2e8f0] bg-white px-4 sm:px-6 transition-all duration-300 ${
+      className={`portal-header sticky top-0 z-[1030] flex h-16 items-center justify-between border-b px-4 sm:px-6 transition-all duration-300 ${
+        theme === 'dark'
+          ? 'border-slate-800 bg-slate-900 text-slate-100'
+          : 'border-[#e2e8f0] bg-white text-[#0f172a]'
+      } ${
         isCollapsed
           ? 'lg:ml-16 lg:w-[calc(100%-4rem)]'
           : 'lg:ml-64 lg:w-[calc(100%-16rem)]'
@@ -65,18 +78,35 @@ export const JobseekerHeader = ({ toggleSidebar, title, isCollapsed }) => {
           type="button"
           onClick={toggleSidebar}
           aria-label="Toggle Sidebar"
-          className="block text-[#475569] xl:hidden"
+          className={`block xl:hidden ${theme === 'dark' ? 'text-slate-300' : 'text-[#475569]'}`}
         >
           <Menu className="h-6 w-6" />
         </button>
-        <h5 className="text-[1.1rem] font-semibold text-[#0f172a]">{pageTitle}</h5>
+        <h5 className={`text-[1.1rem] font-semibold ${theme === 'dark' ? 'text-slate-100' : 'text-[#0f172a]'}`}>{pageTitle}</h5>
       </div>
 
       <div className="flex items-center gap-3">
         <button
           type="button"
+          onClick={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}
+          aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+          title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+          className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${
+            theme === 'dark'
+              ? 'border-slate-700 bg-slate-800 text-slate-300 hover:border-blue-500 hover:text-white'
+              : 'border-[#e2e8f0] bg-white text-[#475569] hover:border-[#0047C7] hover:bg-[#f8fafc] hover:text-[#0047C7]'
+          }`}
+        >
+          {theme === 'dark' ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
+        </button>
+        <button
+          type="button"
           aria-label="Notifications"
-          className="relative flex h-10 w-10 items-center justify-center rounded-full border border-[#e2e8f0] bg-white text-[#475569] transition-colors hover:border-[#0047C7] hover:bg-[#f8fafc] hover:text-[#0047C7]"
+          className={`relative flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${
+            theme === 'dark'
+              ? 'border-slate-700 bg-slate-800 text-slate-300 hover:border-blue-500 hover:text-white'
+              : 'border-[#e2e8f0] bg-white text-[#475569] hover:border-[#0047C7] hover:bg-[#f8fafc] hover:text-[#0047C7]'
+          }`}
         >
           <Bell className="h-[18px] w-[18px]" />
           <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full border-2 border-white bg-[#ef4444]" />
@@ -87,13 +117,13 @@ export const JobseekerHeader = ({ toggleSidebar, title, isCollapsed }) => {
             role="button"
             tabIndex={0}
             onClick={() => setDropdownOpen((current) => !current)}
-            className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-1.5 transition-colors hover:bg-[#f8fafc]"
+            className={`flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-1.5 transition-colors ${theme === 'dark' ? 'hover:bg-slate-800' : 'hover:bg-[#f8fafc]'}`}
           >
             <div className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-[#0047C7] text-[0.85rem] font-semibold text-white">
               {initials}
             </div>
             <div className="hidden sm:block">
-              <div className="text-[0.85rem] font-semibold leading-tight text-[#0f172a]">{displayName}</div>
+              <div className={`text-[0.85rem] font-semibold leading-tight ${theme === 'dark' ? 'text-slate-100' : 'text-[#0f172a]'}`}>{displayName}</div>
               <div className="text-[0.7rem] text-[#94a3b8]">{plan}</div>
             </div>
             <ChevronDown className="hidden h-4 w-4 text-[#94a3b8] sm:block" />

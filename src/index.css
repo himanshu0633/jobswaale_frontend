@@ -40,8 +40,26 @@ body {
   --admin-shadow: 0 1px 6px rgba(0, 0, 0, 0.28);
 }
 
+:root[data-employer-theme='dark'],
+:root[data-jobseeker-theme='dark'] {
+  --portal-primary: #8b7cf6;
+  --portal-primary-soft: rgba(139, 124, 246, 0.16);
+  --portal-body: #111827;
+  --portal-card: #182234;
+  --portal-border: #2b3548;
+  --portal-muted: #9aa7b7;
+  --portal-heading: #eef2f7;
+  --portal-shadow: 0 1px 6px rgba(0, 0, 0, 0.28);
+}
+
 :root[data-admin-theme='dark'] body {
   background-color: var(--admin-body);
+  color: #d5dce7;
+}
+
+:root[data-employer-theme='dark'] body,
+:root[data-jobseeker-theme='dark'] body {
+  background-color: var(--portal-body);
   color: #d5dce7;
 }
 
@@ -59,6 +77,429 @@ body {
 
 :root[data-admin-theme='dark'] .admin-content {
   color: #d5dce7;
+}
+
+:root[data-employer-theme='dark'] .portal-shell,
+:root[data-employer-theme='dark'] .portal-content,
+:root[data-employer-theme='dark'] .portal-content main,
+:root[data-jobseeker-theme='dark'] .portal-shell,
+:root[data-jobseeker-theme='dark'] .portal-content,
+:root[data-jobseeker-theme='dark'] .portal-content main {
+  background-color: var(--portal-body) !important;
+  color: #d5dce7;
+}
+
+:root[data-employer-theme='dark'] aside.bg-white,
+:root[data-employer-theme='dark'] .portal-content .bg-white,
+:root[data-employer-theme='dark'] .portal-content .bg-white.border,
+:root[data-employer-theme='dark'] .portal-content form.bg-white,
+:root[data-employer-theme='dark'] .portal-content section.bg-white,
+:root[data-employer-theme='dark'] .portal-content footer.bg-white,
+:root[data-jobseeker-theme='dark'] aside.bg-white,
+:root[data-jobseeker-theme='dark'] .portal-content .bg-white,
+:root[data-jobseeker-theme='dark'] .portal-content .bg-white.border,
+:root[data-jobseeker-theme='dark'] .portal-content form.bg-white,
+:root[data-jobseeker-theme='dark'] .portal-content section.bg-white,
+:root[data-jobseeker-theme='dark'] .portal-content footer.bg-white {
+  background-color: var(--portal-card) !important;
+  border-color: var(--portal-border) !important;
+  color: #d5dce7 !important;
+}
+
+:root[data-employer-theme='dark'] aside,
+:root[data-employer-theme='dark'] footer,
+:root[data-jobseeker-theme='dark'] aside,
+:root[data-jobseeker-theme='dark'] footer {
+  border-color: var(--portal-border) !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .bg-slate-50,
+:root[data-employer-theme='dark'] .portal-content .bg-slate-50\/30,
+:root[data-employer-theme='dark'] .portal-content .bg-slate-50\/50,
+:root[data-jobseeker-theme='dark'] .portal-content .bg-slate-50,
+:root[data-jobseeker-theme='dark'] .portal-content .bg-slate-50\/30,
+:root[data-jobseeker-theme='dark'] .portal-content .bg-slate-50\/50 {
+  background-color: #202b3c !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .bg-indigo-50,
+:root[data-employer-theme='dark'] .portal-content .bg-indigo-50\/50,
+:root[data-jobseeker-theme='dark'] .portal-content .bg-indigo-50,
+:root[data-jobseeker-theme='dark'] .portal-content .bg-indigo-50\/50 {
+  background-color: var(--portal-primary-soft) !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .bg-\[\#e8e6fa\],
+:root[data-employer-theme='dark'] .portal-content .bg-\[\#e8eaef\],
+:root[data-employer-theme='dark'] .portal-content .bg-\[\#f3f0ff\],
+:root[data-jobseeker-theme='dark'] .portal-content .bg-\[\#e8e6fa\],
+:root[data-jobseeker-theme='dark'] .portal-content .bg-\[\#e8eaef\],
+:root[data-jobseeker-theme='dark'] .portal-content .bg-\[\#f3f0ff\] {
+  background-color: #1f2a3d !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .bg-slate-100,
+:root[data-jobseeker-theme='dark'] .portal-content .bg-slate-100 {
+  background-color: #223049 !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .border-slate-100,
+:root[data-employer-theme='dark'] .portal-content .border-slate-200,
+:root[data-employer-theme='dark'] .portal-content .border-slate-300,
+:root[data-jobseeker-theme='dark'] .portal-content .border-slate-100,
+:root[data-jobseeker-theme='dark'] .portal-content .border-slate-200,
+:root[data-jobseeker-theme='dark'] .portal-content .border-slate-300 {
+  border-color: var(--portal-border) !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .shadow-sm,
+:root[data-jobseeker-theme='dark'] .portal-content .shadow-sm {
+  box-shadow: var(--portal-shadow) !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content h1,
+:root[data-employer-theme='dark'] .portal-content h2,
+:root[data-employer-theme='dark'] .portal-content h3,
+:root[data-employer-theme='dark'] .portal-content h4,
+:root[data-employer-theme='dark'] .portal-content h5,
+:root[data-jobseeker-theme='dark'] .portal-content h1,
+:root[data-jobseeker-theme='dark'] .portal-content h2,
+:root[data-jobseeker-theme='dark'] .portal-content h3,
+:root[data-jobseeker-theme='dark'] .portal-content h4,
+:root[data-jobseeker-theme='dark'] .portal-content h5 {
+  color: var(--portal-heading) !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .text-slate-400,
+:root[data-employer-theme='dark'] .portal-content .text-slate-500,
+:root[data-employer-theme='dark'] .portal-content .text-slate-600,
+:root[data-employer-theme='dark'] .portal-content .text-slate-700,
+:root[data-employer-theme='dark'] .portal-content .text-\[\#475569\],
+:root[data-employer-theme='dark'] .portal-content .text-\[\#6c757d\],
+:root[data-employer-theme='dark'] .portal-content footer,
+:root[data-jobseeker-theme='dark'] .portal-content .text-slate-400,
+:root[data-jobseeker-theme='dark'] .portal-content .text-slate-500,
+:root[data-jobseeker-theme='dark'] .portal-content .text-slate-600,
+:root[data-jobseeker-theme='dark'] .portal-content .text-slate-700,
+:root[data-jobseeker-theme='dark'] .portal-content .text-\[\#475569\],
+:root[data-jobseeker-theme='dark'] .portal-content .text-\[\#6c757d\],
+:root[data-jobseeker-theme='dark'] .portal-content footer {
+  color: #aeb8c8 !important;
+}
+
+:root[data-employer-theme='dark'] aside .text-slate-800,
+:root[data-employer-theme='dark'] .portal-content .text-slate-800,
+:root[data-employer-theme='dark'] .portal-content .text-slate-900,
+:root[data-employer-theme='dark'] .portal-content .text-\[\#3f4254\],
+:root[data-employer-theme='dark'] .portal-content .text-\[\#0f172a\],
+:root[data-jobseeker-theme='dark'] aside .text-slate-800,
+:root[data-jobseeker-theme='dark'] .portal-content .text-slate-800,
+:root[data-jobseeker-theme='dark'] .portal-content .text-slate-900,
+:root[data-jobseeker-theme='dark'] .portal-content .text-\[\#3f4254\],
+:root[data-jobseeker-theme='dark'] .portal-content .text-\[\#0f172a\] {
+  color: var(--portal-heading) !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .text-\[\#6658dd\],
+:root[data-jobseeker-theme='dark'] .portal-content .text-\[\#6658dd\] {
+  color: #a99dff !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content input,
+:root[data-employer-theme='dark'] .portal-content select,
+:root[data-employer-theme='dark'] .portal-content textarea,
+:root[data-jobseeker-theme='dark'] .portal-content input,
+:root[data-jobseeker-theme='dark'] .portal-content select,
+:root[data-jobseeker-theme='dark'] .portal-content textarea {
+  background-color: #111827 !important;
+  border-color: var(--portal-border) !important;
+  color: #eef2f7 !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .advanced-filter-panel,
+:root[data-jobseeker-theme='dark'] .portal-content .advanced-filter-panel {
+  background-color: #172235 !important;
+  border-color: #344158 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+:root[data-employer-theme='dark'] .portal-content .candidate-filter-control,
+:root[data-jobseeker-theme='dark'] .portal-content .candidate-filter-control {
+  background-color: #111827 !important;
+  border-color: #344158 !important;
+  color: #eef2f7 !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .candidate-filter-control:focus,
+:root[data-jobseeker-theme='dark'] .portal-content .candidate-filter-control:focus {
+  border-color: #8b7cf6 !important;
+  box-shadow: 0 0 0 3px rgba(139, 124, 246, 0.16) !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .candidate-check-option,
+:root[data-jobseeker-theme='dark'] .portal-content .candidate-check-option {
+  background-color: #111827 !important;
+  border-color: #344158 !important;
+  color: #d5dce7 !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .candidate-clear-button,
+:root[data-jobseeker-theme='dark'] .portal-content .candidate-clear-button {
+  background-color: rgba(244, 63, 94, 0.08) !important;
+  border-color: rgba(251, 113, 133, 0.35) !important;
+  color: #fda4af !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .candidate-clear-button:hover,
+:root[data-jobseeker-theme='dark'] .portal-content .candidate-clear-button:hover {
+  background-color: rgba(244, 63, 94, 0.14) !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .chat-shell,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-shell {
+  background-color: #182234 !important;
+  border-color: #344158 !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .chat-list-panel,
+:root[data-employer-theme='dark'] .portal-content .chat-list-filters,
+:root[data-employer-theme='dark'] .portal-content .chat-detail-panel,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-list-panel,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-list-filters,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-detail-panel {
+  background-color: #182234 !important;
+  border-color: #344158 !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .chat-control,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-control {
+  background-color: #111827 !important;
+  border-color: #344158 !important;
+  color: #eef2f7 !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .chat-control:focus,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-control:focus {
+  border-color: #8b7cf6 !important;
+  box-shadow: 0 0 0 3px rgba(139, 124, 246, 0.16) !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .chat-thread,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-thread {
+  background-color: transparent !important;
+  border-color: #344158 !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .chat-thread:hover,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-thread:hover {
+  background-color: #202b3c !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .chat-thread.is-active,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-thread.is-active {
+  background-color: #26344d !important;
+  box-shadow: inset 3px 0 0 #8b7cf6;
+}
+
+:root[data-employer-theme='dark'] .portal-content .chat-thread-name,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-thread-name {
+  color: #eef2f7 !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .chat-thread-time,
+:root[data-employer-theme='dark'] .portal-content .chat-thread-message,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-thread-time,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-thread-message {
+  color: #9aa7b7 !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .chat-thread-job,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-thread-job {
+  color: #6ea8ff !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .chat-detail-header,
+:root[data-employer-theme='dark'] .portal-content .chat-composer,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-detail-header,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-composer {
+  background-color: #182234 !important;
+  border-color: #344158 !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .chat-detail-name,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-detail-name {
+  color: #eef2f7 !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .chat-detail-job,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-detail-job {
+  color: #9aa7b7 !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .chat-status,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-status {
+  background-color: #223049 !important;
+  color: #d5dce7 !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .chat-messages,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-messages {
+  background-color: #0f1726 !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .chat-bubble-received,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-bubble-received {
+  background-color: #1b273a !important;
+  border-color: #344158 !important;
+  color: #e6edf7 !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .chat-bubble-sent,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-bubble-sent {
+  background-color: #0d57d8 !important;
+  color: #ffffff !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .chat-reply-button,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-reply-button {
+  background-color: #182234 !important;
+  color: #aeb8c8 !important;
+  box-shadow: none !important;
+  --tw-ring-color: #344158 !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .chat-reply-button:hover,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-reply-button:hover {
+  background-color: #202b3c !important;
+  color: #6ea8ff !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .chat-message-time,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-message-time {
+  color: #8ea0b8 !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .chat-input,
+:root[data-employer-theme='dark'] .portal-content .chat-attach-button,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-input,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-attach-button {
+  background-color: #111827 !important;
+  border-color: #344158 !important;
+  color: #eef2f7 !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .chat-input:focus,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-input:focus {
+  border-color: #6ea8ff !important;
+  box-shadow: 0 0 0 3px rgba(110, 168, 255, 0.14) !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .chat-attach-button:hover,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-attach-button:hover {
+  border-color: #6ea8ff !important;
+  background-color: #202b3c !important;
+  color: #6ea8ff !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .chat-reply-preview,
+:root[data-employer-theme='dark'] .portal-content .chat-file-preview,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-reply-preview,
+:root[data-jobseeker-theme='dark'] .portal-content .chat-file-preview {
+  background-color: #111827 !important;
+  border-color: #344158 !important;
+  color: #d5dce7 !important;
+}
+
+:root[data-jobseeker-theme='dark'] .portal-content .jobseeker-plan-page {
+  background: #111827 !important;
+  color: #d5dce7 !important;
+}
+
+:root[data-jobseeker-theme='dark'] .portal-content .jobseeker-plan-page h4,
+:root[data-jobseeker-theme='dark'] .portal-content .jobseeker-plan-page h5,
+:root[data-jobseeker-theme='dark'] .portal-content .jobseeker-plan-page h6,
+:root[data-jobseeker-theme='dark'] .portal-content .jobseeker-plan-page .text-\[\#0f172a\] {
+  color: #eef2f7 !important;
+}
+
+:root[data-jobseeker-theme='dark'] .portal-content .jobseeker-plan-page .text-\[\#475569\] {
+  color: #d5dce7 !important;
+}
+
+:root[data-jobseeker-theme='dark'] .portal-content .jobseeker-plan-page .text-\[\#8592a6\],
+:root[data-jobseeker-theme='dark'] .portal-content .jobseeker-plan-page .text-\[\#94a3b8\] {
+  color: #9aa7b7 !important;
+}
+
+:root[data-jobseeker-theme='dark'] .portal-content .jobseeker-plan-page .plan-benefit-card,
+:root[data-jobseeker-theme='dark'] .portal-content .jobseeker-plan-page .plan-price-card,
+:root[data-jobseeker-theme='dark'] .portal-content .jobseeker-plan-page .plan-billing-card,
+:root[data-jobseeker-theme='dark'] .portal-content .jobseeker-plan-page .plan-modal-card {
+  background-color: #182234 !important;
+  border-color: #344158 !important;
+  color: #d5dce7 !important;
+}
+
+:root[data-jobseeker-theme='dark'] .portal-content .jobseeker-plan-page .plan-benefit-card:hover {
+  background-color: #202b3c !important;
+  border-color: rgba(110, 168, 255, 0.45) !important;
+  box-shadow: 0 14px 34px -18px rgba(0, 0, 0, 0.6) !important;
+}
+
+:root[data-jobseeker-theme='dark'] .portal-content .jobseeker-plan-page .plan-price-card:hover {
+  background-color: #202b3c !important;
+  border-color: rgba(110, 168, 255, 0.45) !important;
+  box-shadow: 0 18px 44px -20px rgba(0, 0, 0, 0.65) !important;
+}
+
+:root[data-jobseeker-theme='dark'] .portal-content .jobseeker-plan-page .plan-price-card.bg-gradient-to-b {
+  background-image: linear-gradient(to bottom, #202b3c, #182234) !important;
+}
+
+:root[data-jobseeker-theme='dark'] .portal-content .jobseeker-plan-page .bg-white {
+  background-color: #182234 !important;
+}
+
+:root[data-jobseeker-theme='dark'] .portal-content .jobseeker-plan-page .bg-\[\#f8fafc\],
+:root[data-jobseeker-theme='dark'] .portal-content .jobseeker-plan-page .bg-slate-50 {
+  background-color: #111827 !important;
+}
+
+:root[data-jobseeker-theme='dark'] .portal-content .jobseeker-plan-page .bg-slate-100 {
+  background-color: #223049 !important;
+}
+
+:root[data-jobseeker-theme='dark'] .portal-content .jobseeker-plan-page .border-\[\#e6eaf2\],
+:root[data-jobseeker-theme='dark'] .portal-content .jobseeker-plan-page .border-\[\#eef1f6\] {
+  border-color: #344158 !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content input::placeholder,
+:root[data-employer-theme='dark'] .portal-content textarea::placeholder,
+:root[data-jobseeker-theme='dark'] .portal-content input::placeholder,
+:root[data-jobseeker-theme='dark'] .portal-content textarea::placeholder {
+  color: #7f8da1 !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content table,
+:root[data-jobseeker-theme='dark'] .portal-content table {
+  color: #d5dce7;
+}
+
+:root[data-employer-theme='dark'] .portal-content thead tr,
+:root[data-employer-theme='dark'] .portal-content tbody tr,
+:root[data-jobseeker-theme='dark'] .portal-content thead tr,
+:root[data-jobseeker-theme='dark'] .portal-content tbody tr {
+  background-color: var(--portal-card) !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content tbody tr:hover,
+:root[data-employer-theme='dark'] .portal-content .hover\:bg-slate-50:hover,
+:root[data-employer-theme='dark'] .portal-content .hover\:bg-slate-100:hover,
+:root[data-jobseeker-theme='dark'] .portal-content tbody tr:hover,
+:root[data-jobseeker-theme='dark'] .portal-content .hover\:bg-slate-50:hover,
+:root[data-jobseeker-theme='dark'] .portal-content .hover\:bg-slate-100:hover {
+  background-color: #202b3c !important;
 }
 
 :root[data-admin-theme='dark'] .bg-slate-50 {

@@ -162,7 +162,7 @@ const EmployerApplicationDetails = () => {
       {error && <div className="rounded-md border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{error}</div>}
       {message && <div className="rounded-md border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">{message}</div>}
 
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-sky-100 bg-sky-50 px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-slate-100 bg-slate-50 px-4 py-3">
         <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-[#3f4254]">
           <span className={`rounded px-2.5 py-1 text-xs font-black ${statusTone[application.status] || statusTone.Applied}`}>{application.status}</span>
           <span className="inline-flex items-center gap-1"><User className="h-4 w-4" /><strong>{candidate.name}</strong></span>

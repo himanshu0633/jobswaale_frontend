@@ -66,10 +66,13 @@ const getTokenHeaders = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
+const filterLabelClass = 'mb-2 block text-xs font-extrabold text-slate-500';
+const filterControlClass = 'candidate-filter-control h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100';
+
 const SelectField = ({ label, value, onChange, children, uppercase = false }) => (
   <div>
-    <label className={`mb-2 block text-xs font-extrabold ${uppercase ? 'uppercase' : ''} text-slate-400`}>{label}</label>
-    <select value={value} onChange={(event) => onChange(event.target.value)} className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 outline-none focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100">
+    <label className={`${filterLabelClass} ${uppercase ? 'uppercase tracking-wide' : ''}`}>{label}</label>
+    <select value={value} onChange={(event) => onChange(event.target.value)} className={filterControlClass}>
       {children}
     </select>
   </div>
@@ -199,29 +202,35 @@ export const EmployerSearchCandidates = () => {
         <div className="p-4 sm:p-5">
           <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.45fr_1fr_1fr_1fr_1fr_auto]">
             <div>
-              <label className="mb-2 block text-xs font-extrabold text-slate-500">Keywords</label>
-              <div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input className="h-10 w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100" value={filters.search} onChange={(event) => setFilter('search', event.target.value)} placeholder="Skills, title, name, company" /></div>
+              <label className={filterLabelClass}>Keywords</label>
+              <div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input className={`${filterControlClass} py-2 pl-9 pr-3`} value={filters.search} onChange={(event) => setFilter('search', event.target.value)} placeholder="Skills, title, name, company" /></div>
             </div>
             <SelectField label="Job Role" value={filters.role} onChange={(value) => setFilter('role', value)}><option value="">All Roles</option>{(optionFilters.roles || []).map((item) => <option key={item}>{item}</option>)}</SelectField>
-            <div><label className="mb-2 block text-xs font-extrabold text-slate-500">Location</label><input className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100" value={filters.location} onChange={(event) => setFilter('location', event.target.value)} placeholder="City, State" /></div>
+            <div><label className={filterLabelClass}>Location</label><input className={filterControlClass} value={filters.location} onChange={(event) => setFilter('location', event.target.value)} placeholder="City, State" /></div>
             <SelectField label="Experience" value={filters.experience} onChange={(value) => setFilter('experience', value)}><option value="">All Experience</option>{(optionFilters.experiences || ['Fresher', '1 - 2 Years', '2 - 5 Years', '5+ Years']).map((item) => <option key={item}>{item}</option>)}</SelectField>
             <SelectField label="Qualification" value={filters.qualification} onChange={(value) => setFilter('qualification', value)}><option value="">All Qualifications</option>{(optionFilters.qualifications || []).map((item) => <option key={item}>{item}</option>)}</SelectField>
             <div className="flex items-end"><button type="button" onClick={resetFilters} className="h-10 w-full rounded-md bg-[#18b99b] px-4 text-sm font-extrabold text-white transition hover:bg-[#13a98d] xl:w-auto">Reset</button></div>
           </div>
 
           {advancedOpen && (
-            <div className="mb-5 rounded-md bg-slate-100/80 p-4 sm:p-5">
-              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><h3 className="flex items-center gap-2 text-sm font-extrabold text-[#3f4254]"><SlidersHorizontal className="h-4 w-4" />Advanced Filters</h3><button type="button" onClick={resetFilters} className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md border border-rose-300 bg-white px-3 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50 sm:w-auto"><Trash2 className="h-3.5 w-3.5" />Clear All Filters</button></div>
+            <div className="advanced-filter-panel mb-5 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:p-5">
+              <div className="mb-5 flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h3 className="flex items-center gap-2 text-sm font-extrabold text-[#3f4254]"><SlidersHorizontal className="h-4 w-4" />Advanced Filters</h3>
+                  <p className="mt-1 text-xs font-semibold text-slate-500">Refine candidates with profile, salary, and availability filters.</p>
+                </div>
+                <button type="button" onClick={resetFilters} className="candidate-clear-button inline-flex h-9 w-full items-center justify-center gap-2 rounded-md border border-rose-200 bg-white px-3 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50 sm:w-auto"><Trash2 className="h-3.5 w-3.5" />Clear All Filters</button>
+              </div>
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <SelectField uppercase label="Skills" value={filters.skill} onChange={(value) => setFilter('skill', value)}><option value="">All Skills</option></SelectField>
                 <SelectField uppercase label="Min Salary (LPA)" value={filters.minSalary} onChange={(value) => setFilter('minSalary', value)}><option value="">No Min</option>{[3, 5, 10, 15, 20, 25, 30, 50].map((value) => <option key={value}>{value}</option>)}</SelectField>
                 <SelectField uppercase label="Max Salary (LPA)" value={filters.maxSalary} onChange={(value) => setFilter('maxSalary', value)}><option value="">No Max</option>{[5, 10, 15, 20, 25, 30, 50, 100].map((value) => <option key={value}>{value}</option>)}</SelectField>
                 <SelectField uppercase label="Notice Period" value={filters.notice} onChange={(value) => setFilter('notice', value)}><option value="">Any</option>{['Immediate', '15 Days', '30 Days', '60 Days', '90 Days'].map((item) => <option key={item}>{item}</option>)}</SelectField>
-                <div><label className="mb-3 block text-xs font-extrabold uppercase text-slate-400">Employment Type</label><div className="grid grid-cols-2 gap-3 text-sm font-semibold text-slate-600">{employmentOptions.map((type) => <label key={type} className="flex items-center gap-2"><input type="checkbox" checked={filters.employmentTypes.includes(type)} onChange={() => toggleEmploymentType(type)} className="h-4 w-4 rounded border-slate-200 text-[#6658dd] focus:ring-[#6658dd]" />{type}</label>)}</div></div>
+                <div><label className={`${filterLabelClass} uppercase tracking-wide`}>Employment Type</label><div className="grid grid-cols-2 gap-2 text-sm font-semibold text-slate-600">{employmentOptions.map((type) => <label key={type} className="candidate-check-option flex min-h-10 items-center gap-2 rounded-md border border-slate-200 bg-white px-3"><input type="checkbox" checked={filters.employmentTypes.includes(type)} onChange={() => toggleEmploymentType(type)} className="h-4 w-4 rounded border-slate-200 text-[#6658dd] focus:ring-[#6658dd]" /><span className="truncate">{type}</span></label>)}</div></div>
                 <SelectField uppercase label="Industry" value={filters.industry} onChange={(value) => setFilter('industry', value)}><option value="">All Industries</option>{(optionFilters.industries || []).map((item) => <option key={item}>{item}</option>)}</SelectField>
                 <SelectField uppercase label="Gender" value={filters.gender} onChange={(value) => setFilter('gender', value)}><option value="">Any</option>{['Male', 'Female', 'Other'].map((item) => <option key={item}>{item}</option>)}</SelectField>
                 <SelectField uppercase label="Languages" value={filters.language} onChange={(value) => setFilter('language', value)}><option value="">All Languages</option></SelectField>
-                <div><label className="mb-2 block text-xs font-extrabold uppercase text-slate-400">Current Company</label><input className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100" value={filters.company} onChange={(event) => setFilter('company', event.target.value)} placeholder="Company name" /></div>
+                <div><label className={`${filterLabelClass} uppercase tracking-wide`}>Current Company</label><input className={filterControlClass} value={filters.company} onChange={(event) => setFilter('company', event.target.value)} placeholder="Company name" /></div>
                 <SelectField uppercase label="Sort By" value={filters.sortBy} onChange={(value) => setFilter('sortBy', value)}><option value="">Relevance</option><option>Experience (High to Low)</option><option>Experience (Low to High)</option><option>Salary (High to Low)</option><option>Salary (Low to High)</option><option>Newest First</option></SelectField>
               </div>
             </div>

@@ -369,21 +369,23 @@ export const JobseekerChat = ({ portal = 'jobseeker' }) => {
     );
   };
 
+  const isThreadActive = (id) => String(id) === String(activeId);
+
   return (
-    <div className="space-y-3">
+    <div className="chat-page space-y-3">
       {error && (
         <div className="rounded-md border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
           {error}
         </div>
       )}
 
-      <div className="flex h-[calc(100vh-160px)] min-h-[500px] overflow-hidden rounded-xl border border-[#e2e8f0] bg-white max-md:relative max-md:h-[calc(100vh-140px)] max-md:min-h-[400px]">
+      <div className="chat-shell flex h-[calc(100vh-160px)] min-h-[500px] overflow-hidden rounded-xl border border-slate-200 bg-white max-md:relative max-md:h-[calc(100vh-140px)] max-md:min-h-[400px]">
         <div
-          className={`w-full shrink-0 flex-col border-r border-[#e2e8f0] md:flex md:w-[360px] ${
+          className={`chat-list-panel w-full shrink-0 flex-col border-r border-slate-200 md:flex md:w-[360px] ${
             mobileView === 'list' ? 'flex' : 'hidden'
           } max-md:absolute max-md:inset-0 max-md:z-[5] max-md:bg-white`}
         >
-          <div className="border-b border-[#e2e8f0] p-4">
+          <div className="chat-list-filters border-b border-slate-200 p-4">
             <div className="relative">
               <Search className="pointer-events-none absolute left-[0.8rem] top-1/2 h-4 w-4 -translate-y-1/2 text-[#94a3b8]" />
               <input
@@ -391,13 +393,13 @@ export const JobseekerChat = ({ portal = 'jobseeker' }) => {
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search by name, job, or message..."
-                className="w-full rounded-[10px] border border-[#e2e8f0] bg-[#f8fafc] py-[0.6rem] pl-[2.4rem] pr-4 text-[0.85rem] text-[#0f172a] outline-none transition-colors focus:border-[#0047C7]"
+                className="chat-control w-full rounded-[10px] border border-slate-200 bg-[#f8fafc] py-[0.6rem] pl-[2.4rem] pr-4 text-[0.85rem] text-[#0f172a] outline-none transition-colors focus:border-[#0047C7]"
               />
             </div>
             <select
               value={jobFilter}
               onChange={(event) => setJobFilter(event.target.value)}
-              className="mt-3 w-full rounded-[10px] border border-[#e2e8f0] bg-white px-3 py-[0.6rem] text-[0.85rem] font-semibold text-[#475569] outline-none transition-colors focus:border-[#0047C7]"
+              className="chat-control mt-3 w-full rounded-[10px] border border-slate-200 bg-white px-3 py-[0.6rem] text-[0.85rem] font-semibold text-[#475569] outline-none transition-colors focus:border-[#0047C7]"
             >
               <option value="">All jobs</option>
               {jobOptions.map(job => <option key={job.id} value={job.id}>{job.title}</option>)}
@@ -415,14 +417,14 @@ export const JobseekerChat = ({ portal = 'jobseeker' }) => {
                 <p className="mt-2 text-xs font-semibold leading-5 text-[#94a3b8]">{config.emptyText}</p>
               </div>
             ) : (
-              filteredThreads.map(thread => (
+              filteredThreads.map(thread => {
+                const active = isThreadActive(thread.id);
+                return (
                 <button
                   key={thread.id}
                   type="button"
                   onClick={() => openChat(thread.id)}
-                  className={`flex w-full items-center gap-3 border-b border-[#e2e8f0] px-4 py-[0.85rem] text-left transition-colors ${
-                    String(thread.id) === String(activeId) ? 'bg-[#eef2ff]' : 'hover:bg-[#f8fafc]'
-                  }`}
+                  className={`chat-thread flex w-full items-center gap-3 border-b border-slate-200 px-4 py-[0.9rem] text-left transition-colors ${active ? 'is-active bg-slate-100' : 'hover:bg-slate-50'}`}
                 >
                   <div className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full bg-[#0047C7] text-base font-bold text-white">
                     {thread.initials || 'U'}
@@ -430,15 +432,15 @@ export const JobseekerChat = ({ portal = 'jobseeker' }) => {
 
                   <div className="min-w-0 flex-1 overflow-hidden">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="truncate text-[0.9rem] font-semibold text-[#0f172a]">{thread.name}</span>
-                      <span className="shrink-0 text-[0.68rem] font-normal text-[#94a3b8]">{thread.time}</span>
+                      <span className="chat-thread-name truncate text-[0.9rem] font-semibold text-[#0f172a]">{thread.name}</span>
+                      <span className="chat-thread-time shrink-0 text-[0.68rem] font-normal text-[#94a3b8]">{thread.time}</span>
                     </div>
-                    <div className="mt-0.5 flex items-center gap-1 text-[0.72rem] font-bold text-[#0047C7]">
+                    <div className="chat-thread-job mt-0.5 flex items-center gap-1 text-[0.72rem] font-bold text-[#0047C7]">
                       <Briefcase className="h-3 w-3 shrink-0" />
                       <span className="truncate">{thread.jobTitle}</span>
                     </div>
                     <div className="mt-0.5 flex items-center justify-between gap-2 overflow-hidden text-ellipsis">
-                      <span className="truncate text-[0.82rem] text-[#94a3b8]">{thread.lastMessage}</span>
+                      <span className="chat-thread-message truncate text-[0.82rem] text-[#94a3b8]">{thread.lastMessage}</span>
                       {thread.unread > 0 && (
                         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#0047C7] text-[0.6rem] font-bold text-white">
                           {thread.unread}
@@ -447,15 +449,16 @@ export const JobseekerChat = ({ portal = 'jobseeker' }) => {
                     </div>
                   </div>
                 </button>
-              ))
+              );
+              })
             )}
           </div>
         </div>
 
-        <div className={`flex-1 flex-col md:flex ${mobileView === 'chat' ? 'flex' : 'hidden'} max-md:w-full`}>
+        <div className={`chat-detail-panel flex-1 flex-col md:flex ${mobileView === 'chat' ? 'flex' : 'hidden'} max-md:w-full`}>
           {activeConversation ? (
             <>
-              <div className="flex items-center justify-between border-b border-[#e2e8f0] px-5 py-[0.85rem]">
+              <div className="chat-detail-header flex items-center justify-between border-b border-slate-200 px-5 py-[0.85rem]">
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
@@ -471,19 +474,19 @@ export const JobseekerChat = ({ portal = 'jobseeker' }) => {
                   </div>
 
                   <div>
-                    <div className="text-[0.95rem] font-semibold text-[#0f172a]">{activeConversation.name}</div>
-                    <div className="flex items-center gap-1 text-[0.75rem] font-semibold text-[#64748b]">
+                    <div className="chat-detail-name text-[0.95rem] font-semibold text-[#0f172a]">{activeConversation.name}</div>
+                    <div className="chat-detail-job flex items-center gap-1 text-[0.75rem] font-semibold text-[#64748b]">
                       <Briefcase className="h-3.5 w-3.5" />
                       {activeConversation.jobTitle}
                     </div>
                   </div>
                 </div>
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-500">
+                <span className="chat-status rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-500">
                   {activeConversation.status}
                 </span>
               </div>
 
-              <div className="flex flex-1 flex-col gap-4 overflow-y-auto bg-[#f8fafc] p-5">
+              <div className="chat-messages flex flex-1 flex-col gap-4 overflow-y-auto bg-[#f8fafc] p-5">
                 {loadingMessages ? (
                   <div className="flex flex-1 items-center justify-center">
                     <Loader className="h-7 w-7 animate-spin text-[#0047C7]" />
@@ -504,7 +507,7 @@ export const JobseekerChat = ({ portal = 'jobseeker' }) => {
                       <button
                         type="button"
                         onClick={() => setReplyTo(message)}
-                        className="mb-1 inline-flex items-center gap-1 rounded-full bg-white px-2 py-1 text-[0.65rem] font-bold text-[#64748b] opacity-100 shadow-sm ring-1 ring-slate-100 transition hover:text-[#0047C7] md:opacity-0 md:group-hover:opacity-100"
+                        className="chat-reply-button mb-1 inline-flex items-center gap-1 rounded-full bg-white px-2 py-1 text-[0.65rem] font-bold text-[#64748b] opacity-100 shadow-sm ring-1 ring-slate-100 transition hover:text-[#0047C7] md:opacity-0 md:group-hover:opacity-100"
                       >
                         <Reply className="h-3 w-3" />
                         Reply
@@ -512,15 +515,15 @@ export const JobseekerChat = ({ portal = 'jobseeker' }) => {
                       <div
                         className={`rounded-2xl px-4 py-[0.7rem] text-[0.88rem] leading-relaxed ${
                           message.sender === 'sent'
-                            ? 'rounded-br-[4px] bg-[#0047C7] text-white'
-                            : 'rounded-bl-[4px] border border-[#e2e8f0] bg-white text-[#0f172a]'
+                            ? 'chat-bubble chat-bubble-sent rounded-br-[4px] bg-[#0047C7] text-white'
+                            : 'chat-bubble chat-bubble-received rounded-bl-[4px] border border-slate-200 bg-white text-[#0f172a]'
                         }`}
                       >
                         {renderReplyPreview(message.replyTo, message.sender === 'sent')}
                         {message.text && <div className="break-words">{message.text}</div>}
                         {renderAttachment(message.attachment, message.sender === 'sent')}
                       </div>
-                      <span className={`mt-1 px-1 text-[0.65rem] ${message.sender === 'sent' ? 'text-black/40' : 'text-[#94a3b8]'}`}>
+                      <span className={`chat-message-time mt-1 px-1 text-[0.65rem] ${message.sender === 'sent' ? 'text-black/40' : 'text-[#94a3b8]'}`}>
                         {message.time}
                       </span>
                     </div>
@@ -529,14 +532,14 @@ export const JobseekerChat = ({ portal = 'jobseeker' }) => {
                 <div ref={messagesEndRef} />
               </div>
 
-              <div className="border-t border-[#e2e8f0] bg-white px-5 py-4">
+              <div className="chat-composer border-t border-slate-200 bg-white px-5 py-4">
                 {typing && (
                   <div className="mb-2 text-xs font-bold text-[#64748b]">
                     {typing === 'employer' ? 'Employer' : 'Jobseeker'} is typing...
                   </div>
                 )}
                 {replyTo && (
-                  <div className="mb-3 flex items-start justify-between gap-3 rounded-xl border border-[#dbeafe] bg-[#eff6ff] px-3 py-2">
+                  <div className="chat-reply-preview mb-3 flex items-start justify-between gap-3 rounded-xl border border-[#dbeafe] bg-[#eff6ff] px-3 py-2">
                     <div className="min-w-0">
                       <div className="flex items-center gap-1 text-xs font-black text-[#0047C7]">
                         <Reply className="h-3.5 w-3.5" />
@@ -561,7 +564,7 @@ export const JobseekerChat = ({ portal = 'jobseeker' }) => {
                   </div>
                 )}
                 {selectedFile && (
-                  <div className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                  <div className="chat-file-preview mb-3 flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
                     <div className="flex min-w-0 items-center gap-2 text-xs font-bold text-slate-600">
                       {selectedFile.type.startsWith('image/') ? <ImageIcon className="h-4 w-4 shrink-0" /> : <FileText className="h-4 w-4 shrink-0" />}
                       <span className="truncate">{selectedFile.name}</span>
@@ -593,7 +596,7 @@ export const JobseekerChat = ({ portal = 'jobseeker' }) => {
                     onClick={() => fileInputRef.current?.click()}
                     disabled={!activeConversation.canMessage || sending}
                     title="Attach file"
-                    className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full border border-[#e2e8f0] bg-white text-[#64748b] transition-colors hover:border-[#0047C7] hover:text-[#0047C7] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="chat-attach-button flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-[#64748b] transition-colors hover:border-[#0047C7] hover:text-[#0047C7] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <Paperclip className="h-[1.1rem] w-[1.1rem]" />
                   </button>
@@ -604,7 +607,7 @@ export const JobseekerChat = ({ portal = 'jobseeker' }) => {
                     onChange={(event) => emitTyping(event.target.value)}
                     onKeyDown={handleInputKeyDown}
                     placeholder={activeConversation.canMessage ? 'Type your message...' : 'Messaging unavailable'}
-                    className="flex-1 rounded-full border border-[#e2e8f0] px-4 py-[0.65rem] text-[0.88rem] text-[#0f172a] outline-none transition-colors focus:border-[#0047C7] disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+                    className="chat-input flex-1 rounded-full border border-slate-200 px-4 py-[0.65rem] text-[0.88rem] text-[#0f172a] outline-none transition-colors focus:border-[#0047C7] disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
                   />
                   <button
                     type="button"

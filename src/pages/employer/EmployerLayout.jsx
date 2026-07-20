@@ -51,7 +51,7 @@ export const EmployerLayout = () => {
 
   return (
     <MessageSocketProvider role="employer">
-      <div className="flex min-h-screen flex-col bg-slate-50">
+      <div className="portal-shell flex min-h-screen flex-col bg-slate-50">
         <EmployerHeader toggleSidebar={handleToggleSidebar} isCollapsed={sidebarCollapsed} />
         <div className="relative flex min-w-0 flex-1 pt-[66px]">
           <ProfileCompletionPopup portal="employer" />
@@ -60,7 +60,7 @@ export const EmployerLayout = () => {
             isCollapsed={sidebarCollapsed}
             toggleSidebar={() => setSidebarOpenMobile(false)}
           />
-          <div className={`flex min-w-0 flex-grow flex-col bg-[#f5f6f8] transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
+          <div className={`portal-content flex min-w-0 flex-grow flex-col bg-[#f5f6f8] transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
             <main className="min-w-0 flex-grow overflow-x-hidden p-4 md:p-5 lg:p-6">
               <Outlet />
             </main>

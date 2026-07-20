@@ -144,7 +144,7 @@ export const JobseekerSubscription = () => {
   const billingHistory = data?.billingHistory || [];
 
   return (
-    <div className="jsw-root min-h-screen bg-[#F5F7FB] pb-16">
+    <div className="jobseeker-plan-page jsw-root min-h-screen bg-[#F5F7FB] pb-16">
       <FontLoader />
 
       <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-6 sm:pt-10 lg:px-8">
@@ -218,7 +218,7 @@ export const JobseekerSubscription = () => {
               return (
                 <div
                   key={item.title}
-                  className="group rounded-2xl border border-[#e6eaf2] bg-white p-5 transition hover:border-[#0047C7]/30 hover:shadow-[0_10px_30px_-12px_rgba(0,71,199,0.25)] sm:p-6"
+                  className="plan-benefit-card group rounded-2xl border border-[#e6eaf2] bg-white p-5 transition hover:border-[#0047C7]/30 hover:shadow-[0_10px_30px_-12px_rgba(0,71,199,0.25)] sm:p-6"
                 >
                   <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-[#0047C7]/10 text-[#0047C7] transition group-hover:bg-[#0047C7] group-hover:text-white">
                     <Icon className="h-5 w-5" strokeWidth={2} />
@@ -273,7 +273,7 @@ export const JobseekerSubscription = () => {
               <div
                 id={`plan-card-${i}`}
                 key={plan.key}
-                className={`relative flex w-[82vw] shrink-0 snap-center flex-col rounded-2xl border bg-white p-6 text-center transition-all sm:w-auto sm:shrink sm:hover:-translate-y-1 ${
+                className={`plan-price-card relative flex w-[82vw] shrink-0 snap-center flex-col rounded-2xl border bg-white p-6 text-center transition-all sm:w-auto sm:shrink sm:hover:-translate-y-1 ${
                   plan.popular
                     ? 'border-[#FF6B00] shadow-[0_0_0_1.5px_#FF6B00,0_16px_40px_-16px_rgba(255,107,0,0.35)]'
                     : plan.current
@@ -347,7 +347,7 @@ export const JobseekerSubscription = () => {
         </div>
 
         {/* ---------------- Billing History ---------------- */}
-        <div className="mt-10 rounded-2xl border border-[#e6eaf2] bg-white p-5 sm:mt-12 sm:p-6">
+        <div className="plan-billing-card mt-10 rounded-2xl border border-[#e6eaf2] bg-white p-5 sm:mt-12 sm:p-6">
           <h5 className="jsw-display mb-4 flex items-center gap-2 border-b border-[#eef1f6] pb-3 text-[0.95rem] font-bold text-[#0f172a] sm:text-base">
             <Receipt className="h-[1.05rem] w-[1.05rem] text-[#0047C7]" /> Billing history
           </h5>
@@ -432,7 +432,7 @@ export const JobseekerSubscription = () => {
       {/* ---------------- Upgrade Confirmation Modal ---------------- */}
       {pendingPlan && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm sm:items-center sm:px-4">
-          <div className="w-full max-w-sm rounded-t-2xl bg-white p-6 shadow-xl sm:rounded-2xl">
+          <div className="plan-modal-card w-full max-w-sm rounded-t-2xl bg-white p-6 shadow-xl sm:rounded-2xl">
             <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-slate-200 sm:hidden" />
 
             <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-[#0047C7]/10 text-[#0047C7]">

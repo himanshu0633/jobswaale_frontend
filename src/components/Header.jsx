@@ -51,6 +51,9 @@ export const Header = ({ toggleSidebar, isCollapsed, title = '' }) => {
   useEffect(() => {
     document.documentElement.dataset.adminTheme = theme;
     localStorage.setItem('adminTheme', theme);
+    return () => {
+      delete document.documentElement.dataset.adminTheme;
+    };
   }, [theme]);
 
   const toggleTheme = () => {
@@ -95,12 +98,16 @@ export const Header = ({ toggleSidebar, isCollapsed, title = '' }) => {
 
   return (
     <>
-      <header className="fixed left-0 right-0 top-0 z-[60] flex h-14 sm:h-16 items-center justify-between bg-slate-900 pr-3 sm:pr-6 text-slate-100 shadow-sm border-b border-slate-800">
+      <header className={`fixed left-0 right-0 top-0 z-[60] flex h-14 sm:h-16 items-center justify-between pr-3 sm:pr-6 shadow-sm border-b transition-colors ${
+        theme === 'dark'
+          ? 'bg-slate-900 text-slate-100 border-slate-800'
+          : 'bg-white text-slate-700 border-slate-200'
+      }`}>
         
         {/* Left: Brand Logo & Toggle Menu */}
         <div className="flex items-center gap-2 sm:gap-4 flex-1 h-full min-w-0">
           {/* Logo container */}
-          <div className={`flex items-center h-full border-r border-slate-800 transition-all duration-300 shrink-0 ${isCollapsed ? 'w-14 sm:w-16 justify-center' : 'w-24 sm:w-28 lg:w-64 px-2 sm:px-3 lg:px-6'}`}>
+          <div className={`flex items-center h-full border-r transition-all duration-300 shrink-0 ${theme === 'dark' ? 'border-slate-800' : 'border-slate-200'} ${isCollapsed ? 'w-14 sm:w-16 justify-center' : 'w-24 sm:w-28 lg:w-64 px-2 sm:px-3 lg:px-6'}`}>
             <Link to="/admin" className="flex items-center">
               {isCollapsed ? (
                 <img src={logoSm} alt="JobsWaale" className="w-8 sm:w-10 h-auto shrink-0 animate-in fade-in duration-200" />
@@ -112,7 +119,11 @@ export const Header = ({ toggleSidebar, isCollapsed, title = '' }) => {
 
           <button
             onClick={toggleSidebar}
-            className="p-1.5 sm:p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-800 bg-slate-800/20 transition-colors shrink-0"
+            className={`p-1.5 sm:p-2 rounded-lg border transition-colors shrink-0 ${
+              theme === 'dark'
+                ? 'text-slate-300 hover:text-white hover:bg-slate-800 border-slate-800 bg-slate-800/20'
+                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100 border-slate-200 bg-slate-50'
+            }`}
             aria-label="Toggle sidebar"
           >
             <Menu className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
@@ -123,7 +134,11 @@ export const Header = ({ toggleSidebar, isCollapsed, title = '' }) => {
             <input
               type="text"
               placeholder="Quick Search..."
-              className="w-full bg-slate-800/50 border border-slate-700 rounded-lg pl-9 pr-4 py-1.5 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+              className={`w-full rounded-lg border pl-9 pr-4 py-1.5 text-xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all ${
+                theme === 'dark'
+                  ? 'bg-slate-800/50 border-slate-700 text-slate-100 placeholder-slate-400'
+                  : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'
+              }`}
             />
             <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
           </div>
@@ -131,7 +146,7 @@ export const Header = ({ toggleSidebar, isCollapsed, title = '' }) => {
           {/* Mobile Search Toggle */}
           <button
             onClick={() => setMobileSearchOpen(true)}
-            className="md:hidden p-1.5 sm:p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors shrink-0"
+            className={`md:hidden p-1.5 sm:p-2 rounded-lg transition-colors shrink-0 ${theme === 'dark' ? 'text-slate-300 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'}`}
             aria-label="Open search"
           >
             <Search className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -144,7 +159,7 @@ export const Header = ({ toggleSidebar, isCollapsed, title = '' }) => {
           {/* Quick Tools */}
           <div className="hidden sm:flex items-center gap-1 lg:gap-2">
             <button 
-              className="p-1.5 lg:p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+              className={`p-1.5 lg:p-2 rounded-lg transition-colors ${theme === 'dark' ? 'text-slate-300 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'}`}
               aria-label="Dashboard grid"
             >
               <LayoutGrid className="w-4 h-4 lg:w-5 lg:h-5" />
@@ -153,19 +168,19 @@ export const Header = ({ toggleSidebar, isCollapsed, title = '' }) => {
               onClick={toggleTheme}
               title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
               aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
-              className="p-1.5 lg:p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+              className={`p-1.5 lg:p-2 rounded-lg transition-colors ${theme === 'dark' ? 'text-slate-300 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'}`}
             >
               {theme === 'dark' ? <Sun className="w-4 h-4 lg:w-5 lg:h-5" /> : <Moon className="w-4 h-4 lg:w-5 lg:h-5" />}
             </button>
             <button 
               onClick={toggleFullscreen}
-              className="hidden lg:flex p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+              className={`hidden lg:flex p-2 rounded-lg transition-colors ${theme === 'dark' ? 'text-slate-300 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'}`}
               aria-label="Toggle fullscreen"
             >
               <Maximize className="w-5 h-5" />
             </button>
             <button 
-              className="hidden xl:flex p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+              className={`hidden xl:flex p-2 rounded-lg transition-colors ${theme === 'dark' ? 'text-slate-300 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'}`}
               aria-label="Theme palette"
             >
               <Palette className="w-5 h-5" />
@@ -173,13 +188,13 @@ export const Header = ({ toggleSidebar, isCollapsed, title = '' }) => {
           </div>
 
           {/* Vertical Divider */}
-          <div className="w-px h-5 sm:h-6 bg-slate-800 hidden sm:block" />
+          <div className={`w-px h-5 sm:h-6 hidden sm:block ${theme === 'dark' ? 'bg-slate-800' : 'bg-slate-200'}`} />
 
           {/* User Profile */}
           <div className="relative">
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-1.5 sm:gap-2.5 p-1 rounded-lg hover:bg-slate-800 transition-colors"
+              className={`flex items-center gap-1.5 sm:gap-2.5 p-1 rounded-lg transition-colors ${theme === 'dark' ? 'hover:bg-slate-800' : 'hover:bg-slate-100'}`}
               aria-label="User menu"
             >
               <img 
@@ -187,7 +202,7 @@ export const Header = ({ toggleSidebar, isCollapsed, title = '' }) => {
                 alt="profile"
                 className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-indigo-500/30 object-cover"
               />
-              <span className="hidden md:flex text-xs sm:text-sm font-semibold text-slate-200 items-center gap-1">
+              <span className={`hidden md:flex text-xs sm:text-sm font-semibold items-center gap-1 ${theme === 'dark' ? 'text-slate-200' : 'text-slate-700'}`}>
                 <span className="max-w-[80px] lg:max-w-none truncate">Admin</span>
                 <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400" />
               </span>
