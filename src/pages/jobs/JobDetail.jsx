@@ -161,6 +161,10 @@ export const JobDetail = () => {
 
   const [isJobseeker, setIsJobseeker] = useState(false);
   const [showAuthPopup, setShowAuthPopup] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [profileName, setProfileName] = useState('');
+  const [profileEmail, setProfileEmail] = useState('');
+  const [profilePhone, setProfilePhone] = useState('');
 
   useEffect(() => {
     const checkIsJobseeker = () => {
@@ -181,6 +185,29 @@ export const JobDetail = () => {
       setShowAuthPopup(true);
     }
   }, [loading]);
+
+  useEffect(() => {
+    if (isJobseeker) {
+      const fetchProfile = async () => {
+        try {
+          const token = localStorage.getItem('publicToken');
+          if (!token) return;
+          const response = await axios.get(`${BASE_API_URL}/jobseeker/profile`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (response.data) {
+            setProfile(response.data);
+            setProfileName(response.data.name || '');
+            setProfileEmail(response.data.userId?.email || response.data.email || '');
+            setProfilePhone(response.data.phone || '');
+          }
+        } catch (err) {
+          console.error('Error fetching jobseeker profile details:', err);
+        }
+      };
+      fetchProfile();
+    }
+  }, [isJobseeker]);
 
   useEffect(() => {
     const loadJob = async () => {
@@ -467,6 +494,8 @@ export const JobDetail = () => {
                         type="text"
                         name="fullName"
                         required
+                        value={profileName}
+                        onChange={(e) => setProfileName(e.target.value)}
                         placeholder="Enter your full name"
                         className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none focus:border-[#0047C7]"
                       />
@@ -477,6 +506,8 @@ export const JobDetail = () => {
                         type="email"
                         name="email"
                         required
+                        value={profileEmail}
+                        onChange={(e) => setProfileEmail(e.target.value)}
                         placeholder="Enter your email"
                         className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none focus:border-[#0047C7]"
                       />
@@ -487,16 +518,26 @@ export const JobDetail = () => {
                         type="tel"
                         name="phone"
                         required
+                        value={profilePhone}
+                        onChange={(e) => setProfilePhone(e.target.value)}
                         placeholder="Enter contact number"
                         className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none focus:border-[#0047C7]"
                       />
                     </div>
                     <div>
                       <label className="mb-1 block text-sm font-bold text-[#0f172a]">Upload Resume (.PDF, .Docx)</label>
+                      {profile?.resume ? (
+                        <div className="mb-2 flex items-center gap-2 rounded-md border border-emerald-100 bg-emerald-50/50 px-3 py-1.5 text-xs text-emerald-800">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                          <span className="font-semibold truncate max-w-xs">
+                            Using profile resume: {profile.resume.split('/').pop()}
+                          </span>
+                        </div>
+                      ) : null}
                       <input
                         type="file"
                         name="resume"
-                        required
+                        required={!profile?.resume}
                         accept=".pdf,.doc,.docx"
                         className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none file:mr-3 file:rounded file:border-0 file:bg-[#F2F6FF] file:px-3 file:py-1 file:text-xs file:font-bold file:text-[#0047C7] focus:border-[#0047C7]"
                       />

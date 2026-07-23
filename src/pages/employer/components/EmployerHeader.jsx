@@ -13,6 +13,7 @@ import {
   Sun
 } from 'lucide-react';
 import logo from '../../../assets/logo.png';
+import { NotificationDropdown } from '../../../components/NotificationDropdown';
 
 const getEmployerUser = () => {
   try {
@@ -123,6 +124,8 @@ export const EmployerHeader = ({ toggleSidebar, isCollapsed }) => {
             <Palette className="h-4.5 w-4.5" />
           </button>
         </div>
+
+        <NotificationDropdown theme={theme} />
 
         <div className="relative shrink-0">
           <button

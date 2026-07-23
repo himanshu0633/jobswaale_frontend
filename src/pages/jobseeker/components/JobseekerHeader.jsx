@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Bell, ChevronDown, LogOut, Menu, Moon, Settings, Star, Sun, User } from 'lucide-react';
+import { ChevronDown, LogOut, Menu, Moon, Settings, Star, Sun, User } from 'lucide-react';
+import { NotificationDropdown } from '../../../components/NotificationDropdown';
 
 const getJobseekerUser = () => {
   try {
@@ -99,18 +100,7 @@ export const JobseekerHeader = ({ toggleSidebar, title, isCollapsed }) => {
         >
           {theme === 'dark' ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
         </button>
-        <button
-          type="button"
-          aria-label="Notifications"
-          className={`relative flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${
-            theme === 'dark'
-              ? 'border-slate-700 bg-slate-800 text-slate-300 hover:border-blue-500 hover:text-white'
-              : 'border-[#e2e8f0] bg-white text-[#475569] hover:border-[#0047C7] hover:bg-[#f8fafc] hover:text-[#0047C7]'
-          }`}
-        >
-          <Bell className="h-[18px] w-[18px]" />
-          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full border-2 border-white bg-[#ef4444]" />
-        </button>
+        <NotificationDropdown theme={theme} />
 
         <div className="relative">
           <div

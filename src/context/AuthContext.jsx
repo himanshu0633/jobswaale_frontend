@@ -77,21 +77,44 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    const storedToken = localStorage.getItem('token');
-    if (storedUser && storedToken) {
-      const parsedUser = JSON.parse(storedUser);
-      if (isSuperAdminUser(parsedUser) && !isTokenExpired(storedToken)) {
-        setUser(parsedUser);
-        setToken(storedToken);
-        axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-      } else {
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
-        delete axios.defaults.headers.common['Authorization'];
+    const initializeAuth = async () => {
+      const storedUser = localStorage.getItem('user');
+      const storedToken = localStorage.getItem('token');
+      if (storedUser && storedToken) {
+        const parsedUser = JSON.parse(storedUser);
+        if (isSuperAdminUser(parsedUser) && !isTokenExpired(storedToken)) {
+          setUser(parsedUser);
+          setToken(storedToken);
+          axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+
+          try {
+            const res = await axios.get(`${BASE_API_URL}/auth/verify-admin`, {
+              headers: { Authorization: `Bearer ${storedToken}` }
+            });
+            if (res.data?.success && res.data?.user) {
+              setUser(res.data.user);
+              localStorage.setItem('user', JSON.stringify(res.data.user));
+            } else {
+              throw new Error('Verification failed');
+            }
+          } catch (err) {
+            console.error('Super Admin DB verification failed:', err);
+            setUser(null);
+            setToken(null);
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            delete axios.defaults.headers.common['Authorization'];
+          }
+        } else {
+          localStorage.removeItem('user');
+          localStorage.removeItem('token');
+          delete axios.defaults.headers.common['Authorization'];
+        }
       }
-    }
-    setLoading(false);
+      setLoading(false);
+    };
+
+    initializeAuth();
   }, []);
 
   useEffect(() => {

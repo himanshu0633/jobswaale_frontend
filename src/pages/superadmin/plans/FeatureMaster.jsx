@@ -253,8 +253,21 @@ export const FeatureMaster = () => {
             
             {/* Form Input Grid */}
             <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
-              {/* Feature ID (Hidden to match mockup) */}
-              <input type="hidden" value={form.id} readOnly />
+              {/* Feature ID */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  Feature ID <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. feat-alerts"
+                  value={form.id}
+                  onChange={(e) => setForm({ ...form, id: e.target.value })}
+                  disabled={!!editingId}
+                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white disabled:bg-slate-100 disabled:text-slate-500"
+                />
+              </div>
 
               {/* Feature Name */}
               <div className="md:col-span-2">

@@ -354,18 +354,52 @@ export const JobseekerProfile = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleResumeUpload = (e) => {
+  const handleResumeUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
     setResumeFile({
       name: file.name,
-      size: `${(file.size / 1024 / 1024).toFixed(1)} MB · Just now`
+      size: 'Uploading...'
     });
+
+    try {
+      const token = localStorage.getItem('publicToken');
+      const formData = new FormData();
+      formData.append('resume', file);
+
+      const response = await axios.post(`${BASE_API_URL}/jobseeker/profile/resume`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      if (response.data?.resume) {
+        setResumeFile({
+          name: response.data.resume.split('/').pop() || file.name,
+          size: `${(file.size / 1024 / 1024).toFixed(1)} MB · Uploaded`
+        });
+      }
+    } catch (err) {
+      console.error('Resume upload failed:', err);
+      setError(err.response?.data?.message || 'Failed to upload resume.');
+      setResumeFile(null);
+    }
   };
 
-  const deleteResume = () => {
+  const deleteResume = async () => {
     if (window.confirm('Remove your resume?')) {
-      setResumeFile(null);
+      try {
+        const token = localStorage.getItem('publicToken');
+        await axios.delete(`${BASE_API_URL}/jobseeker/profile/resume`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        setResumeFile(null);
+      } catch (err) {
+        console.error('Failed to delete resume:', err);
+        setError(err.response?.data?.message || 'Failed to delete resume.');
+      }
     }
   };
 
