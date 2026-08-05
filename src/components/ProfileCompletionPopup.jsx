@@ -25,9 +25,12 @@ const portalSettings = {
   }
 };
 
+
+
 export const ProfileCompletionPopup = ({ portal }) => {
   const location = useLocation();
   const settings = portalSettings[portal];
+  const storageKey = `${portal}-profile-popup-shown`;
   const [showPopup, setShowPopup] = useState(false);
   const [missingFields, setMissingFields] = useState([]);
   const [profileScore, setProfileScore] = useState(0);
@@ -50,7 +53,12 @@ export const ProfileCompletionPopup = ({ portal }) => {
           : isIncomplete;
         setMissingFields(response.data?.profileMissingFields || []);
         setProfileScore(score);
-        setShowPopup(shouldShowPopup && dismissedForPath !== location.pathname);
+       const alreadyShown = sessionStorage.getItem(storageKey);
+        setShowPopup(
+          shouldShowPopup &&
+          dismissedForPath !== location.pathname &&
+          !alreadyShown
+        );
       })
       .catch(() => {
         if (alive) setShowPopup(false);
@@ -59,8 +67,12 @@ export const ProfileCompletionPopup = ({ portal }) => {
     return () => {
       alive = false;
     };
-  }, [dismissedForPath, isProfilePage, location.pathname, settings]);
-
+  }, [dismissedForPath, isProfilePage, location.pathname, settings, storageKey]);
+      const handleClose = () => {
+      sessionStorage.setItem(storageKey, 'true');
+      setDismissedForPath(location.pathname);
+      setShowPopup(false);
+    };
   if (!settings || isProfilePage || !showPopup) return null;
 
   return (
@@ -88,10 +100,7 @@ export const ProfileCompletionPopup = ({ portal }) => {
           </div>
           <button
             type="button"
-            onClick={() => {
-              setDismissedForPath(location.pathname);
-              setShowPopup(false);
-            }}
+            onClick={handleClose}
             className="rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
             aria-label="Close profile reminder"
           >
@@ -120,16 +129,16 @@ export const ProfileCompletionPopup = ({ portal }) => {
         <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-5 py-4">
           <button
             type="button"
-            onClick={() => {
-              setDismissedForPath(location.pathname);
-              setShowPopup(false);
-            }}
+            onClick={handleClose}
             className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-extrabold text-slate-600 transition hover:bg-slate-50"
           >
             Later
           </button>
           <Link
             to={settings.profilePath}
+            onClick={() => {
+              sessionStorage.setItem(storageKey, 'true');
+            }}
             className="inline-flex items-center gap-2 rounded-md bg-[#0047C7] px-4 py-2 text-sm font-extrabold text-white transition hover:bg-[#0039a3]"
           >
             Complete profile
