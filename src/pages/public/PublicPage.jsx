@@ -14,6 +14,7 @@ import Contact from './Contact';
 import PrivacyPolicy from './PrivacyPolicy';
 import TermsConditions from './TermsConditions';
 import Faq from './Faq';
+import Support from './Support';
 import JobDetail from '../jobs/JobDetail';
 
 import { getPublicSettings } from '../../utils/publicSettings';
@@ -80,6 +81,8 @@ export const PublicPage = () => {
         return <Contact />;
       case 'faq':
         return <Faq />;
+      case 'support':
+        return <Support />;
       case 'privacy-policy':
         return <PrivacyPolicy />;
       case 'terms-conditions':

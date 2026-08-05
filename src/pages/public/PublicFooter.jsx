@@ -73,7 +73,7 @@ export const PublicFooter = () => {
             <h4 className="font-semibold text-white text-[1.1rem] mb-7">For Employers</h4>
             <ul className="space-y-3 text-sm text-white/70">
               <li><Link to="/employer-plan" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Employer Plans</Link></li>
-              <li><Link to="/employer-register" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Post a Job</Link></li>
+              <li><Link to="/employer/jobs/create" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Post a Job</Link></li>
               <li><Link to="/login?role=employer" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Browse Candidates</Link></li>
               <li><Link to="/contact" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Hiring Solutions</Link></li>
             </ul>
