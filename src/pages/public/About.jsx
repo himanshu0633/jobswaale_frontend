@@ -102,7 +102,7 @@ const About = () => {
                 </div>
                 <h5 className="font-bold text-[#1f2938] text-xl mt-5">Market Research</h5>
                 <p className="text-[#37404e] text-base leading-relaxed mt-4 mb-5">It is a long established fact that a reader will be.</p>
-                <Link to="/contact" className="text-[#0047C7] text-lg font-normal no-underline bg-[url(assets/imgs/theme/icons/arrow.svg)] bg-no-repeat bg-[right_0_top_7px] pr-[35px] hover:text-[#0052cc] transition">
+                <Link to="/market-research" className="text-[#0047C7] text-lg font-normal no-underline bg-[url(assets/imgs/theme/icons/arrow.svg)] bg-no-repeat bg-[right_0_top_7px] pr-[35px] hover:text-[#0052cc] transition">
                   Read more
                 </Link>
               </div>
@@ -114,7 +114,7 @@ const About = () => {
                 </div>
                 <h5 className="font-bold text-[#1f2938] text-xl mt-5">Creative Layout</h5>
                 <p className="text-[#37404e] text-base leading-relaxed mt-4 mb-5">It is a long established fact that a reader will be.</p>
-                <Link to="/contact" className="text-[#0047C7] text-lg font-normal no-underline bg-[url(assets/imgs/theme/icons/arrow.svg)] bg-no-repeat bg-[right_0_top_7px] pr-[35px] hover:text-[#0052cc] transition">
+                <Link to="/creative-layout" className="text-[#0047C7] text-lg font-normal no-underline bg-[url(assets/imgs/theme/icons/arrow.svg)] bg-no-repeat bg-[right_0_top_7px] pr-[35px] hover:text-[#0052cc] transition">
                   Read more
                 </Link>
               </div>
@@ -126,7 +126,7 @@ const About = () => {
                 </div>
                 <h5 className="font-bold text-[#1f2938] text-xl mt-5">Digital Marketing</h5>
                 <p className="text-[#37404e] text-base leading-relaxed mt-4 mb-5">It is a long established fact that a reader will be.</p>
-                <Link to="/contact" className="text-[#0047C7] text-lg font-normal no-underline bg-[url(assets/imgs/theme/icons/arrow.svg)] bg-no-repeat bg-[right_0_top_7px] pr-[35px] hover:text-[#0052cc] transition">
+                <Link to="/digital-marketing" className="text-[#0047C7] text-lg font-normal no-underline bg-[url(assets/imgs/theme/icons/arrow.svg)] bg-no-repeat bg-[right_0_top_7px] pr-[35px] hover:text-[#0052cc] transition">
                   Read more
                 </Link>
               </div>
@@ -138,7 +138,7 @@ const About = () => {
                 </div>
                 <h5 className="font-bold text-[#1f2938] text-xl mt-5">SEO & Backlinks</h5>
                 <p className="text-[#37404e] text-base leading-relaxed mt-4 mb-5">It is a long established fact that a reader will be.</p>
-                <Link to="/contact" className="text-[#0047C7] text-lg font-normal no-underline bg-[url(assets/imgs/theme/icons/arrow.svg)] bg-no-repeat bg-[right_0_top_7px] pr-[35px] hover:text-[#0052cc] transition">
+                <Link to="/seo-backlinks" className="text-[#0047C7] text-lg font-normal no-underline bg-[url(assets/imgs/theme/icons/arrow.svg)] bg-no-repeat bg-[right_0_top_7px] pr-[35px] hover:text-[#0052cc] transition">
                   Read more
                 </Link>
               </div>

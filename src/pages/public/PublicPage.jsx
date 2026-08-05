@@ -16,6 +16,10 @@ import TermsConditions from './TermsConditions';
 import Faq from './Faq';
 import Support from './Support';
 import JobDetail from '../jobs/JobDetail';
+import MarketResearch from './MarketResearch';
+import CreativeLayout from './CreativeLayout';
+import DigitalMarketing from './DigitalMarketing';
+import SeoBacklinks from './SeoBacklinks';
 
 import { getPublicSettings } from '../../utils/publicSettings';
 
@@ -83,6 +87,14 @@ export const PublicPage = () => {
         return <Faq />;
       case 'support':
         return <Support />;
+      case 'market-research':
+        return <MarketResearch />;
+      case 'creative-layout':
+        return <CreativeLayout />;
+      case 'digital-marketing':
+        return <DigitalMarketing />;
+      case 'seo-backlinks':
+        return <SeoBacklinks />;
       case 'privacy-policy':
         return <PrivacyPolicy />;
       case 'terms-conditions':
