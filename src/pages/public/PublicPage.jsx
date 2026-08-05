@@ -23,9 +23,9 @@ import SeoBacklinks from './SeoBacklinks';
 
 import { getPublicSettings } from '../../utils/publicSettings';
 
-// Import modular header and footer
 import { PublicHeader } from './PublicHeader';
 import { PublicFooter } from './PublicFooter';
+import FloatingChatButton from '../../components/FloatingChatButton';
 
 // Re-export them to prevent breaking existing imports in other files
 export { PublicHeader, PublicFooter };
@@ -143,6 +143,9 @@ export const PublicPage = () => {
 
       {/* Shared Public Footer */}
       <PublicFooter />
+
+      {/* Floating chat button for logged-in public users */}
+      <FloatingChatButton />
     </div>
   );
 };
