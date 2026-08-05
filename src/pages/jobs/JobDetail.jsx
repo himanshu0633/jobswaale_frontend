@@ -20,47 +20,6 @@ const emptyJob = {
   company: {}
 };
 
-// Dummy data from HTML
-const dummyJob = {
-  job: {
-    id: 1,
-    title: 'Frontend Developer',
-    company: 'Microsoft',
-    website: 'www.microsoft.com',
-    logo: 'M',
-    location: 'Noida, UP',
-    salary: '₹4 - 6 LPA',
-    type: 'Full Time',
-    postedAgo: 'Posted 2 days ago',
-    level: 'Junior/Regular',
-    experience: '1 - 3 Years',
-    education: 'B.Tech / B.E / MCA',
-    description: [
-      'Microsoft is seeking a skilled and passionate Frontend Developer to join our web engineering team in Noida, UP. In this role, you will collaborate with cross-functional product, UX, and engineering departments to build highly responsive, intuitive, and accessible web experiences for global users.',
-      'The ideal candidate should have robust practical experience with semantic HTML5, CSS3, modern CSS compilers, modular layout grids, and core JavaScript frameworks (including React or Vanilla JS environments). You should be committed to design precision, cross-browser compatibility, and modular design system concepts.'
-    ],
-    responsibilities: [
-      'Develop, optimize, and maintain responsive, modular web components matching design layouts with pixel-perfect accuracy.',
-      'Collaborate closely with UI/UX designers to translate Figma design tokens into stable, highly performant codebases.',
-      'Ensure structural accessibility compliance matching W3C and WCAG standard guidelines.',
-      'Identify and fix system errors, rendering issues, and cross-browser formatting anomalies.'
-    ],
-    requirements: [
-      '1 to 3 years of proven experience working directly as a Frontend Developer or Web Engineer.',
-      'Strong expertise in JavaScript, HTML5, CSS3, Bootstrap 5, and CSS preprocessors (SASS/SCSS).',
-      'Comfortable with modular version control systems such as Git/GitHub.',
-      'Bachelor\u2019s degree in Computer Science, Information Technology, or equivalent practical industry qualifications.'
-    ],
-    skills: ['HTML5', 'CSS3', 'Bootstrap 5', 'JavaScript', 'Git Versioning', 'Responsive Design']
-  },
-  company: {
-    name: 'Microsoft',
-    logo: 'M',
-    website: 'www.microsoft.com',
-    about: 'Microsoft is a global leader in software, cloud solutions, consumer electronics, and computing services.'
-  }
-};
-
 const logoTones = {
   Microsoft: 'bg-rose-600',
   Google: 'bg-blue-600',
@@ -152,12 +111,12 @@ export const JobDetail = () => {
   const [data, setData] = useState(emptyJob);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [useDummyData, setUseDummyData] = useState(false);
   const [applying, setApplying] = useState(false);
   const [applied, setApplied] = useState(false);
   const [applyError, setApplyError] = useState('');
   const [saved, setSaved] = useState(false);
   const [toggling, setToggling] = useState(false);
+  const [matchScore, setMatchScore] = useState(null);
 
   const [isJobseeker, setIsJobseeker] = useState(false);
   const [showAuthPopup, setShowAuthPopup] = useState(false);
@@ -229,16 +188,14 @@ export const JobDetail = () => {
         });
         setApplied(Boolean(response.data?.hasApplied));
         setSaved(Boolean(response.data?.hasSaved));
-        setUseDummyData(false);
+        setMatchScore(response.data?.matchScore ?? null);
 
       } catch (err) {
-        // Use dummy data if API fails
-        setData(dummyJob);
-        setUseDummyData(true);
         setError(
           err.response?.data?.message ||
-          'Job details could not be loaded. Showing sample data.'
+          'Job details could not be loaded. Please try again later.'
         );
+        setData(emptyJob);
       } finally {
         setLoading(false);
       }
@@ -256,7 +213,7 @@ export const JobDetail = () => {
       const token = localStorage.getItem('publicToken');
       const formData = new FormData(event.target);
 
-      await axios.post(
+      const response = await axios.post(
         `${BASE_API_URL}/jobs/${id}/apply`,
         formData,
         {
@@ -267,6 +224,7 @@ export const JobDetail = () => {
       );
 
       setApplied(true);
+      setMatchScore(response.data?.application?.matchScore ?? matchScore);
       event.target.reset();
 
     } catch (err) {
@@ -331,11 +289,7 @@ export const JobDetail = () => {
     <div className="space-y-5">
 
       {error && (
-        <div className={`rounded-md border px-4 py-3 text-sm font-bold ${
-          useDummyData
-            ? 'border-amber-100 bg-amber-50 text-amber-700'
-            : 'border-rose-100 bg-rose-50 text-rose-700'
-        }`}>
+        <div className="rounded-md border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
           {error}
         </div>
       )}
@@ -348,14 +302,20 @@ export const JobDetail = () => {
             <div className={`flex h-[70px] w-[70px] flex-shrink-0 items-center justify-center rounded-lg text-2xl font-bold text-white ${logoTone}`}>
               {job.logo || job.company.charAt(0)}
             </div>
-            <div>
-              <h1 className="text-xl font-extrabold text-[#0f172a]">
-                {job.title}
-              </h1>
-              <p className="text-base font-semibold text-slate-500">
-                {job.company}
-              </p>
-            </div>
+          <div>
+            <h1 className="text-xl font-extrabold text-[#0f172a]">
+              {job.title}
+            </h1>
+            <p className="text-base font-semibold text-slate-500">
+              {job.company}
+            </p>
+            {isJobseeker && matchScore !== null && (
+              <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-600">
+                <Star className="h-3.5 w-3.5 fill-emerald-500 text-emerald-500" />
+                {matchScore}% Match
+              </span>
+            )}
+          </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -476,9 +436,14 @@ export const JobDetail = () => {
               </p>
 
               {applied ? (
-                <div className="flex items-center gap-3 rounded-md border border-emerald-100 bg-emerald-50 px-4 py-4 text-sm font-bold text-emerald-700">
+                <div className="flex flex-wrap items-center gap-3 rounded-md border border-emerald-100 bg-emerald-50 px-4 py-4 text-sm font-bold text-emerald-700">
                   <CheckCircle2 className="h-5 w-5 flex-shrink-0"/>
                   You have already applied for this job.
+                  {matchScore !== null && (
+                    <span className="rounded bg-white px-2.5 py-1 text-xs font-extrabold text-emerald-600">
+                      Match Score: {matchScore}%
+                    </span>
+                  )}
                 </div>
               ) : (
                 <form onSubmit={handleApply} className="space-y-4">
@@ -586,6 +551,27 @@ export const JobDetail = () => {
               ))}
             </div>
           </section>
+
+          {isJobseeker && matchScore !== null && (
+            <section className="rounded-md border border-emerald-100 bg-emerald-50 p-6 shadow-sm">
+              <p className="text-xs font-extrabold uppercase tracking-wide text-emerald-600">Your Match Score</p>
+              <div className="mt-3 flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-4xl font-black leading-none text-emerald-700">{matchScore}%</p>
+                  <p className="mt-2 text-sm font-semibold leading-5 text-emerald-700/80">
+                    Based on your skills, experience, location, and qualification.
+                  </p>
+                </div>
+                <Star className="h-8 w-8 flex-shrink-0 fill-emerald-500 text-emerald-500" />
+              </div>
+              <div className="mt-4 h-2 overflow-hidden rounded-full bg-white">
+                <div
+                  className="h-full rounded-full bg-emerald-500"
+                  style={{ width: `${Math.min(Math.max(Number(matchScore || 0), 0), 100)}%` }}
+                />
+              </div>
+            </section>
+          )}
 
           {/* Company Profile */}
           <section className="rounded-md border border-slate-100 bg-white p-6 shadow-sm">

@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
   Briefcase,
   Building2,
+  Check,
   CheckCircle2,
+  ChevronDown,
   Eye,
   EyeOff,
   FileText,
@@ -143,6 +145,81 @@ const CompanyTypeCard = ({ option, selected, onChange }) => {
         {selected && <span className="absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#0058d6]" />}
       </span>
     </button>
+  );
+};
+
+const CompanySizeDropdown = ({ value, onChange }) => {
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const selectedLabel = value || 'Select number of employees';
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const handlePointerDown = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+        className={`flex w-full items-center justify-between gap-3 rounded-xl border bg-white px-5 py-4 text-left text-sm font-bold outline-none transition focus:border-[#0058d6] focus:ring-2 focus:ring-blue-100 ${
+          open ? 'border-[#0058d6] ring-2 ring-blue-100' : 'border-slate-300'
+        } ${value ? 'text-slate-800' : 'text-slate-400'}`}
+      >
+        <span className="min-w-0 truncate">{selectedLabel}</span>
+        <ChevronDown className={`h-5 w-5 shrink-0 text-[#0058d6] transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div
+          role="listbox"
+          className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 max-h-64 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xl shadow-slate-900/15"
+        >
+          {companySizes.map((size) => {
+            const selected = value === size;
+
+            return (
+              <button
+                key={size}
+                type="button"
+                role="option"
+                aria-selected={selected}
+                onClick={() => {
+                  onChange(size);
+                  setOpen(false);
+                }}
+                className={`flex w-full items-center justify-between gap-3 rounded-lg px-4 py-3 text-left text-sm font-bold transition ${
+                  selected ? 'bg-blue-50 text-[#0058d6]' : 'text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <span>{size}</span>
+                {selected && <Check className="h-4 w-4 shrink-0" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -450,17 +527,10 @@ export const EmployerRegister = () => {
 
             <div>
               <label className="mb-2 block text-sm font-bold text-slate-800">Company Size <span className="text-rose-500">*</span></label>
-              <select
-                required
+              <CompanySizeDropdown
                 value={form.companySize}
-                onChange={(event) => setField('companySize', event.target.value)}
-                className="w-full rounded-xl border border-slate-300 bg-white px-5 py-4 text-sm font-bold text-slate-800 outline-none focus:border-[#0058d6] focus:ring-2 focus:ring-blue-100"
-              >
-                <option value="">Select number of employees</option>
-                {companySizes.map((size) => (
-                  <option key={size} value={size}>{size}</option>
-                ))}
-              </select>
+                onChange={(size) => setField('companySize', size)}
+              />
             </div>
 
             <div className="space-y-3 pt-2">

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import {
@@ -13,30 +13,6 @@ import {
   User,
 } from 'lucide-react';
 import { BASE_API_URL } from '../../context/AuthContext';
-import defaultEmployerLogo from './employerImages/employer-12.png';
-
-const fallbackEmployer = {
-  name: 'Behance Studio',
-  location: 'Chicago, US',
-  industry: 'Accounting / Finance',
-  foundedYear: 2012,
-  contactPerson: 'Michal Thomas',
-  website: 'https://www.behance.com',
-  description:
-    'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Debitis illum fuga eveniet. Deleniti asperiores, commodi quae ipsum quas est itaque, ipsa, dolore beatae voluptates nemo blanditiis iste eius officia minus.',
-  rating: 5,
-  ratesCount: 0,
-  openJobs: 4,
-  memberSince: '2012-07-01',
-  logoImg: defaultEmployerLogo,
-  online: true,
-  jobs: [
-    { id: 'frontend-developer', title: 'Frontend Developer', company: 'Microsoft', location: 'Noida, UP', salary: '₹4 - 6 LPA', type: 'Full Time', logoLetter: 'M', logoColor: '#dc3545' },
-    { id: 'ui-ux-designer', title: 'UI/UX Designer', company: 'TCS', location: 'Bangalore, KA', salary: '₹3 - 5 LPA', type: 'Full Time', logoLetter: 'T', logoColor: '#0047C7' },
-    { id: 'system-analyst', title: 'System Analyst', company: 'Infosys', location: 'Pune, MH', salary: '₹5 - 8 LPA', type: 'Full Time', logoLetter: 'I', logoColor: '#198754' },
-    { id: 'hr-executive', title: 'HR Executive', company: 'Wipro', location: 'Hyderabad, TS', salary: '₹2.5 - 3.5 LPA', type: 'Full Time', logoLetter: 'W', logoColor: '#f5a623' },
-  ],
-};
 
 const formatMonthYear = (value) => {
   if (!value) return 'Not specified';
@@ -234,7 +210,8 @@ const EmployerDetail = () => {
         }
 
         if (!id) {
-          setEmployer(fallbackEmployer);
+          setError('No employer profile is available yet.');
+          setEmployer(null);
           return;
         }
 
@@ -245,12 +222,12 @@ const EmployerDetail = () => {
             headers: token ? { Authorization: `Bearer ${token}` } : {}
           }
         );
-        setEmployer({ ...fallbackEmployer, ...res.data, jobs: res.data?.jobs || [] });
+        setEmployer({ ...res.data, jobs: res.data?.jobs || [] });
         setSaved(Boolean(res.data?.hasSaved));
       } catch (err) {
         console.error('Fetch employer detail error:', err);
         setError('Failed to load employer details.');
-        setEmployer(fallbackEmployer);
+        setEmployer(null);
       } finally {
         setLoading(false);
       }
@@ -291,7 +268,7 @@ const EmployerDetail = () => {
   };
 
   const aboutParagraphs = useMemo(() => {
-    const text = employer?.description || fallbackEmployer.description;
+    const text = employer?.description || 'Company description has not been added yet.';
     return text.split(/\n+/).filter(Boolean).slice(0, 3);
   }, [employer?.description]);
 
@@ -299,7 +276,23 @@ const EmployerDetail = () => {
     return <EmployerDetailSkeleton />;
   }
 
-  const logoSrc = employer.logoImg || defaultEmployerLogo;
+  if (!employer) {
+    return (
+      <div className="w-full bg-white py-20" style={{ fontFamily: "'Inter', sans-serif" }}>
+        <div className="mx-auto max-w-3xl px-4 text-center">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-6 text-sm font-bold text-amber-700">
+            {error || 'Employer details are not available.'}
+          </div>
+          <Link to="/employers" className="mt-5 inline-flex rounded-lg bg-[#0047C7] px-5 py-3 text-sm font-bold text-white hover:bg-[#003aa3] transition">
+            Back to Employers
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(employer.name || 'Employer')}&background=e8eaf6&color=3949ab&size=110&bold=true`;
+  const logoSrc = employer.logoImg || fallbackAvatar;
   const sinceText = employer.foundedYear ? `Since ${employer.foundedYear}` : `Since ${formatMonthYear(employer.memberSince)}`;
   const openJobsUrl = `/jobs?company=${encodeURIComponent(employer.name)}`;
 

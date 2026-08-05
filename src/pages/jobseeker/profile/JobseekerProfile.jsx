@@ -49,6 +49,67 @@ const getQualificationValue = (qualification) => qualification?._id || qualifica
 const getQualificationLabel = (qualification) => qualification?.name || qualification?.id || '';
 const experienceOptions = ['Fresher', ...Array.from({ length: 10 }, (_, index) => `${index + 1}+ Years`)];
 
+const emptyExperience = {
+  position: '',
+  company: '',
+  employmentType: 'Full-time',
+  startDate: '',
+  endDate: '',
+  currentlyWorking: false,
+  description: ''
+};
+
+const monthIndex = (value) => {
+  const match = String(value || '').match(/^(\d{4})-(\d{2})/);
+  return match ? Number(match[1]) * 12 + Number(match[2]) : NaN;
+};
+
+const calculateTotalExperience = (exps) => {
+  let totalMonths = 0;
+  for (const exp of exps) {
+    if (!exp.startDate) continue;
+    const start = monthIndex(exp.startDate);
+    const end = exp.currentlyWorking ? monthIndex(new Date().toISOString().slice(0, 7)) : monthIndex(exp.endDate);
+    if (!isNaN(start) && !isNaN(end) && end >= start) {
+      totalMonths += (end - start + 1);
+    }
+  }
+  if (totalMonths === 0) return 'Fresher';
+  const years = Math.floor(totalMonths / 12);
+  const months = totalMonths % 12;
+  const parts = [];
+  if (years > 0) parts.push(`${years} ${years === 1 ? 'year' : 'years'}`);
+  if (months > 0) parts.push(`${months} ${months === 1 ? 'month' : 'months'}`);
+  return parts.join(' ');
+};
+
+const validateExperiencePeriods = (experiences = []) => {
+  const ranges = experiences.map((item, index) => ({
+    index,
+    start: monthIndex(item.startDate),
+    end: item.currentlyWorking ? Number.MAX_SAFE_INTEGER : monthIndex(item.endDate)
+  }));
+
+  for (const item of ranges) {
+    if (!Number.isFinite(item.start) || !Number.isFinite(item.end)) {
+      return 'Start and end month are required for every experience.';
+    }
+    if (item.end < item.start) {
+      return 'Experience end month cannot be before start month.';
+    }
+  }
+
+  for (let i = 0; i < ranges.length; i += 1) {
+    for (let j = i + 1; j < ranges.length; j += 1) {
+      if (ranges[i].start <= ranges[j].end && ranges[j].start <= ranges[i].end) {
+        return 'Two experiences cannot have the same or overlapping time period.';
+      }
+    }
+  }
+
+  return '';
+};
+
 const findByValueOrLabel = (items, value, getValue, getLabel) => {
   const current = normalizeText(value);
   if (!current) return null;
@@ -248,6 +309,7 @@ export const JobseekerProfile = () => {
   const [skills, setSkills] = useState([]);
   const [skillInput, setSkillInput] = useState('');
   const [locations, setLocations] = useState([]);
+  const [experiences, setExperiences] = useState([]);
   const [relocate, setRelocate] = useState('yes');
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [resumeFile, setResumeFile] = useState(null);
@@ -324,6 +386,8 @@ export const JobseekerProfile = () => {
         setProfileCompletionScore(Number(seeker.profileCompletionScore || 0));
         setSkills(seeker.skills || []);
         setRelocate(seeker.relocate || 'yes');
+        const fetchedExps = Array.isArray(seeker.experiences) ? seeker.experiences : [];
+        setExperiences(fetchedExps.length > 0 ? fetchedExps : [{ ...emptyExperience }]);
         
         if (seeker.preferredLocation) {
           setLocations(seeker.preferredLocation.split(',').map(l => l.trim()).filter(Boolean));
@@ -435,6 +499,31 @@ export const JobseekerProfile = () => {
     setError('');
     setSaved(false);
     try {
+      const cleanExperiences = experiences
+        .map(item => ({
+          ...item,
+          position: String(item.position || '').trim(),
+          company: String(item.company || '').trim(),
+          employmentType: item.employmentType || 'Full-time',
+          startDate: String(item.startDate || '').slice(0, 7),
+          endDate: item.currentlyWorking ? '' : String(item.endDate || '').slice(0, 7),
+          description: String(item.description || '').trim()
+        }))
+        .filter(item => item.position || item.company || item.startDate || item.endDate || item.description);
+      const periodError = validateExperiencePeriods(cleanExperiences);
+      if (periodError) {
+        setError(periodError);
+        return;
+      }
+
+      const computedDesignation = cleanExperiences[0]?.position || '';
+      const computedBio = cleanExperiences[0]?.description || '';
+      const computedExperience = calculateTotalExperience(cleanExperiences);
+
+      setDesignation(computedDesignation);
+      setBio(computedBio);
+      setExperience(computedExperience);
+
       const token = localStorage.getItem('publicToken');
       const payload = {
         name,
@@ -447,14 +536,15 @@ export const JobseekerProfile = () => {
         district,
         address,
         pinCode,
-        designation,
+        designation: computedDesignation,
         relocate,
-        experience,
+        experience: computedExperience,
+        experiences: cleanExperiences,
         expectedSalary,
         industryType: selectedIndustry?._id || industryType,
         jobCategory: selectedJobCategory?._id || jobCategory,
         jobType: selectedJobType?._id || jobType,
-        bio,
+        bio: computedBio,
         skills,
         linkedin,
         portfolio,
@@ -725,17 +815,7 @@ export const JobseekerProfile = () => {
                 />
               </div>
 
-              <div className="sm:col-span-2">
-                <label className="mb-1.5 block text-sm font-bold text-slate-600">
-                  Current Designation <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={designation}
-                  onChange={(e) => setDesignation(e.target.value)}
-                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
-                />
-              </div>
+              {/* Designation is automatically calculated from experiences */}
 
               {/* Preferred Location */}
               <div className="sm:col-span-2">
@@ -788,21 +868,7 @@ export const JobseekerProfile = () => {
             </h5>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1.5 block text-sm font-bold text-slate-600">
-                  Total Experience <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  value={experience}
-                  onChange={(e) => setExperience(e.target.value)}
-                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
-                >
-                  <option value="">Select experience</option>
-                  {experienceOptions.map((item) => <option key={item} value={item}>{item}</option>)}
-                </select>
-              </div>
-
-              <div>
+              <div className="sm:col-span-2">
                 <label className="mb-1.5 block text-sm font-bold text-slate-600">
                   Expected Salary
                 </label>
@@ -859,16 +925,92 @@ export const JobseekerProfile = () => {
                 placeholder="Search job type..."
               />
 
+              {/* Summary is automatically calculated from experiences */}
+
               <div className="sm:col-span-2">
-                <label className="mb-1.5 block text-sm font-bold text-slate-600">
-                  Brief Bio / Summary
-                </label>
-                <textarea
-                  rows={4}
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
-                />
+                <div className="mb-3 flex items-center justify-between">
+                  <label className="block text-sm font-bold text-slate-600">
+                    Company Experience
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setExperiences([...experiences, { ...emptyExperience }])}
+                    className="rounded-md border border-[#0047C7] px-3 py-1.5 text-xs font-extrabold text-[#0047C7] hover:bg-blue-50"
+                  >
+                    + Add Experience
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {experiences.map((item, index) => (
+                    <div key={index} className="rounded-md border border-slate-200 bg-slate-50 p-4">
+                      <div className="mb-3 flex items-center justify-between">
+                        <p className="text-sm font-extrabold text-slate-700">Experience {index + 1}</p>
+                        {index > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setExperiences(experiences.filter((_, itemIndex) => itemIndex !== index))}
+                            className="text-xs font-extrabold text-rose-600"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <input
+                          type="text"
+                          value={item.position || ''}
+                          onChange={(e) => setExperiences(experiences.map((exp, itemIndex) => itemIndex === index ? { ...exp, position: e.target.value } : exp))}
+                          placeholder="Position"
+                          className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
+                        />
+                        <input
+                          type="text"
+                          value={item.company || ''}
+                          onChange={(e) => setExperiences(experiences.map((exp, itemIndex) => itemIndex === index ? { ...exp, company: e.target.value } : exp))}
+                          placeholder="Company"
+                          className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
+                        />
+                        <input
+                          type="text"
+                          value={item.employmentType || ''}
+                          onChange={(e) => setExperiences(experiences.map((exp, itemIndex) => itemIndex === index ? { ...exp, employmentType: e.target.value } : exp))}
+                          placeholder="Employment Type"
+                          className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
+                        />
+                        <label className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-600">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(item.currentlyWorking)}
+                            onChange={(e) => setExperiences(experiences.map((exp, itemIndex) => itemIndex === index ? { ...exp, currentlyWorking: e.target.checked, endDate: e.target.checked ? '' : exp.endDate } : exp))}
+                          />
+                          Currently working here
+                        </label>
+                        <input
+                          type="month"
+                          value={item.startDate || ''}
+                          onChange={(e) => setExperiences(experiences.map((exp, itemIndex) => itemIndex === index ? { ...exp, startDate: e.target.value } : exp))}
+                          className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
+                        />
+                        <input
+                          type="month"
+                          value={item.currentlyWorking ? '' : (item.endDate || '')}
+                          disabled={Boolean(item.currentlyWorking)}
+                          onChange={(e) => setExperiences(experiences.map((exp, itemIndex) => itemIndex === index ? { ...exp, endDate: e.target.value } : exp))}
+                          className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none disabled:bg-slate-100 disabled:text-slate-400"
+                        />
+                        <textarea
+                          rows={3}
+                          value={item.description || ''}
+                          onChange={(e) => setExperiences(experiences.map((exp, itemIndex) => itemIndex === index ? { ...exp, description: e.target.value } : exp))}
+                          placeholder="What did you work on?"
+                          className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none sm:col-span-2"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

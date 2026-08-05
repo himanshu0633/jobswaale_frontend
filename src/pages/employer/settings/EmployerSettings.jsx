@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import {
   User,
@@ -15,11 +15,6 @@ import {
   AlertTriangle,
   Lock,
   CheckCircle2,
-  Mail,
-  Languages,
-  Clock,
-  Calendar,
-  Globe,
   Loader
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
@@ -30,8 +25,10 @@ const getTokenHeaders = () => {
 };
 
 export const EmployerSettings = () => {
+  const bannerInputRef = useRef(null);
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(true);
+  const [bannerUploading, setBannerUploading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -53,7 +50,8 @@ export const EmployerSettings = () => {
     jobTitle: '',
     department: '',
     altEmail: '',
-    bio: ''
+    bio: '',
+    companyBanner: ''
   });
 
   const [passwordForm, setPasswordForm] = useState({
@@ -96,7 +94,7 @@ export const EmployerSettings = () => {
     { id: '3', device: 'iPad - Chrome', location: 'New Delhi, India · 3 days ago', icon: Tablet, active: false }
   ]);
 
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     setLoading(true);
     setErrorMsg('');
     try {
@@ -110,11 +108,12 @@ export const EmployerSettings = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    loadSettings();
-  }, []);
+    const timer = window.setTimeout(loadSettings, 0);
+    return () => window.clearTimeout(timer);
+  }, [loadSettings]);
 
   const showNotification = (msg) => {
     setSuccessMsg(msg);
@@ -133,6 +132,37 @@ export const EmployerSettings = () => {
     } catch (err) {
       setErrorMsg(err.response?.data?.message || 'Failed to save profile settings.');
     }
+  };
+
+  const handleCompanyBannerUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('banner', file);
+    setBannerUploading(true);
+    setErrorMsg('');
+
+    try {
+      const response = await axios.post(`${BASE_API_URL}/employer/profile/banner`, formData, {
+        headers: {
+          ...getTokenHeaders(),
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      setProfileForm(prev => ({ ...prev, companyBanner: response.data.bannerImage || '' }));
+      showNotification('Company banner image uploaded successfully!');
+    } catch (err) {
+      setErrorMsg(err.response?.data?.message || 'Failed to upload company banner image.');
+    } finally {
+      setBannerUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoveCompanyBanner = async () => {
+    setProfileForm(prev => ({ ...prev, companyBanner: '' }));
+    showNotification('Company banner preview removed. Save changes to keep profile details.');
   };
 
   const handlePasswordSubmit = async (e) => {
@@ -308,24 +338,42 @@ export const EmployerSettings = () => {
               <div className="rounded-lg border border-slate-100 bg-white shadow-sm overflow-hidden">
                 <div className="border-b border-slate-100 p-5 bg-slate-50/50">
                   <h3 className="font-extrabold text-[#3f4254] text-base">Personal Information</h3>
-                  <p className="text-xs font-semibold text-slate-400 mt-1">Update your personal details and profile photo.</p>
+                  <p className="text-xs font-semibold text-slate-400 mt-1">Update your personal details and company banner image.</p>
                 </div>
                 <form onSubmit={handleProfileSubmit} className="p-5 space-y-5 text-xs font-bold text-slate-500">
                   
-                  {/* Photo upload section */}
-                  <div className="flex items-center gap-4 p-4 bg-slate-50/60 rounded-lg border border-slate-100">
-                    <div className="h-16 w-16 rounded-full overflow-hidden shrink-0 border-2 border-white shadow-sm bg-slate-100">
-                      <img src="/assets/images/users/user-3.jpg" alt="Profile" className="h-full w-full object-cover" onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150" }} />
+                  {/* Company banner upload section */}
+                  <div className="flex flex-col gap-4 p-4 bg-slate-50/60 rounded-lg border border-slate-100 sm:flex-row sm:items-center">
+                    <div className="h-24 w-full overflow-hidden rounded-lg border border-slate-200 bg-slate-100 shadow-sm sm:w-48 shrink-0">
+                      {profileForm.companyBanner ? (
+                        <img src={profileForm.companyBanner} alt="Company banner" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center px-4 text-center text-[11px] font-extrabold text-slate-400">
+                          Company banner preview
+                        </div>
+                      )}
                     </div>
+                    <input
+                      ref={bannerInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleCompanyBannerUpload}
+                    />
                     <div className="space-y-1.5">
-                      <h6 className="font-extrabold text-sm text-[#3f4254]">Profile Photo</h6>
-                      <p className="text-xs font-semibold text-slate-400">Upload a professional photo. Maximum size: 2MB.</p>
+                      <h6 className="font-extrabold text-sm text-[#3f4254]">Company Banner Image</h6>
+                      <p className="text-xs font-semibold text-slate-400">Upload a wide company banner image for job detail pages. Maximum size: 5MB.</p>
                       <div className="flex gap-2">
-                        <button type="button" onClick={() => alert('Photo upload dialog triggered')} className="inline-flex items-center gap-1 bg-[#6658dd] text-white px-2.5 py-1.5 rounded hover:bg-[#5848d8] transition">
+                        <button
+                          type="button"
+                          disabled={bannerUploading}
+                          onClick={() => bannerInputRef.current?.click()}
+                          className="inline-flex items-center gap-1 bg-[#6658dd] text-white px-2.5 py-1.5 rounded hover:bg-[#5848d8] transition disabled:cursor-not-allowed disabled:opacity-60"
+                        >
                           <Upload className="h-3.5 w-3.5" />
-                          Upload New
+                          {bannerUploading ? 'Uploading...' : 'Upload Banner'}
                         </button>
-                        <button type="button" onClick={() => alert('Photo removed')} className="inline-flex items-center gap-1 bg-rose-50 text-rose-600 px-2.5 py-1.5 rounded hover:bg-rose-100 transition border border-rose-100">
+                        <button type="button" onClick={handleRemoveCompanyBanner} className="inline-flex items-center gap-1 bg-rose-50 text-rose-600 px-2.5 py-1.5 rounded hover:bg-rose-100 transition border border-rose-100">
                           <Trash2 className="h-3.5 w-3.5" />
                           Remove
                         </button>
