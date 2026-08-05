@@ -147,7 +147,7 @@ export const JobseekerSubscription = () => {
     <div className="jobseeker-plan-page jsw-root min-h-screen bg-[#F5F7FB] pb-16">
       <FontLoader />
 
-      <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-6 sm:pt-10 lg:px-8">
+      <div className="mx-auto max-w-8xl px-4 pt-6 sm:px-6 sm:pt-10 lg:px-8">
 
         {/* Notifications */}
         {error && (
@@ -261,12 +261,16 @@ export const JobseekerSubscription = () => {
           </div>
 
           <div
-            className="jsw-scrollbar-none -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:snap-none sm:grid-cols-2 sm:overflow-visible sm:px-0 xl:grid-cols-4"
+            className="jsw-scrollbar-none -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:snap-none sm:grid-cols-2 sm:overflow-visible sm:px-0"
             onScroll={(e) => {
               const el = e.currentTarget;
               const cardWidth = el.firstChild ? el.firstChild.offsetWidth + 16 : 1;
               const idx = Math.round(el.scrollLeft / cardWidth);
               if (idx !== activeCard) setActiveCard(idx);
+              
+            }}
+            style={{
+              gridTemplateColumns: `repeat(${plans.length}, minmax(0, 1fr))`,
             }}
           >
             {plans.map((plan, i) => (
