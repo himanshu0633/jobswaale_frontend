@@ -207,6 +207,19 @@ export const EmployerCompanyProfile = () => {
     }
   };
 
+  const activeStateObj = editForm.state
+    ? (profile.states || []).find((s) => (s.sid || '') === editForm.state || (s.stateName || s.name) === editForm.state)
+    : null;
+  const filteredDistricts = activeStateObj
+    ? (profile.districts || []).filter((d) => (d.sid || '') === (activeStateObj.sid || ''))
+    : [];
+  const activeDistrictObj = editForm.district
+    ? (profile.districts || []).find((d) => (d.did || '') === editForm.district || (d.districtName || d.name) === editForm.district)
+    : null;
+  const filteredCities = activeDistrictObj
+    ? (profile.cities || []).filter((c) => (c.did || '') === (activeDistrictObj.did || ''))
+    : [];
+
   if (loading) {
     return (
       <div className="flex min-h-[450px] items-center justify-center">
@@ -801,11 +814,11 @@ export const EmployerCompanyProfile = () => {
                 </div>
                 <div>
                   <label className="block text-xs font-black text-slate-500 mb-1">State</label>
-                  <select
-                    className="w-full rounded border border-slate-200 px-3 py-2 text-sm text-[#3f4254] bg-white focus:border-[#6658dd] outline-none"
-                    value={editForm.state || ''}
-                    onChange={(e) => setEditForm({ ...editForm, state: e.target.value })}
-                  >
+                    <select
+                      className="w-full rounded border border-slate-200 px-3 py-2 text-sm text-[#3f4254] bg-white focus:border-[#6658dd] outline-none"
+                      value={editForm.state || ''}
+                      onChange={(e) => setEditForm({ ...editForm, state: e.target.value, district: '', city: '' })}
+                    >
                     <option value="">Select State</option>
                     {(profile.states || []).map((s) => (
                       <option key={s._id} value={s.stateName || s.name || s.sid}>
@@ -817,12 +830,13 @@ export const EmployerCompanyProfile = () => {
                 <div>
                   <label className="block text-xs font-black text-slate-500 mb-1">District</label>
                   <select
-                    className="w-full rounded border border-slate-200 px-3 py-2 text-sm text-[#3f4254] bg-white focus:border-[#6658dd] outline-none"
+                    className="w-full rounded border border-slate-200 px-3 py-2 text-sm text-[#3f4254] bg-white focus:border-[#6658dd] outline-none disabled:bg-slate-50"
                     value={editForm.district || ''}
-                    onChange={(e) => setEditForm({ ...editForm, district: e.target.value })}
+                    onChange={(e) => setEditForm({ ...editForm, district: e.target.value, city: '' })}
+                    disabled={!editForm.state}
                   >
                     <option value="">Select District</option>
-                    {(profile.districts || []).map((d) => (
+                    {filteredDistricts.map((d) => (
                       <option key={d._id} value={d.districtName || d.name || d.did}>
                         {d.districtName || d.name}
                       </option>
@@ -832,12 +846,13 @@ export const EmployerCompanyProfile = () => {
                 <div>
                   <label className="block text-xs font-black text-slate-500 mb-1">City</label>
                   <select
-                    className="w-full rounded border border-slate-200 px-3 py-2 text-sm text-[#3f4254] bg-white focus:border-[#6658dd] outline-none"
+                    className="w-full rounded border border-slate-200 px-3 py-2 text-sm text-[#3f4254] bg-white focus:border-[#6658dd] outline-none disabled:bg-slate-50"
                     value={editForm.city || ''}
                     onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                    disabled={!editForm.district}
                   >
                     <option value="">Select City</option>
-                    {(profile.cities || []).map((c) => (
+                    {filteredCities.map((c) => (
                       <option key={c._id} value={c.cityName || c.name || c.ctid}>
                         {c.cityName || c.name}
                       </option>
