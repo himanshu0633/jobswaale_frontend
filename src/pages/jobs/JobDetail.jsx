@@ -436,14 +436,22 @@ export const JobDetail = () => {
               </p>
 
               {applied ? (
-                <div className="flex flex-wrap items-center gap-3 rounded-md border border-emerald-100 bg-emerald-50 px-4 py-4 text-sm font-bold text-emerald-700">
-                  <CheckCircle2 className="h-5 w-5 flex-shrink-0"/>
-                  You have already applied for this job.
-                  {matchScore !== null && (
-                    <span className="rounded bg-white px-2.5 py-1 text-xs font-extrabold text-emerald-600">
-                      Match Score: {matchScore}%
-                    </span>
-                  )}
+                <div className="flex flex-col items-start gap-3 rounded-md border border-emerald-100 bg-emerald-50 px-4 py-4 text-sm font-bold text-emerald-700">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <CheckCircle2 className="h-5 w-5 flex-shrink-0"/>
+                    You have already applied for this job.
+                    {matchScore !== null && (
+                      <span className="rounded bg-white px-2.5 py-1 text-xs font-extrabold text-emerald-600">
+                        Match Score: {matchScore}%
+                      </span>
+                    )}
+                  </div>
+                  <Link
+                    to="/jobs"
+                    className="inline-block rounded-md bg-[#0047C7] px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-[#0035a0]"
+                  >
+                    Apply for more jobs
+                  </Link>
                 </div>
               ) : (
                 <form onSubmit={handleApply} className="space-y-4">

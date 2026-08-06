@@ -179,18 +179,27 @@ export const PublicHeader = () => {
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white">
                   {profileInitials}
                 </div>
-                
-                <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform duration-200 ${profileDropdownOpen ? 'rotate-180' : ''}`} />
+                <span className="hidden items-center gap-1 text-sm font-extrabold sm:flex">
+                  <span className="max-w-24 truncate lg:max-w-32">{profileName}</span>
+                  <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform duration-200 ${profileDropdownOpen ? 'rotate-180' : ''}`} />
+                </span>
               </button>
               {profileDropdownOpen && (
-                <div className="absolute top-full right-0 mt-1.5 block w-52 rounded-xl border border-slate-200 bg-white py-2 shadow-xl z-50">
-                  <Link to={dashboardPath} onClick={() => setProfileDropdownOpen(false)} className="flex items-center gap-2.5 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
-                    <LayoutDashboard className="h-4 w-4 text-slate-400" /> Go to Dashboard
-                  </Link>
-                  <div onClick={handleLogout} className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
-                    <LogOut className="h-4 w-4 text-slate-400" /> Log out
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setProfileDropdownOpen(false)} />
+                  <div className="absolute top-full right-0 mt-1.5 block w-52 rounded-xl border border-slate-200 bg-white py-2 shadow-xl z-50">
+                    <div className="border-b border-slate-200 px-4 py-2">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Signed in as</p>
+                      <p className="mt-0.5 truncate text-xs font-semibold text-slate-700">{authUser?.email || 'user@jobswaale.com'}</p>
+                    </div>
+                    <Link to={dashboardPath} onClick={() => setProfileDropdownOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">
+                      <LayoutDashboard className="h-4 w-4 text-slate-400" /> Go to Dashboard
+                    </Link>
+                    <div onClick={handleLogout} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-xs font-semibold text-rose-500 transition hover:bg-slate-50">
+                      <LogOut className="h-4 w-4" /> Sign Out
+                    </div>
                   </div>
-                </div>
+                </>
               )}
             </div>
           ) : (

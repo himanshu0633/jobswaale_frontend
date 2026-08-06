@@ -102,7 +102,7 @@ const CandidateActions = ({ candidate, isOpen, onToggle, onClose, align = 'right
 
 export const EmployerSearchCandidates = () => {
   const [filters, setFilters] = useState(initialFilters);
-  const [advancedOpen, setAdvancedOpen] = useState(true);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [tableSearch, setTableSearch] = useState('');
