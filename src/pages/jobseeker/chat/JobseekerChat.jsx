@@ -112,7 +112,11 @@ export const JobseekerChat = ({ portal = 'jobseeker' }) => {
     setError('');
     try {
       const response = await axios.get(config.endpoint, { headers: getTokenHeaders() });
-      const nextThreads = sortThreadsByRecentMessage(response.data?.threads || []);
+      const rawThreads = response.data?.threads || [];
+      const filteredThreadsList = portal === 'jobseeker'
+        ? rawThreads.filter(t => t.canMessage)
+        : rawThreads;
+      const nextThreads = sortThreadsByRecentMessage(filteredThreadsList);
       setThreads(nextThreads);
       const nextActive = nextThreads.some(thread => String(thread.id) === String(preferredId))
         ? preferredId
@@ -426,8 +430,13 @@ export const JobseekerChat = ({ portal = 'jobseeker' }) => {
                   onClick={() => openChat(thread.id)}
                   className={`chat-thread flex w-full items-center gap-3 border-b border-slate-200 px-4 py-[0.9rem] text-left transition-colors ${active ? 'is-active bg-slate-100' : 'hover:bg-slate-50'}`}
                 >
-                  <div className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full bg-[#0047C7] text-base font-bold text-white">
-                    {thread.initials || 'U'}
+                  <div className="relative shrink-0">
+                    <div className="flex h-[46px] w-[46px] items-center justify-center rounded-full bg-[#0047C7] text-base font-bold text-white">
+                      {thread.initials || 'U'}
+                    </div>
+                    {thread.online && (
+                      <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full border-2 border-white bg-[#00c070]" />
+                    )}
                   </div>
 
                   <div className="min-w-0 flex-1 overflow-hidden">
@@ -469,12 +478,22 @@ export const JobseekerChat = ({ portal = 'jobseeker' }) => {
                     <ArrowLeft className="h-5 w-5" />
                   </button>
 
-                  <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-[#0047C7] text-[0.85rem] font-bold text-white">
-                    {activeConversation.initials || 'U'}
+                  <div className="relative shrink-0">
+                    <div className="flex h-[42px] w-[42px] items-center justify-center rounded-full bg-[#0047C7] text-[0.85rem] font-bold text-white">
+                      {activeConversation.initials || 'U'}
+                    </div>
+                    {activeConversation.online && (
+                      <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full border-2 border-white bg-[#00c070]" />
+                    )}
                   </div>
 
                   <div>
-                    <div className="chat-detail-name text-[0.95rem] font-semibold text-[#0f172a]">{activeConversation.name}</div>
+                    <div className="chat-detail-name flex items-center gap-2 text-[0.95rem] font-semibold text-[#0f172a]">
+                      {activeConversation.name}
+                      <span className={`text-[0.72rem] font-bold ${activeConversation.online ? 'text-[#00c070]' : 'text-slate-400'}`}>
+                        ({activeConversation.online ? 'Active now' : 'Offline'})
+                      </span>
+                    </div>
                     <div className="chat-detail-job flex items-center gap-1 text-[0.75rem] font-semibold text-[#64748b]">
                       <Briefcase className="h-3.5 w-3.5" />
                       {activeConversation.jobTitle}
@@ -533,11 +552,7 @@ export const JobseekerChat = ({ portal = 'jobseeker' }) => {
               </div>
 
               <div className="chat-composer border-t border-slate-200 bg-white px-5 py-4">
-                {typing && (
-                  <div className="mb-2 text-xs font-bold text-[#64748b]">
-                    {typing === 'employer' ? 'Employer' : 'Jobseeker'} is typing...
-                  </div>
-                )}
+
                 {replyTo && (
                   <div className="chat-reply-preview mb-3 flex items-start justify-between gap-3 rounded-xl border border-[#dbeafe] bg-[#eff6ff] px-3 py-2">
                     <div className="min-w-0">
