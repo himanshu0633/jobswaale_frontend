@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { BASE_API_URL } from '../../../context/AuthContext';
 import {
   ChevronDown,
   Grid2X2,
@@ -27,6 +29,11 @@ export const EmployerHeader = ({ toggleSidebar, isCollapsed }) => {
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [theme, setTheme] = useState(() => localStorage.getItem('employerTheme') || 'light');
+  const [searchValue, setSearchValue] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [allCandidates, setAllCandidates] = useState([]);
+  const [candidatesFetched, setCandidatesFetched] = useState(false);
+  const searchRef = useRef(null);
   const user = getEmployerUser();
   const displayName = user?.firstName || user?.companyName || 'Nitika';
 
@@ -51,6 +58,61 @@ export const EmployerHeader = ({ toggleSidebar, isCollapsed }) => {
     localStorage.removeItem('publicToken');
     navigate('/login?role=employer', { replace: true });
   };
+
+  useEffect(() => {
+    if (!searchFocused || candidatesFetched) return;
+    let alive = true;
+    const token = localStorage.getItem('publicToken');
+    axios
+      .get(`${BASE_API_URL}/employer/candidates?search=&page=1&limit=200`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      })
+      .then((response) => {
+        if (!alive) return;
+        const raw = response.data?.candidates || (Array.isArray(response.data) ? response.data : []);
+        const list = raw.map((candidate) => ({
+          id: candidate.id || candidate._id,
+          name: candidate.name || 'Applicant',
+          role: candidate.designation || candidate.role,
+          location: candidate.location,
+          experience: candidate.experience
+        }));
+        setAllCandidates(list);
+      })
+      .catch(() => {
+        if (alive) setAllCandidates([]);
+      })
+      .finally(() => {
+        if (alive) setCandidatesFetched(true);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [searchFocused, candidatesFetched]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setSearchFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredCandidates = useMemo(() => {
+    if (!searchValue.trim()) return [];
+    const kw = searchValue.toLowerCase();
+    return allCandidates
+      .filter(
+        (candidate) =>
+          String(candidate.name || '').toLowerCase().includes(kw) ||
+          String(candidate.role || '').toLowerCase().includes(kw) ||
+          String(candidate.experience || '').toLowerCase().includes(kw) ||
+          String(candidate.location || '').toLowerCase().includes(kw)
+      )
+      .slice(0, 6);
+  }, [searchValue, allCandidates]);
 
   return (
     <header
@@ -91,17 +153,56 @@ export const EmployerHeader = ({ toggleSidebar, isCollapsed }) => {
       </div>
 
       <div className="flex h-full min-w-0 items-center gap-1.5 sm:gap-3 lg:gap-[18px]">
-        <div className="relative hidden xl:block xl:w-[270px]">
+        <div className="relative hidden xl:block xl:w-[270px]" ref={searchRef}>
           <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             placeholder="Quick Search..."
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            onFocus={() => setSearchFocused(true)}
             className={`h-9 w-full rounded-full border py-2 pr-4 pl-[42px] text-[13px] font-semibold outline-none placeholder:text-slate-400 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 ${
               theme === 'dark'
                 ? 'border-slate-600/30 bg-slate-600/30 text-slate-100'
                 : 'border-slate-200 bg-slate-50 text-slate-800'
             }`}
           />
+
+          {searchFocused && searchValue.trim() && (
+            <ul
+              className={`absolute top-full mt-2 w-full max-h-80 overflow-y-auto rounded-[10px] border py-1 shadow-lg ${
+                theme === 'dark'
+                  ? 'border-slate-600 bg-[#303a44] text-slate-100'
+                  : 'border-slate-200 bg-white text-slate-700'
+              }`}
+            >
+              {!candidatesFetched ? (
+                <li className="px-4 py-3 text-sm text-slate-400">Searching applicants...</li>
+              ) : filteredCandidates.length === 0 ? (
+                <li className="px-4 py-3 text-sm text-slate-400">No applicants found</li>
+              ) : (
+                filteredCandidates.map((candidate) => (
+                  <li key={candidate.id} className="border-b border-transparent last:border-0">
+                    <Link
+                      to={`/employer/candidateProfile/${candidate.id}`}
+                      onClick={() => {
+                        setSearchValue('');
+                        setSearchFocused(false);
+                      }}
+                      className={`block px-4 py-2 text-[13px] font-medium hover:bg-indigo-50 ${
+                        theme === 'dark' ? 'text-indigo-300 hover:bg-slate-700' : 'text-[#6658dd] hover:text-[#5848d8]'
+                      }`}
+                    >
+                      <div className="font-semibold">{candidate.name}</div>
+                      <div className="text-xs text-slate-400">
+                        {candidate.role || candidate.experience || candidate.location || ''}
+                      </div>
+                    </Link>
+                  </li>
+                ))
+              )}
+            </ul>
+          )}
         </div>
 
         <div className="hidden items-center gap-1 md:flex lg:gap-3">

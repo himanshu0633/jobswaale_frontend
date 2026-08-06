@@ -107,6 +107,8 @@ export const Home = () => {
     navigate(`/login?role=${role}&redirect=${encodeURIComponent(targetPath)}`);
   };
 
+  const isLoggedIn = Boolean(getPublicUser() && localStorage.getItem('publicToken'));
+
   return (
     <div className="w-full">
       {/* Hero Section */}
@@ -115,7 +117,7 @@ export const Home = () => {
           <div className="grid gap-12 lg:grid-cols-12 items-center">
 
             {/* Left Block: Search & Text */}
-            <div className="lg:col-span-7 lg:pr-4 space-y-6">
+            <div className={`${isLoggedIn ? 'lg:col-span-12' : 'lg:col-span-7 lg:pr-4'} space-y-6`}>
               <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-[#0047C7]/[0.08] text-[#0047C7]">
                 <CheckCircle2 className="h-4 w-4 text-[#0047C7]" /> Smart Hiring. Better Recruitment.
               </span>
@@ -185,6 +187,7 @@ export const Home = () => {
             </div>
 
             {/* Right Block: Choice Cards */}
+            {!isLoggedIn && (
             <div className="lg:col-span-5">
               <div className="bg-white rounded-2xl p-8 shadow-[0_10px_40px_rgba(0,0,0,0.04)] border border-black/[0.03] space-y-5 w-full">
                 <h3 className="text-lg font-semibold text-slate-900 text-center mb-2">Choose Your Account Type</h3>
@@ -230,6 +233,7 @@ export const Home = () => {
                 </button>
               </div>
             </div>
+            )}
 
           </div>
         </div>
