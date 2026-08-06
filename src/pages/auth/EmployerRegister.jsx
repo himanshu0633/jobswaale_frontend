@@ -435,7 +435,7 @@ export const EmployerRegister = () => {
                 value={form.email}
                 onChange={(event) => setField('email', event.target.value)}
                 placeholder="you@company.com"
-                helper="We'll send candidate applications and updates to this email."
+                // helper="We'll send candidate applications and updates to this email."
               />
             </div>
 
