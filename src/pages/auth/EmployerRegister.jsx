@@ -32,27 +32,33 @@ import RegImg from './authImages/register-illustration.png'
 const benefits = [
   {
     icon: Briefcase,
-    iconClass: 'bg-sky-100 text-sky-600',
+    iconClass: 'bg-white/10 text-orange-400',
     title: 'Post jobs & find talent',
     text: 'Reach thousands of active job seekers instantly.'
   },
   {
     icon: Users,
-    iconClass: 'bg-orange-100 text-orange-600',
+    iconClass: 'bg-white/10 text-slate-300',
     title: 'Access verified candidates',
     text: 'Browse pre-screened, quality applicant profiles.'
   },
   {
     icon: Phone,
-    iconClass: 'bg-sky-100 text-blue-600',
+    iconClass: 'bg-white/10 text-orange-400',
     title: 'Direct contact with applicants',
     text: 'Call or message candidates without intermediaries.'
   },
   {
     icon: Gauge,
-    iconClass: 'bg-orange-100 text-orange-500',
+    iconClass: 'bg-white/10 text-slate-300',
     title: 'Smart hiring dashboard',
     text: 'Track applications, manage jobs & analytics.'
+  },
+  {
+    icon: Gauge,
+    iconClass: 'h-8 w-8 rounded-full border-2 border-white bg-gradient-to-br from-gray-300 to-gray-500',   
+    title: '2,500 + Employers',  
+    text: 'Already hiring on JobsWaale.'
   }
 ];
 
@@ -62,21 +68,21 @@ const companyTypes = [
     icon: Rocket,
     title: 'Startup',
     text: 'Building from the ground up',
-    iconClass: 'bg-sky-100 text-blue-600'
+    iconClass: 'bg-blue-50 text-blue-600'
   },
   {
     value: 'enterprise',
     icon: Building2,
     title: 'Enterprise',
     text: 'Established organization',
-    iconClass: 'bg-orange-100 text-orange-500'
+    iconClass: 'bg-slate-100 text-slate-700'
   },
   {
     value: 'recruitment-agency',
     icon: Users,
     title: 'Recruitment Agency',
     text: 'Connecting talent with companies',
-    iconClass: 'bg-sky-100 text-sky-600'
+    iconClass: 'bg-orange-50 text-orange-600'
   }
 ];
 
@@ -128,21 +134,21 @@ const CompanyTypeCard = ({ option, selected, onChange }) => {
     <button
       type="button"
       onClick={() => onChange(option.value)}
-      className={`relative flex min-h-[118px] items-center gap-4 rounded-xl border p-5 text-left transition ${
+      className={`relative flex items-center gap-3 rounded-xl border p-4 text-left transition ${
         selected ? 'border-[#0058d6] bg-blue-50' : 'border-slate-300 bg-white hover:border-slate-400'
       }`}
     >
-      <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${option.iconClass}`}>
+      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${option.iconClass}`}>
         <Icon className="h-5 w-5" />
       </span>
-      <span className="pr-8">
-        <span className="block text-base font-extrabold text-slate-900">{option.title}</span>
-        <span className="mt-1 block text-sm font-medium leading-6 text-slate-500">{option.text}</span>
+      <span className="flex-1 min-w-0">
+        <span className="block text-sm font-extrabold text-slate-900 truncate">{option.title}</span>
+        <span className="block text-xs font-medium text-slate-500 truncate">{option.text}</span>
       </span>
-      <span className={`absolute right-5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full border-2 ${
+      <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
         selected ? 'border-[#0058d6]' : 'border-slate-300'
       }`}>
-        {selected && <span className="absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#0058d6]" />}
+        {selected && <span className="h-2 w-2 rounded-full bg-[#0058d6]" />}
       </span>
     </button>
   );
@@ -224,8 +230,8 @@ const CompanySizeDropdown = ({ value, onChange }) => {
 };
 
 const RegisterIllustration = () => (
-  <div>
-    <img src={RegImg} alt="" />
+  <div className="mx-auto max-w-[260px]">
+    <img src={RegImg} alt="" className="w-full h-auto drop-shadow-xl" />
   </div>
 );
 
@@ -358,49 +364,34 @@ export const EmployerRegister = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#f1f5f9] bg-[radial-gradient(circle_at_0%_0%,rgba(255,87,34,0.08)_0%,transparent_35%),radial-gradient(circle_at_0%_100%,rgba(30,64,175,0.12)_0%,transparent_40%),radial-gradient(circle_at_100%_100%,rgba(255,87,34,0.12)_0%,transparent_40%)] px-4 py-8 text-slate-900">
+    <div className="min-h-screen bg-[#f0f4ff] bg-[radial-gradient(circle_at_0%_0%,rgba(0,88,214,0.08)_0%,transparent_35%),radial-gradient(circle_at_100%_0%,rgba(0,88,191,0.10)_0%,transparent_40%),radial-gradient(circle_at_100%_100%,rgba(0,88,214,0.06)_0%,transparent_40%)] px-4 py-8 text-slate-900">
       <header className="mx-auto mb-8 flex w-full max-w-7xl items-center justify-between">
         <Link to="/" className="inline-flex flex-col">
           <img src={logoAsset} alt="JobsWaale" className="h-14 w-auto object-contain" />
         </Link>
         <div className="hidden text-base font-bold text-slate-800 sm:block">
-          Already Registered? <Link to="/login?role=employer" className="text-orange-600 hover:underline">Employer Login</Link>
+          Already Registered? <Link to="/login?role=employer" className="text-[#0058d6] hover:underline">Employer Login</Link>
         </div>
       </header>
 
-      <main className="mx-auto grid w-full max-w-7xl gap-8 lg:grid-cols-[0.9fr_1.8fr]">
-        <aside className="rounded-3xl border border-slate-100 bg-white p-8 shadow-[0_18px_45px_rgba(15,23,42,0.06)] lg:min-h-[980px]">
-          <RegisterIllustration />
-
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-slate-950">Why register with</h2>
-            <h3 className="mt-2 text-3xl font-extrabold">
-              <span className="text-[#0058d6]">Jobs</span><span className="text-[#ff6b00]">Waale</span> <span>?</span>
-            </h3>
+      <main className="mx-auto grid w-full max-w-7xl gap-8 lg:grid-cols-[1.4fr_1fr]">
+        <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.06)] sm:p-10 border-t-4 border-t-[#0058d6]">
+          <div className="mb-8 flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-200 text-slate-700">
+              <Building2 className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-900">Employer Registration</p>
+              <p className="text-xs font-medium text-slate-500">Create your company account and start hiring</p>
+            </div>
           </div>
 
-          <div className="space-y-7">
-            {benefits.map(({ icon: Icon, iconClass, title, text }) => (
-              <div key={title} className="flex gap-4">
-                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${iconClass}`}>
-                  <Icon className="h-5 w-5" />
-                </span>
-                <div>
-                  <h4 className="text-lg font-extrabold text-slate-900">{title}</h4>
-                  <p className="mt-1 text-base font-medium leading-7 text-slate-500">{text}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </aside>
-
-        <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.06)] sm:p-10">
           <div className="mb-9">
             <h1 className="text-3xl font-extrabold tracking-tight text-slate-950">
-              Register your <span className="text-[#0058d6]">Company</span> <span className="text-[#ff6b00]">Today</span>
+              Build Your <span className="text-[#0058d6]">Employer</span> Account
             </h1>
             <p className="mt-2 text-base font-medium leading-7 text-slate-400">
-              Join hundreds of employers hiring top talent on JobsWaale. Post jobs, connect with candidates, and grow your team.
+              Register your organization and gain access to top talent. Manage jobs, track applications, and grow your team with JobsWaale.
             </p>
           </div>
 
@@ -426,94 +417,97 @@ export const EmployerRegister = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <TextInput
-              icon={User}
-              label="Full Name"
-              required
-              type="text"
-              value={form.fullName}
-              onChange={(event) => setField('fullName', event.target.value)}
-              placeholder="Enter your full name"
-            />
-
-            <TextInput
-              icon={Mail}
-              label="Official Email Address"
-              required
-              type="email"
-              value={form.email}
-              onChange={(event) => setField('email', event.target.value)}
-              placeholder="you@company.com"
-              helper="We'll send candidate applications and updates to this email."
-            />
-
-            <div>
+            <div className="grid gap-5 sm:grid-cols-2">
               <TextInput
-                icon={Lock}
-                label="Password"
+                icon={User}
+                label="Full Name"
                 required
-                type={showPassword ? 'text' : 'password'}
-                value={form.password}
-                onChange={(event) => setField('password', event.target.value)}
-                placeholder="Create Password"
-                helper={`Minimum ${settings.minPassLen} characters.`}
-                right={(
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((current) => !current)}
-                    className="absolute right-4 text-[#0058d6]"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                )}
+                type="text"
+                value={form.fullName}
+                onChange={(event) => setField('fullName', event.target.value)}
+                placeholder="Enter your full name"
               />
-              {form.password && (
-                <div className="mt-3">
-                  <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
-                    <div className={`h-full rounded-full transition-all ${strength.color}`} style={{ width: strength.width }} />
-                  </div>
-                  <p className="mt-1 text-xs font-semibold text-slate-500">
-                    Password Strength: <span className={strength.text}>{strength.label}</span>
-                  </p>
-                </div>
-              )}
+              <TextInput
+                icon={Mail}
+                label="Official Email Address"
+                required
+                type="email"
+                value={form.email}
+                onChange={(event) => setField('email', event.target.value)}
+                placeholder="you@company.com"
+                helper="We'll send candidate applications and updates to this email."
+              />
             </div>
 
-            <TextInput
-              icon={Phone}
-              label="Phone Number"
-              required
-              type="tel"
-              value={form.phone}
-              onChange={(event) => setField('phone', event.target.value.replace(/[^0-9+\s-]/g, ''))}
-              placeholder="e.g. +91 99999 88888"
-              helper="Candidates and our team may contact you on this number."
-            />
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div>
+                <TextInput
+                  icon={Lock}
+                  label="Password"
+                  required
+                  type={showPassword ? 'text' : 'password'}
+                  value={form.password}
+                  onChange={(event) => setField('password', event.target.value)}
+                  placeholder="Create Password"
+                  helper={`Minimum ${settings.minPassLen} characters.`}
+                  right={(
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((current) => !current)}
+                      className="absolute right-4 text-[#0058d6]"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  )}
+                />
+                {form.password && (
+                  <div className="mt-3">
+                    <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+                      <div className={`h-full rounded-full transition-all ${strength.color}`} style={{ width: strength.width }} />
+                    </div>
+                    <p className="mt-1 text-xs font-semibold text-slate-500">
+                      Password Strength: <span className={strength.text}>{strength.label}</span>
+                    </p>
+                  </div>
+                )}
+              </div>
+              <TextInput
+                icon={Phone}
+                label="Phone Number"
+                required
+                type="tel"
+                value={form.phone}
+                onChange={(event) => setField('phone', event.target.value.replace(/[^0-9+\s-]/g, ''))}
+                placeholder="e.g. +91 99999 88888"
+                helper="Candidates and our team may contact you on this number."
+              />
+            </div>
 
-            <TextInput
-              icon={Building2}
-              label="Company / Organization Name"
-              required
-              type="text"
-              value={form.companyName}
-              onChange={(event) => setField('companyName', event.target.value)}
-              placeholder="e.g. ABC Pvt. Ltd."
-            />
-
-            <TextInput
-              icon={Landmark}
-              label="Designation / Job Title"
-              required
-              type="text"
-              value={form.designation}
-              onChange={(event) => setField('designation', event.target.value)}
-              placeholder="e.g. HR Manager, Founder, Recruiter"
-            />
+            <div className="grid gap-5 sm:grid-cols-2">
+              <TextInput
+                icon={Building2}
+                label="Company / Organization Name"
+                required
+                type="text"
+                value={form.companyName}
+                onChange={(event) => setField('companyName', event.target.value)}
+                placeholder="e.g. ABC Pvt. Ltd."
+              />
+              <TextInput
+                icon={Landmark}
+                label="Designation / Job Title"
+                required
+                type="text"
+                value={form.designation}
+                onChange={(event) => setField('designation', event.target.value)}
+                placeholder="e.g. HR Manager, Founder, Recruiter"
+              />
+            </div>
 
             <div>
               <label className="mb-3 block text-sm font-bold text-slate-800">Company Type <span className="text-rose-500">*</span></label>
-              <div className="grid gap-4 lg:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-3">
                 {companyTypes.map((option) => (
                   <CompanyTypeCard
                     key={option.value}
@@ -574,17 +568,87 @@ export const EmployerRegister = () => {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <button type="button" className="flex items-center justify-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700">
+              <button type="button" className="flex items-center justify-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-100">
                 <span className="text-lg font-extrabold text-rose-500">G</span>
                 Google
               </button>
-              <button type="button" className="flex items-center justify-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700">
+              <button type="button" className="flex items-center justify-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-100">
                 <span className="rounded bg-blue-600 px-1.5 py-0.5 text-xs font-extrabold text-white">in</span>
                 LinkedIn
               </button>
             </div>
           </form>
         </section>
+
+        <aside className="flex flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-lg lg:min-h-[760px]">
+  <div className="mb-6">
+    <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-orange-600">
+      <Building2 className="h-3 w-3" />
+      For Employers
+    </div>
+
+    <RegisterIllustration />
+  </div>
+
+  <div className="mb-6">
+    <h2 className="text-xl font-bold text-gray-800">
+      Why register with
+    </h2>
+
+    <h3 className="mt-2 text-3xl font-extrabold">
+      <span className="text-gray-900">Jobs</span>
+      <span className="text-orange-500">Waale</span>
+      <span className="text-gray-900">?</span>
+    </h3>
+  </div>
+
+  <div className="flex-1 space-y-3">
+    {benefits.map(({ icon: Icon, iconClass, title, text }) => (
+      <div
+        key={title}
+        className="flex gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 transition hover:border-orange-200 hover:bg-orange-50/40"
+      >
+        <span
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${iconClass}`}
+        >
+          <Icon className="h-5 w-5" />
+        </span>
+
+        <div>
+          <h4 className="text-sm font-bold text-gray-900">
+            {title}
+          </h4>
+
+          <p className="mt-1 text-sm leading-5 text-gray-600">
+            {text}
+          </p>
+        </div>
+      </div>
+      
+    ))}
+  </div>
+
+  {/* <div className="mt-6 flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
+    <div className="flex -space-x-2">
+      {[...Array(3)].map((_, i) => (
+        <div
+          key={i}
+          className="h-8 w-8 rounded-full border-2 border-white bg-gradient-to-br from-gray-300 to-gray-500"
+        />
+      ))}
+    </div>
+
+    <div>
+      <p className="text-sm font-bold text-gray-900">
+        2,500+ Employers
+      </p>
+
+      <p className="text-sm text-gray-600">
+        Already hiring on JobsWaale
+      </p>
+    </div>
+  </div> */}
+</aside>
       </main>
 
       <footer className="mx-auto mt-8 w-full max-w-7xl pb-4 text-center">

@@ -41,7 +41,6 @@ const emptyForm = {
   jobTitle: '',
   jobCategory: '',
   jobType: '',
-  experience: '',
   workMode: 'Office',
   country: '',
   state: '',
@@ -196,9 +195,8 @@ export const EmployerPostJob = () => {
             ...emptyForm,
             jobTitle: jobForm.jobTitle || '',
             jobCategory: String(jobForm.jobCategory || ''),
-            jobType: String(jobForm.jobType || ''),
-            experience: jobForm.experience || jobForm.requiredExperience || '',
-            workMode: jobForm.workMode || 'Office',
+             jobType: String(jobForm.jobType || ''),
+             workMode: jobForm.workMode || 'Office',
             country: locationMeta?.cid || countryMeta?.cid || '',
             state: locationMeta?.sid || stateMeta?.sid || '',
             district: locationMeta?.did || districtMeta?.did || '',
@@ -261,7 +259,7 @@ export const EmployerPostJob = () => {
           ...form,
           jobLocations: form.location,
           detailedDescription: form.description,
-          requiredExperience: form.requiredExperience || form.experience,
+           requiredExperience: form.requiredExperience,
           languages: form.language
         }, { headers: getTokenHeaders() });
         setPreview({ ...emptyPreview, ...response.data });
@@ -332,7 +330,7 @@ export const EmployerPostJob = () => {
     if (upgradePopup.open) return false;
 
     const requiredByStep = [
-      ['jobTitle', 'jobCategory', 'jobType', 'experience', 'country', 'state', 'district', 'vacancies', 'location', 'minSalary', 'maxSalary'],
+       ['jobTitle', 'jobCategory', 'jobType', 'country', 'state', 'district', 'vacancies', 'location', 'minSalary', 'maxSalary'],
       ['jobSummary', 'description'],
       ['skills'],
       []
@@ -375,18 +373,17 @@ export const EmployerPostJob = () => {
       const employer = meta.employer || {};
       const payload = {
         jobTitle: form.jobTitle,
-        jobCategory: form.jobCategory,
-        jobType: form.jobType,
-        vacancies: Number(form.vacancies) || 1,
+         jobCategory: form.jobCategory,
+         jobType: form.jobType,
+         vacancies: Number(form.vacancies) || 1,
         workMode: form.workMode,
         jobLocations: form.location,
         description: form.description,
         jobSummary: form.jobSummary,
         detailedDescription: form.description,
         responsibilities: form.responsibilities,
-        qualification: form.qualification || null,
-        experience: form.experience,
-        requiredExperience: form.requiredExperience || form.experience,
+         qualification: form.qualification || null,
+         requiredExperience: form.requiredExperience,
         salary: preview.salary,
         minSalary: form.minSalary,
         maxSalary: form.maxSalary,
@@ -524,9 +521,8 @@ export const EmployerPostJob = () => {
                 <div className="grid gap-4 p-5 md:grid-cols-2">
                   <div><label className={labelClass}>Job Title *</label><input className={fieldClass('jobTitle')} value={form.jobTitle} onChange={(e) => setValue('jobTitle', e.target.value)} placeholder="e.g. Software Developer" /></div>
                   <div><label className={labelClass}>Job Category *</label><select className={fieldClass('jobCategory')} value={form.jobCategory} onChange={(e) => setValue('jobCategory', e.target.value)}><option value="">Select Category</option>{meta.categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
-                  <div><label className={labelClass}>Employment Type *</label><select className={fieldClass('jobType')} value={form.jobType} onChange={(e) => setValue('jobType', e.target.value)}><option value="">Select Employment Type</option>{meta.jobTypes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
-                  <div><label className={labelClass}>Experience Level *</label><select className={fieldClass('experience')} value={form.experience} onChange={(e) => setValue('experience', e.target.value)}><option value="">Select Experience</option>{experienceOptions.map((item) => <option key={item} value={item}>{item}</option>)}</select></div>
-                  <div className="md:col-span-2">
+                   <div><label className={labelClass}>Employment Type *</label><select className={fieldClass('jobType')} value={form.jobType} onChange={(e) => setValue('jobType', e.target.value)}><option value="">Select Employment Type</option>{meta.jobTypes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
+                   <div className="md:col-span-2">
                     <label className={labelClass}>Work Mode *</label>
                     <div className="grid gap-2 md:grid-cols-3">
                       {[['Office', 'Office', Building2], ['Work from Home', 'Work from Home', Briefcase], ['Hybrid', 'Hybrid', Building2]].map(([value, label, Icon]) => (
