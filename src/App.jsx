@@ -55,6 +55,7 @@ const JobseekerSubscription = lazy(() => import('./pages/jobseeker/subscription/
 const JobseekerProfile = lazy(() => import('./pages/jobseeker/profile/JobseekerProfile'));
 const JobseekerSavedJobs = lazy(() => import('./pages/jobseeker/savedjobs/JobseekerSavedJobs'));
 const JobseekerSavedEmployers = lazy(() => import('./pages/jobseeker/savedemployers/JobseekerSavedEmployers'));
+const JobseekerApplicationTracker = lazy(() => import('./pages/jobseeker/applications/JobseekerApplicationTracker'));
 
 // Admin Core & Master Pages
 const Dashboard = lazy(() => import('./pages/superadmin/dashboard/Dashboard'));
@@ -391,6 +392,7 @@ function App() {
               <Route path="saved-employers" element={<JobseekerSavedEmployers />} />
               <Route path="messages" element={<JobseekerChat />} />
               <Route path="applications" element={<JobseekerApplications />} />
+              <Route path="applications/:id" element={<JobseekerApplicationTracker />} />
               
               <Route path="*" element={<Navigate to="/jobseeker" replace />} />
             </Route>

@@ -127,23 +127,45 @@ export const EmployerShortlisted = () => {
   const loadData = () => {
     setLoading(true);
     setError('');
-    axios.get(`${BASE_API_URL}/employer/applications?${queryParams}`, { headers: getTokenHeaders() })
+    
+    // Fetch all records with a large limit so we can calculate stats and paginate on client side accurately
+    const fetchParams = new URLSearchParams(queryParams);
+    fetchParams.set('limit', '10000');
+    fetchParams.set('page', '1');
+
+    axios.get(`${BASE_API_URL}/employer/applications?${fetchParams.toString()}`, { headers: getTokenHeaders() })
       .then((response) => {
-        // Filter shortlist-specific candidates: Shortlisted, Interview, Offered, Rejected
         const resData = response.data;
         let filteredApps = resData.applications || [];
         
-        // If status filter is not set on the query side, we restrict to shortlisted items on client side
+        // If status filter is not set on the query side, we restrict strictly to shortlisted items on client side
         if (!filters.status) {
-          filteredApps = filteredApps.filter(app => ['Shortlisted', 'Interview', 'Offered', 'Rejected'].includes(app.status));
+          filteredApps = filteredApps.filter(app => app.status === 'Shortlisted');
+        } else {
+          // Since we fetched all applications, we manually apply the status filter to the list
+          let targetStatus = '';
+          if (filters.status === 'Pending Interview') targetStatus = 'Shortlisted';
+          else if (filters.status === 'Interview Scheduled') targetStatus = 'Interview';
+          else if (filters.status === 'Selected') targetStatus = 'Offered';
+          else if (filters.status === 'Rejected') targetStatus = 'Rejected';
+          
+          if (targetStatus) {
+            filteredApps = filteredApps.filter(app => app.status === targetStatus);
+          }
         }
+
+        // Perform client-side pagination on the filtered results
+        const total = filteredApps.length;
+        const totalPages = Math.max(1, Math.ceil(total / pageSize));
+        const startIndex = (currentPage - 1) * pageSize;
+        const paginatedApps = filteredApps.slice(startIndex, startIndex + pageSize);
 
         setData({
           stats: resData.stats || {},
           pipeline: resData.pipeline || {},
           filters: resData.filters || {},
-          applications: filteredApps,
-          pagination: resData.pagination || { page: currentPage, limit: pageSize, total: filteredApps.length, totalPages: 1 }
+          applications: paginatedApps,
+          pagination: { page: currentPage, limit: pageSize, total, totalPages }
         });
       })
       .catch((err) => {
@@ -213,7 +235,7 @@ export const EmployerShortlisted = () => {
   // Compute dynamic stats based on all pipeline items
   const statsCounts = useMemo(() => {
     const pipe = data.pipeline || {};
-    const totalShortlisted = Number(pipe.shortlisted || 0) + Number(pipe.interview || 0) + Number(pipe.offered || 0);
+    const totalShortlisted = Number(pipe.shortlisted || 0);
     return {
       total: totalShortlisted,
       pending: Number(pipe.shortlisted || 0),

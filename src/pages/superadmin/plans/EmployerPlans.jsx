@@ -28,6 +28,8 @@ const emptyForm = {
   autoMailLimit: '',
   showBadge: false,
   badge: '',
+  showContactDetails: false,
+  allowResumeDownload: false,
   employerFeatures: ['Direct Contact Access', 'Employer Dashboard', 'Priority Support', 'Candidate Tracking'],
   offerEnabled: false,
   offerTitle: '',
@@ -195,8 +197,17 @@ export const EmployerPlanListings = () => {
                 </div>
                 <StatusBadge status={item.status} />
               </div>
+              {item.employerFeatures && item.employerFeatures.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {item.employerFeatures.map((feat, fIdx) => (
+                    <span key={fIdx} className="inline-flex px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 text-[10px] font-bold">
+                      {feat}
+                    </span>
+                  ))}
+                </div>
+              )}
               <div className="flex items-center justify-between gap-3">
-                <div className="text-xs text-slate-500">Unlock: {item.unlockCount || '-'} | Sort: {item.displayOrder}</div>
+                <div className="text-xs text-slate-500">Unlock: {item.unlockCount || '-'} | Sort: {item.displayOrder} | Contacts: {item.showContactDetails ? 'Visible' : 'Hidden'} | Resumes: {item.allowResumeDownload ? 'Allowed' : 'Blocked'}</div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => navigate(`/admin/employer-plans/edit/${item._id}`)} className="w-8 h-8 bg-teal-500 hover:bg-teal-600 text-white rounded-full flex items-center justify-center">
                     <Edit2 className="w-4 h-4" />
@@ -225,6 +236,9 @@ export const EmployerPlanListings = () => {
                 <th className="px-4 py-3.5 font-extrabold">Price (Rs.)</th>
                 <th className="px-4 py-3.5 font-extrabold">Unlock Count</th>
                 <th className="px-4 py-3.5 font-extrabold">Auto Mail Limit</th>
+                <th className="px-4 py-3.5 font-extrabold">Contacts</th>
+                <th className="px-4 py-3.5 font-extrabold">Resumes</th>
+                <th className="px-4 py-3.5 font-extrabold">Features</th>
                 <th className="px-4 py-3.5 font-extrabold">Badge</th>
                 <th className="px-4 py-3.5 font-extrabold">Sort Order</th>
                 <th className="px-4 py-3.5 font-extrabold">Status</th>
@@ -234,7 +248,7 @@ export const EmployerPlanListings = () => {
             <tbody className="divide-y divide-slate-100 text-slate-600">
               {list.length === 0 ? (
                 <tr>
-                  <td colSpan="10" className="px-6 py-8 text-center text-slate-400">No matching records found.</td>
+                  <td colSpan="13" className="px-6 py-8 text-center text-slate-400">No matching records found.</td>
                 </tr>
               ) : (
                 list.map((item, index) => (
@@ -245,6 +259,37 @@ export const EmployerPlanListings = () => {
                     <td className="px-4 py-4">{formatPrice(item.cost)}</td>
                     <td className="px-4 py-4">{item.unlockCount || '-'}</td>
                     <td className="px-4 py-4">{item.autoMailLimit || 0}</td>
+                    <td className="px-4 py-4">
+                      <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-bold border ${
+                        item.showContactDetails 
+                          ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                          : 'bg-rose-50 text-rose-600 border-rose-100'
+                      }`}>
+                        {item.showContactDetails ? 'Visible' : 'Hidden'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-bold border ${
+                        item.allowResumeDownload 
+                          ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                          : 'bg-rose-50 text-rose-600 border-rose-100'
+                      }`}>
+                        {item.allowResumeDownload ? 'Allowed' : 'Blocked'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="flex flex-wrap gap-1 max-w-[200px]">
+                        {item.employerFeatures && item.employerFeatures.length > 0 ? (
+                          item.employerFeatures.map((feat, fIdx) => (
+                            <span key={fIdx} className="inline-flex px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 text-[10px] font-bold">
+                              {feat}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-slate-400 text-xs">-</span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-4 py-4"><PlanBadge value={item.badge} /></td>
                     <td className="px-4 py-4">{item.displayOrder}</td>
                     <td className="px-4 py-4"><StatusBadge status={item.status} /></td>
@@ -359,6 +404,8 @@ export const EmployerPlanForm = () => {
           autoMailLimit: String(plan.autoMailLimit ?? ''),
           showBadge: Boolean(plan.showBadge),
           badge: plan.badge || '',
+          showContactDetails: Boolean(plan.showContactDetails),
+          allowResumeDownload: Boolean(plan.allowResumeDownload),
           employerFeatures: plan.employerFeatures?.length ? plan.employerFeatures : emptyForm.employerFeatures,
           offerEnabled: Boolean(plan.offerEnabled),
           offerTitle: plan.offerTitle || '',
@@ -372,7 +419,7 @@ export const EmployerPlanForm = () => {
     };
     fetchPlan();
   }, [id]);
-
+ 
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!form.planName.trim()) {
@@ -387,7 +434,7 @@ export const EmployerPlanForm = () => {
       setAlert({ type: 'error', text: 'Sort Order is required.' });
       return;
     }
-
+ 
     const payload = {
       category: 'Employer',
       planName: form.planName,
@@ -399,6 +446,8 @@ export const EmployerPlanForm = () => {
       autoMailLimit: Number(form.autoMailLimit) || 0,
       showBadge: form.showBadge,
       badge: form.badge,
+      showContactDetails: form.showContactDetails,
+      allowResumeDownload: form.allowResumeDownload,
       planSubtitle: form.planSubtitle,
       employerFeatures: form.employerFeatures,
       offerEnabled: form.offerEnabled,
@@ -512,6 +561,32 @@ export const EmployerPlanForm = () => {
                         <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${form.status === 'active' ? 'translate-x-4' : 'translate-x-0.5'}`} />
                       </span>
                       Active
+                    </button>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-600 mb-3">Candidate Contacts</label>
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, showContactDetails: !form.showContactDetails })}
+                      className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600"
+                    >
+                      <span className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${form.showContactDetails ? 'bg-indigo-600' : 'bg-slate-300'}`}>
+                        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${form.showContactDetails ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                      </span>
+                      {form.showContactDetails ? 'Show' : 'Hide'}
+                    </button>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-600 mb-3">Resume Downloads</label>
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, allowResumeDownload: !form.allowResumeDownload })}
+                      className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600"
+                    >
+                      <span className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${form.allowResumeDownload ? 'bg-indigo-600' : 'bg-slate-300'}`}>
+                        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${form.allowResumeDownload ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                      </span>
+                      {form.allowResumeDownload ? 'Allowed' : 'Blocked'}
                     </button>
                   </div>
                 </div>

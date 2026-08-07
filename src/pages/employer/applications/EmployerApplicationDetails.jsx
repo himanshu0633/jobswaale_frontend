@@ -147,6 +147,13 @@ const EmployerApplicationDetails = () => {
   const job = application.job || {};
   const resumeHref = candidate.resume ? `${BASE_API_URL.replace(/\/api$/, '')}/${candidate.resume}` : '#';
 
+  const handleResumeDownload = (e) => {
+    if (candidate.hasResume && !candidate.allowResumeDownload) {
+      e.preventDefault();
+      alert('Upgrade Plan: Resume downloads are not supported under your current plan. Please upgrade to download resumes.');
+    }
+  };
+
   return (
     <div className="space-y-5">
       <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
@@ -177,7 +184,13 @@ const EmployerApplicationDetails = () => {
         <ActionButton tone="bg-[#6658dd] text-white hover:bg-[#5848d8]" icon={CalendarPlus} onClick={scheduleInterview} disabled={Boolean(saving)}>Schedule Interview</ActionButton>
         <ActionButton tone="bg-emerald-500 text-white hover:bg-emerald-600" icon={UserPlus} onClick={() => updateStatus('Offered')} disabled={Boolean(saving)}>Select</ActionButton>
         <ActionButton tone="border border-rose-200 bg-white text-rose-600 hover:bg-rose-50" icon={UserX} onClick={() => updateStatus('Rejected')} disabled={Boolean(saving)}>Reject</ActionButton>
-        <a href={resumeHref} target="_blank" rel="noreferrer" className={`inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-600 transition hover:bg-slate-50 ${!candidate.resume ? 'pointer-events-none opacity-60' : ''}`}>
+        <a 
+          href={resumeHref} 
+          target="_blank" 
+          rel="noreferrer" 
+          onClick={handleResumeDownload}
+          className={`inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-600 transition hover:bg-slate-50 ${!candidate.hasResume ? 'pointer-events-none opacity-60' : ''}`}
+        >
           <Download className="h-4 w-4" /> Download Resume
         </a>
       </div>
@@ -286,7 +299,15 @@ const EmployerApplicationDetails = () => {
               <ActionButton tone="bg-[#6658dd] text-white hover:bg-[#5848d8]" icon={CalendarPlus} onClick={scheduleInterview} disabled={Boolean(saving)}>Schedule Interview</ActionButton>
               <ActionButton tone="bg-emerald-500 text-white hover:bg-emerald-600" icon={UserPlus} onClick={() => updateStatus('Offered')} disabled={Boolean(saving)}>Move to Selected</ActionButton>
               <ActionButton tone="border border-rose-200 bg-white text-rose-600 hover:bg-rose-50" icon={UserX} onClick={() => updateStatus('Rejected')} disabled={Boolean(saving)}>Reject Application</ActionButton>
-              <a href={resumeHref} target="_blank" rel="noreferrer" className={`inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-600 transition hover:bg-slate-50 ${!candidate.resume ? 'pointer-events-none opacity-60' : ''}`}><Download className="h-4 w-4" /> Download Resume</a>
+              <a 
+                href={resumeHref} 
+                target="_blank" 
+                rel="noreferrer" 
+                onClick={handleResumeDownload}
+                className={`inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-600 transition hover:bg-slate-50 ${!candidate.hasResume ? 'pointer-events-none opacity-60' : ''}`}
+              >
+                <Download className="h-4 w-4" /> Download Resume
+              </a>
             </div>
           </Card>
         </aside>

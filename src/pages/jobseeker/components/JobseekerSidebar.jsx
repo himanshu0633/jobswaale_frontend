@@ -113,7 +113,7 @@ export const JobseekerSidebar = ({ isOpen, toggleSidebar }) => {
       );
     } catch {
       setProfile((current) => ({ ...current, jobSearchStatus: previousStatus }));
-      window.alert('Job search status update nahi ho paaya. Please try again.');
+      window.alert('Failed to update job search status. Please try again.');
     } finally {
       setSavingStatus(false);
     }

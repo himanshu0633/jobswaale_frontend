@@ -89,10 +89,23 @@ const CandidateActions = ({ candidate, isOpen, onToggle, onClose, align = 'right
         <div className={`absolute ${align} z-20 w-44 rounded-md border border-slate-100 bg-white py-1.5 text-left shadow-lg`}>
           <Link to="/employer/candidates" className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"><User className="h-4 w-4" /> View Profile</Link>
           <Link to="/employer/messages" className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"><MessageCircle className="h-4 w-4" /> Contact</Link>
-          {candidate.resume ? (
-            <a href={candidate.resume} className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"><Download className="h-4 w-4" /> Download Resume</a>
+          {candidate.hasResume ? (
+            <a 
+              href={candidate.resume ? `${BASE_API_URL.replace(/\/api$/, '')}/${candidate.resume}` : '#'} 
+              onClick={(e) => {
+                if (!candidate.allowResumeDownload) {
+                  e.preventDefault();
+                  alert('Upgrade Plan: Resume downloads are not supported under your current plan. Please upgrade to download resumes.');
+                }
+              }}
+              className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"
+            >
+              <Download className="h-4 w-4" /> Download Resume
+            </a>
           ) : (
-            <button type="button" className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-bold text-slate-400"><Download className="h-4 w-4" /> No Resume</button>
+            <button type="button" className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-bold text-slate-400" disabled>
+              <Download className="h-4 w-4" /> No Resume
+            </button>
           )}
         </div>
       </>

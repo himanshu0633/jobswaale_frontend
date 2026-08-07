@@ -129,7 +129,7 @@ export const EmployerAutoMail = () => {
         setPlan(response.data?.plan || null);
         setCities(cityRows || []);
       })
-      .catch((error) => setAlert({ type: 'error', text: error.response?.data?.message || 'Auto mail settings load nahi ho paayi.' }))
+      .catch((error) => setAlert({ type: 'error', text: error.response?.data?.message || 'Failed to load auto mail settings.' }))
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
@@ -156,7 +156,7 @@ export const EmployerAutoMail = () => {
       setSettings(nextSettings);
       setAlert({ type: 'success', text: 'Auto mail settings saved successfully.' });
     } catch (error) {
-      setAlert({ type: 'error', text: error.response?.data?.message || 'Settings save nahi ho paayi.' });
+      setAlert({ type: 'error', text: error.response?.data?.message || 'Failed to save settings.' });
     } finally {
       setSaving(false);
     }
@@ -214,7 +214,7 @@ export const EmployerAutoMail = () => {
             </span>
             <div>
               <h2 className="text-base font-extrabold text-[#3f4254]">Campaign Control</h2>
-              <p className="text-xs font-semibold text-slate-400">Job post hote hi category matched candidates ko mail jayegi.</p>
+              <p className="text-xs font-semibold text-slate-400">Automatically emails category-matched candidates immediately when a job is published.</p>
             </div>
           </div>
           <button

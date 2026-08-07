@@ -29,16 +29,20 @@ const filterTabs = [
 const statusStyles = {
   applied: 'bg-blue-50 text-blue-600',
   pending: 'bg-amber-50 text-amber-600',
+  reviewed: 'bg-cyan-50 text-cyan-600',
   shortlisted: 'bg-emerald-50 text-emerald-600',
-  interview: 'bg-sky-50 text-sky-600',
+  interview: 'bg-indigo-50 text-indigo-600',
+  offered: 'bg-emerald-100 text-emerald-800',
   rejected: 'bg-rose-50 text-rose-600'
 };
 
 const statusLabels = {
   applied: 'Applied',
   pending: 'Pending',
+  reviewed: 'Reviewed',
   shortlisted: 'Shortlisted',
   interview: 'Interview',
+  offered: 'Offered / Selected',
   rejected: 'Rejected'
 };
 
@@ -190,14 +194,10 @@ export const JobseekerApplications = () => {
 
             <div className="flex shrink-0 flex-wrap gap-2">
               <Link
-                to={`/jobs/${job.jobId}`}
-                className={`rounded-md px-4 py-2 text-center text-sm font-bold transition ${
-                  job.status === 'rejected'
-                    ? 'border border-slate-200 text-slate-400 hover:bg-slate-50'
-                    : 'border border-[#0047C7] text-[#0047C7] hover:bg-blue-50'
-                }`}
+                to={`/jobseeker/applications/${job.id}`}
+                className="rounded-md border border-[#0047C7] text-[#0047C7] hover:bg-blue-50 px-4 py-2 text-center text-sm font-bold transition"
               >
-                View Details
+                Track Application
               </Link>
               {canJobseekerMessage(job.status) && (
                 <Link

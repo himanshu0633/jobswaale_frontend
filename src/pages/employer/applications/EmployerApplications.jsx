@@ -128,6 +128,21 @@ export const EmployerApplications = () => {
   const optionFilters = data.filters || {};
   const goToPage = (page) => setCurrentPage(Math.min(Math.max(page, 1), pagination.totalPages || 1));
 
+  const handleStatusUpdate = async (appId, nextStatus) => {
+    try {
+      await axios.patch(
+        `${BASE_API_URL}/employer/applications/${appId}/status`,
+        { status: nextStatus },
+        { headers: getTokenHeaders() }
+      );
+      // Refresh the application list
+      const response = await axios.get(`${BASE_API_URL}/employer/applications?${queryParams}`, { headers: getTokenHeaders() });
+      setData(prev => ({ ...prev, ...response.data }));
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update application status.');
+    }
+  };
+
   return (
     <div className="space-y-4 px-3 sm:space-y-5 sm:px-0">
       <div className="flex flex-col justify-between gap-2 md:flex-row md:items-center md:gap-3">
@@ -167,6 +182,32 @@ export const EmployerApplications = () => {
         </div>
 
         <div className="p-4 sm:p-5">
+          {/* Quick Status Filter Tabs */}
+          <div className="flex flex-wrap gap-1.5 border-b border-dashed border-slate-100 pb-4 mb-5">
+            {[
+              { key: '', label: 'All Applications' },
+              { key: 'Applied', label: 'Waiting for Review' },
+              { key: 'Reviewed', label: 'Reviewed' },
+              { key: 'Shortlisted', label: 'Shortlisted' },
+              { key: 'Interview', label: 'Interview Scheduled' },
+              { key: 'Offered', label: 'Selected / Offered' },
+              { key: 'Rejected', label: 'Rejected' }
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setFilter('status', tab.key)}
+                className={`rounded-full px-4 py-1.5 text-xs font-bold transition border ${
+                  filters.status === tab.key
+                    ? 'bg-[#6658dd] text-white border-[#6658dd] shadow-sm'
+                    : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
           <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto]">
             <div>
               <label className="mb-2 block text-xs font-extrabold text-slate-500">Search Candidate / Job</label>
@@ -205,9 +246,49 @@ export const EmployerApplications = () => {
                   <p><span className="text-slate-400">Experience:</span> {application.experience}</p>
                   <p><span className="text-slate-400">Applied:</span> {application.displayDate}</p>
                 </div>
-                <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
+                <div className="mt-3 flex flex-wrap items-center justify-between border-t border-slate-100 pt-3 gap-2">
                   <span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${scoreTone(application.matchScore)}`}>{application.matchScore}% match</span>
-                  <Link to="/employer/applications" className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-[#6658dd] px-3 text-xs font-extrabold text-[#6658dd] transition hover:bg-violet-50"><Eye className="h-4 w-4" />View</Link>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {application.status === 'Applied' && (
+                      <>
+                        <button
+                          onClick={() => handleStatusUpdate(application.id, 'Reviewed')}
+                          className="inline-flex h-8 items-center justify-center gap-1 rounded bg-sky-50 px-2 text-[10px] font-bold text-sky-600 border border-sky-100"
+                        >
+                          Review
+                        </button>
+                        <button
+                          onClick={() => handleStatusUpdate(application.id, 'Shortlisted')}
+                          className="inline-flex h-8 items-center justify-center gap-1 rounded bg-amber-50 px-2 text-[10px] font-bold text-amber-600 border border-amber-100"
+                        >
+                          Shortlist
+                        </button>
+                        <button
+                          onClick={() => handleStatusUpdate(application.id, 'Rejected')}
+                          className="inline-flex h-8 items-center justify-center gap-1 rounded bg-rose-50 px-2 text-[10px] font-bold text-rose-600 border border-rose-100"
+                        >
+                          Reject
+                        </button>
+                      </>
+                    )}
+                    {application.status === 'Reviewed' && (
+                      <>
+                        <button
+                          onClick={() => handleStatusUpdate(application.id, 'Shortlisted')}
+                          className="inline-flex h-8 items-center justify-center gap-1 rounded bg-amber-50 px-2 text-[10px] font-bold text-amber-600 border border-amber-100"
+                        >
+                          Shortlist
+                        </button>
+                        <button
+                          onClick={() => handleStatusUpdate(application.id, 'Rejected')}
+                          className="inline-flex h-8 items-center justify-center gap-1 rounded bg-rose-50 px-2 text-[10px] font-bold text-rose-600 border border-rose-100"
+                        >
+                          Reject
+                        </button>
+                      </>
+                    )}
+                    <Link to={`/employer/applications/${application.id}`} className="inline-flex h-8 items-center justify-center gap-1 rounded border border-[#6658dd] px-2 text-[10px] font-extrabold text-[#6658dd] transition hover:bg-violet-50">View</Link>
+                  </div>
                 </div>
               </div>
             )) : (
@@ -228,7 +309,55 @@ export const EmployerApplications = () => {
                     <td className="px-5 py-4 text-sm font-semibold text-slate-600">{application.displayDate}</td>
                     <td className="px-5 py-4"><span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${scoreTone(application.matchScore)}`}>{application.matchScore}%</span></td>
                     <td className="px-5 py-4"><span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${statusTone[application.status] || statusTone.Applied}`}>{application.status}</span></td>
-                    <td className="px-5 py-4 text-center"><div className="inline-flex items-center gap-2"><Link to={`/employer/applications/${application.id}`} className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-[#6658dd] px-3 text-xs font-extrabold text-[#6658dd] transition hover:bg-violet-50"><Eye className="h-4 w-4" />View</Link><Link to={`/employer/messages?application=${application.id}`} className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-sky-200 px-3 text-xs font-extrabold text-sky-600 transition hover:bg-sky-50"><MessageCircle className="h-4 w-4" />Message</Link></div></td>
+                    <td className="px-5 py-4 text-center">
+                      <div className="inline-flex items-center gap-1.5 justify-center">
+                        {application.status === 'Applied' && (
+                          <>
+                            <button
+                              onClick={() => handleStatusUpdate(application.id, 'Reviewed')}
+                              title="Mark as Reviewed"
+                              className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md bg-sky-50 px-2 text-xs font-bold text-sky-600 hover:bg-sky-100 transition border border-sky-100"
+                            >
+                              Review
+                            </button>
+                            <button
+                              onClick={() => handleStatusUpdate(application.id, 'Shortlisted')}
+                              title="Shortlist Candidate"
+                              className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md bg-amber-50 px-2 text-xs font-bold text-amber-600 hover:bg-amber-100 transition border border-amber-100"
+                            >
+                              Shortlist
+                            </button>
+                            <button
+                              onClick={() => handleStatusUpdate(application.id, 'Rejected')}
+                              title="Reject Candidate"
+                              className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md bg-rose-50 px-2 text-xs font-bold text-rose-600 hover:bg-rose-100 transition border border-rose-100"
+                            >
+                              Reject
+                            </button>
+                          </>
+                        )}
+                        {application.status === 'Reviewed' && (
+                          <>
+                            <button
+                              onClick={() => handleStatusUpdate(application.id, 'Shortlisted')}
+                              title="Shortlist Candidate"
+                              className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md bg-amber-50 px-2 text-xs font-bold text-amber-600 hover:bg-amber-100 transition border border-amber-100"
+                            >
+                              Shortlist
+                            </button>
+                            <button
+                              onClick={() => handleStatusUpdate(application.id, 'Rejected')}
+                              title="Reject Candidate"
+                              className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md bg-rose-50 px-2 text-xs font-bold text-rose-600 hover:bg-rose-100 transition border border-rose-100"
+                            >
+                              Reject
+                            </button>
+                          </>
+                        )}
+                        <Link to={`/employer/applications/${application.id}`} className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-[#6658dd] px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-violet-50"><Eye className="h-3.5 w-3.5" />View</Link>
+                        <Link to={`/employer/messages?application=${application.id}`} className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-sky-200 px-2 text-xs font-extrabold text-sky-600 transition hover:bg-sky-50"><MessageCircle className="h-3.5 w-3.5" />Message</Link>
+                      </div>
+                    </td>
                   </tr>
                 )) : <tr><td colSpan="7" className="px-5 py-12 text-center text-sm font-bold text-slate-400">No applications found.</td></tr>}
               </tbody>
