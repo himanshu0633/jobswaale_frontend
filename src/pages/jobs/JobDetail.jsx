@@ -27,6 +27,19 @@ const logoTones = {
   Flipkart: 'bg-amber-500 text-slate-800'
 };
 
+const getJobLocationLabels = (job) => {
+  const labels = [];
+  const cityState = [job.city, job.state].map(value => String(value || '').trim()).filter(Boolean).join(', ');
+  if (cityState) labels.push(cityState);
+  if (Array.isArray(job.jobLocations)) {
+    job.jobLocations.forEach((location) => {
+      const cleanLocation = String(location || '').trim();
+      if (cleanLocation) labels.push(cleanLocation);
+    });
+  }
+  return labels;
+};
+
 const overviewRows = [
   { key: 'level', label: 'Job Level', icon: User },
   { key: 'experience', label: 'Experience Required', icon: Star },
@@ -117,6 +130,8 @@ export const JobDetail = () => {
   const [saved, setSaved] = useState(false);
   const [toggling, setToggling] = useState(false);
   const [matchScore, setMatchScore] = useState(null);
+  const [categoryJobs, setCategoryJobs] = useState([]);
+  const [categoryLoading, setCategoryLoading] = useState(false);
 
   const [isJobseeker, setIsJobseeker] = useState(false);
   const [showAuthPopup, setShowAuthPopup] = useState(false);
@@ -203,6 +218,33 @@ export const JobDetail = () => {
 
     loadJob();
   }, [id]);
+
+  useEffect(() => {
+    const fetchCategoryJobs = async () => {
+      setCategoryLoading(true);
+      try {
+        const response = await axios.get(`${BASE_API_URL}/jobs`, { headers: {} });
+        const jobs = (response.data || []).map(j => ({
+          id: j.slug || j._id,
+          title: j.jobTitle,
+          company: j.companyName,
+          location: getJobLocationLabels(j)[0] || 'Location not specified',
+          salary: j.salary || (j.minSalary && j.maxSalary ? `₹${j.minSalary} - ${j.maxSalary}` : 'Not Specified'),
+          type: j.jobType?.jobType || j.workMode || 'Full Time',
+          category: j.jobCategory?.categoryName || 'IT & Software',
+          experience: j.experience,
+          logoLetter: j.companyName ? j.companyName.charAt(0).toUpperCase() : 'J',
+          logoBg: ['bg-red-500', 'bg-blue-600', 'bg-emerald-500', 'bg-purple-500', 'bg-amber-500'][Math.floor(Math.random() * 5)]
+        }));
+        setCategoryJobs(jobs);
+      } catch (err) {
+        console.error('Fetch jobs error:', err);
+      } finally {
+        setCategoryLoading(false);
+      }
+    };
+    fetchCategoryJobs();
+  }, []);
 
   const handleApply = async (event) => {
     event.preventDefault();
@@ -446,12 +488,12 @@ export const JobDetail = () => {
                       </span>
                     )}
                   </div>
-                  <Link
+                  {/* <Link
                     to="/jobs"
                     className="inline-block rounded-md bg-[#0047C7] px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-[#0035a0]"
                   >
                     Apply for more jobs
-                  </Link>
+                  </Link> */}
                 </div>
               ) : (
                 <form onSubmit={handleApply} className="space-y-4">
@@ -533,9 +575,90 @@ export const JobDetail = () => {
                     {applying ? 'Submitting...' : 'Submit Application'}
                   </button>
                 </form>
-              )}
-            </section>
-          )}
+                )}
+             </section>
+           )}
+
+             <section className="rounded-md border border-slate-100 bg-white p-6 shadow-sm sm:p-8">
+                  <h2 className="text-lg font-extrabold text-[#0f172a]">More Jobs in This Category</h2>
+                  <p className="mt-1 mb-4 text-sm font-semibold text-slate-500">
+                    Explore other opportunities in <span className="font-bold text-[#0f172a]">{job.jobCategory?.categoryName || job.category}</span>.
+                  </p>
+                  <div className="max-h-[320px] overflow-y-auto pr-1">
+                    <style dangerouslySetInnerHTML={{__html: `
+                      .more-jobs-scroll::-webkit-scrollbar { width: 6px; }
+                      .more-jobs-scroll::-webkit-scrollbar-track { background: transparent; }
+                      .more-jobs-scroll::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.15); border-radius: 999px; }
+                    `}} />
+                    <div className="more-jobs-scroll">
+                 {categoryLoading ? (
+                   <div className="grid gap-4 sm:grid-cols-2">
+                     {[1, 2, 3, 4].map((i) => (
+                       <div key={i} className="rounded-[12px] border border-[rgba(6,18,36,0.1)] bg-white p-[1.8rem] flex flex-col min-h-[180px]">
+                         <div className="flex items-start">
+                           <div className="w-12 h-12 rounded-full bg-slate-200 shrink-0" />
+                           <div className="ms-4 space-y-2 flex-grow">
+                             <div className="h-4 w-3/4 bg-slate-200 rounded" />
+                             <div className="h-3 w-1/2 bg-slate-200 rounded" />
+                             <div className="h-3 w-1/3 bg-slate-200 rounded mt-3" />
+                           </div>
+                         </div>
+                         <div className="border-t border-[#eef1f6] pt-4 mt-auto flex items-center justify-between" style={{ marginTop: '7%' }}>
+                           <div className="h-4 w-20 bg-slate-200 rounded" />
+                           <div className="h-6 w-16 bg-slate-200 rounded-full" />
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                 ) : categoryJobs.length > 0 ? (
+                   <div className="grid gap-4 sm:grid-cols-2">
+                     {categoryJobs.map((jobItem) => (
+                       <div
+                         key={jobItem.id}
+                         className="rounded-[12px] border border-[rgba(6,18,36,0.1)] bg-white p-[1.8rem] flex flex-col h-full transition-all duration-300 ease-in-out hover:shadow-[0_10px_25px_rgba(0,0,0,0.06)] hover:-translate-y-1 hover:border-[rgba(0,102,255,0.2)]"
+                       >
+                         <div className="flex items-start">
+                           <div className="flex-shrink-0">
+                             <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg text-white ${jobItem.logoBg}`}>
+                               {jobItem.logoLetter}
+                             </div>
+                           </div>
+                           <div className="flex-grow-1 ms-4 min-w-0">
+                             <h3 className="job-title font-bold text-[#1f2938] text-base leading-snug truncate">
+                               <Link to={`/jobs/${jobItem.id}`} className="text-dark hover:text-[#0047C7]">
+                                 {jobItem.title}
+                               </Link>
+                             </h3>
+                             <p className="company-name text-xs font-bold text-[black] truncate mb-2 mt-2">
+                               {jobItem.company}
+                             </p>
+                             <div className="job-meta-list flex items-center gap-1 text-xs text-[#88929b]">
+                               <MapPin className="h-3.5 w-3.5 text-[#88929b] shrink-0" />
+                               <span>{jobItem.location}</span>
+                             </div>
+                           </div>
+                         </div>
+                         <div className="job-footer mt-auto pt-4 flex items-center justify-between" style={{ borderTop: '1px solid #d8d2d2', marginTop:'7%' }}>
+                           <span className="job-salary text-sm font-bold text-[black]">{jobItem.salary}</span>
+                           <span className="job-badge px-3 py-1 rounded-[6px] bg-[rgba(0,71,199,0.12)] text-blue-500 text-xs font-medium">
+                             {jobItem.type}
+                           </span>
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                 ) : (
+                   <p className="text-sm font-semibold text-slate-400">No other jobs found in this category.</p>
+                 )}
+               </div>
+             </div>
+                 <Link
+                   to={`/jobs?category=${encodeURIComponent(job.jobCategory?.categoryName || job.category)}`}
+                   className="mt-4 inline-block rounded-md bg-[#0047C7] px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-[#0035a0]"
+                 >
+                   Apply for more jobs
+                 </Link>
+               </section>
 
         </div>
 
