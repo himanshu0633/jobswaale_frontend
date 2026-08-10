@@ -224,18 +224,26 @@ export const JobDetail = () => {
       setCategoryLoading(true);
       try {
         const response = await axios.get(`${BASE_API_URL}/jobs`, { headers: {} });
-        const jobs = (response.data || []).map(j => ({
-          id: j.slug || j._id,
-          title: j.jobTitle,
-          company: j.companyName,
-          location: getJobLocationLabels(j)[0] || 'Location not specified',
-          salary: j.salary || (j.minSalary && j.maxSalary ? `₹${j.minSalary} - ${j.maxSalary}` : 'Not Specified'),
-          type: j.jobType?.jobType || j.workMode || 'Full Time',
-          category: j.jobCategory?.categoryName || 'IT & Software',
-          experience: j.experience,
-          logoLetter: j.companyName ? j.companyName.charAt(0).toUpperCase() : 'J',
-          logoBg: ['bg-red-500', 'bg-blue-600', 'bg-emerald-500', 'bg-purple-500', 'bg-amber-500'][Math.floor(Math.random() * 5)]
-        }));
+        const currentTitle = String(data?.job?.jobTitle || data?.job?.title || '').toLowerCase();
+        const keywords = currentTitle.split(/\s+/).filter(word => word.length > 3);
+        const jobs = (response.data || [])
+          .filter(j => j._id !== id && j._id !== data?.job?._id)
+          .filter(j => {
+            const otherTitle = String(j.jobTitle || j.title || '').toLowerCase();
+            return keywords.some(keyword => otherTitle.includes(keyword));
+          })
+          .map(j => ({
+            id: j.slug || j._id,
+            title: j.jobTitle,
+            company: j.companyName,
+            location: getJobLocationLabels(j)[0] || 'Location not specified',
+            salary: j.salary || (j.minSalary && j.maxSalary ? `₹${j.minSalary} - ${j.maxSalary}` : 'Not Specified'),
+            type: j.jobType?.jobType || j.workMode || 'Full Time',
+            category: j.jobCategory?.categoryName || 'IT & Software',
+            experience: j.experience,
+            logoLetter: j.companyName ? j.companyName.charAt(0).toUpperCase() : 'J',
+            logoBg: ['bg-red-500', 'bg-blue-600', 'bg-emerald-500', 'bg-purple-500', 'bg-amber-500'][Math.floor(Math.random() * 5)]
+          }));
         setCategoryJobs(jobs);
       } catch (err) {
         console.error('Fetch jobs error:', err);
@@ -244,7 +252,7 @@ export const JobDetail = () => {
       }
     };
     fetchCategoryJobs();
-  }, []);
+  }, [id, data]);
 
   const handleApply = async (event) => {
     event.preventDefault();
