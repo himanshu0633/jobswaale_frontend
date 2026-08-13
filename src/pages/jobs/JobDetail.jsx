@@ -12,13 +12,21 @@ import {
   Star,
   User
 } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { BASE_API_URL } from '../../context/AuthContext';
 import { formatJobSalary } from '../../utils/salary';
 
 const emptyJob = {
   job: null,
   company: {}
+};
+
+const getPublicUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem('publicUser') || 'null');
+  } catch {
+    return null;
+  }
 };
 
 const logoTones = {
@@ -122,6 +130,7 @@ const JobDetailSkeleton = () => (
 
 export const JobDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [data, setData] = useState(emptyJob);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -136,6 +145,7 @@ export const JobDetail = () => {
 
   const [isJobseeker, setIsJobseeker] = useState(false);
   const [showAuthPopup, setShowAuthPopup] = useState(false);
+  const [showEmployerLogoutConfirm, setShowEmployerLogoutConfirm] = useState(false);
   const [profile, setProfile] = useState(null);
   const [profileName, setProfileName] = useState('');
   const [profileEmail, setProfileEmail] = useState('');
@@ -783,25 +793,67 @@ export const JobDetail = () => {
       {showAuthPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4">
           <div className="w-full max-w-md rounded-2xl border border-slate-100 bg-white p-6 shadow-2xl text-center">
-            <h3 className="text-lg font-extrabold text-slate-900">Jobseeker Login Required</h3>
-            <p className="mt-3 text-sm font-semibold text-slate-600 leading-relaxed">
-              To apply for this job and view full details, please log in with your Jobseeker account.
-            </p>
-            <div className="mt-6 flex items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={() => setShowAuthPopup(false)}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-extrabold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
-              >
-                Cancel
-              </button>
-              <Link
-                to="/login?role=jobseeker"
-                className="rounded-xl bg-[#0047C7] px-5 py-2.5 text-sm font-extrabold text-white hover:bg-[#0035a0] transition inline-block text-center"
-              >
-                Log In
-              </Link>
-            </div>
+            {showEmployerLogoutConfirm ? (
+              <>
+                <h3 className="text-lg font-extrabold text-slate-900">Switch to Jobseeker?</h3>
+                <p className="mt-3 text-sm font-semibold text-slate-600 leading-relaxed">
+                  You are currently logged in as an employer. Do you want to logout and continue as a jobseeker?
+                </p>
+                <div className="mt-6 flex items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowEmployerLogoutConfirm(false)}
+                    className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-extrabold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+                  >
+                    No, go back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      localStorage.removeItem('publicUser');
+                      localStorage.removeItem('publicToken');
+                      navigate('/login?role=jobseeker', { replace: true });
+                    }}
+                    className="rounded-xl bg-[#0047C7] px-5 py-2.5 text-sm font-extrabold text-white hover:bg-[#0035a0] transition inline-block text-center cursor-pointer"
+                  >
+                    Yes, logout & login as jobseeker
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 className="text-lg font-extrabold text-slate-900">Jobseeker Login Required</h3>
+                <p className="mt-3 text-sm font-semibold text-slate-600 leading-relaxed">
+                  To apply for this job and view full details, please log in with your Jobseeker account.
+                </p>
+                <div className="mt-6 flex items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => { setShowAuthPopup(false); setShowEmployerLogoutConfirm(false); navigate('/jobs'); }}
+                    className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-extrabold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const user = getPublicUser();
+                      const accountType = String(user?.accountType || '').toLowerCase();
+                      const role = String(user?.role || '').toLowerCase();
+                      const isEmployer = accountType === 'employer' || role === 'employer';
+                      if (isEmployer) {
+                        setShowEmployerLogoutConfirm(true);
+                      } else {
+                        navigate('/login?role=jobseeker');
+                      }
+                    }}
+                    className="rounded-xl bg-[#0047C7] px-5 py-2.5 text-sm font-extrabold text-white hover:bg-[#0035a0] transition inline-block text-center cursor-pointer"
+                  >
+                    Log In
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
