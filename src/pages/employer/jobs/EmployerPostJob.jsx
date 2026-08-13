@@ -20,6 +20,7 @@ import {
   Tags
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import PageSkeleton from '../../../components/SkeletonLoader';
 
 const today = () => new Date().toISOString().split('T')[0];
 const toDateInput = (value) => {
@@ -430,11 +431,7 @@ export const EmployerPostJob = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex min-h-[420px] items-center justify-center">
-        <Loader className="h-8 w-8 animate-spin text-[#6658dd]" />
-      </div>
-    );
+    return <PageSkeleton variant="form" />;
   }
 
   return (

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import PageSkeleton from '../../../components/SkeletonLoader';
 import {
   AlertCircle,
   Briefcase,
@@ -199,11 +200,7 @@ export const PostJob = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader className="w-8 h-8 animate-spin text-indigo-600" />
-      </div>
-    );
+    return <PageSkeleton variant="table" />;
   }
 
   return (

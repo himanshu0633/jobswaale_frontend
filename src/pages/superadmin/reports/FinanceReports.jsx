@@ -19,7 +19,7 @@ import {
 
 export const FinanceReports = () => {
   const [transactions, setTransactions] = useState([]);
-  const [stats, setStats] = useState({ totalRevenue: 12500, successful: 18, pending: 3, failedRefunded: 2 });
+  const [stats, setStats] = useState({ totalRevenue: 0, successful: 0, pending: 0, failedRefunded: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 

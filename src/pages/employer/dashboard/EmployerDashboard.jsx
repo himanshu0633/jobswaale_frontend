@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import PageSkeleton from '../../../components/SkeletonLoader';
 
 const emptyDashboard = {
   company: {},
@@ -32,7 +33,9 @@ const emptyDashboard = {
 
 const formatDate = (value, fallback = '-') => {
   if (!value) return fallback;
-  return new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(value));
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return fallback;
+  return `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
 };
 
 const actionConfig = [
@@ -99,11 +102,7 @@ export const EmployerDashboard = () => {
   }, [dashboard.pipeline]);
 
   if (loading) {
-    return (
-      <div className="flex min-h-[420px] items-center justify-center">
-        <div className="h-9 w-9 animate-spin rounded-full border-4 border-[#6658dd] border-t-transparent" />
-      </div>
-    );
+    return <PageSkeleton variant="dashboard" />;
   }
 
   return (
@@ -373,8 +372,9 @@ export const EmployerDashboard = () => {
       <div className="grid gap-5 pb-2 sm:gap-7 xl:grid-cols-[1.2fr_0.8fr]">
         {/* Upcoming Interviews */}
         <section className="rounded-md border border-slate-100 bg-white shadow-sm">
-          <div className="border-b border-dashed border-slate-200 px-4 py-4 sm:px-6 sm:py-5">
+          <div className="flex flex-col gap-2 border-b border-dashed border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
             <h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Upcoming Interviews</h2>
+            <Link to="/employer/interviews" className="text-xs font-extrabold text-[#6658dd] sm:text-sm">View Calendar <ArrowRight className="inline h-4 w-4" /></Link>
           </div>
           <div className="divide-y divide-slate-100">
             {(dashboard.upcomingInterviews || []).map((item) => (
@@ -383,7 +383,12 @@ export const EmployerDashboard = () => {
                   <p className="truncate text-sm font-extrabold text-slate-800">{item.candidateName}</p>
                   <p className="truncate text-xs font-semibold text-slate-400">{item.position}</p>
                 </div>
-                <p className="order-3 text-xs font-bold text-slate-500 sm:order-none">{formatDate(item.scheduledAt)}</p>
+                <div className="order-3 flex flex-wrap gap-2 sm:order-none sm:justify-end">
+                  <span className="inline-flex items-center rounded bg-indigo-50 px-2.5 py-1 text-xs font-extrabold text-[#6658dd]">{formatDate(item.scheduledAt)}</span>
+                  {item.scheduledTime && (
+                    <span className="inline-flex items-center rounded bg-amber-50 px-2.5 py-1 text-xs font-extrabold text-amber-600">{item.scheduledTime}</span>
+                  )}
+                </div>
                 <div className="flex shrink-0 gap-2">
                   <button type="button" className="rounded bg-emerald-500 p-2 text-white"><Check className="h-4 w-4" /></button>
                   <button type="button" className="rounded bg-slate-100 p-2 text-slate-600"><Eye className="h-4 w-4" /></button>

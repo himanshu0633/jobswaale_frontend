@@ -25,6 +25,7 @@ import {
   Upload
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import PageSkeleton from '../../../components/SkeletonLoader';
 
 const Linkedin = (props) => (
   <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className={props.className}>
@@ -221,14 +222,10 @@ export const EmployerCompanyProfile = () => {
     : [];
 
   if (loading) {
-    return (
-      <div className="flex min-h-[450px] items-center justify-center">
-        <Loader className="h-9 w-9 animate-spin text-[#6658dd]" />
-      </div>
-    );
+    return <PageSkeleton variant="detail" />;
   }
 
-  const stats = profile?.stats || { activeJobs: 0, hired: 0, profileViews: 5230, rating: 4.2 };
+  const stats = profile?.stats || { activeJobs: 0, hired: 0, profileViews: 0, rating: 0 };
   const subscription = profile?.subscription || { planName: 'Free', status: 'Active', validUntil: null, jobsUsed: 0, jobLimit: 50, remainingCredits: 50, utilization: 0 };
   const valueTextClass = (value) => (
     value ? 'text-sm font-extrabold text-[#3f4254]' : 'text-sm font-semibold text-slate-400'

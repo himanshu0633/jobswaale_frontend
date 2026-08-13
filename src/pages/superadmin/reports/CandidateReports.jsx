@@ -19,7 +19,7 @@ import {
 
 export const CandidateReports = () => {
   const [candidates, setCandidates] = useState([]);
-  const [stats, setStats] = useState({ totalCandidates: 2543, active: 1892, newThisMonth: 128, verified: 1045 });
+  const [stats, setStats] = useState({ totalCandidates: 0, active: 0, newThisMonth: 0, verified: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 

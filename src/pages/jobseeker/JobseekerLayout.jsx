@@ -1,11 +1,12 @@
 /* eslint-disable react-refresh/only-export-components */
-import { useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import JobseekerFooter from './components/JobseekerFooter';
 import JobseekerHeader from './components/JobseekerHeader';
 import JobseekerSidebar from './components/JobseekerSidebar';
 import { MessageSocketProvider } from '../../context/MessageSocketContext';
 import ProfileCompletionPopup from '../../components/ProfileCompletionPopup';
+import PageSkeleton from '../../components/SkeletonLoader';
 
 const getPublicUser = () => {
   try {
@@ -92,7 +93,9 @@ export const JobseekerLayout = () => {
             } portal-content`}
           >
             <main className="min-w-0 flex-grow overflow-x-hidden p-4 md:p-5 lg:p-6">
-              <Outlet />
+              <Suspense fallback={<PageSkeleton />}>
+                <Outlet />
+              </Suspense>
             </main>
 
             <JobseekerFooter />

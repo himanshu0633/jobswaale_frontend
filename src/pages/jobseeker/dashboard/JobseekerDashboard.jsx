@@ -11,101 +11,13 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import PageSkeleton from '../../../components/SkeletonLoader';
 
 const emptyDashboard = {
   user: {},
   stats: {},
   recentActivity: [],
   recommendedJobs: []
-};
-
-// Dummy data from HTML
-const dummyDashboard = {
-  user: {
-    name: 'Rahul Kumar',
-    initials: 'RK',
-    role: 'Job Seeker',
-    plan: 'Free Plan'
-  },
-  stats: {
-    jobsApplied: {
-      value: 6,
-      change: '+2 this week'
-    },
-    shortlisted: {
-      value: 3,
-      change: '+1 this week'
-    },
-    interviews: {
-      value: 2,
-      change: 'Scheduled'
-    },
-    profileViews: {
-      value: 28,
-      change: '+5 this week'
-    }
-  },
-  recentActivity: [
-    {
-      type: 'accepted',
-      text: 'Your application for Frontend Developer at Microsoft was shortlisted',
-      time: '2 hours ago'
-    },
-    {
-      type: 'pending',
-      text: 'Application sent for UI/UX Designer at TCS',
-      time: '1 day ago'
-    },
-    {
-      type: 'viewed',
-      text: 'Infosys viewed your profile',
-      time: '2 days ago'
-    },
-    {
-      type: 'accepted',
-      text: 'Interview scheduled with Wipro for HR Executive position',
-      time: '3 days ago'
-    },
-    {
-      type: 'rejected',
-      text: 'Application for System Analyst at Infosys was not selected',
-      time: '5 days ago'
-    },
-    {
-      type: 'pending',
-      text: 'Application sent for Frontend Developer at Google',
-      time: '1 week ago'
-    }
-  ],
-  recommendedJobs: [
-    {
-      id: 1,
-      title: 'Frontend Developer',
-      company: 'Google',
-      location: 'Bangalore, KA',
-      salary: '₹20 - 35 LPA',
-      type: 'Full Time',
-      logo: 'G'
-    },
-    {
-      id: 2,
-      title: 'React Developer',
-      company: 'Amazon',
-      location: 'Hyderabad, TS',
-      salary: '₹12 - 18 LPA',
-      type: 'Full Time',
-      logo: 'A'
-    },
-    {
-      id: 3,
-      title: 'Software Engineer',
-      company: 'Flipkart',
-      location: 'Bangalore, KA',
-      salary: '₹8 - 14 LPA',
-      type: 'Full Time',
-      logo: 'F'
-    }
-  ]
 };
 
 const statConfig = [
@@ -146,7 +58,6 @@ export const JobseekerDashboard = () => {
   const [dashboard, setDashboard] = useState(emptyDashboard);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [useDummyData, setUseDummyData] = useState(false);
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -166,15 +77,11 @@ export const JobseekerDashboard = () => {
           ...emptyDashboard,
           ...response.data
         });
-        setUseDummyData(false);
-
       } catch (err) {
-        // Use dummy data if API fails
-        setDashboard(dummyDashboard);
-        setUseDummyData(true);
+        setDashboard(emptyDashboard);
         setError(
           err.response?.data?.message ||
-          'Dashboard data could not be loaded. Showing sample data.'
+          'Dashboard data could not be loaded.'
         );
       } finally {
         setLoading(false);
@@ -185,11 +92,7 @@ export const JobseekerDashboard = () => {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex min-h-[420px] items-center justify-center">
-        <div className="h-9 w-9 animate-spin rounded-full border-4 border-[#0047C7] border-t-transparent"/>
-      </div>
-    );
+    return <PageSkeleton variant="dashboard" />;
   }
 
   const stats = dashboard.stats || {};

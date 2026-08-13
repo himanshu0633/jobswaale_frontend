@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { AlertCircle, CheckCircle, ClipboardList, Info, Loader, Mail, Save, ShieldCheck, User, X } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import PageSkeleton from '../../../components/SkeletonLoader';
 import { permissionGroups } from '../../../utils/permissions';
 import { cleanPhoneInput } from '../../../utils/phone';
 
@@ -95,7 +96,7 @@ const AddUser = () => {
   const inputCls = 'w-full px-3.5 py-2 border border-slate-200 rounded-lg text-sm disabled:bg-slate-50';
   const labelCls = 'block text-sm font-medium text-slate-600 mb-1';
 
-  if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><Loader className="w-8 h-8 animate-spin text-indigo-600" /></div>;
+  if (loading) return <PageSkeleton variant="table" />;
 
   return (
     <div className="space-y-5">

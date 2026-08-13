@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { AlertCircle, CheckCircle, Edit2, Loader, Plus, Search, Shield, Trash2, X } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import PageSkeleton from '../../../components/SkeletonLoader';
 
 const Roles = () => {
   const [roles, setRoles] = useState([]);

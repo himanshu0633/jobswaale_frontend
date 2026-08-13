@@ -19,7 +19,7 @@ import {
 
 export const JobReports = () => {
   const [jobs, setJobs] = useState([]);
-  const [stats, setStats] = useState({ totalJobs: 856, activeJobs: 247, expiredJobs: 129, totalApplications: 4582 });
+  const [stats, setStats] = useState({ totalJobs: 0, activeJobs: 0, expiredJobs: 0, totalApplications: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 

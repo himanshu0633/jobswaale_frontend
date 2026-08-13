@@ -19,6 +19,7 @@ import {
   X
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import PageSkeleton from '../../../components/SkeletonLoader';
 
 const colors = ['#3b82f6', '#ef4444', '#f59e0b', '#8b5cf6', '#10b981', '#9ca3af'];
 
@@ -266,11 +267,7 @@ export const EmployerReports = () => {
   };
 
   if (loading && !data.monthlyOverview.length) {
-    return (
-      <div className="flex min-h-[420px] items-center justify-center">
-        <Loader className="h-9 w-9 animate-spin text-[#6658dd]" />
-      </div>
-    );
+    return <PageSkeleton variant="dashboard" />;
   }
 
   return (

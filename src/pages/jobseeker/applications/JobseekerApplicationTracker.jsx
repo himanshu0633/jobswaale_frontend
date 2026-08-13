@@ -15,6 +15,7 @@ import {
   X
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import PageSkeleton from '../../../components/SkeletonLoader';
 
 const statusOrder = ['applied', 'reviewed', 'shortlisted', 'interview', 'offered', 'accepted'];
 
@@ -137,11 +138,7 @@ export const JobseekerApplicationTracker = () => {
   }, [tracker]);
 
   if (loading) {
-    return (
-      <div className="flex min-h-[420px] items-center justify-center">
-        <Loader className="h-8 w-8 animate-spin text-indigo-600" />
-      </div>
-    );
+    return <PageSkeleton variant="detail" />;
   }
 
   if (error || !tracker) {
