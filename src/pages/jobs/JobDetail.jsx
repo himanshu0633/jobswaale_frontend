@@ -12,7 +12,7 @@ import {
   Star,
   User
 } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { BASE_API_URL } from '../../context/AuthContext';
 import { formatJobSalary } from '../../utils/salary';
 
@@ -122,6 +122,7 @@ const JobDetailSkeleton = () => (
 
 export const JobDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [data, setData] = useState(emptyJob);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -790,7 +791,7 @@ export const JobDetail = () => {
             <div className="mt-6 flex items-center justify-center gap-3">
               <button
                 type="button"
-                onClick={() => setShowAuthPopup(false)}
+                onClick={() => { setShowAuthPopup(false); navigate('/jobs'); }}
                 className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-extrabold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
               >
                 Cancel
