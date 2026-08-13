@@ -31,7 +31,7 @@ const About = () => {
             {/* Left Column */}
             <div className="lg:col-span-7 space-y-5 sm:space-y-6 lg:py-[20px] lg:pr-[60px] text-center lg:text-left">
               <h1 className="text-[30px] leading-[38px] sm:text-5xl lg:text-[52px] font-bold text-[#1f2938] leading-[1.2] tracking-tight">
-                The #1 Job Board for <span className="text-[#0047C7]">Graphic Design Jobs</span>
+                The #1 Job Board for <span className="text-[#0047C7] inline-block mt-3">Graphic Design Jobs</span>
               </h1>
               <p className="text-[#475569] text-base sm:text-lg leading-relaxed max-w-full sm:max-w-[85%] lg:max-w-[70%] mx-auto lg:mx-0">
                 Search and connect with the right candidates faster. This talent search gives you the opportunity to find candidates who may be a perfect fit for your role.
