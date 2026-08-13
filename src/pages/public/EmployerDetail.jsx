@@ -13,6 +13,7 @@ import {
   User,
 } from 'lucide-react';
 import { BASE_API_URL } from '../../context/AuthContext';
+import { formatJobSalary } from '../../utils/salary';
 
 const formatMonthYear = (value) => {
   if (!value) return 'Not specified';
@@ -88,7 +89,7 @@ const JobCard = ({ job }) => {
           </div>
         </div>
         <div className="mt-6 pt-4 border-t border-[#eef1f6] flex items-center justify-between gap-3">
-          <span className="text-sm font-bold text-[#0047C7]">{job.salary}</span>
+          <span className="text-sm font-bold text-[#0047C7]">{formatJobSalary(job)}</span>
           <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[#eaf1ff] text-[#0047C7]">{job.type}</span>
         </div>
       </div>

@@ -75,7 +75,12 @@ const EmployerApplicationDetails = () => {
     setError('');
     try {
       const response = await axios.get(`${BASE_API_URL}/employer/applications/${id}`, { headers: getTokenHeaders() });
-      setApplication(response.data);
+      if (response.data?.status === 'Applied') {
+        await axios.patch(`${BASE_API_URL}/employer/applications/${id}/status`, { status: 'Reviewed' }, { headers: getTokenHeaders() });
+        setApplication({ ...response.data, status: 'Reviewed' });
+      } else {
+        setApplication(response.data);
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Application details could not be loaded.');
     } finally {
@@ -123,9 +128,11 @@ const EmployerApplicationDetails = () => {
 
   const activeStepIndex = useMemo(() => {
     if (!application?.status) return 0;
-    if (application.status === 'Rejected') return 0;
+    if (application.status === 'Rejected') {
+      return Math.max(timelineSteps.findIndex((step) => step === application.rejectedFromStatus), 0);
+    }
     return Math.max(timelineSteps.findIndex((step) => step === application.status), 0);
-  }, [application?.status]);
+  }, [application?.rejectedFromStatus, application?.status]);
 
   if (loading) {
     return (
@@ -175,15 +182,22 @@ const EmployerApplicationDetails = () => {
           <span className="inline-flex items-center gap-1"><User className="h-4 w-4" /><strong>{candidate.name}</strong></span>
           <span className="inline-flex items-center gap-1"><Briefcase className="h-4 w-4" />{job.title}</span>
           <span className="inline-flex items-center gap-1"><Calendar className="h-4 w-4" />Applied: {application.appliedDisplayDate}</span>
+          {application.status === 'Rejected' && (
+            <span className="inline-flex items-center gap-1 text-rose-600"><UserX className="h-4 w-4" />Rejected after: {application.rejectedFromStatus || 'Not available'}</span>
+          )}
         </div>
         <span className="rounded bg-emerald-50 px-2.5 py-1 text-xs font-black text-emerald-600"><Star className="mr-1 inline h-3.5 w-3.5" />{application.matchScore}% Match</span>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <ActionButton tone="bg-amber-400 text-white hover:bg-amber-500" icon={UserCheck} onClick={() => updateStatus('Shortlisted')} disabled={Boolean(saving)}>Shortlist</ActionButton>
-        <ActionButton tone="bg-[#6658dd] text-white hover:bg-[#5848d8]" icon={CalendarPlus} onClick={scheduleInterview} disabled={Boolean(saving)}>Schedule Interview</ActionButton>
-        <ActionButton tone="bg-emerald-500 text-white hover:bg-emerald-600" icon={UserPlus} onClick={() => updateStatus('Offered')} disabled={Boolean(saving)}>Select</ActionButton>
-        <ActionButton tone="border border-rose-200 bg-white text-rose-600 hover:bg-rose-50" icon={UserX} onClick={() => updateStatus('Rejected')} disabled={Boolean(saving)}>Reject</ActionButton>
+        {application.status !== 'Rejected' && (
+          <>
+            <ActionButton tone="bg-amber-400 text-white hover:bg-amber-500" icon={UserCheck} onClick={() => updateStatus('Shortlisted')} disabled={Boolean(saving)}>Shortlist</ActionButton>
+            <ActionButton tone="bg-[#6658dd] text-white hover:bg-[#5848d8]" icon={CalendarPlus} onClick={scheduleInterview} disabled={Boolean(saving)}>Schedule Interview</ActionButton>
+            <ActionButton tone="bg-emerald-500 text-white hover:bg-emerald-600" icon={UserPlus} onClick={() => updateStatus('Offered')} disabled={Boolean(saving)}>Select</ActionButton>
+            <ActionButton tone="border border-rose-200 bg-white text-rose-600 hover:bg-rose-50" icon={UserX} onClick={() => updateStatus('Rejected')} disabled={Boolean(saving)}>Reject</ActionButton>
+          </>
+        )}
         <a 
           href={resumeHref} 
           target="_blank" 
@@ -208,6 +222,12 @@ const EmployerApplicationDetails = () => {
                 </Field>
                 <Field label="Applied Date">{application.appliedDisplayDate}</Field>
                 <Field label="Job Applied To"><span>{job.title}</span><br /><span className="mt-1 inline-flex rounded bg-blue-50 px-2 py-1 text-xs font-black text-blue-600">{job.type}</span></Field>
+                {application.status === 'Rejected' && (
+                  <>
+                    <Field label="Rejected After">{application.rejectedFromStatus || 'Not available'}</Field>
+                    <Field label="Rejected Date">{application.rejectedDisplayDate || 'Not specified'}</Field>
+                  </>
+                )}
                 <Field label="Experience">{candidate.experience}</Field>
                 <Field label="Ready to Relocate?">{candidate.relocate}</Field>
               </div>
@@ -282,7 +302,7 @@ const EmployerApplicationDetails = () => {
           <Card title="Application Timeline">
             <div className="space-y-4">
               {timelineSteps.map((step, index) => {
-                const done = application.status === 'Rejected' ? step === 'Applied' : index <= activeStepIndex;
+                const done = index <= activeStepIndex;
                 return (
                   <div key={step} className="flex items-start gap-3">
                     <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white ${done ? 'bg-emerald-500' : 'bg-slate-300'}`}>{done ? <Check className="h-4 w-4" /> : <Calendar className="h-4 w-4" />}</span>
@@ -295,10 +315,14 @@ const EmployerApplicationDetails = () => {
 
           <Card title="Quick Actions">
             <div className="grid gap-2">
-              <ActionButton tone="bg-amber-400 text-white hover:bg-amber-500" icon={UserCheck} onClick={() => updateStatus('Shortlisted')} disabled={Boolean(saving)}>Shortlist Candidate</ActionButton>
-              <ActionButton tone="bg-[#6658dd] text-white hover:bg-[#5848d8]" icon={CalendarPlus} onClick={scheduleInterview} disabled={Boolean(saving)}>Schedule Interview</ActionButton>
-              <ActionButton tone="bg-emerald-500 text-white hover:bg-emerald-600" icon={UserPlus} onClick={() => updateStatus('Offered')} disabled={Boolean(saving)}>Move to Selected</ActionButton>
-              <ActionButton tone="border border-rose-200 bg-white text-rose-600 hover:bg-rose-50" icon={UserX} onClick={() => updateStatus('Rejected')} disabled={Boolean(saving)}>Reject Application</ActionButton>
+              {application.status !== 'Rejected' && (
+                <>
+                  <ActionButton tone="bg-amber-400 text-white hover:bg-amber-500" icon={UserCheck} onClick={() => updateStatus('Shortlisted')} disabled={Boolean(saving)}>Shortlist Candidate</ActionButton>
+                  <ActionButton tone="bg-[#6658dd] text-white hover:bg-[#5848d8]" icon={CalendarPlus} onClick={scheduleInterview} disabled={Boolean(saving)}>Schedule Interview</ActionButton>
+                  <ActionButton tone="bg-emerald-500 text-white hover:bg-emerald-600" icon={UserPlus} onClick={() => updateStatus('Offered')} disabled={Boolean(saving)}>Move to Selected</ActionButton>
+                  <ActionButton tone="border border-rose-200 bg-white text-rose-600 hover:bg-rose-50" icon={UserX} onClick={() => updateStatus('Rejected')} disabled={Boolean(saving)}>Reject Application</ActionButton>
+                </>
+              )}
               <a 
                 href={resumeHref} 
                 target="_blank" 

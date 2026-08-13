@@ -39,7 +39,7 @@ const actionConfig = [
   { key: 'newApplications', title: 'New Applications', subtitle: 'Need Review', action: 'View all', to: '/employer/applications', icon: FileText, tone: 'bg-[#f3f0ff] text-[#6658dd]', card: 'bg-[#f7f4ff]' },
   { key: 'interviews', title: 'Interviews', subtitle: 'To Confirm', action: 'View schedule', to: '/employer/interviews', icon: CalendarCheck, tone: 'bg-amber-50 text-amber-500', card: 'bg-[#fff9ef]' },
   { key: 'candidates', title: 'Candidates', subtitle: 'Ready for Selection', action: 'View list', to: '/employer/shortlisted', icon: UserCheck, tone: 'bg-emerald-50 text-emerald-500', card: 'bg-[#f0fbf7]' },
-  { key: 'jobsExpiring', title: 'Jobs Expiring', subtitle: 'Tomorrow', action: 'Renew now', to: '/employer/jobs', icon: Clock, tone: 'bg-rose-50 text-rose-500', card: 'bg-[#fff3f5]' }
+  { key: 'jobsExpiring', title: 'Expired Jobs', subtitle: 'Needs renewal', action: 'View jobs', to: '/employer/jobs', icon: Clock, tone: 'bg-rose-50 text-rose-500', card: 'bg-[#fff3f5]' }
 ];
 
 const quickActions = [

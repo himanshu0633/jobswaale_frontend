@@ -5,6 +5,7 @@ import TrustedCompanies from './TrustedCompanies';
 import axios from 'axios';
 import { BASE_API_URL } from '../../context/AuthContext';
 import { getWithCache } from '../../utils/apiCache';
+import { annualLacsToMonthlyText, formatJobSalary, getAnnualSalaryRangeLacs } from '../../utils/salary';
 
 const MOCK_JOBS = [
   {
@@ -152,6 +153,8 @@ export const Jobs = () => {
   const [sidebarCat, setSidebarCat] = useState('');
   const [sidebarTypes, setSidebarTypes] = useState([]);
   const [sidebarExps, setSidebarExps] = useState([]);
+  const [salaryMinLacs, setSalaryMinLacs] = useState('');
+  const [salaryMaxLacs, setSalaryMaxLacs] = useState('');
 
   // Active filter state
   const [dbJobs, setDbJobs] = useState([]);
@@ -175,7 +178,10 @@ export const Jobs = () => {
           title: j.jobTitle,
           company: j.companyName,
           location: getJobLocationLabels(j)[0] || 'Location not specified',
-          salary: j.salary || (j.minSalary && j.maxSalary ? `₹${j.minSalary} - ${j.maxSalary}` : 'Not Specified'),
+          salary: formatJobSalary(j),
+          minSalary: j.minSalary,
+          maxSalary: j.maxSalary,
+          salaryUnit: j.salaryUnit || '',
           type: j.jobType?.jobType || j.workMode || 'Full Time',
           category: j.jobCategory?.categoryName || 'IT & Software',
           experience: j.experience,
@@ -280,6 +286,20 @@ export const Jobs = () => {
     if (sidebarExps.length > 0) {
       result = result.filter((j) => sidebarExps.includes(j.experience));
     }
+    const minLpa = Number(salaryMinLacs);
+    const maxLpa = Number(salaryMaxLacs);
+    if (Number.isFinite(minLpa) && minLpa > 0) {
+      result = result.filter((j) => {
+        const range = getAnnualSalaryRangeLacs(j);
+        return !range || range.max === null || range.max >= minLpa;
+      });
+    }
+    if (Number.isFinite(maxLpa) && maxLpa > 0) {
+      result = result.filter((j) => {
+        const range = getAnnualSalaryRangeLacs(j);
+        return !range || range.min === null || range.min <= maxLpa;
+      });
+    }
 
     // Sort
     if (sortBy === 'newest') {
@@ -334,6 +354,8 @@ export const Jobs = () => {
     setSidebarCat('');
     setSidebarTypes([]);
     setSidebarExps([]);
+    setSalaryMinLacs('');
+    setSalaryMaxLacs('');
     setSearchKeyword('');
     setSearchType('');
     setSearchLoc('');
@@ -681,6 +703,54 @@ export const Jobs = () => {
                   </select>
                   <ChevronDown className="absolute right-[15px] h-4 w-4 text-[#88929b] pointer-events-none" />
                 </div>
+              </div>
+
+              {/* Salary range */}
+              <div className="space-y-3">
+                <h4 className="text-[18px] font-semibold text-[#1f2938]">Salary Range</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[#88929b]">
+                      Min LPA
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      placeholder="5"
+                      value={salaryMinLacs}
+                      onChange={(e) => setSalaryMinLacs(e.target.value)}
+                      className="w-full border border-[rgba(6,18,36,0.1)] rounded-[10px] px-4 py-3 text-sm text-[#37404e] placeholder-[#88929b] focus:outline-none focus:border-[#0047C7] transition"
+                    />
+                    {salaryMinLacs ? (
+                      <p className="mt-1 text-xs font-semibold text-[#88929b]">
+                        {annualLacsToMonthlyText(salaryMinLacs)}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[#88929b]">
+                      Max LPA
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      placeholder="50"
+                      value={salaryMaxLacs}
+                      onChange={(e) => setSalaryMaxLacs(e.target.value)}
+                      className="w-full border border-[rgba(6,18,36,0.1)] rounded-[10px] px-4 py-3 text-sm text-[#37404e] placeholder-[#88929b] focus:outline-none focus:border-[#0047C7] transition"
+                    />
+                    {salaryMaxLacs ? (
+                      <p className="mt-1 text-xs font-semibold text-[#88929b]">
+                        {annualLacsToMonthlyText(salaryMaxLacs)}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+                <p className="text-xs font-medium leading-5 text-[#88929b]">
+                  Monthly salaries are converted to yearly LPA automatically.
+                </p>
               </div>
 
               {/* Job type checklist */}

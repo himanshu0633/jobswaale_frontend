@@ -20,7 +20,7 @@ import {
 import { BASE_API_URL } from '../../../context/AuthContext';
 
 const emptyJobs = {
-  stats: { active: 0, draft: 0, expiring: 0, closed: 0 },
+  stats: { active: 0, draft: 0, expired: 0, closed: 0 },
   filters: { locations: [], jobTypes: [] },
   jobs: []
 };
@@ -38,7 +38,7 @@ const formatDate = (value, fallback = '-') => {
 const statusTone = {
   Active: 'bg-emerald-50 text-emerald-600',
   Draft: 'bg-amber-50 text-amber-600',
-  Expiring: 'bg-rose-50 text-rose-600',
+  Expired: 'bg-rose-50 text-rose-600',
   Paused: 'bg-slate-100 text-slate-600',
   Closed: 'bg-slate-100 text-slate-600'
 };
@@ -46,9 +46,44 @@ const statusTone = {
 const statCards = [
   { key: 'active', title: 'Active Jobs', icon: Briefcase, tone: 'bg-emerald-50 text-emerald-500' },
   { key: 'draft', title: 'Draft Jobs', icon: FilePenLine, tone: 'bg-amber-50 text-amber-500' },
-  { key: 'expiring', title: 'Expiring Soon', icon: Clock, tone: 'bg-rose-50 text-rose-500' },
+  { key: 'expired', title: 'Expired Jobs', icon: Clock, tone: 'bg-rose-50 text-rose-500' },
   { key: 'closed', title: 'Closed Jobs', icon: Lock, tone: 'bg-slate-100 text-slate-500' }
 ];
+
+const parseJobDate = (value) => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  date.setHours(0, 0, 0, 0);
+  return date;
+};
+
+const normalizeJobStatus = (job) => {
+  if (['Draft', 'Paused', 'Closed'].includes(job.status)) return job.status;
+  const expiry = parseJobDate(job.expiry);
+  if (!expiry) return job.status === 'Expired' ? 'Active' : job.status || 'Active';
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return expiry.getTime() < today.getTime() ? 'Expired' : 'Active';
+};
+
+const buildJobsData = (payload) => {
+  const jobs = Array.isArray(payload?.jobs)
+    ? payload.jobs.map((job) => ({ ...job, status: normalizeJobStatus(job) }))
+    : [];
+
+  return {
+    ...emptyJobs,
+    ...payload,
+    jobs,
+    stats: {
+      active: jobs.filter((job) => job.status === 'Active').length,
+      draft: jobs.filter((job) => job.status === 'Draft').length,
+      expired: jobs.filter((job) => job.status === 'Expired').length,
+      closed: jobs.filter((job) => job.status === 'Closed' || job.status === 'Paused').length
+    }
+  };
+};
 
 export const EmployerJobs = () => {
   const [data, setData] = useState(emptyJobs);
@@ -70,7 +105,7 @@ export const EmployerJobs = () => {
     setError('');
     try {
       const response = await axios.get(`${BASE_API_URL}/employer/jobs`, { headers: getTokenHeaders() });
-      setData({ ...emptyJobs, ...response.data });
+      setData(buildJobsData(response.data));
     } catch (err) {
       setError(err.response?.data?.message || 'Jobs could not be loaded.');
     } finally {
@@ -89,7 +124,7 @@ export const EmployerJobs = () => {
     return (data.jobs || []).filter((job) => {
       const matchesSearch = !search
         || [job.title, job.location, job.jobType, job.category].some((value) => String(value || '').toLowerCase().includes(search));
-      const matchesStatus = !filters.status || job.status === filters.status;
+      const matchesStatus = !filters.status || job.status === filters.status || (filters.status === 'Closed' && job.status === 'Paused');
       const matchesLocation = !filters.location || String(job.location || '').includes(filters.location);
       const matchesType = !filters.jobType || job.jobType === filters.jobType;
       const matchesDate = !postDate || (job.postDate && new Date(job.postDate) >= postDate);
@@ -165,8 +200,8 @@ export const EmployerJobs = () => {
       <button type="button" title="Duplicate" onClick={() => duplicateJob(job.id)} disabled={duplicatingJobId === job.id} className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-[#6658dd] disabled:opacity-60">
         {duplicatingJobId === job.id ? <Loader className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}
       </button>
-      {job.status === 'Closed' || job.status === 'Paused' || job.status === 'Expiring' ? (
-        <button type="button" title={job.status === 'Expiring' ? 'Renew' : 'Reopen'} onClick={() => runJobAction(job.id, job.status === 'Expiring' ? 'renew' : 'reopen')} disabled={actionState.jobId === job.id} className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-emerald-600 disabled:opacity-60">
+      {job.status === 'Closed' || job.status === 'Paused' || job.status === 'Expired' ? (
+        <button type="button" title={job.status === 'Expired' ? 'Renew' : 'Reopen'} onClick={() => runJobAction(job.id, job.status === 'Expired' ? 'renew' : 'reopen')} disabled={actionState.jobId === job.id} className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-emerald-600 disabled:opacity-60">
           {actionState.jobId === job.id && ['renew', 'reopen'].includes(actionState.action) ? <Loader className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
         </button>
       ) : (
@@ -254,7 +289,7 @@ export const EmployerJobs = () => {
                 <option value="">All Status</option>
                 <option>Active</option>
                 <option>Draft</option>
-                <option>Expiring</option>
+                <option>Expired</option>
                 <option>Paused</option>
                 <option>Closed</option>
               </select>

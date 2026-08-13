@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Bookmark, Clock, MapPin, PlusCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import { formatJobSalary } from '../../../utils/salary';
 
 export const JobseekerSavedJobs = () => {
   const [savedJobs, setSavedJobs] = useState([]);
@@ -133,7 +134,7 @@ export const JobseekerSavedJobs = () => {
 
               <div className="mt-0 flex items-center justify-between border-t border-[#e2e8f0] pt-[0.8rem]">
                 <span className="text-[0.85rem] font-bold text-[#0f172a]">
-                  {job.salary}
+                  {formatJobSalary(job)}
                 </span>
                 <Link
                   to={`/jobs/${job.id}`}

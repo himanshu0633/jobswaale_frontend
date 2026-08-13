@@ -112,7 +112,24 @@ export const EmployerApplications = () => {
     setError('');
     axios.get(`${BASE_API_URL}/employer/applications?${queryParams}`, { headers: getTokenHeaders() })
       .then((response) => {
-        if (alive) setData({ stats: {}, pipeline: {}, filters: {}, applications: [], pagination: { page: 1, limit: pageSize, total: 0, totalPages: 1 }, ...response.data });
+        if (alive) {
+          const applications = filters.status
+            ? (response.data?.applications || [])
+            : (response.data?.applications || []).filter((item) => ['Applied', 'Reviewed'].includes(item.status));
+          setData({
+            stats: {},
+            pipeline: {},
+            filters: {},
+            applications: [],
+            pagination: { page: 1, limit: pageSize, total: applications.length, totalPages: 1 },
+            ...response.data,
+            applications,
+            pagination: {
+              ...(response.data?.pagination || { page: 1, limit: pageSize, total: applications.length, totalPages: 1 }),
+              total: applications.length
+            }
+          });
+        }
       })
       .catch((err) => {
         if (alive) setError(err.response?.data?.message || 'Applications could not be loaded.');
@@ -137,7 +154,18 @@ export const EmployerApplications = () => {
       );
       // Refresh the application list
       const response = await axios.get(`${BASE_API_URL}/employer/applications?${queryParams}`, { headers: getTokenHeaders() });
-      setData(prev => ({ ...prev, ...response.data }));
+      const applications = filters.status
+        ? (response.data?.applications || [])
+        : (response.data?.applications || []).filter((item) => ['Applied', 'Reviewed'].includes(item.status));
+      setData(prev => ({
+        ...prev,
+        ...response.data,
+        applications,
+        pagination: {
+          ...(response.data?.pagination || prev.pagination || {}),
+          total: applications.length
+        }
+      }));
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update application status.');
     }
@@ -184,13 +212,10 @@ export const EmployerApplications = () => {
         <div className="p-4 sm:p-5">
           {/* Quick Status Filter Tabs */}
           <div className="flex flex-wrap gap-1.5 border-b border-dashed border-slate-100 pb-4 mb-5">
-            {[
-              { key: '', label: 'All Applications' },
+              {[
+              { key: '', label: 'Application' },
               { key: 'Applied', label: 'Waiting for Review' },
               { key: 'Reviewed', label: 'Reviewed' },
-              { key: 'Shortlisted', label: 'Shortlisted' },
-              { key: 'Interview', label: 'Interview Scheduled' },
-              { key: 'Offered', label: 'Selected / Offered' },
               { key: 'Rejected', label: 'Rejected' }
             ].map((tab) => (
               <button
@@ -214,7 +239,7 @@ export const EmployerApplications = () => {
               <div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input className="h-10 w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100" value={filters.search} onChange={(event) => setFilter('search', event.target.value)} placeholder="Name, email, job, location" /></div>
             </div>
             <SelectField label="Job Title" value={filters.jobTitle} onChange={(value) => setFilter('jobTitle', value)}><option value="">All Jobs</option>{(optionFilters.jobTitles || []).map((item) => <option key={item}>{item}</option>)}</SelectField>
-            <SelectField label="Status" value={filters.status} onChange={(value) => setFilter('status', value)}><option value="">All Status</option>{['Applied', 'Reviewed', 'Shortlisted', 'Interview', 'Offered', 'Rejected'].map((item) => <option key={item}>{item}</option>)}</SelectField>
+            <SelectField label="Status" value={filters.status} onChange={(value) => setFilter('status', value)}><option value="">Application</option>{['Applied', 'Reviewed', 'Rejected'].map((item) => <option key={item}>{item}</option>)}</SelectField>
             <SelectField label="Experience" value={filters.experience} onChange={(value) => setFilter('experience', value)}><option value="">All Experience</option>{(optionFilters.experiences || ['Fresher', '1 - 2 Years', '2 - 5 Years', '5+ Years']).map((item) => <option key={item}>{item}</option>)}</SelectField>
             <div><label className="mb-2 block text-xs font-extrabold text-slate-500">Applied After</label><input type="date" value={filters.appliedAfter} onChange={(event) => setFilter('appliedAfter', event.target.value)} className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100" /></div>
             <div className="flex items-end"><button type="button" onClick={resetFilters} className="h-10 w-full rounded-md bg-[#18b99b] px-4 text-sm font-extrabold text-white transition hover:bg-[#13a98d] xl:w-auto">Reset</button></div>
@@ -234,7 +259,7 @@ export const EmployerApplications = () => {
                 <div className="flex items-start gap-3">
                   <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${application.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>{application.initials}</span>
                   <div className="min-w-0 flex-1">
-                    <Link to="/employer/applications" className="truncate text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{application.name}</Link>
+                    <Link to={`/employer/applications/${application.id}`} className="truncate text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{application.name}</Link>
                     <p className="mt-0.5 truncate text-xs font-semibold text-slate-400">{application.email || application.phone}</p>
                     <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><MapPin className="h-3 w-3 shrink-0" /><span className="truncate">{application.location}</span></p>
                   </div>
@@ -245,6 +270,9 @@ export const EmployerApplications = () => {
                   <p className="truncate"><span className="text-slate-400">Type:</span> {application.jobType}</p>
                   <p><span className="text-slate-400">Experience:</span> {application.experience}</p>
                   <p><span className="text-slate-400">Applied:</span> {application.displayDate}</p>
+                  {application.status === 'Rejected' && (
+                    <p className="col-span-2"><span className="text-slate-400">Rejected after:</span> {application.rejectedFromStatus || 'Not available'}</p>
+                  )}
                 </div>
                 <div className="mt-3 flex flex-wrap items-center justify-between border-t border-slate-100 pt-3 gap-2">
                   <span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${scoreTone(application.matchScore)}`}>{application.matchScore}% match</span>
@@ -303,8 +331,14 @@ export const EmployerApplications = () => {
               <tbody className="divide-y divide-slate-100">
                 {loading ? <tr><td colSpan="7" className="px-5 py-12 text-center"><Loader className="mx-auto h-7 w-7 animate-spin text-[#6658dd]" /></td></tr> : data.applications.length ? data.applications.map((application) => (
                   <tr key={application.id} className="transition hover:bg-slate-50">
-                    <td className="px-5 py-4"><div className="flex items-center gap-3"><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${application.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>{application.initials}</span><div><Link to="/employer/applications" className="text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{application.name}</Link><p className="mt-0.5 text-xs font-semibold text-slate-400">{application.email || application.phone}</p><p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><MapPin className="h-3 w-3" />{application.location}</p></div></div></td>
-                    <td className="px-5 py-4"><p className="text-sm font-extrabold text-[#3f4254]">{application.jobTitle}</p><p className="mt-0.5 text-xs font-semibold text-slate-400">{application.jobType}</p></td>
+                    <td className="px-5 py-4"><div className="flex items-center gap-3"><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${application.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>{application.initials}</span><div><Link to={`/employer/applications/${application.id}`} className="text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{application.name}</Link><p className="mt-0.5 text-xs font-semibold text-slate-400">{application.email || application.phone}</p><p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><MapPin className="h-3 w-3" />{application.location}</p></div></div></td>
+                    <td className="px-5 py-4">
+                      <p className="text-sm font-extrabold text-[#3f4254]">{application.jobTitle}</p>
+                      <p className="mt-0.5 text-xs font-semibold text-slate-400">{application.jobType}</p>
+                      {application.status === 'Rejected' && (
+                        <p className="mt-1 text-xs font-black text-rose-500">Rejected after: {application.rejectedFromStatus || 'Not available'}</p>
+                      )}
+                    </td>
                     <td className="px-5 py-4 text-sm font-semibold text-slate-600">{application.experience}</td>
                     <td className="px-5 py-4 text-sm font-semibold text-slate-600">{application.displayDate}</td>
                     <td className="px-5 py-4"><span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${scoreTone(application.matchScore)}`}>{application.matchScore}%</span></td>

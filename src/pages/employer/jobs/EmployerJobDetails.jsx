@@ -43,7 +43,7 @@ const formatDate = (value, fallback = '-') => {
 const statusTone = {
   Active: 'border-emerald-100 bg-emerald-50 text-emerald-700',
   Draft: 'border-amber-100 bg-amber-50 text-amber-700',
-  Expiring: 'border-rose-100 bg-rose-50 text-rose-700',
+  Expired: 'border-rose-100 bg-rose-50 text-rose-700',
   Paused: 'border-slate-200 bg-slate-100 text-slate-600',
   Closed: 'border-slate-200 bg-slate-100 text-slate-600'
 };
@@ -63,6 +63,30 @@ const applicantTone = {
   Rejected: 'bg-rose-50 text-rose-600'
 };
 
+const parseJobDate = (value) => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  date.setHours(0, 0, 0, 0);
+  return date;
+};
+
+const normalizeDetails = (payload) => {
+  const expiry = parseJobDate(payload?.expiry);
+  let status = payload?.status || 'Active';
+  if (!['Draft', 'Paused', 'Closed'].includes(status)) {
+    if (expiry) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      status = expiry.getTime() < today.getTime() ? 'Expired' : 'Active';
+    } else if (status === 'Expired') {
+      status = 'Active';
+    }
+  }
+
+  return { ...emptyDetails, ...payload, status };
+};
+
 export const EmployerJobDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -78,7 +102,7 @@ export const EmployerJobDetails = () => {
     setError('');
     try {
       const response = await axios.get(`${BASE_API_URL}/employer/jobs/${id}`, { headers: getTokenHeaders() });
-      setDetails({ ...emptyDetails, ...response.data });
+      setDetails(normalizeDetails(response.data));
     } catch (err) {
       setError(err.response?.data?.message || 'Job details could not be loaded.');
     } finally {
@@ -194,7 +218,7 @@ export const EmployerJobDetails = () => {
         <button type="button" onClick={duplicateJob} disabled={duplicating} className="inline-flex items-center gap-2 rounded-md bg-emerald-500 px-3 py-2 text-sm font-extrabold text-white disabled:opacity-60">{duplicating ? <Loader className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />} Duplicate</button>
         {details.status === 'Closed' || details.status === 'Paused' ? (
           <button type="button" onClick={() => runJobAction('reopen')} disabled={Boolean(actionState)} className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-2 text-sm font-extrabold text-white disabled:opacity-60">{actionState === 'reopen' ? <Loader className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} Reopen Job</button>
-        ) : details.status === 'Expiring' ? (
+        ) : details.status === 'Expired' ? (
           <button type="button" onClick={() => runJobAction('renew')} disabled={Boolean(actionState)} className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-2 text-sm font-extrabold text-white disabled:opacity-60">{actionState === 'renew' ? <Loader className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} Renew Job</button>
         ) : (
           <button type="button" onClick={() => runJobAction('pause')} disabled={Boolean(actionState)} className="inline-flex items-center gap-2 rounded-md bg-amber-500 px-3 py-2 text-sm font-extrabold text-white disabled:opacity-60">{actionState === 'pause' ? <Loader className="h-4 w-4 animate-spin" /> : <Pause className="h-4 w-4" />} Pause Job</button>

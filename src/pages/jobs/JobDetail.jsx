@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { BASE_API_URL } from '../../context/AuthContext';
+import { formatJobSalary } from '../../utils/salary';
 
 const emptyJob = {
   job: null,
@@ -229,7 +230,7 @@ export const JobDetail = () => {
           title: j.jobTitle,
           company: j.companyName,
           location: getJobLocationLabels(j)[0] || 'Location not specified',
-          salary: j.salary || (j.minSalary && j.maxSalary ? `₹${j.minSalary} - ${j.maxSalary}` : 'Not Specified'),
+          salary: formatJobSalary(j),
           type: j.jobType?.jobType || j.workMode || 'Full Time',
           category: j.jobCategory?.categoryName || 'IT & Software',
           experience: j.experience,
@@ -326,6 +327,7 @@ export const JobDetail = () => {
   }
 
   const logoTone = logoTones[job.company] || 'bg-slate-600';
+  const displaySalary = formatJobSalary(job);
 
   return (
     <div className="space-y-5">
@@ -403,7 +405,7 @@ export const JobDetail = () => {
             <MapPin className="h-4 w-4 text-[#FF6B00]"/> {job.location}
           </span>
           <span className="flex items-center gap-2">
-            <IndianRupee className="h-4 w-4 text-[#FF6B00]"/> {job.salary}
+            <IndianRupee className="h-4 w-4 text-[#FF6B00]"/> {displaySalary}
           </span>
           <span className="flex items-center gap-2">
             <Briefcase className="h-4 w-4 text-[#FF6B00]"/> {job.type}
@@ -677,7 +679,9 @@ export const JobDetail = () => {
                   <span className="flex items-center gap-2 text-sm font-semibold text-slate-400">
                     <Icon className="h-4 w-4"/> {label}
                   </span>
-                  <span className="text-sm font-bold text-[#0f172a]">{job[key]}</span>
+                  <span className="text-sm font-bold text-[#0f172a]">
+                    {key === 'salary' ? displaySalary : job[key]}
+                  </span>
                 </div>
               ))}
             </div>

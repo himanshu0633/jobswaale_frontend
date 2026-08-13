@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, MapPin } from 'lucide-react';
 import axios from 'axios';
 import { BASE_API_URL } from '../../context/AuthContext';
+import { formatJobSalary } from '../../utils/salary';
 
 export const FeaturedJobs = () => {
   const [jobs, setJobs] = useState([]);
@@ -18,7 +19,7 @@ export const FeaturedJobs = () => {
           title: j.jobTitle,
           company: j.companyName,
           location: `${j.city}, ${j.state}`,
-          salary: j.salary || (j.minSalary && j.maxSalary ? `₹${j.minSalary} - ${j.maxSalary}` : 'Not Specified'),
+          salary: formatJobSalary(j),
           type: j.jobType?.jobType || j.workMode || 'Full Time',
           logoLetter: j.companyName ? j.companyName.charAt(0).toUpperCase() : 'J',
           logoBg: ['bg-red-600 text-white', 'bg-blue-600 text-white', 'bg-emerald-600 text-white', 'bg-purple-600 text-white', 'bg-amber-500 text-slate-900'][Math.floor(Math.random() * 5)],
