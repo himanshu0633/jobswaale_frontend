@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import PageSkeleton from '../../../components/SkeletonLoader';
 import {
   ArrowUp,
   Briefcase,
@@ -236,11 +237,7 @@ export const Dashboard = () => {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader className="h-8 w-8 animate-spin text-[#6658dd]" />
-      </div>
-    );
+    return <PageSkeleton variant="dashboard" />;
   }
 
   const statCards = [

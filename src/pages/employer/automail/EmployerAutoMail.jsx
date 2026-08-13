@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { AlertCircle, CheckCircle2, MailCheck, Save, SlidersHorizontal, X } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import PageSkeleton from '../../../components/SkeletonLoader';
 import { getWithCache } from '../../../utils/apiCache';
 
 const getTokenHeaders = () => {
@@ -163,7 +164,7 @@ export const EmployerAutoMail = () => {
   };
 
   if (loading) {
-    return <div className="flex min-h-[360px] items-center justify-center text-sm font-bold text-slate-400">Loading...</div>;
+    return <PageSkeleton variant="form" />;
   }
 
   return (

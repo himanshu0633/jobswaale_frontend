@@ -1,11 +1,12 @@
 /* eslint-disable react-refresh/only-export-components */
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import EmployerFooter from './components/EmployerFooter';
 import EmployerHeader from './components/EmployerHeader';
 import EmployerSidebar from './components/EmployerSidebar';
 import { MessageSocketProvider } from '../../context/MessageSocketContext';
 import ProfileCompletionPopup from '../../components/ProfileCompletionPopup';
+import PageSkeleton from '../../components/SkeletonLoader';
 
 const getPublicUser = () => {
   try {
@@ -62,7 +63,9 @@ export const EmployerLayout = () => {
           />
           <div className={`portal-content flex min-w-0 flex-grow flex-col bg-[#f5f6f8] transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
             <main className="min-w-0 flex-grow overflow-x-hidden p-4 md:p-5 lg:p-6">
-              <Outlet />
+              <Suspense fallback={<PageSkeleton />}>
+                <Outlet />
+              </Suspense>
             </main>
             <EmployerFooter />
           </div>

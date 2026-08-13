@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import PageSkeleton from '../../../components/SkeletonLoader';
 import {
   Plus,
   Edit2,
@@ -138,11 +139,7 @@ export const Jobs = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader className="w-8 h-8 animate-spin text-[#6658dd]" />
-      </div>
-    );
+    return <PageSkeleton variant="table" />;
   }
 
   return (

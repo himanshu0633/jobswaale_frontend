@@ -22,6 +22,7 @@ import {
   Users
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import PageSkeleton from '../../../components/SkeletonLoader';
 
 const emptyDetails = {
   stats: {},
@@ -156,11 +157,7 @@ export const EmployerJobDetails = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex min-h-[420px] items-center justify-center">
-        <Loader className="h-8 w-8 animate-spin text-[#6658dd]" />
-      </div>
-    );
+    return <PageSkeleton variant="detail" />;
   }
 
   if (error) {

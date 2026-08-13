@@ -18,7 +18,7 @@ import {
 
 export const ApplicationReports = () => {
   const [applications, setApplications] = useState([]);
-  const [stats, setStats] = useState({ totalApplications: 4582, shortlisted: 845, rejected: 1237, selected: 312 });
+  const [stats, setStats] = useState({ totalApplications: 0, shortlisted: 0, rejected: 0, selected: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 

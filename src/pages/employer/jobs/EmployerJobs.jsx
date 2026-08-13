@@ -18,6 +18,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import PageSkeleton from '../../../components/SkeletonLoader';
 
 const emptyJobs = {
   stats: { active: 0, draft: 0, expired: 0, closed: 0 },
@@ -186,11 +187,7 @@ export const EmployerJobs = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex min-h-[420px] items-center justify-center">
-        <Loader className="h-8 w-8 animate-spin text-[#6658dd]" />
-      </div>
-    );
+    return <PageSkeleton variant="list" />;
   }
 
   const renderRowActions = (job) => (

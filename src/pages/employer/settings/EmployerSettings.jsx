@@ -18,6 +18,7 @@ import {
   Loader
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import PageSkeleton from '../../../components/SkeletonLoader';
 
 const getTokenHeaders = () => {
   const token = localStorage.getItem('publicToken');
@@ -248,11 +249,7 @@ export const EmployerSettings = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex min-h-[450px] items-center justify-center">
-        <Loader className="h-9 w-9 animate-spin text-[#6658dd]" />
-      </div>
-    );
+    return <PageSkeleton variant="form" />;
   }
 
   return (

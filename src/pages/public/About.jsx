@@ -169,7 +169,7 @@ const About = () => {
                   Create free account and start applying to your dream job today
                 </h3>
                 <p className="text-[#37404e] text-base sm:text-lg leading-relaxed">
-                  Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum is simply dummy.
+                  Build your profile, explore verified openings, and apply directly to roles that match your skills, location, and career goals.
                 </p>
                 <div className="mt-6 sm:mt-7">
                   <Link

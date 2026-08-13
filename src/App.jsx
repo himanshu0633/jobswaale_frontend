@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation }
 import { AuthProvider, isSuperAdminUser, useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
+import PageSkeleton from './components/SkeletonLoader';
 
 /* ==========================================
    1. PAGE COMPONENT IMPORTS
@@ -144,7 +145,9 @@ const ProtectedRoute = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50">
-        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-full max-w-6xl p-6">
+          <PageSkeleton />
+        </div>
       </div>
     );
   }
@@ -179,11 +182,7 @@ const ProtectedRoute = () => {
 // Sub-router containing all administrative panels
 const AdminSubRoutes = () => {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    }>
+    <Suspense fallback={<PageSkeleton />}>
       <Routes>
         {/* Core Dashboard */}
         <Route index element={<Dashboard />} />
@@ -334,8 +333,8 @@ function App() {
           <Route element={<EmployerProtectedRoute />}>
             <Route path="/employer" element={
               <Suspense fallback={
-                <div className="flex items-center justify-center min-h-screen bg-slate-50">
-                  <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                <div className="min-h-screen bg-slate-50 p-6">
+                  <PageSkeleton />
                 </div>
               }>
                 <EmployerLayout />
@@ -376,8 +375,8 @@ function App() {
           <Route element={<JobseekerProtectedRoute />}>
             <Route path="/jobseeker" element={
               <Suspense fallback={
-                <div className="flex items-center justify-center min-h-screen bg-slate-50">
-                  <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                <div className="min-h-screen bg-slate-50 p-6">
+                  <PageSkeleton />
                 </div>
               }>
                 <JobseekerLayout />

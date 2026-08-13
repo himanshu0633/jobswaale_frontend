@@ -21,6 +21,7 @@ import {
   XCircle
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import PageSkeleton from '../../../components/SkeletonLoader';
 import { getWithCache } from '../../../utils/apiCache';
 
 const getRefLabel = (value, keys = []) => {
@@ -572,11 +573,7 @@ export const JobseekerProfile = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex min-h-[420px] items-center justify-center">
-        <div className="h-9 w-9 animate-spin rounded-full border-4 border-[#0047C7] border-t-transparent"/>
-      </div>
-    );
+    return <PageSkeleton variant="detail" />;
   }
 
   return (

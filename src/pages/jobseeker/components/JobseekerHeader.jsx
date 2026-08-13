@@ -28,9 +28,9 @@ export const JobseekerHeader = ({ toggleSidebar, title, isCollapsed }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [theme, setTheme] = useState(() => localStorage.getItem('jobseekerTheme') || 'light');
   const user = getJobseekerUser();
-  const displayName = user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Rahul Kumar';
+  const displayName = user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Jobseeker';
   const plan = user?.planName || 'Free Plan';
-  const initials = getInitials(displayName) || 'RK';
+  const initials = getInitials(displayName) || 'JS';
 
   const [searchValue, setSearchValue] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);

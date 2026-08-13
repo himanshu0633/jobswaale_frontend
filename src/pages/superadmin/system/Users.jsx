@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { AlertCircle, CheckCircle, Edit2, Loader, Plus, Search, Trash2, User, X } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import PageSkeleton from '../../../components/SkeletonLoader';
 
 const statusLabel = (status) => status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Active';
 
@@ -61,7 +62,7 @@ const Users = () => {
     }
   };
 
-  if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><Loader className="w-8 h-8 animate-spin text-indigo-600" /></div>;
+  if (loading) return <PageSkeleton variant="table" />;
 
   return (
     <div className="space-y-5">

@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Bookmark, MapPin, PlusCircle, Building, Globe, Phone } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import PageSkeleton from '../../../components/SkeletonLoader';
 
 export const JobseekerSavedEmployers = () => {
   const [savedEmployers, setSavedEmployers] = useState([]);
@@ -47,11 +48,7 @@ export const JobseekerSavedEmployers = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex min-h-[420px] items-center justify-center">
-        <div className="h-9 w-9 animate-spin rounded-full border-4 border-[#0047C7] border-t-transparent"/>
-      </div>
-    );
+    return <PageSkeleton variant="table" />;
   }
 
   return (

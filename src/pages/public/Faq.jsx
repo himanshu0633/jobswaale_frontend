@@ -161,8 +161,7 @@ const AccordionItem = ({ faq, index, isOpen, toggle, isLeft }) => {
             <div className="hidden lg:block w-full lg:w-2/12"></div>
             <div className="w-full lg:w-5/12 mt-6 lg:mt-0">
               <p className="text-lg text-gray-500 leading-relaxed">
-                Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum is
-                simply dummy.
+                Find quick answers about job applications, employer registration, subscriptions, profile updates, and account support.
               </p>
             </div>
           </div>
