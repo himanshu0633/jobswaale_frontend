@@ -245,7 +245,7 @@ export const JobDetail = () => {
       }
     };
     fetchCategoryJobs();
-  }, []);
+  }, [id, data]);
 
   const handleApply = async (event) => {
     event.preventDefault();
