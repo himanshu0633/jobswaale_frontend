@@ -19,7 +19,6 @@ import {
   Loader
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
-import { Link } from 'react-router-dom';
 
 const getTokenHeaders = () => {
   const token = localStorage.getItem('publicToken');
@@ -196,12 +195,12 @@ export const JobseekerSubscription = () => {
               <div className="jsw-display text-3xl font-extrabold sm:text-4xl">
                 {activePlan.price} <span className="text-sm font-medium text-white/60">/ {activePlan.period}</span>
               </div>
-              <Link
-                to="/jobseeker-plan"
+              <a
+                href="#plansSection"
                 className="inline-flex items-center gap-1.5 rounded-xl bg-[#FFC107] px-5 py-2.5 text-sm font-bold text-[#212529] shadow-lg shadow-black/10 transition hover:-translate-y-0.5 hover:bg-[#ffca2c] active:translate-y-0"
               >
                 Upgrade now <ArrowUpRight className="h-4 w-4" />
-              </Link>
+              </a>
             </div>
 
           </div>
