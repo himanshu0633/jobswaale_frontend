@@ -29,6 +29,19 @@ const getPublicUser = () => {
   }
 };
 
+const hasJobseekerSession = () => {
+  try {
+    const user = JSON.parse(localStorage.getItem('publicUser') || 'null');
+    const token = localStorage.getItem('publicToken');
+    if (!user || !token) return false;
+    const accountType = String(user?.accountType || '').trim().toLowerCase();
+    const role = String(user?.role || '').trim().toLowerCase();
+    return accountType === 'jobseeker' || role === 'jobseeker';
+  } catch {
+    return false;
+  }
+};
+
 const logoTones = {
   Microsoft: 'bg-rose-600',
   Google: 'bg-blue-600',
@@ -143,33 +156,14 @@ export const JobDetail = () => {
   const [categoryJobs, setCategoryJobs] = useState([]);
   const [categoryLoading, setCategoryLoading] = useState(false);
 
-  const [isJobseeker, setIsJobseeker] = useState(false);
+  const [isJobseeker, setIsJobseeker] = useState(() => hasJobseekerSession());
   const [showAuthPopup, setShowAuthPopup] = useState(false);
   const [showEmployerLogoutConfirm, setShowEmployerLogoutConfirm] = useState(false);
   const [profile, setProfile] = useState(null);
   const [profileName, setProfileName] = useState('');
   const [profileEmail, setProfileEmail] = useState('');
   const [profilePhone, setProfilePhone] = useState('');
-
-  useEffect(() => {
-    const checkIsJobseeker = () => {
-      try {
-        const user = JSON.parse(localStorage.getItem('publicUser') || 'null');
-        const token = localStorage.getItem('publicToken');
-        if (!user || !token) return false;
-        const accountType = String(user?.accountType || '').trim().toLowerCase();
-        const role = String(user?.role || '').trim().toLowerCase();
-        return accountType === 'jobseeker' || role === 'jobseeker';
-      } catch {
-        return false;
-      }
-    };
-    const hasJobseeker = checkIsJobseeker();
-    setIsJobseeker(hasJobseeker);
-    if (!loading && !hasJobseeker) {
-      setShowAuthPopup(true);
-    }
-  }, [loading]);
+  const [resumeFile, setResumeFile] = useState(null);
 
   useEffect(() => {
     if (isJobseeker) {
@@ -223,6 +217,11 @@ export const JobDetail = () => {
         );
         setData(emptyJob);
       } finally {
+        const hasJobseeker = hasJobseekerSession();
+        setIsJobseeker(hasJobseeker);
+        if (!hasJobseeker) {
+          setShowAuthPopup(true);
+        }
         setLoading(false);
       }
     };
@@ -259,8 +258,27 @@ export const JobDetail = () => {
 
   const handleApply = async (event) => {
     event.preventDefault();
-    setApplying(true);
     setApplyError('');
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!profileName.trim()) {
+      setApplyError('Please enter your full name.');
+      return;
+    }
+    if (!profileEmail.trim() || !emailPattern.test(profileEmail.trim())) {
+      setApplyError('Please enter a valid email address.');
+      return;
+    }
+    if (!profilePhone.trim()) {
+      setApplyError('Please enter your phone number.');
+      return;
+    }
+    if (resumeFile && !/\.(pdf|doc|docx)$/i.test(resumeFile.name)) {
+      setApplyError('Please upload a PDF, DOC, or DOCX resume file.');
+      return;
+    }
+
+    setApplying(true);
 
     try {
       const token = localStorage.getItem('publicToken');
@@ -279,12 +297,14 @@ export const JobDetail = () => {
       setApplied(true);
       setMatchScore(response.data?.application?.matchScore ?? matchScore);
       event.target.reset();
+      setResumeFile(null);
 
     } catch (err) {
       const message = err.response?.data?.message || 'Failed to submit application. Please try again.';
       if (message.toLowerCase().includes('already applied')) {
         setApplied(true);
         event.target.reset();
+        setResumeFile(null);
       } else {
         setApplyError(message);
       }
@@ -508,7 +528,7 @@ export const JobDetail = () => {
                   </Link> */}
                 </div>
               ) : (
-                <form onSubmit={handleApply} className="space-y-4">
+                <form onSubmit={handleApply} noValidate className="space-y-4">
                   {applyError && (
                     <div className="rounded-md border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
                       {applyError}
@@ -564,10 +584,16 @@ export const JobDetail = () => {
                       <input
                         type="file"
                         name="resume"
-                        required={!profile?.resume}
                         accept=".pdf,.doc,.docx"
+                        onChange={(e) => {
+                          setResumeFile(e.target.files?.[0] || null);
+                          if (applyError) setApplyError('');
+                        }}
                         className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none file:mr-3 file:rounded file:border-0 file:bg-[#F2F6FF] file:px-3 file:py-1 file:text-xs file:font-bold file:text-[#0047C7] focus:border-[#0047C7]"
                       />
+                      <p className="mt-1 text-xs font-semibold text-slate-500">
+                        Optional: choose a file only if you want to include a resume with this application.
+                      </p>
                     </div>
                     <div className="sm:col-span-2">
                       <label className="mb-1 block text-sm font-bold text-[#0f172a]">Cover Letter / Additional Information</label>

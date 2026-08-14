@@ -53,7 +53,7 @@ export const EmployerLayout = () => {
   return (
     <MessageSocketProvider role="employer">
       <div className="portal-shell flex min-h-screen flex-col bg-slate-50">
-        <EmployerHeader toggleSidebar={handleToggleSidebar} isCollapsed={sidebarCollapsed} />
+        <EmployerHeader toggleSidebar={handleToggleSidebar} />
         <div className="relative flex min-w-0 flex-1 pt-[66px]">
           <ProfileCompletionPopup portal="employer" />
           <EmployerSidebar

@@ -35,6 +35,7 @@ const EmployerSupport = lazy(() => import('./pages/employer/support/EmployerSupp
 const EmployerJobDetails = lazy(() => import('./pages/employer/jobs/EmployerJobDetails'));
 const EmployerJobs = lazy(() => import('./pages/employer/jobs/EmployerJobs'));
 const EmployerPostJob = lazy(() => import('./pages/employer/jobs/EmployerPostJob'));
+const EmployerSearchResults = lazy(() => import('./pages/employer/search/EmployerSearchResults'));
 const EmployerSearchCandidates = lazy(() => import('./pages/employer/candidates/EmployerSearchCandidates'));
 const EmployerCandidateProfile = lazy(() => import('./pages/employer/candidates/EmployerCandidateProfile'));
 const EmployerApplications = lazy(() => import('./pages/employer/applications/EmployerApplications'));
@@ -342,6 +343,7 @@ function App() {
             }>
               <Route index element={<EmployerDashboard />} />
               <Route path="dashboard" element={<EmployerDashboard />} />
+              <Route path="search-results" element={<EmployerSearchResults />} />
               <Route path="jobs" element={<EmployerJobs />} />
               <Route path="jobs/create" element={<EmployerPostJob />} />
               <Route path="jobs/:id/edit" element={<EmployerPostJob />} />

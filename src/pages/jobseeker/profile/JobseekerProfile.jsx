@@ -320,14 +320,14 @@ export const JobseekerProfile = () => {
     const fetchMasters = async () => {
       try {
         const [countryData, stateData, districtData, cityData, industryData, categoryData, typeData, qualificationData] = await Promise.all([
-          getWithCache(`${BASE_API_URL}/masters/countries`),
-          getWithCache(`${BASE_API_URL}/masters/states`),
-          getWithCache(`${BASE_API_URL}/masters/districts`),
-          getWithCache(`${BASE_API_URL}/masters/cities`),
-          getWithCache(`${BASE_API_URL}/masters/industry-types`),
-          getWithCache(`${BASE_API_URL}/masters/job-categories`),
-          getWithCache(`${BASE_API_URL}/masters/job-types`),
-          getWithCache(`${BASE_API_URL}/masters/qualifications`)
+          getWithCache(`${BASE_API_URL}/masters/countries`, true),
+          getWithCache(`${BASE_API_URL}/masters/states`, true),
+          getWithCache(`${BASE_API_URL}/masters/districts`, true),
+          getWithCache(`${BASE_API_URL}/masters/cities`, true),
+          getWithCache(`${BASE_API_URL}/masters/industry-types`, true),
+          getWithCache(`${BASE_API_URL}/masters/job-categories`, true),
+          getWithCache(`${BASE_API_URL}/masters/job-types`, true),
+          getWithCache(`${BASE_API_URL}/masters/qualifications`, true)
         ]);
 
         setCountries(countryData || []);
