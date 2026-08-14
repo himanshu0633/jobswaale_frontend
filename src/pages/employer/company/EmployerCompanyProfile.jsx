@@ -22,10 +22,12 @@ import {
   BadgeAlert,
   Gem,
   CheckCircle2,
-  Upload
+  Upload,
+  MailCheck
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
+import EmployerAutoMail from '../automail/EmployerAutoMail';
 
 const Linkedin = (props) => (
   <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className={props.className}>
@@ -80,6 +82,7 @@ export const EmployerCompanyProfile = () => {
 
   // Tab State
   const [activeTab, setActiveTab] = useState('info'); // 'info' or 'team'
+  const [showAutoMail, setShowAutoMail] = useState(false);
 
   // Modals visibility
   const [showEditModal, setShowEditModal] = useState(false);
@@ -367,9 +370,27 @@ export const EmployerCompanyProfile = () => {
               <Edit className="h-4 w-4" />
               Edit Profile
             </button>
+            <button
+              type="button"
+              onClick={() => setShowAutoMail((current) => !current)}
+              className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-extrabold transition ${
+                showAutoMail
+                  ? 'bg-[#6658dd] text-white hover:bg-[#5848d8]'
+                  : 'border border-indigo-100 bg-indigo-50 text-[#6658dd] hover:bg-indigo-100'
+              }`}
+            >
+              <MailCheck className="h-4 w-4" />
+              Auto Mail
+            </button>
           </div>
         </div>
       </div>
+
+      {showAutoMail && (
+        <section className="rounded-lg border border-indigo-100 bg-indigo-50/30 p-4">
+          <EmployerAutoMail />
+        </section>
+      )}
 
       {/* SECTION 3: STATS GRID */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

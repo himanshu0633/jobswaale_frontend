@@ -71,11 +71,29 @@ const IcoChevronRight = () => (
 /* ─────────────────────────────────────────────────────────────
    EMPLOYER CARD  — mirrors .card-grid-2.card-employers exactly
 ───────────────────────────────────────────────────────────── */
-const EmployerCard = ({ company }) => {
+const getPublicUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem('publicUser') || 'null');
+  } catch {
+    return null;
+  }
+};
+
+const isJobseekerUser = (user) => {
+  const accountType = String(user?.accountType || '').trim().toLowerCase();
+  const role = String(user?.role || '').trim().toLowerCase();
+  return accountType === 'jobseeker' || role === 'jobseeker';
+};
+
+const EmployerCard = ({ company, onSavedChange }) => {
   const [hovered, setHovered] = useState(false);
   const [saved, setSaved] = useState(Boolean(company.hasSaved));
   const [toggling, setToggling] = useState(false);
   const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(company.name)}&background=e8eaf6&color=3949ab&size=110&bold=true`;
+
+  useEffect(() => {
+    setSaved(Boolean(company.hasSaved));
+  }, [company.hasSaved]);
 
   const handleToggleSave = async (e) => {
     e.preventDefault();
@@ -83,8 +101,14 @@ const EmployerCard = ({ company }) => {
     setToggling(true);
     try {
       const token = localStorage.getItem('publicToken');
+      const user = getPublicUser();
       if (!token) {
         alert('Please log in to save employers.');
+        setToggling(false);
+        return;
+      }
+      if (!isJobseekerUser(user)) {
+        alert('Only jobseekers can save employers. Please log in with a jobseeker account.');
         setToggling(false);
         return;
       }
@@ -95,9 +119,12 @@ const EmployerCard = ({ company }) => {
           headers: { Authorization: `Bearer ${token}` }
         }
       );
-      setSaved(Boolean(res.data?.saved));
+      const nextSaved = Boolean(res.data?.saved);
+      setSaved(nextSaved);
+      onSavedChange?.(company.id, nextSaved);
     } catch (err) {
       console.error('Toggle save employer error:', err);
+      alert(err.response?.data?.message || 'Employer could not be saved. Please try again.');
     } finally {
       setToggling(false);
     }
@@ -270,6 +297,14 @@ export const Employers = () => {
   const industries = [...new Set(companies.map(company => company.industry).filter(Boolean))];
   const locations = [...new Set(companies.map(company => company.location).filter(Boolean))];
 
+  const handleSavedChange = (companyId, hasSaved) => {
+    const applySaved = company => (
+      String(company.id) === String(companyId) ? { ...company, hasSaved } : company
+    );
+    setCompanies(prev => prev.map(applySaved));
+    setFilteredCompanies(prev => prev.map(applySaved));
+  };
+
   /* filter logic */
   const runFilter = (overrides = {}) => {
     const kw   = (overrides.searchKeyword ?? searchKeyword).toLowerCase();
@@ -308,7 +343,7 @@ export const Employers = () => {
           headers: token ? { Authorization: `Bearer ${token}` } : {}
         });
         const mapped = (res.data || []).map((item) => ({
-          id: item.id || item._id,
+          id: item._id || item.id,
           name: item.name || 'Employer',
           location: item.location || 'Location not specified',
           industry: item.industry || 'General',
@@ -744,7 +779,11 @@ export const Employers = () => {
             ) : (
               <div className="grid grid-cols-2 gap-6">
                 {filteredCompanies.map(company => (
-                  <EmployerCard key={company.id} company={company} />
+                  <EmployerCard
+                    key={company.id}
+                    company={company}
+                    onSavedChange={handleSavedChange}
+                  />
                 ))}
               </div>
             )}

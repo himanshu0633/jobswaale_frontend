@@ -75,6 +75,7 @@ export const EmployerShortlisted = () => {
   
   // Dropdown states
   const [openDropdownId, setOpenDropdownId] = useState(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
 
   // Modals state
   const [activeCandidate, setActiveCandidate] = useState(null);
@@ -247,6 +248,7 @@ export const EmployerShortlisted = () => {
 
   // Open modals helper
   const openModal = (candidate, type) => {
+    setOpenDropdownId(null);
     setActiveCandidate(candidate);
     setModalType(type);
     setModalError('');
@@ -268,6 +270,14 @@ export const EmployerShortlisted = () => {
         type="button"
         onClick={(e) => {
           e.stopPropagation();
+          const rect = e.currentTarget.getBoundingClientRect();
+          const menuWidth = 208;
+          const menuHeight = app.status !== 'Offered' && app.status !== 'Rejected' ? 178 : 136;
+          const hasSpaceBelow = window.innerHeight - rect.bottom > menuHeight + 16;
+          setDropdownPosition({
+            top: hasSpaceBelow ? rect.bottom + 6 : Math.max(12, rect.top - menuHeight - 6),
+            left: Math.min(window.innerWidth - menuWidth - 12, Math.max(12, rect.right - menuWidth))
+          });
           setOpenDropdownId(openDropdownId === app.id ? null : app.id);
         }}
         className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-600 transition hover:bg-slate-50"
@@ -276,7 +286,11 @@ export const EmployerShortlisted = () => {
       </button>
 
       {openDropdownId === app.id && (
-        <div className="absolute right-0 mt-1.5 z-10 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-none py-1">
+        <div
+          className="fixed z-[70] w-52 origin-top-right rounded-md bg-white py-1 shadow-xl ring-1 ring-black/5 focus:outline-none"
+          style={{ top: dropdownPosition.top, left: dropdownPosition.left }}
+          onClick={(e) => e.stopPropagation()}
+        >
           <button
             type="button"
             onClick={() => openModal(app, 'viewProfile')}

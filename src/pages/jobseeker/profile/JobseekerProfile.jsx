@@ -31,6 +31,7 @@ const getRefLabel = (value, keys = []) => {
 };
 
 const normalizeText = (value) => String(value || '').trim().toLowerCase();
+const isMongoObjectId = (value) => /^[a-f\d]{24}$/i.test(String(value || '').trim());
 
 const getCountryValue = (country) => country?.cid || country?.countryName || '';
 const getCountryLabel = (country) => country?.countryName || country?.cid || '';
@@ -47,7 +48,7 @@ const getJobCategoryLabel = (category) => category?.categoryName || category?.na
 const getJobTypeValue = (type) => type?._id || type?.id || '';
 const getJobTypeLabel = (type) => type?.jobType || type?.name || type?.id || '';
 const getQualificationValue = (qualification) => qualification?._id || qualification?.id || '';
-const getQualificationLabel = (qualification) => qualification?.name || qualification?.id || '';
+const getQualificationLabel = (qualification) => qualification?.name || '';
 const experienceOptions = ['Fresher', ...Array.from({ length: 10 }, (_, index) => `${index + 1}+ Years`)];
 
 const emptyExperience = {
@@ -133,7 +134,7 @@ const SearchableSelect = ({
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const selected = findByValueOrLabel(options, value, getOptionValue, getOptionLabel);
-  const displayValue = selected ? getOptionLabel(selected) : value;
+  const displayValue = selected ? getOptionLabel(selected) : (isMongoObjectId(value) ? '' : value);
   const filtered = options.filter(option => getOptionLabel(option).toLowerCase().includes(query.toLowerCase()));
 
   return (
@@ -377,7 +378,7 @@ export const JobseekerProfile = () => {
         setStatus(seeker.status || '');
         setJobSearchStatus(seeker.jobSearchStatus || 'looking');
         setBio(seeker.bio || '');
-        setQualification(seeker.qualification?._id || getRefLabel(seeker.qualification, ['name']) || '');
+        setQualification(getRefLabel(seeker.qualification, ['name']) || seeker.qualification?._id || '');
         setPassingYear(seeker.passingYear || '');
         setStudyField(seeker.studyField || '');
         setUniversity(seeker.university || '');
@@ -495,6 +496,12 @@ export const JobseekerProfile = () => {
   const selectedJobCategory = findByValueOrLabel(jobCategories, jobCategory, getJobCategoryValue, getJobCategoryLabel);
   const selectedJobType = findByValueOrLabel(jobTypes, jobType, getJobTypeValue, getJobTypeLabel);
   const selectedQualification = findByValueOrLabel(qualifications, qualification, getQualificationValue, getQualificationLabel);
+
+  useEffect(() => {
+    if (!isMongoObjectId(qualification) || !selectedQualification) return;
+    const label = getQualificationLabel(selectedQualification);
+    if (label) setQualification(label);
+  }, [qualification, selectedQualification]);
 
   const handleSave = async () => {
     setError('');
