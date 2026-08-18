@@ -26,25 +26,13 @@ const GithubIcon = ({ className }) => (
 );
 
 export const PublicFooter = () => {
-  const location = useLocation();
-  const [authUser, setAuthUser] = useState(() => {
+  const authUser = (() => {
     try {
       return JSON.parse(localStorage.getItem('publicUser') || 'null');
     } catch {
       return null;
     }
-  });
-
-  useEffect(() => {
-    const syncUser = () => {
-      try {
-        setAuthUser(JSON.parse(localStorage.getItem('publicUser') || 'null'));
-      } catch {
-        setAuthUser(null);
-      }
-    };
-    syncUser();
-  }, [location]);
+  })();
 
   const isLoggedIn = Boolean(authUser);
 
