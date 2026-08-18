@@ -244,17 +244,7 @@ export const EmployerApplications = () => {
         ))}
       </div>
 
-      <section className="rounded-md border border-slate-100 bg-white shadow-sm">
-        <div className="border-b border-dashed border-slate-200 px-4 py-4 sm:px-5"><h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Hiring Pipeline</h2></div>
-        <div className="grid grid-cols-2 gap-4 p-4 sm:p-5 md:grid-cols-3 xl:grid-cols-6">
-          {pipelineConfig.map((item) => (
-            <button key={item.key} type="button" onClick={() => handlePipelineClick(item)} className={`flex min-w-0 items-center gap-3 rounded-md p-1 text-left transition hover:bg-slate-50 ${filters.status === item.status ? 'ring-2 ring-indigo-100' : ''}`}>
-              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11 ${item.tone}`}><item.icon className="h-4 w-4" /></span>
-              <div className="min-w-0"><p className="text-sm font-black text-[#3f4254] sm:text-base">{Number(data.pipeline?.[item.key] || 0).toLocaleString('en-IN')}</p><p className="truncate text-xs font-semibold text-slate-400">{item.title}</p></div>
-            </button>
-          ))}
-        </div>
-      </section>
+
 
       <section className="rounded-md border border-slate-100 bg-white shadow-sm">
         <div className="flex flex-col justify-between gap-4 border-b border-dashed border-slate-200 px-4 py-4 sm:px-5 lg:flex-row lg:items-center">
