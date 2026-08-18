@@ -36,7 +36,7 @@ const statusTone = {
 };
 
 const statusLabel = {
-  Shortlisted: 'Pending Interview',
+  Shortlisted: 'Shortlisted',
   Interview: 'Interview Scheduled',
   Offered: 'Selected',
   Rejected: 'Rejected'
