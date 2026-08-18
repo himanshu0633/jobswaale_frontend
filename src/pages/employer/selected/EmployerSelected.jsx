@@ -68,7 +68,7 @@ const OfferActions = ({ candidate, isUpdating, isOpen, onToggle, buttonClassName
     </button>
     {isOpen && (
       <div className={menuClassName}>
-        <Link to="/employer/applications" className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"><FileText className="h-4 w-4 text-slate-500" />View Application</Link>
+        <Link to={`/employer/applications/${candidate.applicationId}`} className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"><FileText className="h-4 w-4 text-slate-500" />View Application</Link>
         <button type="button" onClick={() => onUpdate(candidate, 'Offer Sent')} className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"><Send className="h-4 w-4 text-[#6658dd]" />Mark Offer Sent</button>
         <button type="button" onClick={() => onUpdate(candidate, 'Offer Accepted')} className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"><CheckCircle2 className="h-4 w-4 text-cyan-500" />Mark Accepted</button>
         <button type="button" onClick={() => onUpdate(candidate, 'Hired')} className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"><Briefcase className="h-4 w-4 text-emerald-500" />Mark Hired</button>
@@ -278,13 +278,13 @@ export const EmployerSelected = () => {
           </div>
 
           {/* Table — sm and up */}
-          <div className="hidden overflow-x-auto sm:block">
+          <div className="hidden overflow-x-auto pb-32 sm:block">
             <table className="w-full min-w-[1120px] text-left">
               <thead className="bg-[#dbe6f6] text-[11px] uppercase text-slate-600"><tr><th className="px-5 py-3">Candidate</th><th className="px-5 py-3">Job Applied</th><th className="px-5 py-3"><span className="inline-flex items-center gap-1">Selection Date <ChevronUp className="h-3 w-3 text-slate-400" /></span></th><th className="px-5 py-3">Interview Score</th><th className="px-5 py-3">Offer Status</th><th className="px-5 py-3">Salary Offered</th><th className="px-5 py-3 text-center">Action</th></tr></thead>
               <tbody className="divide-y divide-slate-100">
                 {loading ? <tr><td colSpan="7" className="px-5 py-12 text-center"><Loader className="mx-auto h-7 w-7 animate-spin text-[#6658dd]" /></td></tr> : visibleRows.length ? visibleRows.map((candidate) => (
                   <tr key={candidate.id} className="transition hover:bg-slate-50">
-                    <td className="px-5 py-4"><div className="flex items-center gap-3"><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${candidate.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>{candidate.initials}</span><div><Link to="/employer/applications" className="text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{candidate.name}</Link><p className="mt-0.5 text-xs font-semibold text-slate-400">{candidate.email}</p><p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><MapPin className="h-3 w-3" />{candidate.location}</p></div></div></td>
+                    <td className="px-5 py-4"><div className="flex items-center gap-3"><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${candidate.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>{candidate.initials}</span><div><Link to={`/employer/applications/${candidate.applicationId}`} className="text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{candidate.name}</Link><p className="mt-0.5 text-xs font-semibold text-slate-400">{candidate.email}</p><p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><MapPin className="h-3 w-3" />{candidate.location}</p></div></div></td>
                     <td className="px-5 py-4"><p className="text-sm font-extrabold text-[#3f4254]">{candidate.jobTitle}</p><p className="mt-0.5 text-xs font-semibold text-slate-400">{candidate.jobType}</p></td>
                     <td className="px-5 py-4 text-sm font-semibold text-slate-600">{candidate.displayDate || '-'}</td>
                     <td className="px-5 py-4"><span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${scoreTone(candidate.interviewScore || 0)}`}>{candidate.interviewScore || 0}%</span></td>

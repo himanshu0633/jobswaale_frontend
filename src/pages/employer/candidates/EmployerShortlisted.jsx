@@ -467,7 +467,7 @@ export const EmployerShortlisted = () => {
           </div>
 
           {/* Candidates Table — sm and up */}
-          <div className="hidden overflow-x-auto sm:block">
+          <div className="hidden overflow-x-auto pb-32 sm:block">
             <table className="w-full min-w-[1000px] text-left">
               <thead className="bg-[#dbe6f6] text-[11px] uppercase text-slate-600">
                 <tr>
