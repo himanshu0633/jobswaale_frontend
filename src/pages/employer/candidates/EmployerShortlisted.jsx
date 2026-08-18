@@ -363,7 +363,17 @@ export const EmployerShortlisted = () => {
         </div>
       )}
 
-
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-4 sm:gap-4">
+        <div className="rounded-md border border-slate-100 bg-white p-3 text-left shadow-sm sm:p-5">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-500 sm:h-12 sm:w-12"><UserCheck className="h-4 w-4 sm:h-5 sm:w-5" /></span>
+            <div className="min-w-0">
+              <p className="truncate text-xs font-semibold text-slate-400 sm:text-sm">Total Shortlisted</p>
+              <p className="mt-1 text-base font-black text-[#3f4254] sm:text-xl">{Number(statsCounts.total || 0).toLocaleString('en-IN')}</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Filter and Table Card */}
       <section className="rounded-md border border-slate-100 bg-white shadow-sm">
