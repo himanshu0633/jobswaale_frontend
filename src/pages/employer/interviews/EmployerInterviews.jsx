@@ -27,13 +27,10 @@ import InterviewLocationPicker from '../../../components/InterviewLocationPicker
 
 const initialFilters = { search: '', jobTitle: '', status: '', type: '', fromDate: '' };
 
-const statConfig = [
-  { key: 'total', title: 'Total', status: '', icon: CalendarCheck, tone: 'bg-violet-50 text-[#6658dd]' },
+const statCards = [
+  { key: 'total', title: 'Total Interviews', status: '', icon: CalendarCheck, tone: 'bg-violet-50 text-[#6658dd]' },
   { key: 'scheduled', title: 'Scheduled', status: 'Scheduled', icon: Calendar, tone: 'bg-cyan-50 text-cyan-500' },
-  { key: 'onHold', title: 'On Hold', status: 'On Hold', icon: CalendarClock, tone: 'bg-amber-50 text-amber-500' },
-  { key: 'completed', title: 'Completed', status: 'Completed', icon: CalendarCheck, tone: 'bg-emerald-50 text-emerald-500' },
-  { key: 'rescheduled', title: 'Rescheduled', status: 'Rescheduled', icon: CalendarClock, tone: 'bg-amber-50 text-amber-500' },
-  { key: 'cancelled', title: 'Cancelled', status: 'Cancelled', icon: CalendarX, tone: 'bg-rose-50 text-rose-500' }
+  { key: 'onHold', title: 'On Hold', status: 'On Hold', icon: CalendarClock, tone: 'bg-amber-50 text-amber-500' }
 ];
 
 const statusTone = {
@@ -103,7 +100,7 @@ export const EmployerInterviews = () => {
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [data, setData] = useState({
-    stats: { total: 0, scheduled: 0, onHold: 0, completed: 0, rescheduled: 0, cancelled: 0 },
+    stats: { total: 0, scheduled: 0, onHold: 0 },
     filters: { jobTitles: [], types: [] },
     interviews: [],
     pagination: { page: 1, limit: 10, total: 0, totalPages: 1 }
@@ -137,7 +134,7 @@ export const EmployerInterviews = () => {
       .then((response) => {
         if (!alive) return;
         setData({
-          stats: { total: 0, scheduled: 0, onHold: 0, completed: 0, rescheduled: 0, cancelled: 0 },
+          stats: { total: 0, scheduled: 0, onHold: 0 },
           filters: { jobTitles: [], types: [] },
           interviews: [],
           pagination: { page: 1, limit: pageSize, total: 0, totalPages: 1 },
@@ -168,7 +165,7 @@ export const EmployerInterviews = () => {
   };
 
   const optionFilters = data.filters || { jobTitles: [], types: [] };
-  const stats = data.stats || { total: 0, scheduled: 0, onHold: 0, completed: 0, rescheduled: 0, cancelled: 0 };
+  const stats = data.stats || { total: 0, scheduled: 0, onHold: 0 };
   const pagination = data.pagination || { page: currentPage, limit: pageSize, total: 0, totalPages: 1 };
   const totalPages = pagination.totalPages || 1;
   const safePage = pagination.page || 1;
@@ -222,7 +219,7 @@ export const EmployerInterviews = () => {
       setEditForm({ date: '', time: '', type: 'Video Call', locationOrLink: '', notes: '' });
       const response = await axios.get(`${BASE_API_URL}/employer/interviews?${queryParams}`, { headers: getTokenHeaders() });
       setData({
-        stats: { total: 0, scheduled: 0, onHold: 0, completed: 0, rescheduled: 0, cancelled: 0 },
+        stats: { total: 0, scheduled: 0, onHold: 0 },
         filters: { jobTitles: [], types: [] },
         interviews: [],
         pagination: { page: 1, limit: pageSize, total: 0, totalPages: 1 },
@@ -246,7 +243,7 @@ export const EmployerInterviews = () => {
       );
       const response = await axios.get(`${BASE_API_URL}/employer/interviews?${queryParams}`, { headers: getTokenHeaders() });
       setData({
-        stats: { total: 0, scheduled: 0, onHold: 0, completed: 0, rescheduled: 0, cancelled: 0 },
+        stats: { total: 0, scheduled: 0, onHold: 0 },
         filters: { jobTitles: [], types: [] },
         interviews: [],
         pagination: { page: 1, limit: pageSize, total: 0, totalPages: 1 },
@@ -267,6 +264,22 @@ export const EmployerInterviews = () => {
       </div>
 
       {error && <div className="rounded-md border border-amber-100 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700">{error}</div>}
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+        {statCards.map((card) => (
+          <button
+            key={card.key}
+            type="button"
+            onClick={() => setFilter('status', card.status)}
+            className={`rounded-md border bg-white p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-5 ${filters.status === card.status ? 'border-[#6658dd] ring-2 ring-indigo-100' : 'border-slate-100'}`}
+          >
+            <div className="flex items-center gap-2 sm:gap-4">
+              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${card.tone}`}><card.icon className="h-4 w-4 sm:h-5 sm:w-5" /></span>
+              <div className="min-w-0"><p className="truncate text-xs font-semibold text-slate-400 sm:text-sm">{card.title}</p><p className="mt-1 text-base font-black text-[#3f4254] sm:text-xl">{Number(stats[card.key] || 0).toLocaleString('en-IN')}</p></div>
+            </div>
+          </button>
+        ))}
+      </div>
 
       <section className="rounded-md border border-slate-100 bg-white shadow-sm">
         <div className="flex flex-col justify-between gap-4 border-b border-dashed border-slate-200 px-4 py-4 sm:px-5 lg:flex-row lg:items-center">
