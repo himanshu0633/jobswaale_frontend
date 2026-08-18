@@ -197,6 +197,15 @@ export const EmployerInterviews = () => {
       setEditError('Please specify interview date and time.');
       return;
     }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedDate = new Date(editForm.date + 'T00:00:00');
+    if (selectedDate.getTime() <= today.getTime()) {
+      setEditError('Interview cannot be scheduled or rescheduled for today or a past date. Please choose a future date.');
+      return;
+    }
+
     if (isInPersonInterview(editForm.type) && !editForm.locationOrLink) {
       setEditError('Please select interview location from the map.');
       return;
@@ -223,6 +232,30 @@ export const EmployerInterviews = () => {
       setEditError(err.response?.data?.message || 'Interview update failed.');
     } finally {
       setEditLoading(false);
+    }
+  };
+
+  const handleStatusUpdate = async (applicationId, nextStatus) => {
+    setLoading(true);
+    setError('');
+    try {
+      await axios.patch(
+        `${BASE_API_URL}/employer/applications/${applicationId}/status`,
+        { status: nextStatus },
+        { headers: getTokenHeaders() }
+      );
+      const response = await axios.get(`${BASE_API_URL}/employer/interviews?${queryParams}`, { headers: getTokenHeaders() });
+      setData({
+        stats: { total: 0, scheduled: 0, onHold: 0, completed: 0, rescheduled: 0, cancelled: 0 },
+        filters: { jobTitles: [], types: [] },
+        interviews: [],
+        pagination: { page: 1, limit: pageSize, total: 0, totalPages: 1 },
+        ...response.data
+      });
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update candidate status.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -288,7 +321,7 @@ export const EmployerInterviews = () => {
                   <div className="flex items-start gap-3">
                     <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${interview.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>{interview.initials}</span>
                     <div className="min-w-0 flex-1">
-                      <Link to="/employer/applications" className="truncate text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{interview.name}</Link>
+                      <Link to={`/employer/candidateProfile/${interview.candidateId}`} className="truncate text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{interview.name}</Link>
                       <p className="mt-0.5 truncate text-xs font-semibold text-slate-400">{interview.email}</p>
                       <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><Phone className="h-3 w-3 shrink-0" />{interview.phone}</p>
                     </div>
@@ -311,8 +344,9 @@ export const EmployerInterviews = () => {
                   </div>
 
                   <div className="mt-3 flex justify-end gap-2">
-                    <button type="button" onClick={() => openEditModal(interview)} className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-amber-200 px-3 text-xs font-extrabold text-amber-600 transition hover:bg-amber-50"><Edit className="h-4 w-4" />Edit</button>
-                    <Link to="/employer/applications" className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-[#6658dd] px-3 text-xs font-extrabold text-[#6658dd] transition hover:bg-violet-50"><Eye className="h-4 w-4" />View</Link>
+                    <button type="button" onClick={() => openEditModal(interview)} className="inline-flex h-9 items-center justify-center gap-1 rounded-md bg-amber-500 px-3 text-xs font-extrabold text-white transition hover:bg-amber-600">Update</button>
+                    <button type="button" onClick={() => handleStatusUpdate(interview.applicationId, 'Offered')} className="inline-flex h-9 items-center justify-center gap-1 rounded-md bg-emerald-500 px-3 text-xs font-extrabold text-white transition hover:bg-emerald-600">Select</button>
+                    <button type="button" onClick={() => handleStatusUpdate(interview.applicationId, 'Rejected')} className="inline-flex h-9 items-center justify-center gap-1 rounded-md bg-rose-500 px-3 text-xs font-extrabold text-white transition hover:bg-rose-600">Reject</button>
                   </div>
                 </div>
               );
@@ -330,7 +364,7 @@ export const EmployerInterviews = () => {
                   const TypeIcon = typeTone[interview.type]?.icon || Calendar;
                   return (
                     <tr key={interview.id} className="transition hover:bg-slate-50">
-                      <td className="px-5 py-4"><div className="flex items-center gap-3"><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${interview.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>{interview.initials}</span><div><Link to="/employer/applications" className="text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{interview.name}</Link><p className="mt-0.5 text-xs font-semibold text-slate-400">{interview.email}</p><p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><Phone className="h-3 w-3" />{interview.phone}</p></div></div></td>
+                      <td className="px-5 py-4"><div className="flex items-center gap-3"><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${interview.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>{interview.initials}</span><div><Link to={`/employer/candidateProfile/${interview.candidateId}`} className="text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{interview.name}</Link><p className="mt-0.5 text-xs font-semibold text-slate-400">{interview.email}</p><p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><Phone className="h-3 w-3" />{interview.phone}</p></div></div></td>
                       <td className="px-5 py-4"><p className="text-sm font-extrabold text-[#3f4254]">{interview.jobTitle}</p><p className="mt-0.5 text-xs font-semibold text-slate-400">{interview.jobType}</p></td>
                       <td className="px-5 py-4"><span className={`inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-black ${typeTone[interview.type]?.className || 'bg-slate-100 text-slate-600'}`}><TypeIcon className="h-3.5 w-3.5" />{interview.type}</span></td>
                       <td className="px-5 py-4 text-sm font-semibold leading-6 text-slate-600">{interview.displayDate || formatDate(interview.interviewDate)}<br />{normalizeTime(interview.time)}</td>
@@ -338,8 +372,9 @@ export const EmployerInterviews = () => {
                       <td className="px-5 py-4"><span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${statusTone[interview.status] || 'bg-slate-100 text-slate-600'}`}>{interview.status}</span></td>
                       <td className="px-5 py-4 text-center">
                         <div className="flex justify-center gap-2">
-                          <button type="button" onClick={() => openEditModal(interview)} className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-amber-200 px-3 text-xs font-extrabold text-amber-600 transition hover:bg-amber-50"><Edit className="h-4 w-4" />Edit</button>
-                          <Link to="/employer/applications" className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-[#6658dd] px-3 text-xs font-extrabold text-[#6658dd] transition hover:bg-violet-50"><Eye className="h-4 w-4" />View</Link>
+                          <button type="button" onClick={() => openEditModal(interview)} className="inline-flex h-9 items-center justify-center gap-1 rounded-md bg-amber-500 px-3 text-xs font-extrabold text-white transition hover:bg-amber-600">Update</button>
+                          <button type="button" onClick={() => handleStatusUpdate(interview.applicationId, 'Offered')} className="inline-flex h-9 items-center justify-center gap-1 rounded-md bg-emerald-500 px-3 text-xs font-extrabold text-white transition hover:bg-emerald-600">Select</button>
+                          <button type="button" onClick={() => handleStatusUpdate(interview.applicationId, 'Rejected')} className="inline-flex h-9 items-center justify-center gap-1 rounded-md bg-rose-500 px-3 text-xs font-extrabold text-white transition hover:bg-rose-600">Reject</button>
                         </div>
                       </td>
                     </tr>
