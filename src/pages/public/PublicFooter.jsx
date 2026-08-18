@@ -46,8 +46,7 @@ export const PublicFooter = () => {
     syncUser();
   }, [location]);
 
-  const token = localStorage.getItem('publicToken');
-  const isLoggedIn = Boolean(authUser && token);
+  const isLoggedIn = Boolean(authUser);
 
   const normalize = (value) => String(value || '').trim().toLowerCase().replace(/\s+/g, '');
   const accountType = normalize(authUser?.accountType || authUser?.role || authUser?.roleName);
