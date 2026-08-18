@@ -28,8 +28,8 @@ import ClearFilterButton from '../../../components/ClearFilterButton';
 const initialFilters = { search: '', jobTitle: '', status: '', experience: '', appliedAfter: '' };
 
 const statCards = [
-  { key: 'total', title: 'Total', status: '', icon: FileText, tone: 'bg-violet-50 text-[#6658dd]' },
-  { key: 'new', title: 'New', status: 'Applied', icon: Inbox, tone: 'bg-emerald-50 text-emerald-500' },
+  { key: 'applied', title: 'Applied', status: 'Applied', icon: FileText, tone: 'bg-violet-50 text-[#6658dd]' },
+  { key: 'reviewed', title: 'Reviewed', status: 'Reviewed', icon: Eye, tone: 'bg-emerald-50 text-emerald-500' },
   { key: 'shortlisted', title: 'Shortlisted', status: 'Shortlisted', icon: UserCheck, tone: 'bg-amber-50 text-amber-500' },
   { key: 'interviews', title: 'Interviews', status: 'Interview', icon: CalendarCheck, tone: 'bg-sky-50 text-sky-500' },
   { key: 'rejected', title: 'Rejected', status: 'Rejected', icon: UserX, tone: 'bg-rose-50 text-rose-500' }
