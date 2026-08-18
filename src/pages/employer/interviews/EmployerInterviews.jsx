@@ -268,22 +268,6 @@ export const EmployerInterviews = () => {
 
       {error && <div className="rounded-md border border-amber-100 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700">{error}</div>}
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-6">
-        {statConfig.map((card) => (
-          <button
-            key={card.key}
-            type="button"
-            onClick={() => setFilter('status', card.status)}
-            className={`rounded-md border bg-white p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-5 ${filters.status === card.status ? 'border-[#6658dd] ring-2 ring-indigo-100' : 'border-slate-100'}`}
-          >
-            <div className="flex items-center gap-2 sm:gap-4">
-              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${card.tone}`}><card.icon className="h-4 w-4 sm:h-5 sm:w-5" /></span>
-              <div className="min-w-0"><p className="truncate text-xs font-semibold text-slate-400 sm:text-sm">{card.title}</p><p className="mt-1 text-base font-black text-[#3f4254] sm:text-xl">{Number(stats[card.key] || 0).toLocaleString('en-IN')}</p></div>
-            </div>
-          </button>
-        ))}
-      </div>
-
       <section className="rounded-md border border-slate-100 bg-white shadow-sm">
         <div className="flex flex-col justify-between gap-4 border-b border-dashed border-slate-200 px-4 py-4 sm:px-5 lg:flex-row lg:items-center">
           <div><h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Interview Schedule</h2><p className="mt-1 text-xs font-semibold text-slate-400 sm:text-sm">Manage all upcoming, ongoing, and past interviews. Schedule, reschedule, or cancel as needed.</p></div>
@@ -299,7 +283,7 @@ export const EmployerInterviews = () => {
               <div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input className="h-10 w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100" value={filters.search} onChange={(event) => setFilter('search', event.target.value)} placeholder="Name, email, job, interviewer" /></div>
             </div>
             <SelectField label="Job Title" value={filters.jobTitle} onChange={(value) => setFilter('jobTitle', value)}><option value="">All Jobs</option>{optionFilters.jobTitles.map((item) => <option key={item}>{item}</option>)}</SelectField>
-            <SelectField label="Status" value={filters.status} onChange={(value) => setFilter('status', value)}><option value="">All Status</option>{['Scheduled', 'On Hold', 'Completed', 'Cancelled', 'Rescheduled'].map((item) => <option key={item}>{item}</option>)}</SelectField>
+            <SelectField label="Status" value={filters.status} onChange={(value) => setFilter('status', value)}><option value="">All Status</option>{['Pending Interview', 'Scheduled', 'Rescheduled'].map((item) => <option key={item}>{item}</option>)}</SelectField>
             <SelectField label="Interview Type" value={filters.type} onChange={(value) => setFilter('type', value)}><option value="">All Types</option>{optionFilters.types.map((item) => <option key={item}>{item}</option>)}</SelectField>
             <div><label className="mb-2 block text-xs font-extrabold text-slate-500">From Date</label><input type="date" value={filters.fromDate} onChange={(event) => setFilter('fromDate', event.target.value)} className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100" /></div>
             <div className="flex items-end"><ClearFilterButton active={hasActiveFilters} onClick={resetFilters} /></div>
