@@ -93,13 +93,25 @@ export const EmployerApplications = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const getRedirectUrl = (basePath, extraParams = {}) => {
+    const params = new URLSearchParams();
+    if (filters.jobTitle) {
+      params.set('jobTitle', filters.jobTitle);
+    }
+    Object.entries(extraParams).forEach(([key, val]) => {
+      if (val) params.set(key, val);
+    });
+    const queryString = params.toString();
+    return queryString ? `${basePath}?${queryString}` : basePath;
+  };
+
   const handleStatCardClick = (card) => {
     if (card.key === 'shortlisted') {
-      navigate('/employer/shortlisted');
+      navigate(getRedirectUrl('/employer/shortlisted'));
     } else if (card.key === 'interviews') {
-      navigate('/employer/interviews');
+      navigate(getRedirectUrl('/employer/interviews'));
     } else if (card.key === 'rejected') {
-      navigate('/employer/applicant-history?status=Rejected');
+      navigate(getRedirectUrl('/employer/applicant-history', { status: 'Rejected', search: filters.jobTitle }));
     } else {
       setFilter('status', card.status);
     }
@@ -107,13 +119,13 @@ export const EmployerApplications = () => {
 
   const handlePipelineClick = (item) => {
     if (item.status === 'Shortlisted') {
-      navigate('/employer/shortlisted');
+      navigate(getRedirectUrl('/employer/shortlisted'));
     } else if (item.status === 'Interview') {
-      navigate('/employer/interviews');
+      navigate(getRedirectUrl('/employer/interviews'));
     } else if (item.status === 'Offered') {
-      navigate('/employer/selected');
+      navigate(getRedirectUrl('/employer/selected'));
     } else if (item.status === 'Rejected') {
-      navigate('/employer/applicant-history?status=Rejected');
+      navigate(getRedirectUrl('/employer/applicant-history', { status: 'Rejected', search: filters.jobTitle }));
     } else {
       setFilter('status', item.status);
     }
