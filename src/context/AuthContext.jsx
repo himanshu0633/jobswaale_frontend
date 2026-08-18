@@ -43,9 +43,18 @@ const isAuthExpiredError = (error) => {
   );
 };
 
+const parseStoredUser = (value) => {
+  try {
+    return value ? JSON.parse(value) : null;
+  } catch {
+    return null;
+  }
+};
+
 const clearPublicSession = () => {
   localStorage.removeItem('publicUser');
   localStorage.removeItem('publicToken');
+  delete axios.defaults.headers.common['Authorization'];
 };
 
 export const AuthProvider = ({ children }) => {
@@ -80,8 +89,12 @@ export const AuthProvider = ({ children }) => {
     const initializeAuth = async () => {
       const storedUser = localStorage.getItem('user');
       const storedToken = localStorage.getItem('token');
+      const storedPublicToken = localStorage.getItem('publicToken');
+      if (storedPublicToken && !isTokenExpired(storedPublicToken)) {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${storedPublicToken}`;
+      }
       if (storedUser && storedToken) {
-        const parsedUser = JSON.parse(storedUser);
+        const parsedUser = parseStoredUser(storedUser);
         if (isSuperAdminUser(parsedUser) && !isTokenExpired(storedToken)) {
           setUser(parsedUser);
           setToken(storedToken);

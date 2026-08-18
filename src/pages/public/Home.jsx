@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
-  Search,
   MapPin,
   Briefcase,
   Building2,
@@ -91,6 +90,14 @@ export const Home = () => {
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
+    if (isEmployer) {
+      const params = new URLSearchParams();
+      if (searchTitle.trim()) params.set('search', searchTitle.trim());
+      if (searchLoc.trim()) params.set('location', searchLoc.trim());
+      navigate(`/employer/candidates${params.toString() ? `?${params.toString()}` : ''}`);
+      return;
+    }
+
     const params = new URLSearchParams();
     if (searchTitle.trim()) params.set('q', searchTitle.trim());
     if (searchLoc.trim()) params.set('location', searchLoc.trim());
@@ -107,7 +114,11 @@ export const Home = () => {
     navigate(`/login?role=${role}&redirect=${encodeURIComponent(targetPath)}`);
   };
 
-  const isLoggedIn = Boolean(getPublicUser() && localStorage.getItem('publicToken'));
+  const publicUser = getPublicUser();
+  const isLoggedIn = Boolean(publicUser && localStorage.getItem('publicToken'));
+  const accountType = String(publicUser?.accountType || '').toLowerCase();
+  const role = String(publicUser?.role || '').toLowerCase();
+  const isEmployer = isLoggedIn && (accountType === 'employer' || role === 'employer');
 
   return (
     <div className="w-full">
@@ -119,20 +130,28 @@ export const Home = () => {
             {/* Left Block: Search & Text */}
             <div className={`${isLoggedIn ? 'lg:col-span-12' : 'lg:col-span-7 lg:pr-4'} space-y-6`}>
               <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-[#0047C7]/[0.08] text-[#0047C7]">
-                <CheckCircle2 className="h-4 w-4 text-[#0047C7]" /> Smart Hiring. Better Recruitment.
+                <CheckCircle2 className="h-4 w-4 text-[#0047C7]" /> {isEmployer ? 'Candidate Search. Faster Hiring.' : 'Smart Hiring. Better Recruitment.'}
               </span>
 
               <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold leading-[1.2] text-slate-900">
-                Find Your{' '}
+                {isEmployer ? 'Find the Right' : 'Find Your'}{' '}
                 <span className="bg-gradient-to-r from-[#f3761e] to-[#c40c0c] bg-clip-text text-transparent">
-                  Dream Job
+                  {isEmployer ? 'Candidates' : 'Dream Job'}
                 </span>
                 <br />
-                <strong>Build Your Future</strong>
+                <strong>{isEmployer ? 'Build Your Team' : 'Build Your Future'}</strong>
               </h1>
 
               <p className="text-base sm:text-[1.05rem] text-slate-500 leading-relaxed max-w-xl">
-                <strong className="text-slate-700">You can find your dream jobs faster and easier.</strong> We are providing fast hiring for employers and local jobs near you for job seekers.
+                {isEmployer ? (
+                  <>
+                    <strong className="text-slate-700">Search relevant candidates faster and manage hiring in one place.</strong> Review talent, shortlist profiles, and move applicants through your recruitment pipeline.
+                  </>
+                ) : (
+                  <>
+                    <strong className="text-slate-700">Find local jobs faster and easier.</strong> We connect job seekers with nearby opportunities and help employers hire quickly.
+                  </>
+                )}
               </p>
 
               {/* Search Form */}
@@ -143,7 +162,7 @@ export const Home = () => {
                 <div className="flex-1 relative flex items-center">
                   <input
                     type="text"
-                    placeholder="Job title"
+                    placeholder={isEmployer ? 'Candidate skill, title, or name' : 'Job title'}
                     value={searchTitle}
                     onChange={(e) => setSearchTitle(e.target.value)}
                     className="w-full bg-transparent border-0 px-4 py-3 text-slate-800 placeholder-slate-400 text-[0.95rem] focus:outline-none focus:ring-0"
@@ -167,12 +186,12 @@ export const Home = () => {
                   type="submit"
                   className="bg-gradient-to-br from-[#FF6B00] to-[#ff7043] text-white font-semibold text-sm px-7 py-3 rounded-lg transition duration-150 hover:opacity-95 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
                 >
-                  Search Jobs
+                  {isEmployer ? 'Search Candidates' : 'Search Jobs'}
                 </button>
               </form>
 
               {/* Trending Searches */}
-              <div className="flex flex-wrap items-center gap-1.5 pt-2 text-sm text-slate-500">
+              {!isEmployer && <div className="flex flex-wrap items-center gap-1.5 pt-2 text-sm text-slate-500">
                 <span className="mr-1">Trending Searches:</span>
                 {categories.map((category) => (
                   <Link
@@ -183,7 +202,7 @@ export const Home = () => {
                     #{category.categoryName}
                   </Link>
                 ))}
-              </div>
+              </div>}
             </div>
 
             {/* Right Block: Choice Cards */}

@@ -1,4 +1,4 @@
-import { useEffect, useState, lazy, Suspense } from 'react';
+import { Component, useEffect, useState, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthProvider, isSuperAdminUser, useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
@@ -135,6 +135,88 @@ const ScrollToTop = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [pathname, search]);
+
+  return null;
+};
+
+const isChunkLoadError = (error) => {
+  const message = String(error?.message || error || '').toLowerCase();
+  return (
+    message.includes('failed to fetch dynamically imported module') ||
+    message.includes('importing a module script failed') ||
+    message.includes('loading chunk') ||
+    message.includes('chunkloaderror')
+  );
+};
+
+const reloadOnceForFreshAssets = () => {
+  const key = 'jobswaale:asset-reload-attempted';
+  if (sessionStorage.getItem(key) === '1') return false;
+  sessionStorage.setItem(key, '1');
+  window.location.reload();
+  return true;
+};
+
+class AppErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  componentDidCatch(error) {
+    if (isChunkLoadError(error)) {
+      reloadOnceForFreshAssets();
+    }
+  }
+
+  render() {
+    if (!this.state.error) return this.props.children;
+
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6 text-center">
+        <div className="max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <h1 className="text-xl font-extrabold text-slate-900">Page could not be loaded</h1>
+          <p className="mt-2 text-sm font-semibold text-slate-500">
+            Please refresh once. The latest website files may still be loading.
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="mt-5 rounded-md bg-[#6658dd] px-5 py-2.5 text-sm font-extrabold text-white transition hover:bg-[#5848d8]"
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
+    );
+  }
+}
+
+const AssetRefreshGuard = () => {
+  useEffect(() => {
+    const handleUnhandledRejection = (event) => {
+      if (isChunkLoadError(event.reason)) {
+        reloadOnceForFreshAssets();
+      }
+    };
+
+    const handleError = (event) => {
+      if (isChunkLoadError(event.error || event.message)) {
+        reloadOnceForFreshAssets();
+      }
+    };
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    window.addEventListener('error', handleError);
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      window.removeEventListener('error', handleError);
+    };
+  }, []);
 
   return null;
 };
@@ -311,10 +393,12 @@ const AppLayout = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <ScrollToTop />
-        <Routes>
+    <AppErrorBoundary>
+      <AuthProvider>
+        <Router>
+          <AssetRefreshGuard />
+          <ScrollToTop />
+          <Routes>
           {/* A. Visitor Authentication Routes */}
           <Route path="/login" element={<PublicLogin />} />
           <Route path="/superadmin-login" element={<SuperAdminLogin />} />      
@@ -402,9 +486,10 @@ function App() {
           {/* F. Public Web Portal Wildcard Route Fallback */}
           <Route path="/jobs/:id" element={<PublicPage />} />
           <Route path="*" element={<PublicPage />} />
-        </Routes>
-      </Router>
-    </AuthProvider>
+          </Routes>
+        </Router>
+      </AuthProvider>
+    </AppErrorBoundary>
   );
 }
 

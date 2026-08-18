@@ -1,7 +1,33 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { Menu, X, ChevronDown, User, Briefcase, LogIn, UserPlus, UploadCloud, Building2, LayoutDashboard, LogOut } from 'lucide-react';
+import {
+  Bookmark,
+  Building,
+  Building2,
+  CalendarCheck,
+  ChevronDown,
+  CreditCard,
+  Database,
+  FileText,
+  Grid2X2,
+  LogIn,
+  LogOut,
+  MailCheck,
+  Menu,
+  MessageCircle,
+  MessageSquare,
+  Search,
+  Settings,
+  Star,
+  UploadCloud,
+  User,
+  UserCheck,
+  UserPlus,
+  UserRoundCheck,
+  X,
+  Briefcase,
+  LayoutDashboard
+} from 'lucide-react';
 import { BASE_API_URL } from '../../context/AuthContext';
 import logoAsset from '../../assets/logo-black.png';
 import { getPublicSettings } from '../../utils/publicSettings';
@@ -18,6 +44,8 @@ export const PublicHeader = () => {
   const [employersDesktopOpen, setEmployersDesktopOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [pricingDesktopOpen, setPricingDesktopOpen] = useState(false); // Added state for pricing dropdown
+  const [dashboardDesktopOpen, setDashboardDesktopOpen] = useState(false);
+  const [dashboardMobileOpen, setDashboardMobileOpen] = useState(false);
   const [authUser, setAuthUser] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('publicUser') || 'null');
@@ -29,19 +57,52 @@ export const PublicHeader = () => {
   const employersDesktopRef = useRef(null);
   const profileMenuRef = useRef(null);
   const pricingRef = useRef(null); // Added ref for pricing dropdown
+  const dashboardRef = useRef(null);
 
   const isLoggedIn = Boolean(authUser);
-  const dashboardPath = authUser?.accountType === 'employer' || authUser?.role === 'Employer' || authUser?.role === 'employer'
+  const accountType = String(authUser?.accountType || authUser?.role || authUser?.roleName || '').trim().toLowerCase();
+  const isEmployerUser = accountType === 'employer';
+  const isJobseekerUser = accountType === 'jobseeker';
+  const dashboardPath = isEmployerUser
     ? '/employer'
-    : authUser?.accountType === 'jobseeker' || authUser?.role === 'Jobseeker' || authUser?.role === 'jobseeker'
+    : isJobseekerUser
       ? '/jobseeker'
       : '/';
   const pricingPath = (() => {
     if (!isLoggedIn) return null;
-    if (authUser?.accountType === 'employer' || authUser?.role === 'Employer' || authUser?.role === 'employer') return '/employer-plan';
-    if (authUser?.accountType === 'jobseeker' || authUser?.role === 'Jobseeker' || authUser?.role === 'jobseeker') return '/jobseeker-plan';
+    if (isEmployerUser) return '/employer-plan';
+    if (isJobseekerUser) return '/jobseeker-plan';
     return null;
   })();
+  const employerDashboardLinks = [
+    { to: '/employer', icon: Grid2X2, label: 'Dashboard' },
+    { to: '/employer/jobs/create', icon: Briefcase, label: 'Post a Job' },
+    { to: '/employer/jobs', icon: Briefcase, label: 'Manage Jobs' },
+    { to: '/employer/applications', icon: FileText, label: 'Applications' },
+    { to: '/employer/applicant-history', icon: UserRoundCheck, label: 'Applicants History' },
+    { to: '/employer/shortlisted', icon: UserCheck, label: 'Shortlisted' },
+    { to: '/employer/interviews', icon: CalendarCheck, label: 'Interviews' },
+    { to: '/employer/selected', icon: UserPlus, label: 'Selected' },
+    { to: '/employer/candidates', icon: Search, label: 'Search Candidates' },
+    { to: '/employer/auto-mail', icon: MailCheck, label: 'Auto Mail' },
+    { to: '/employer/reports', icon: Grid2X2, label: 'Reports' },
+    { to: '/employer/messages', icon: MessageCircle, label: 'Messages' },
+    { to: '/employer/company', icon: Building2, label: 'Company Profile' },
+    { to: '/employer/subscription', icon: CreditCard, label: 'Subscription' },
+    { to: '/employer/talent-pool', icon: Database, label: 'Talent Pool' },
+    { to: '/employer/settings', icon: Settings, label: 'Settings' }
+  ];
+  const jobseekerDashboardLinks = [
+    { to: '/jobseeker/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/jobseeker/profile', icon: User, label: 'My Profile' },
+    { to: '/jobseeker/jobs-applied', icon: Briefcase, label: 'Jobs Applied' },
+    { to: '/jobseeker/saved-jobs', icon: Bookmark, label: 'Saved Jobs' },
+    { to: '/jobseeker/saved-employers', icon: Building, label: 'Saved Employers' },
+    { to: '/jobseeker/subscription', icon: Star, label: 'My Plan' },
+    { to: '/jobseeker/messages', icon: MessageSquare, label: 'Messages' },
+    { to: '/jobseeker/profile', icon: Settings, label: 'My Account' }
+  ];
+  const dashboardMenuLinks = isEmployerUser ? employerDashboardLinks : isJobseekerUser ? jobseekerDashboardLinks : [];
   const profileName = authUser?.firstName || authUser?.name || authUser?.companyName || authUser?.email || 'User';
   const profileInitials = String(profileName)
     .split(' ')
@@ -69,6 +130,8 @@ export const PublicHeader = () => {
     setEmployersDesktopOpen(false);
     setProfileDropdownOpen(false);
     setPricingDesktopOpen(false); // Close pricing dropdown on route change
+    setDashboardDesktopOpen(false);
+    setDashboardMobileOpen(false);
   }, [location.pathname]);
 
   // Close desktop CTA dropdowns when clicking outside of them
@@ -85,6 +148,9 @@ export const PublicHeader = () => {
       }
       if (pricingRef.current && !pricingRef.current.contains(event.target)) {
         setPricingDesktopOpen(false);
+      }
+      if (dashboardRef.current && !dashboardRef.current.contains(event.target)) {
+        setDashboardDesktopOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -128,6 +194,7 @@ export const PublicHeader = () => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
   const isPricingActive = isActive('/jobseeker-plan') || isActive('/employer-plan');
+  const isDashboardActive = isEmployerUser ? isActive('/employer') : isJobseekerUser ? isActive('/jobseeker') : false;
 
   return (
     <header className="fixed inset-x-0 top-0 z-[60] w-full border-b border-slate-200/50 bg-white/80 backdrop-blur-md shadow-sm">
@@ -148,6 +215,45 @@ export const PublicHeader = () => {
           <Link to="/employers" className={`text-[0.9375rem] font-medium transition duration-150 whitespace-nowrap ${isActive('/employers') ? 'text-blue-600' : 'text-slate-655 hover:text-blue-600'}`}>
             Employers
           </Link>
+
+          {isLoggedIn && dashboardMenuLinks.length > 0 && (
+            <div
+              className="relative py-2"
+              ref={dashboardRef}
+              onMouseEnter={() => setDashboardDesktopOpen(true)}
+              onMouseLeave={() => setDashboardDesktopOpen(false)}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setDashboardDesktopOpen((prev) => !prev);
+                  setPricingDesktopOpen(false);
+                }}
+                className={`flex items-center gap-1 text-[0.9375rem] font-medium hover:text-blue-600 focus:outline-none cursor-pointer whitespace-nowrap ${isDashboardActive ? 'text-blue-600' : 'text-slate-655'}`}
+              >
+                Dashboard <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${dashboardDesktopOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {dashboardDesktopOpen && (
+                <div className="absolute top-full left-0 mt-1 block w-72 rounded-lg border border-slate-200 bg-white py-2 shadow-lg z-50">
+                  <div className="max-h-[430px] overflow-y-auto">
+                    {dashboardMenuLinks.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <Link
+                          key={`${item.to}-${item.label}`}
+                          to={item.to}
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-blue-600"
+                        >
+                          <Icon className="h-4 w-4 text-slate-400" />
+                          {item.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           
           {pricingPath ? (
             <Link to={pricingPath} className={`flex items-center gap-1 text-[0.9375rem] font-medium hover:text-blue-600 focus:outline-none cursor-pointer whitespace-nowrap ${isPricingActive ? 'text-blue-600' : 'text-slate-655'}`}>
@@ -196,9 +302,7 @@ export const PublicHeader = () => {
                 </span>
               </button>
               {profileDropdownOpen && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setProfileDropdownOpen(false)} />
-                  <div className="absolute top-full right-0 mt-1.5 block w-52 rounded-xl border border-slate-200 bg-white py-2 shadow-xl z-50">
+                <div className="absolute top-full right-0 mt-1.5 block w-52 rounded-xl border border-slate-200 bg-white py-2 shadow-xl z-50">
                     <div className="border-b border-slate-200 px-4 py-2">
                       <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Signed in as</p>
                       <p className="mt-0.5 truncate text-xs font-semibold text-slate-700">{authUser?.email || 'user@jobswaale.com'}</p>
@@ -206,11 +310,10 @@ export const PublicHeader = () => {
                     <Link to={dashboardPath} onClick={() => setProfileDropdownOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">
                       <LayoutDashboard className="h-4 w-4 text-slate-400" /> Go to Dashboard
                     </Link>
-                    <div onClick={handleLogout} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-xs font-semibold text-rose-500 transition hover:bg-slate-50">
+                    <div onClick={handleLogout} className="flex w-full cursor-pointer items-center gap-2.5 px-4 py-2.5 text-left text-xs font-semibold text-rose-500 transition hover:bg-slate-50">
                       <LogOut className="h-4 w-4" /> Sign Out
                     </div>
                   </div>
-                </>
               )}
             </div>
           ) : (
@@ -300,12 +403,12 @@ export const PublicHeader = () => {
                     <p className="text-xs text-slate-500">Signed in</p>
                   </div>
                 </div>
-                <div className="mt-3 flex flex-col gap-2">
-                  <Link to={dashboardPath} className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                <div className="mt-3 grid grid-cols-1 gap-1 border-t border-slate-200 pt-3">
+                  <Link to={dashboardPath} className="flex items-center gap-2 rounded-md px-2 py-2 text-sm font-semibold text-slate-700 hover:bg-white">
                     <LayoutDashboard className="h-4 w-4 text-slate-400" /> Go to Dashboard
                   </Link>
-                  <div onClick={handleLogout} className="flex items-center gap-2 text-left text-sm font-semibold text-slate-700">
-                    <LogOut className="h-4 w-4 text-slate-400" /> Log out
+                  <div onClick={handleLogout} className="flex items-center gap-2 rounded-md px-2 py-2 text-left text-sm font-semibold text-rose-500 hover:bg-white">
+                    <LogOut className="h-4 w-4" /> Log out
                   </div>
                 </div>
               </div>
@@ -319,6 +422,31 @@ export const PublicHeader = () => {
             <Link to="/employer" className={`text-sm font-bold py-1 ${isActive('/employer') ? 'text-blue-600' : 'text-slate-655'}`}>
               Employers
             </Link>
+
+            {isLoggedIn && dashboardMenuLinks.length > 0 && (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setDashboardMobileOpen(!dashboardMobileOpen)}
+                  className={`flex items-center justify-between w-full text-sm font-bold py-1 focus:outline-none cursor-pointer ${isDashboardActive ? 'text-blue-600' : 'text-slate-655'}`}
+                >
+                  <span>Dashboard</span>
+                  <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${dashboardMobileOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {dashboardMobileOpen && (
+                  <div className="pl-4 mt-2 flex max-h-72 flex-col gap-1 overflow-y-auto border-l border-slate-100">
+                    {dashboardMenuLinks.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <Link key={`${item.to}-${item.label}`} to={item.to} className="flex items-center gap-2 py-2 text-xs font-bold text-slate-700">
+                          <Icon className="h-4 w-4 text-slate-400" /> {item.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
 
             {pricingPath ? (
               <Link to={pricingPath} className={`block text-sm font-bold py-1 ${isPricingActive ? 'text-blue-600' : 'text-slate-655'}`}>

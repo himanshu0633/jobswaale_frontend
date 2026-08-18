@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
+import ClearFilterButton from '../../../components/ClearFilterButton';
 
 const colors = ['#3b82f6', '#ef4444', '#f59e0b', '#8b5cf6', '#10b981', '#9ca3af'];
 
@@ -123,10 +124,12 @@ const DonutChart = ({ sources = [], total = 0 }) => {
 };
 
 export const EmployerReports = () => {
-  const [range, setRange] = useState(getInitialRange);
+  const defaultRange = useMemo(getInitialRange, []);
+  const [range, setRange] = useState(defaultRange);
   const [data, setData] = useState({ stats: {}, monthlyOverview: [], sources: [], funnel: [], recentActivity: [], topJobs: [], range: {} });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const hasActiveFilters = range.from !== defaultRange.from || range.to !== defaultRange.to;
 
   const queryString = useMemo(() => {
     const params = new URLSearchParams();
@@ -286,12 +289,13 @@ export const EmployerReports = () => {
 
       <Card>
         <div className="border-b border-dashed border-slate-200 px-4 py-4 sm:px-5"><h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Filter</h2></div>
-        <div className="grid gap-3 p-4 sm:p-5 md:grid-cols-[1fr_1fr_auto]">
+        <div className="grid gap-3 p-4 sm:p-5 md:grid-cols-[1fr_1fr_auto_auto]">
           <div className="grid grid-cols-2 gap-3">
             <input type="date" value={range.from} onChange={(event) => setRange((current) => ({ ...current, from: event.target.value }))} className="h-10 w-full rounded-md border border-slate-200 px-2 text-xs font-bold text-slate-600 outline-none focus:border-[#6658dd] sm:px-3 sm:text-sm" />
             <input type="date" value={range.to} onChange={(event) => setRange((current) => ({ ...current, to: event.target.value }))} className="h-10 w-full rounded-md border border-slate-200 px-2 text-xs font-bold text-slate-600 outline-none focus:border-[#6658dd] sm:px-3 sm:text-sm" />
           </div>
           <div className="flex h-10 items-center gap-2 rounded-md bg-slate-100 px-4 text-xs font-bold text-slate-500 sm:text-sm"><Filter className="h-4 w-4 shrink-0" /><span className="truncate">{data.range?.label || 'Selected range'}</span></div>
+          <ClearFilterButton active={hasActiveFilters} onClick={() => setRange(defaultRange)} />
           <button type="button" onClick={handleExcelExport} className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#6658dd] px-5 text-sm font-extrabold text-white transition hover:bg-[#5848d8]"><Download className="h-4 w-4" />Export</button>
         </div>
       </Card>

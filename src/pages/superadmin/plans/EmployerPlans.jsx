@@ -48,6 +48,8 @@ const badgeClasses = {
 
 const formatPrice = (value) => Number(value || 0).toLocaleString('en-IN');
 
+const hasCandidateAccess = (plan) => Boolean(plan.showContactDetails || plan.allowResumeDownload);
+
 const PlanBadge = ({ value }) => {
   if (!value) return <span className="text-slate-300">-</span>;
   return (
@@ -207,7 +209,7 @@ export const EmployerPlanListings = () => {
                 </div>
               )}
               <div className="flex items-center justify-between gap-3">
-                <div className="text-xs text-slate-500">Unlock: {item.unlockCount || '-'} | Sort: {item.displayOrder} | Contacts: {item.showContactDetails ? 'Visible' : 'Hidden'} | Resumes: {item.allowResumeDownload ? 'Allowed' : 'Blocked'}</div>
+                <div className="text-xs text-slate-500">Unlock: {item.unlockCount || '-'} | Sort: {item.displayOrder} | Candidate Access: {hasCandidateAccess(item) ? 'Allowed' : 'Blocked'}</div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => navigate(`/admin/employer-plans/edit/${item._id}`)} className="w-8 h-8 bg-teal-500 hover:bg-teal-600 text-white rounded-full flex items-center justify-center">
                     <Edit2 className="w-4 h-4" />
@@ -236,8 +238,7 @@ export const EmployerPlanListings = () => {
                 <th className="px-4 py-3.5 font-extrabold">Price (Rs.)</th>
                 <th className="px-4 py-3.5 font-extrabold">Unlock Count</th>
                 <th className="px-4 py-3.5 font-extrabold">Auto Mail Limit</th>
-                <th className="px-4 py-3.5 font-extrabold">Contacts</th>
-                <th className="px-4 py-3.5 font-extrabold">Resumes</th>
+                <th className="px-4 py-3.5 font-extrabold">Candidate Access</th>
                 <th className="px-4 py-3.5 font-extrabold">Features</th>
                 <th className="px-4 py-3.5 font-extrabold">Badge</th>
                 <th className="px-4 py-3.5 font-extrabold">Sort Order</th>
@@ -248,7 +249,7 @@ export const EmployerPlanListings = () => {
             <tbody className="divide-y divide-slate-100 text-slate-600">
               {list.length === 0 ? (
                 <tr>
-                  <td colSpan="13" className="px-6 py-8 text-center text-slate-400">No matching records found.</td>
+                  <td colSpan="12" className="px-6 py-8 text-center text-slate-400">No matching records found.</td>
                 </tr>
               ) : (
                 list.map((item, index) => (
@@ -261,20 +262,11 @@ export const EmployerPlanListings = () => {
                     <td className="px-4 py-4">{item.autoMailLimit || 0}</td>
                     <td className="px-4 py-4">
                       <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-bold border ${
-                        item.showContactDetails 
+                        hasCandidateAccess(item)
                           ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
                           : 'bg-rose-50 text-rose-600 border-rose-100'
                       }`}>
-                        {item.showContactDetails ? 'Visible' : 'Hidden'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-bold border ${
-                        item.allowResumeDownload 
-                          ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
-                          : 'bg-rose-50 text-rose-600 border-rose-100'
-                      }`}>
-                        {item.allowResumeDownload ? 'Allowed' : 'Blocked'}
+                        {hasCandidateAccess(item) ? 'Allowed' : 'Blocked'}
                       </span>
                     </td>
                     <td className="px-4 py-4">
@@ -404,8 +396,8 @@ export const EmployerPlanForm = () => {
           autoMailLimit: String(plan.autoMailLimit ?? ''),
           showBadge: Boolean(plan.showBadge),
           badge: plan.badge || '',
-          showContactDetails: Boolean(plan.showContactDetails),
-          allowResumeDownload: Boolean(plan.allowResumeDownload),
+          showContactDetails: hasCandidateAccess(plan),
+          allowResumeDownload: hasCandidateAccess(plan),
           employerFeatures: plan.employerFeatures?.length ? plan.employerFeatures : emptyForm.employerFeatures,
           offerEnabled: Boolean(plan.offerEnabled),
           offerTitle: plan.offerTitle || '',
@@ -447,7 +439,7 @@ export const EmployerPlanForm = () => {
       showBadge: form.showBadge,
       badge: form.badge,
       showContactDetails: form.showContactDetails,
-      allowResumeDownload: form.allowResumeDownload,
+      allowResumeDownload: form.showContactDetails,
       planSubtitle: form.planSubtitle,
       employerFeatures: form.employerFeatures,
       offerEnabled: form.offerEnabled,
@@ -564,29 +556,24 @@ export const EmployerPlanForm = () => {
                     </button>
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-slate-600 mb-3">Candidate Contacts</label>
+                    <label className="block text-sm font-bold text-slate-600 mb-3">Candidate Access</label>
                     <button
                       type="button"
-                      onClick={() => setForm({ ...form, showContactDetails: !form.showContactDetails })}
+                      onClick={() => {
+                        const nextValue = !form.showContactDetails;
+                        setForm({
+                          ...form,
+                          showContactDetails: nextValue,
+                          allowResumeDownload: nextValue,
+                          unlockCount: nextValue ? form.unlockCount : ''
+                        });
+                      }}
                       className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600"
                     >
                       <span className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${form.showContactDetails ? 'bg-indigo-600' : 'bg-slate-300'}`}>
                         <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${form.showContactDetails ? 'translate-x-4' : 'translate-x-0.5'}`} />
                       </span>
-                      {form.showContactDetails ? 'Show' : 'Hide'}
-                    </button>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-slate-600 mb-3">Resume Downloads</label>
-                    <button
-                      type="button"
-                      onClick={() => setForm({ ...form, allowResumeDownload: !form.allowResumeDownload })}
-                      className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600"
-                    >
-                      <span className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${form.allowResumeDownload ? 'bg-indigo-600' : 'bg-slate-300'}`}>
-                        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${form.allowResumeDownload ? 'translate-x-4' : 'translate-x-0.5'}`} />
-                      </span>
-                      {form.allowResumeDownload ? 'Allowed' : 'Blocked'}
+                      {form.showContactDetails ? 'Contacts + Resume Downloads Allowed' : 'Contacts + Resume Downloads Blocked'}
                     </button>
                   </div>
                 </div>
@@ -601,12 +588,14 @@ export const EmployerPlanForm = () => {
                       <input type="number" value={form.cost} onChange={(event) => setForm({ ...form, cost: event.target.value })} placeholder="0.00" className="w-full px-3.5 py-2.5 border border-slate-200 rounded-r-md text-sm focus:outline-none focus:border-indigo-500" />
                     </div>
                   </div>
+                  {form.showContactDetails && (
+                    <div>
+                      <label className="block text-sm font-bold text-slate-600 mb-2">Unlock Count</label>
+                      <input value={form.unlockCount} onChange={(event) => setForm({ ...form, unlockCount: event.target.value })} placeholder="e.g. 50 or Unlimited" className="w-full px-3.5 py-2.5 border border-slate-200 rounded-md text-sm focus:outline-none focus:border-indigo-500" />
+                    </div>
+                  )}
                   <div>
-                    <label className="block text-sm font-bold text-slate-600 mb-2">Unlock Count</label>
-                    <input value={form.unlockCount} onChange={(event) => setForm({ ...form, unlockCount: event.target.value })} placeholder="e.g. 50" className="w-full px-3.5 py-2.5 border border-slate-200 rounded-md text-sm focus:outline-none focus:border-indigo-500" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-slate-600 mb-2">Free Job Posts</label>
+                    <label className="block text-sm font-bold text-slate-600 mb-2">Job Posts</label>
                     <input inputMode="numeric" value={form.freeJobPosts} onChange={(event) => setForm({ ...form, freeJobPosts: onlyDigits(event.target.value) })} placeholder="e.g. 10" className="w-full px-3.5 py-2.5 border border-slate-200 rounded-md text-sm focus:outline-none focus:border-indigo-500" />
                   </div>
                   <div>

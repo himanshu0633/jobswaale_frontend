@@ -211,7 +211,10 @@ export const Login = () => {
     }
 
     localStorage.setItem('publicUser', JSON.stringify(userData));
-    if (token) localStorage.setItem('publicToken', token);
+    if (token) {
+      localStorage.setItem('publicToken', token);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
     setSuccess('Logged in successfully.');
     setTimeout(() => navigate(safeRedirectPath || getPublicRedirectPath(userData, role), { replace: true }), 700);
     return true;

@@ -62,6 +62,18 @@ const getJobLocationLabels = (job) => {
   return labels;
 };
 
+const normalizeValue = (value) => String(value || '').trim().toLowerCase();
+
+const getJobSortTime = (job) => {
+  const timestamp = Date.parse(job?.postedAt || '');
+  if (Number.isFinite(timestamp)) return timestamp;
+
+  const objectIdTime = /^[a-f\d]{24}$/i.test(String(job?.mongoId || job?.id || ''))
+    ? Number.parseInt(String(job.mongoId || job.id).slice(0, 8), 16) * 1000
+    : 0;
+  return Number.isFinite(objectIdTime) ? objectIdTime : 0;
+};
+
 const overviewRows = [
   { key: 'level', label: 'Job Level', icon: User },
   { key: 'experience', label: 'Experience Required', icon: Star },
@@ -155,6 +167,7 @@ export const JobDetail = () => {
   const [matchScore, setMatchScore] = useState(null);
   const [categoryJobs, setCategoryJobs] = useState([]);
   const [categoryLoading, setCategoryLoading] = useState(false);
+  const [currentCategoryName, setCurrentCategoryName] = useState('');
 
   const [isJobseeker, setIsJobseeker] = useState(() => hasJobseekerSession());
   const [showAuthPopup, setShowAuthPopup] = useState(false);
@@ -231,11 +244,14 @@ export const JobDetail = () => {
 
   useEffect(() => {
     const fetchCategoryJobs = async () => {
+      if (!data.job) return;
       setCategoryLoading(true);
       try {
         const response = await axios.get(`${BASE_API_URL}/jobs`, { headers: {} });
         const jobs = (response.data || []).map(j => ({
           id: j.slug || j._id,
+          mongoId: j._id,
+          slug: j.slug || '',
           title: j.jobTitle,
           company: j.companyName,
           location: getJobLocationLabels(j)[0] || 'Location not specified',
@@ -243,18 +259,37 @@ export const JobDetail = () => {
           type: j.jobType?.jobType || j.workMode || 'Full Time',
           category: j.jobCategory?.categoryName || 'IT & Software',
           experience: j.experience,
+          postedAt: j.postingDate || j.createDate || j.createdAt || '',
           logoLetter: j.companyName ? j.companyName.charAt(0).toUpperCase() : 'J',
           logoBg: ['bg-red-500', 'bg-blue-600', 'bg-emerald-500', 'bg-purple-500', 'bg-amber-500'][Math.floor(Math.random() * 5)]
         }));
-        setCategoryJobs(jobs);
+        const currentJobId = String(data.job.id || id);
+        const currentJob = jobs.find((jobItem) =>
+          String(jobItem.id) === currentJobId ||
+          String(jobItem.mongoId) === currentJobId ||
+          String(jobItem.slug) === String(id)
+        );
+        const currentCategory = currentJob?.category || data.job.jobCategory?.categoryName || data.job.category || '';
+        setCurrentCategoryName(currentCategory);
+        const latestSameCategoryJobs = jobs
+          .filter((jobItem) =>
+            normalizeValue(jobItem.category) === normalizeValue(currentCategory) &&
+            String(jobItem.id) !== String(currentJob?.id || id) &&
+            String(jobItem.mongoId) !== String(data.job.id)
+          )
+          .sort((a, b) => getJobSortTime(b) - getJobSortTime(a))
+          .slice(0, 2);
+        setCategoryJobs(latestSameCategoryJobs);
       } catch (err) {
         console.error('Fetch jobs error:', err);
+        setCategoryJobs([]);
+        setCurrentCategoryName('');
       } finally {
         setCategoryLoading(false);
       }
     };
     fetchCategoryJobs();
-  }, [id, data]);
+  }, [id, data.job]);
 
   const handleApply = async (event) => {
     event.preventDefault();
@@ -358,6 +393,10 @@ export const JobDetail = () => {
 
   const logoTone = logoTones[job.company] || 'bg-slate-600';
   const displaySalary = formatJobSalary(job);
+  const categoryLabel = currentCategoryName || job.jobCategory?.categoryName || job.category || 'this category';
+  const moreJobsLink = categoryLabel === 'this category'
+    ? '/jobs'
+    : `/jobs?category=${encodeURIComponent(categoryLabel)}`;
 
   return (
     <div className="space-y-5">
@@ -620,7 +659,7 @@ export const JobDetail = () => {
              <section className="rounded-md border border-slate-100 bg-white p-6 shadow-sm sm:p-8">
                   <h2 className="text-lg font-extrabold text-[#0f172a]">More Jobs in This Category</h2>
                   <p className="mt-1 mb-4 text-sm font-semibold text-slate-500">
-                    Explore other opportunities in <span className="font-bold text-[#0f172a]">{job.jobCategory?.categoryName || job.category}</span>.
+                    Explore other opportunities in <span className="font-bold text-[#0f172a]">{categoryLabel}</span>.
                   </p>
                   <div className="max-h-[320px] overflow-y-auto pr-1">
                     <style dangerouslySetInnerHTML={{__html: `
@@ -691,7 +730,7 @@ export const JobDetail = () => {
                </div>
              </div>
                  <Link
-                   to={`/jobs?category=${encodeURIComponent(job.jobCategory?.categoryName || job.category)}`}
+                   to={moreJobsLink}
                    className="mt-4 inline-block rounded-md bg-[#0047C7] px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-[#0035a0]"
                  >
                    Apply for more jobs

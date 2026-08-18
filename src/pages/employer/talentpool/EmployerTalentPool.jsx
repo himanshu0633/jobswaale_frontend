@@ -18,11 +18,11 @@ import {
   Mail,
   User,
   Filter,
-  RefreshCw,
   FolderPlus,
   Briefcase
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import ClearFilterButton from '../../../components/ClearFilterButton';
 
 const getTokenHeaders = () => {
   const token = localStorage.getItem('publicToken');
@@ -144,6 +144,7 @@ export const EmployerTalentPool = () => {
     setSortBy('');
     setSuccess('Filters reset successfully.');
   };
+  const hasActiveFilters = Boolean(searchQuery || categoryFilter || experienceFilter || sortBy);
 
   const handleRemoveCandidate = async (id) => {
     if (!window.confirm('Are you sure you want to remove this candidate from your talent pool?')) return;
@@ -351,13 +352,7 @@ export const EmployerTalentPool = () => {
             </div>
 
             <div className="xl:col-span-2 flex items-end">
-              <button
-                onClick={handleResetFilters}
-                className="w-full inline-flex h-9.5 items-center justify-center gap-1 rounded-lg bg-emerald-50 border border-emerald-200 text-xs font-black text-emerald-700 hover:bg-emerald-100 transition"
-              >
-                <RefreshCw className="h-3.5 w-3.5" />
-                Reset
-              </button>
+              <ClearFilterButton active={hasActiveFilters} onClick={handleResetFilters} className="h-9.5 text-xs" />
             </div>
           </div>
 

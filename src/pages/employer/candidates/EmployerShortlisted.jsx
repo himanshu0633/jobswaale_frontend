@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   CalendarCheck,
   CalendarPlus,
@@ -9,7 +9,6 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Eye,
-  FileText,
   Loader,
   MapPin,
   Search,
@@ -19,13 +18,13 @@ import {
   X,
   MoreVertical,
   Calendar,
-  Video,
   Phone,
   Building,
-  GraduationCap,
   Briefcase
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import ClearFilterButton from '../../../components/ClearFilterButton';
+import InterviewLocationPicker from '../../../components/InterviewLocationPicker';
 
 const initialFilters = { search: '', jobTitle: '', status: '', minMatchScore: '', shortlistedAfter: '' };
 
@@ -50,6 +49,29 @@ const scoreTone = (score) => {
   return 'bg-rose-50 text-rose-500';
 };
 
+const getInterviewLocationField = (type) => {
+  const normalizedType = String(type || '').toLowerCase();
+  if (normalizedType.includes('phone')) return null;
+  if (normalizedType.includes('person')) {
+    return {
+      label: 'Interview Location',
+      placeholder: 'Office address or interview venue'
+    };
+  }
+  if (normalizedType.includes('other')) {
+    return {
+      label: 'Interview Details',
+      placeholder: 'Location, link, or custom interview instructions'
+    };
+  }
+  return {
+    label: 'Meeting Link',
+    placeholder: 'Zoom link, Google Meet, or Teams link'
+  };
+};
+
+const isInPersonInterview = (type) => String(type || '').toLowerCase().includes('person');
+
 const getTokenHeaders = () => {
   const token = localStorage.getItem('publicToken');
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -65,7 +87,15 @@ const SelectField = ({ label, value, onChange, children }) => (
 );
 
 export const EmployerShortlisted = () => {
-  const [filters, setFilters] = useState(initialFilters);
+  const [searchParams] = useSearchParams();
+  const getUrlFilters = () => ({
+    search: searchParams.get('search') || '',
+    jobTitle: searchParams.get('jobTitle') || '',
+    status: searchParams.get('status') || '',
+    minMatchScore: searchParams.get('minMatchScore') || '',
+    shortlistedAfter: searchParams.get('shortlistedAfter') || ''
+  });
+  const [filters, setFilters] = useState(getUrlFilters);
   const [tableSearch, setTableSearch] = useState('');
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -87,7 +117,8 @@ export const EmployerShortlisted = () => {
     time: '',
     type: 'Video Call',
     locationOrLink: '',
-    notes: ''
+    notes: '',
+    onHold: false
   });
   const [modalLoading, setModalLoading] = useState(false);
   const [modalError, setModalError] = useState('');
@@ -205,8 +236,12 @@ export const EmployerShortlisted = () => {
 
   const handleScheduleInterview = async (e) => {
     e.preventDefault();
-    if (!interviewForm.date || !interviewForm.time) {
+    if (!interviewForm.onHold && (!interviewForm.date || !interviewForm.time)) {
       setModalError('Please specify date and time.');
+      return;
+    }
+    if (!interviewForm.onHold && isInPersonInterview(interviewForm.type) && !interviewForm.locationOrLink) {
+      setModalError('Please select interview location from the map.');
       return;
     }
     setModalLoading(true);
@@ -219,7 +254,7 @@ export const EmployerShortlisted = () => {
       );
       setActiveCandidate(null);
       setModalType(null);
-      setInterviewForm({ date: '', time: '', type: 'Video Call', locationOrLink: '', notes: '' });
+      setInterviewForm({ date: '', time: '', type: 'Video Call', locationOrLink: '', notes: '', onHold: false });
       loadData();
     } catch (err) {
       setModalError(err.response?.data?.message || 'Failed to schedule interview.');
@@ -232,6 +267,9 @@ export const EmployerShortlisted = () => {
   const startIndex = pagination.total ? (pagination.page - 1) * pagination.limit : 0;
   const optionFilters = data.filters || {};
   const goToPage = (page) => setCurrentPage(Math.min(Math.max(page, 1), pagination.totalPages || 1));
+  const hasActiveFilters = Object.values(filters).some(Boolean) || Boolean(tableSearch);
+  const interviewLocationField = getInterviewLocationField(interviewForm.type);
+  const showMapPicker = isInPersonInterview(interviewForm.type);
 
   // Compute dynamic stats based on all pipeline items
   const statsCounts = useMemo(() => {
@@ -259,7 +297,8 @@ export const EmployerShortlisted = () => {
         time: details.time || '',
         type: details.type || 'Video Call',
         locationOrLink: details.locationOrLink || '',
-        notes: details.notes || ''
+        notes: details.notes || '',
+        onHold: Boolean(details.onHold || details.status === 'On Hold')
       });
     }
   };
@@ -349,13 +388,18 @@ export const EmployerShortlisted = () => {
       {/* Stats Section */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
         {[
-          { title: 'Total Shortlisted', value: statsCounts.total, icon: UserCheck, tone: 'bg-warning-subtle text-amber-500 bg-amber-50 border border-amber-100' },
-          { title: 'Pending Interview', value: statsCounts.pending, icon: Loader, tone: 'bg-info-subtle text-sky-500 bg-sky-50 border border-sky-100' },
-          { title: 'Interview Scheduled', value: statsCounts.scheduled, icon: CalendarCheck, tone: 'bg-primary-subtle text-indigo-500 bg-indigo-50 border border-indigo-100' },
-          { title: 'Selected Candidates', value: statsCounts.selected, icon: UserPlus, tone: 'bg-success-subtle text-emerald-500 bg-emerald-50 border border-emerald-100' },
-          { title: 'Rejected Candidates', value: statsCounts.rejected, icon: UserX, tone: 'bg-danger-subtle text-rose-500 bg-rose-50 border border-rose-100' }
+          { title: 'Total Shortlisted', value: statsCounts.total, status: '', icon: UserCheck, tone: 'bg-warning-subtle text-amber-500 bg-amber-50 border border-amber-100' },
+          { title: 'Pending Interview', value: statsCounts.pending, status: 'Pending Interview', icon: Loader, tone: 'bg-info-subtle text-sky-500 bg-sky-50 border border-sky-100' },
+          { title: 'Interview Scheduled', value: statsCounts.scheduled, status: 'Interview Scheduled', icon: CalendarCheck, tone: 'bg-primary-subtle text-indigo-500 bg-indigo-50 border border-indigo-100' },
+          { title: 'Selected Candidates', value: statsCounts.selected, status: 'Selected', icon: UserPlus, tone: 'bg-success-subtle text-emerald-500 bg-emerald-50 border border-emerald-100' },
+          { title: 'Rejected Candidates', value: statsCounts.rejected, status: 'Rejected', icon: UserX, tone: 'bg-danger-subtle text-rose-500 bg-rose-50 border border-rose-100' }
         ].map((stat, idx) => (
-          <section key={idx} className="rounded-md border border-slate-100 bg-white p-3 shadow-sm sm:p-5">
+          <button
+            key={idx}
+            type="button"
+            onClick={() => setFilter('status', stat.status)}
+            className={`rounded-md border bg-white p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-5 ${filters.status === stat.status ? 'border-[#6658dd] ring-2 ring-indigo-100' : 'border-slate-100'}`}
+          >
             <div className="flex items-center gap-2 sm:gap-4">
               <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${stat.tone}`}>
                 <stat.icon className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -365,7 +409,7 @@ export const EmployerShortlisted = () => {
                 <p className="mt-1 text-base font-black text-[#3f4254] sm:text-xl">{stat.value}</p>
               </div>
             </div>
-          </section>
+          </button>
         ))}
       </div>
 
@@ -416,9 +460,7 @@ export const EmployerShortlisted = () => {
               <option value="60">60%+</option>
             </SelectField>
             <div className="flex items-end">
-              <button type="button" onClick={resetFilters} className="h-10 w-full rounded-md bg-[#18b99b] px-4 text-sm font-extrabold text-white transition hover:bg-[#13a98d] xl:w-auto">
-                Reset
-              </button>
+              <ClearFilterButton active={hasActiveFilters} onClick={resetFilters} />
             </div>
           </div>
 
@@ -610,65 +652,89 @@ export const EmployerShortlisted = () => {
                   <p className="text-xs font-semibold text-slate-400">
                     Schedule a dynamic interview with <span className="font-extrabold text-[#3f4254]">{activeCandidate?.name}</span> for the position of <span className="font-extrabold text-[#3f4254]">{activeCandidate?.jobTitle}</span>.
                   </p>
-                  
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Date</label>
-                      <input
-                        type="date"
-                        required
-                        value={interviewForm.date}
-                        onChange={(e) => setInterviewForm({ ...interviewForm, date: e.target.value })}
-                        className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Time</label>
-                      <input
-                        type="time"
-                        required
-                        value={interviewForm.time}
-                        onChange={(e) => setInterviewForm({ ...interviewForm, time: e.target.value })}
-                        className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
-                      />
-                    </div>
-                  </div>
 
-                  <div>
-                    <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Type</label>
-                    <select
-                      value={interviewForm.type}
-                      onChange={(e) => setInterviewForm({ ...interviewForm, type: e.target.value })}
-                      className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 outline-none focus:border-[#6658dd]"
-                    >
-                      <option>Video Call</option>
-                      <option>Phone Call</option>
-                      <option>In-Person</option>
-                      <option>Other</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Meeting Link / Location</label>
+                  <label className={`flex cursor-pointer items-start gap-3 rounded-md border px-3 py-3 transition ${interviewForm.onHold ? 'border-amber-200 bg-amber-50' : 'border-slate-200 bg-white'}`}>
                     <input
-                      type="text"
-                      placeholder="Zoom link, Google Meet, or office address"
-                      value={interviewForm.locationOrLink}
-                      onChange={(e) => setInterviewForm({ ...interviewForm, locationOrLink: e.target.value })}
-                      className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                      type="checkbox"
+                      checked={interviewForm.onHold}
+                      onChange={(e) => setInterviewForm({ ...interviewForm, onHold: e.target.checked })}
+                      className="mt-1 h-4 w-4 rounded border-slate-300 text-[#6658dd] focus:ring-[#6658dd]"
                     />
-                  </div>
+                    <span>
+                      <span className="block text-sm font-extrabold text-[#3f4254]">On Hold</span>
+                      <span className="mt-0.5 block text-xs font-semibold text-slate-500">Move this candidate to the interview stage now. You can add the schedule details later from the Interviews page.</span>
+                    </span>
+                  </label>
+                  
+                  {!interviewForm.onHold && (
+                    <>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div>
+                          <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Date</label>
+                          <input
+                            type="date"
+                            required
+                            value={interviewForm.date}
+                            onChange={(e) => setInterviewForm({ ...interviewForm, date: e.target.value })}
+                            className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Time</label>
+                          <input
+                            type="time"
+                            required
+                            value={interviewForm.time}
+                            onChange={(e) => setInterviewForm({ ...interviewForm, time: e.target.value })}
+                            className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                          />
+                        </div>
+                      </div>
 
-                  <div>
-                    <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interviewer Notes</label>
-                    <textarea
-                      rows="3"
-                      placeholder="Topics to discuss or instruction notes..."
-                      value={interviewForm.notes}
-                      onChange={(e) => setInterviewForm({ ...interviewForm, notes: e.target.value })}
-                      className="w-full rounded-md border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
-                    />
-                  </div>
+                      <div>
+                        <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Type</label>
+                        <select
+                          value={interviewForm.type}
+                          onChange={(e) => setInterviewForm({ ...interviewForm, type: e.target.value, locationOrLink: '' })}
+                          className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 outline-none focus:border-[#6658dd]"
+                        >
+                          <option>Video Call</option>
+                          <option>Phone Call</option>
+                          <option>In-Person</option>
+                          <option>Other</option>
+                        </select>
+                      </div>
+
+                      {showMapPicker ? (
+                        <InterviewLocationPicker
+                          value={interviewForm.locationOrLink}
+                          onChange={(locationOrLink) => setInterviewForm({ ...interviewForm, locationOrLink })}
+                        />
+                      ) : interviewLocationField && (
+                        <div>
+                          <label className="mb-1.5 block text-xs font-extrabold text-slate-500">{interviewLocationField.label}</label>
+                          <input
+                            type="text"
+                            placeholder={interviewLocationField.placeholder}
+                            value={interviewForm.locationOrLink}
+                            onChange={(e) => setInterviewForm({ ...interviewForm, locationOrLink: e.target.value })}
+                            className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                          />
+                        </div>
+                      )}
+
+                      <div>
+                        <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interviewer Notes</label>
+                        <textarea
+                          rows="3"
+                          placeholder="Topics to discuss or instruction notes..."
+                          value={interviewForm.notes}
+                          onChange={(e) => setInterviewForm({ ...interviewForm, notes: e.target.value })}
+                          className="w-full rounded-md border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                        />
+                      </div>
+                    </>
+                  )}
 
                   <div className="flex flex-col-reverse justify-end gap-2 pt-2 border-t border-slate-100 sm:flex-row">
                     <button
@@ -684,7 +750,7 @@ export const EmployerShortlisted = () => {
                       disabled={modalLoading}
                       className="h-10 rounded-md bg-[#6658dd] px-4 text-sm font-extrabold text-white transition hover:bg-[#5848d8] flex items-center justify-center gap-2"
                     >
-                      {modalLoading ? <Loader className="h-4 w-4 animate-spin" /> : 'Confirm Interview'}
+                      {modalLoading ? <Loader className="h-4 w-4 animate-spin" /> : interviewForm.onHold ? 'Mark On Hold' : 'Confirm Interview'}
                     </button>
                   </div>
                 </form>

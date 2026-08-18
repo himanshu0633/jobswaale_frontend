@@ -13,6 +13,7 @@ import {
   UserX
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import ClearFilterButton from '../../../components/ClearFilterButton';
 
 const getTokenHeaders = () => {
   const token = localStorage.getItem('publicToken');
@@ -51,6 +52,12 @@ export const EmployerApplicantHistory = () => {
     if (status) params.set('status', status);
     return params.toString();
   }, [search, jobId, status]);
+  const hasActiveFilters = Boolean(search.trim() || jobId || status);
+  const resetFilters = () => {
+    setSearch('');
+    setJobId('');
+    setStatus('');
+  };
 
   useEffect(() => {
     let alive = true;
@@ -105,7 +112,7 @@ export const EmployerApplicantHistory = () => {
         </div>
 
         <div className="p-5">
-          <div className="mb-5 grid gap-3 md:grid-cols-3">
+          <div className="mb-5 grid gap-3 md:grid-cols-4">
             <div>
               <label className="mb-2 block text-xs font-extrabold text-slate-500">Search</label>
               <div className="relative">
@@ -131,6 +138,9 @@ export const EmployerApplicantHistory = () => {
                 <option value="">All Status</option>
                 {['Applied', 'Reviewed', 'Shortlisted', 'Interview', 'Offered', 'Rejected'].map((item) => <option key={item}>{item}</option>)}
               </select>
+            </div>
+            <div className="flex items-end">
+              <ClearFilterButton active={hasActiveFilters} onClick={resetFilters} />
             </div>
           </div>
 

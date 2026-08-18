@@ -68,7 +68,7 @@ export const EmployerHeader = ({ toggleSidebar }) => {
     event.preventDefault();
     const query = searchValue.trim();
     if (!query) return;
-    navigate(`/employer/search-results?q=${encodeURIComponent(query)}`);
+    navigate(`/employer/candidates?search=${encodeURIComponent(query)}`);
   };
 
   return (
@@ -114,13 +114,13 @@ export const EmployerHeader = ({ toggleSidebar }) => {
           <button
             type="submit"
             className="absolute left-4 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-slate-400 transition hover:text-[#6658dd]"
-            aria-label="Search jobs"
+            aria-label="Search candidates"
           >
             <Search className="h-4 w-4" />
           </button>
           <input
             type="text"
-            placeholder="Quick Search..."
+            placeholder="Candidates Search..."
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
             className={`h-9 w-full rounded-full border py-2 pr-4 pl-[42px] text-[13px] font-semibold outline-none placeholder:text-slate-400 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 ${

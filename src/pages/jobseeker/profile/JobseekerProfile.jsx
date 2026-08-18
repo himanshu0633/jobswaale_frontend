@@ -991,19 +991,25 @@ export const JobseekerProfile = () => {
                           />
                           Currently working here
                         </label>
-                        <input
-                          type="month"
-                          value={item.startDate || ''}
-                          onChange={(e) => setExperiences(experiences.map((exp, itemIndex) => itemIndex === index ? { ...exp, startDate: e.target.value } : exp))}
-                          className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
-                        />
-                        <input
-                          type="month"
-                          value={item.currentlyWorking ? '' : (item.endDate || '')}
-                          disabled={Boolean(item.currentlyWorking)}
-                          onChange={(e) => setExperiences(experiences.map((exp, itemIndex) => itemIndex === index ? { ...exp, endDate: e.target.value } : exp))}
-                          className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none disabled:bg-slate-100 disabled:text-slate-400"
-                        />
+                        <div>
+                          <label className="mb-1 block text-xs font-extrabold uppercase tracking-wide text-slate-500">Start Date</label>
+                          <input
+                            type="month"
+                            value={item.startDate || ''}
+                            onChange={(e) => setExperiences(experiences.map((exp, itemIndex) => itemIndex === index ? { ...exp, startDate: e.target.value } : exp))}
+                            className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-xs font-extrabold uppercase tracking-wide text-slate-500">End Date</label>
+                          <input
+                            type="month"
+                            value={item.currentlyWorking ? '' : (item.endDate || '')}
+                            disabled={Boolean(item.currentlyWorking)}
+                            onChange={(e) => setExperiences(experiences.map((exp, itemIndex) => itemIndex === index ? { ...exp, endDate: e.target.value } : exp))}
+                            className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none disabled:bg-slate-100 disabled:text-slate-400"
+                          />
+                        </div>
                         <textarea
                           rows={3}
                           value={item.description || ''}

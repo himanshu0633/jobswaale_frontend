@@ -211,7 +211,7 @@ export const EmployerJobDetails = () => {
 
       <div className="flex flex-wrap gap-2">
         <Link to={`/employer/jobs/${details.id}/edit`} className="inline-flex items-center gap-2 rounded-md bg-[#6658dd] px-3 py-2 text-sm font-extrabold text-white"><Edit className="h-4 w-4" /> Edit Job</Link>
-        <Link to="/employer/applications" className="inline-flex items-center gap-2 rounded-md bg-sky-500 px-3 py-2 text-sm font-extrabold text-white"><FileText className="h-4 w-4" /> View Applications</Link>
+        <Link to={`/employer/applications?jobTitle=${encodeURIComponent(details.title || '')}`} className="inline-flex items-center gap-2 rounded-md bg-sky-500 px-3 py-2 text-sm font-extrabold text-white"><FileText className="h-4 w-4" /> View Applications</Link>
         <button type="button" onClick={duplicateJob} disabled={duplicating} className="inline-flex items-center gap-2 rounded-md bg-emerald-500 px-3 py-2 text-sm font-extrabold text-white disabled:opacity-60">{duplicating ? <Loader className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />} Duplicate</button>
         {details.status === 'Closed' || details.status === 'Paused' ? (
           <button type="button" onClick={() => runJobAction('reopen')} disabled={Boolean(actionState)} className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-2 text-sm font-extrabold text-white disabled:opacity-60">{actionState === 'reopen' ? <Loader className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} Reopen Job</button>
@@ -344,7 +344,7 @@ export const EmployerJobDetails = () => {
             <h2 className="text-lg font-extrabold text-[#3f4254]">Recent Applicants</h2>
             <p className="mt-1 text-sm font-semibold text-slate-400">Latest candidates who applied for this position.</p>
           </div>
-          <Link to="/employer/applications" className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#6658dd] px-4 text-sm font-extrabold text-white">
+          <Link to={`/employer/applications?jobTitle=${encodeURIComponent(details.title || '')}`} className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#6658dd] px-4 text-sm font-extrabold text-white">
             <Eye className="h-4 w-4" />
             View All Applications
           </Link>
@@ -370,9 +370,18 @@ export const EmployerJobDetails = () => {
                   <td className="px-4 py-4 text-sm font-semibold text-slate-500">{formatDate(candidate.appliedAt)}</td>
                   <td className="px-4 py-4"><span className="rounded bg-emerald-50 px-2 py-1 text-xs font-black text-emerald-600">{candidate.matchScore}%</span></td>
                   <td className="px-4 py-4"><span className={`rounded px-2 py-1 text-xs font-black ${applicantTone[candidate.status] || applicantTone.Applied}`}>{candidate.status}</span></td>
-                  <td className="px-4 py-4 text-right"><button type="button" className="rounded border border-slate-200 p-2 text-[#6658dd]"><Eye className="h-4 w-4" /></button></td>
+                  <td className="px-4 py-4 text-right">
+                    <Link to={`/employer/applications/${candidate.id}`} className="inline-flex rounded border border-slate-200 p-2 text-[#6658dd] transition hover:bg-indigo-50">
+                      <Eye className="h-4 w-4" />
+                    </Link>
+                  </td>
                 </tr>
               ))}
+              {!(details.recentApplicants || []).length && (
+                <tr>
+                  <td colSpan="5" className="px-4 py-10 text-center text-sm font-bold text-slate-400">No recent applicants found.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

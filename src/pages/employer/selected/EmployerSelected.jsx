@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   BadgeCheck,
   Briefcase,
@@ -21,15 +21,16 @@ import {
   UserX
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import ClearFilterButton from '../../../components/ClearFilterButton';
 
 const initialFilters = { search: '', jobTitle: '', status: '', selectionDate: '', minSalary: '' };
 
 const statCards = [
-  { key: 'total', title: 'Total Selected', icon: UserPlus, tone: 'bg-emerald-50 text-emerald-500' },
-  { key: 'offerSent', title: 'Total Offer Sent', icon: MailCheck, tone: 'bg-violet-50 text-[#6658dd]' },
-  { key: 'offerAccepted', title: 'Offer Accepted', icon: BadgeCheck, tone: 'bg-cyan-50 text-cyan-500' },
-  { key: 'hired', title: 'Total Hired', icon: Briefcase, tone: 'bg-blue-50 text-blue-500' },
-  { key: 'offerDeclined', title: 'Offer Declined', icon: UserX, tone: 'bg-rose-50 text-rose-500' }
+  { key: 'total', title: 'Total Selected', status: '', icon: UserPlus, tone: 'bg-emerald-50 text-emerald-500' },
+  { key: 'offerSent', title: 'Total Offer Sent', status: 'Offer Sent', icon: MailCheck, tone: 'bg-violet-50 text-[#6658dd]' },
+  { key: 'offerAccepted', title: 'Offer Accepted', status: 'Offer Accepted', icon: BadgeCheck, tone: 'bg-cyan-50 text-cyan-500' },
+  { key: 'hired', title: 'Total Hired', status: 'Hired', icon: Briefcase, tone: 'bg-blue-50 text-blue-500' },
+  { key: 'offerDeclined', title: 'Offer Declined', status: 'Offer Declined', icon: UserX, tone: 'bg-rose-50 text-rose-500' }
 ];
 
 const statusTone = {
@@ -78,7 +79,15 @@ const OfferActions = ({ candidate, isUpdating, isOpen, onToggle, buttonClassName
 );
 
 export const EmployerSelected = () => {
-  const [filters, setFilters] = useState(initialFilters);
+  const [searchParams] = useSearchParams();
+  const getUrlFilters = () => ({
+    search: searchParams.get('search') || '',
+    jobTitle: searchParams.get('jobTitle') || '',
+    status: searchParams.get('status') || '',
+    selectionDate: searchParams.get('selectionDate') || '',
+    minSalary: searchParams.get('minSalary') || ''
+  });
+  const [filters, setFilters] = useState(getUrlFilters);
   const [tableSearch, setTableSearch] = useState('');
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -175,6 +184,7 @@ export const EmployerSelected = () => {
   const optionFilters = data.filters || { jobTitles: [] };
   const stats = data.stats || {};
   const visibleRows = data.selected || [];
+  const hasActiveFilters = Object.values(filters).some(Boolean) || Boolean(tableSearch);
 
   return (
     <div className="space-y-4 px-3 sm:space-y-5 sm:px-0">
@@ -187,12 +197,17 @@ export const EmployerSelected = () => {
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-5">
         {statCards.map((card) => (
-          <section key={card.key} className="rounded-md border border-slate-100 bg-white p-3 shadow-sm sm:p-5">
+          <button
+            key={card.key}
+            type="button"
+            onClick={() => setFilter('status', card.status)}
+            className={`rounded-md border bg-white p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-5 ${filters.status === card.status ? 'border-[#6658dd] ring-2 ring-indigo-100' : 'border-slate-100'}`}
+          >
             <div className="flex items-center gap-2 sm:gap-4">
               <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${card.tone}`}><card.icon className="h-4 w-4 sm:h-5 sm:w-5" /></span>
               <div className="min-w-0"><p className="truncate text-xs font-semibold text-slate-400 sm:text-sm">{card.title}</p><p className="mt-1 text-base font-black text-[#3f4254] sm:text-xl">{Number(stats[card.key] || 0).toLocaleString('en-IN')}</p></div>
             </div>
-          </section>
+          </button>
         ))}
       </div>
 
@@ -215,7 +230,7 @@ export const EmployerSelected = () => {
             <SelectField label="Status" value={filters.status} onChange={(value) => setFilter('status', value)}><option value="">All Status</option>{['Offer Sent', 'Offer Accepted', 'Offer Declined', 'Hired'].map((item) => <option key={item}>{item}</option>)}</SelectField>
             <div><label className="mb-2 block text-xs font-extrabold text-slate-500">Selection Date</label><input type="date" value={filters.selectionDate} onChange={(event) => setFilter('selectionDate', event.target.value)} className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100" /></div>
             <SelectField label="Min Salary (LPA)" value={filters.minSalary} onChange={(value) => setFilter('minSalary', value)}><option value="">All Salaries</option>{[5, 10, 15, 20].map((item) => <option key={item} value={item}>{item}</option>)}</SelectField>
-            <div className="flex items-end"><button type="button" onClick={resetFilters} className="h-10 w-full rounded-md bg-[#18b99b] px-4 text-sm font-extrabold text-white transition hover:bg-[#13a98d] xl:w-auto">Reset</button></div>
+            <div className="flex items-end"><ClearFilterButton active={hasActiveFilters} onClick={resetFilters} /></div>
           </div>
 
           <div className="mb-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">

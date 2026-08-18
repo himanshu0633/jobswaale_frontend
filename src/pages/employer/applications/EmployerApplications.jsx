@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Calendar,
   CalendarCheck,
@@ -23,24 +23,25 @@ import {
   X
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import ClearFilterButton from '../../../components/ClearFilterButton';
 
 const initialFilters = { search: '', jobTitle: '', status: '', experience: '', appliedAfter: '' };
 
 const statCards = [
-  { key: 'total', title: 'Total', icon: FileText, tone: 'bg-violet-50 text-[#6658dd]' },
-  { key: 'new', title: 'New', icon: Inbox, tone: 'bg-emerald-50 text-emerald-500' },
-  { key: 'shortlisted', title: 'Shortlisted', icon: UserCheck, tone: 'bg-amber-50 text-amber-500' },
-  { key: 'interviews', title: 'Interviews', icon: CalendarCheck, tone: 'bg-sky-50 text-sky-500' },
-  { key: 'rejected', title: 'Rejected', icon: UserX, tone: 'bg-rose-50 text-rose-500' }
+  { key: 'total', title: 'Total', status: '', icon: FileText, tone: 'bg-violet-50 text-[#6658dd]' },
+  { key: 'new', title: 'New', status: 'Applied', icon: Inbox, tone: 'bg-emerald-50 text-emerald-500' },
+  { key: 'shortlisted', title: 'Shortlisted', status: 'Shortlisted', icon: UserCheck, tone: 'bg-amber-50 text-amber-500' },
+  { key: 'interviews', title: 'Interviews', status: 'Interview', icon: CalendarCheck, tone: 'bg-sky-50 text-sky-500' },
+  { key: 'rejected', title: 'Rejected', status: 'Rejected', icon: UserX, tone: 'bg-rose-50 text-rose-500' }
 ];
 
 const pipelineConfig = [
-  { key: 'applied', title: 'Applied', icon: FileText, tone: 'bg-[#18b99b] text-white' },
-  { key: 'reviewed', title: 'Reviewed', icon: Eye, tone: 'bg-sky-500 text-white' },
-  { key: 'shortlisted', title: 'Shortlisted', icon: UserCheck, tone: 'bg-amber-400 text-white' },
-  { key: 'interview', title: 'Interview', icon: Calendar, tone: 'bg-[#6658dd] text-white' },
-  { key: 'offered', title: 'Offered', icon: MailCheck, tone: 'bg-blue-500 text-white' },
-  { key: 'rejected', title: 'Rejected', icon: X, tone: 'bg-rose-500 text-white' }
+  { key: 'applied', title: 'Applied', status: 'Applied', icon: FileText, tone: 'bg-[#18b99b] text-white' },
+  { key: 'reviewed', title: 'Reviewed', status: 'Reviewed', icon: Eye, tone: 'bg-sky-500 text-white' },
+  { key: 'shortlisted', title: 'Shortlisted', status: 'Shortlisted', icon: UserCheck, tone: 'bg-amber-400 text-white' },
+  { key: 'interview', title: 'Interview', status: 'Interview', icon: Calendar, tone: 'bg-[#6658dd] text-white' },
+  { key: 'offered', title: 'Offered', status: 'Offered', icon: MailCheck, tone: 'bg-blue-500 text-white' },
+  { key: 'rejected', title: 'Rejected', status: 'Rejected', icon: X, tone: 'bg-rose-500 text-white' }
 ];
 
 const statusTone = {
@@ -74,13 +75,28 @@ const SelectField = ({ label, value, onChange, children }) => (
 );
 
 export const EmployerApplications = () => {
-  const [filters, setFilters] = useState(initialFilters);
+  const [searchParams] = useSearchParams();
+  const searchParamString = searchParams.toString();
+  const getUrlFilters = () => ({
+    search: searchParams.get('search') || '',
+    jobTitle: searchParams.get('jobTitle') || '',
+    status: searchParams.get('status') || '',
+    experience: searchParams.get('experience') || '',
+    appliedAfter: searchParams.get('appliedAfter') || ''
+  });
+  const [filters, setFilters] = useState(getUrlFilters);
   const [tableSearch, setTableSearch] = useState('');
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [data, setData] = useState({ stats: {}, pipeline: {}, filters: {}, applications: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 1 } });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    setFilters(getUrlFilters());
+    setTableSearch('');
+    setCurrentPage(1);
+  }, [searchParamString]);
 
   const setFilter = (key, value) => {
     setFilters((current) => ({ ...current, [key]: value }));
@@ -113,21 +129,14 @@ export const EmployerApplications = () => {
     axios.get(`${BASE_API_URL}/employer/applications?${queryParams}`, { headers: getTokenHeaders() })
       .then((response) => {
         if (alive) {
-          const applications = filters.status
-            ? (response.data?.applications || [])
-            : (response.data?.applications || []).filter((item) => ['Applied', 'Reviewed'].includes(item.status));
+          const applications = response.data?.applications || [];
           setData({
             stats: {},
             pipeline: {},
             filters: {},
-            applications: [],
-            pagination: { page: 1, limit: pageSize, total: applications.length, totalPages: 1 },
             ...response.data,
             applications,
-            pagination: {
-              ...(response.data?.pagination || { page: 1, limit: pageSize, total: applications.length, totalPages: 1 }),
-              total: applications.length
-            }
+            pagination: response.data?.pagination || { page: 1, limit: pageSize, total: applications.length, totalPages: 1 }
           });
         }
       })
@@ -144,6 +153,7 @@ export const EmployerApplications = () => {
   const startIndex = pagination.total ? (pagination.page - 1) * pagination.limit : 0;
   const optionFilters = data.filters || {};
   const goToPage = (page) => setCurrentPage(Math.min(Math.max(page, 1), pagination.totalPages || 1));
+  const hasActiveFilters = Object.values(filters).some(Boolean) || Boolean(tableSearch);
 
   const handleStatusUpdate = async (appId, nextStatus) => {
     try {
@@ -154,17 +164,12 @@ export const EmployerApplications = () => {
       );
       // Refresh the application list
       const response = await axios.get(`${BASE_API_URL}/employer/applications?${queryParams}`, { headers: getTokenHeaders() });
-      const applications = filters.status
-        ? (response.data?.applications || [])
-        : (response.data?.applications || []).filter((item) => ['Applied', 'Reviewed'].includes(item.status));
+      const applications = response.data?.applications || [];
       setData(prev => ({
         ...prev,
         ...response.data,
         applications,
-        pagination: {
-          ...(response.data?.pagination || prev.pagination || {}),
-          total: applications.length
-        }
+        pagination: response.data?.pagination || prev.pagination || { page: 1, limit: pageSize, total: applications.length, totalPages: 1 }
       }));
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update application status.');
@@ -182,12 +187,17 @@ export const EmployerApplications = () => {
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-5">
         {statCards.map((card) => (
-          <section key={card.key} className="rounded-md border border-slate-100 bg-white p-3 shadow-sm sm:p-5">
+          <button
+            key={card.key}
+            type="button"
+            onClick={() => setFilter('status', card.status)}
+            className={`rounded-md border bg-white p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-5 ${filters.status === card.status ? 'border-[#6658dd] ring-2 ring-indigo-100' : 'border-slate-100'}`}
+          >
             <div className="flex items-center gap-2 sm:gap-4">
               <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${card.tone}`}><card.icon className="h-4 w-4 sm:h-5 sm:w-5" /></span>
               <div className="min-w-0"><p className="truncate text-xs font-semibold text-slate-400 sm:text-sm">{card.title}</p><p className="mt-1 text-base font-black text-[#3f4254] sm:text-xl">{Number(data.stats?.[card.key] || 0).toLocaleString('en-IN')}</p></div>
             </div>
-          </section>
+          </button>
         ))}
       </div>
 
@@ -195,10 +205,10 @@ export const EmployerApplications = () => {
         <div className="border-b border-dashed border-slate-200 px-4 py-4 sm:px-5"><h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Hiring Pipeline</h2></div>
         <div className="grid grid-cols-2 gap-4 p-4 sm:p-5 md:grid-cols-3 xl:grid-cols-6">
           {pipelineConfig.map((item) => (
-            <div key={item.key} className="flex min-w-0 items-center gap-3">
+            <button key={item.key} type="button" onClick={() => setFilter('status', item.status)} className={`flex min-w-0 items-center gap-3 rounded-md p-1 text-left transition hover:bg-slate-50 ${filters.status === item.status ? 'ring-2 ring-indigo-100' : ''}`}>
               <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11 ${item.tone}`}><item.icon className="h-4 w-4" /></span>
               <div className="min-w-0"><p className="text-sm font-black text-[#3f4254] sm:text-base">{Number(data.pipeline?.[item.key] || 0).toLocaleString('en-IN')}</p><p className="truncate text-xs font-semibold text-slate-400">{item.title}</p></div>
-            </div>
+            </button>
           ))}
         </div>
       </section>
@@ -216,6 +226,9 @@ export const EmployerApplications = () => {
               { key: '', label: 'Application' },
               { key: 'Applied', label: 'Waiting for Review' },
               { key: 'Reviewed', label: 'Reviewed' },
+              { key: 'Shortlisted', label: 'Shortlisted' },
+              { key: 'Interview', label: 'Interview' },
+              { key: 'Offered', label: 'Offered' },
               { key: 'Rejected', label: 'Rejected' }
             ].map((tab) => (
               <button
@@ -233,16 +246,35 @@ export const EmployerApplications = () => {
             ))}
           </div>
 
-          <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto]">
+          <div className="mb-5 flex flex-wrap gap-1.5 border-b border-dashed border-slate-100 pb-4">
+            {[
+              { key: '', label: 'All Jobs' },
+              ...(optionFilters.jobTitles || []).map((title) => ({ key: title, label: title }))
+            ].map((job) => (
+              <button
+                key={job.key || 'all-jobs'}
+                type="button"
+                onClick={() => setFilter('jobTitle', job.key)}
+                className={`max-w-full rounded-full border px-4 py-1.5 text-xs font-bold transition ${
+                  filters.jobTitle === job.key
+                    ? 'border-[#6658dd] bg-[#6658dd] text-white shadow-sm'
+                    : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
+                }`}
+                title={job.label}
+              >
+                <span className="block max-w-56 truncate">{job.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.5fr_1fr_1fr_auto]">
             <div>
               <label className="mb-2 block text-xs font-extrabold text-slate-500">Search Candidate / Job</label>
               <div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input className="h-10 w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100" value={filters.search} onChange={(event) => setFilter('search', event.target.value)} placeholder="Name, email, job, location" /></div>
             </div>
-            <SelectField label="Job Title" value={filters.jobTitle} onChange={(value) => setFilter('jobTitle', value)}><option value="">All Jobs</option>{(optionFilters.jobTitles || []).map((item) => <option key={item}>{item}</option>)}</SelectField>
-            <SelectField label="Status" value={filters.status} onChange={(value) => setFilter('status', value)}><option value="">Application</option>{['Applied', 'Reviewed', 'Rejected'].map((item) => <option key={item}>{item}</option>)}</SelectField>
             <SelectField label="Experience" value={filters.experience} onChange={(value) => setFilter('experience', value)}><option value="">All Experience</option>{(optionFilters.experiences || ['Fresher', '1 - 2 Years', '2 - 5 Years', '5+ Years']).map((item) => <option key={item}>{item}</option>)}</SelectField>
             <div><label className="mb-2 block text-xs font-extrabold text-slate-500">Applied After</label><input type="date" value={filters.appliedAfter} onChange={(event) => setFilter('appliedAfter', event.target.value)} className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100" /></div>
-            <div className="flex items-end"><button type="button" onClick={resetFilters} className="h-10 w-full rounded-md bg-[#18b99b] px-4 text-sm font-extrabold text-white transition hover:bg-[#13a98d] xl:w-auto">Reset</button></div>
+            <div className="flex items-end"><ClearFilterButton active={hasActiveFilters} onClick={resetFilters} /></div>
           </div>
 
           <div className="mb-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
@@ -277,45 +309,8 @@ export const EmployerApplications = () => {
                 <div className="mt-3 flex flex-wrap items-center justify-between border-t border-slate-100 pt-3 gap-2">
                   <span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${scoreTone(application.matchScore)}`}>{application.matchScore}% match</span>
                   <div className="flex flex-wrap items-center gap-1.5">
-                    {application.status === 'Applied' && (
-                      <>
-                        <button
-                          onClick={() => handleStatusUpdate(application.id, 'Reviewed')}
-                          className="inline-flex h-8 items-center justify-center gap-1 rounded bg-sky-50 px-2 text-[10px] font-bold text-sky-600 border border-sky-100"
-                        >
-                          Review
-                        </button>
-                        <button
-                          onClick={() => handleStatusUpdate(application.id, 'Shortlisted')}
-                          className="inline-flex h-8 items-center justify-center gap-1 rounded bg-amber-50 px-2 text-[10px] font-bold text-amber-600 border border-amber-100"
-                        >
-                          Shortlist
-                        </button>
-                        <button
-                          onClick={() => handleStatusUpdate(application.id, 'Rejected')}
-                          className="inline-flex h-8 items-center justify-center gap-1 rounded bg-rose-50 px-2 text-[10px] font-bold text-rose-600 border border-rose-100"
-                        >
-                          Reject
-                        </button>
-                      </>
-                    )}
-                    {application.status === 'Reviewed' && (
-                      <>
-                        <button
-                          onClick={() => handleStatusUpdate(application.id, 'Shortlisted')}
-                          className="inline-flex h-8 items-center justify-center gap-1 rounded bg-amber-50 px-2 text-[10px] font-bold text-amber-600 border border-amber-100"
-                        >
-                          Shortlist
-                        </button>
-                        <button
-                          onClick={() => handleStatusUpdate(application.id, 'Rejected')}
-                          className="inline-flex h-8 items-center justify-center gap-1 rounded bg-rose-50 px-2 text-[10px] font-bold text-rose-600 border border-rose-100"
-                        >
-                          Reject
-                        </button>
-                      </>
-                    )}
                     <Link to={`/employer/applications/${application.id}`} className="inline-flex h-8 items-center justify-center gap-1 rounded border border-[#6658dd] px-2 text-[10px] font-extrabold text-[#6658dd] transition hover:bg-violet-50">View</Link>
+                    <Link to={`/employer/messages?application=${application.id}`} className="inline-flex h-8 items-center justify-center gap-1 rounded border border-sky-200 px-2 text-[10px] font-extrabold text-sky-600 transition hover:bg-sky-50">Message</Link>
                   </div>
                 </div>
               </div>
@@ -345,49 +340,6 @@ export const EmployerApplications = () => {
                     <td className="px-5 py-4"><span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${statusTone[application.status] || statusTone.Applied}`}>{application.status}</span></td>
                     <td className="px-5 py-4 text-center">
                       <div className="inline-flex items-center gap-1.5 justify-center">
-                        {application.status === 'Applied' && (
-                          <>
-                            <button
-                              onClick={() => handleStatusUpdate(application.id, 'Reviewed')}
-                              title="Mark as Reviewed"
-                              className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md bg-sky-50 px-2 text-xs font-bold text-sky-600 hover:bg-sky-100 transition border border-sky-100"
-                            >
-                              Review
-                            </button>
-                            <button
-                              onClick={() => handleStatusUpdate(application.id, 'Shortlisted')}
-                              title="Shortlist Candidate"
-                              className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md bg-amber-50 px-2 text-xs font-bold text-amber-600 hover:bg-amber-100 transition border border-amber-100"
-                            >
-                              Shortlist
-                            </button>
-                            <button
-                              onClick={() => handleStatusUpdate(application.id, 'Rejected')}
-                              title="Reject Candidate"
-                              className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md bg-rose-50 px-2 text-xs font-bold text-rose-600 hover:bg-rose-100 transition border border-rose-100"
-                            >
-                              Reject
-                            </button>
-                          </>
-                        )}
-                        {application.status === 'Reviewed' && (
-                          <>
-                            <button
-                              onClick={() => handleStatusUpdate(application.id, 'Shortlisted')}
-                              title="Shortlist Candidate"
-                              className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md bg-amber-50 px-2 text-xs font-bold text-amber-600 hover:bg-amber-100 transition border border-amber-100"
-                            >
-                              Shortlist
-                            </button>
-                            <button
-                              onClick={() => handleStatusUpdate(application.id, 'Rejected')}
-                              title="Reject Candidate"
-                              className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md bg-rose-50 px-2 text-xs font-bold text-rose-600 hover:bg-rose-100 transition border border-rose-100"
-                            >
-                              Reject
-                            </button>
-                          </>
-                        )}
                         <Link to={`/employer/applications/${application.id}`} className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-[#6658dd] px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-violet-50"><Eye className="h-3.5 w-3.5" />View</Link>
                         <Link to={`/employer/messages?application=${application.id}`} className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-sky-200 px-2 text-xs font-extrabold text-sky-600 transition hover:bg-sky-50"><MessageCircle className="h-3.5 w-3.5" />Message</Link>
                       </div>

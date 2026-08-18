@@ -248,34 +248,6 @@ const EmployerCard = ({ company, onSavedChange }) => {
 };
 
 /* ─────────────────────────────────────────────────────────────
-   CHECKBOX ROW  — matches .cb-container + .number-item
-───────────────────────────────────────────────────────────── */
-const CheckRow = ({ label, count, checked, onChange }) => (
-  <li className="relative pr-[30px] pb-1 inline-block w-full">
-    <label className="block relative pl-[35px] mb-2.5 cursor-pointer leading-[21px] select-none text-sm text-[#475569]">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={onChange}
-        className="absolute opacity-0 cursor-pointer h-0 w-0"
-      />
-      {/* custom checkmark box */}
-      <span className={`absolute top-0 left-0 h-[22px] w-[22px] bg-white border-2 ${checked ? 'border-[#0047C7]' : 'border-[#d1d1d1]'} rounded flex items-center justify-center transition-colors duration-150`}>
-        {checked && (
-          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-            <path d="M2 7l3.5 3.5L11 3" stroke="#0047C7" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        )}
-      </span>
-      <span className="text-sm">{label}</span>
-    </label>
-    <span className="absolute top-[30%] right-0 -translate-y-1/2 px-2 py-0.5 text-xs leading-4 rounded bg-[rgba(156,156,163,0.18)] text-[#9c9ca3]">
-      {count}
-    </span>
-  </li>
-);
-
-/* ─────────────────────────────────────────────────────────────
    MAIN PAGE COMPONENT
 ───────────────────────────────────────────────────────────── */
 export const Employers = () => {
@@ -284,8 +256,6 @@ export const Employers = () => {
   const [searchLoc, setSearchLoc]         = useState('');
   const [sidebarLoc, setSidebarLoc]       = useState('');
   const [sidebarInd, setSidebarInd]       = useState('');
-  const [sidebarTypes, setSidebarTypes]   = useState([]);
-  const [sidebarExps, setSidebarExps]     = useState([]);
   const [sortBy, setSortBy]               = useState('newest');
   const [companies, setCompanies] = useState([]);
   const [filteredCompanies, setFilteredCompanies] = useState([]);
@@ -375,11 +345,9 @@ export const Employers = () => {
   const handleFind = e => { e.preventDefault(); runFilter(); };
   const resetFilters = () => {
     setSearchKeyword(''); setSearchInd(''); setSearchLoc('');
-    setSidebarLoc(''); setSidebarInd(''); setSidebarTypes([]); setSidebarExps([]);
+    setSidebarLoc(''); setSidebarInd('');
     setFilteredCompanies(companies);
   };
-  const toggleType = t => setSidebarTypes(p => p.includes(t) ? p.filter(x=>x!==t) : [...p,t]);
-  const toggleExp  = e => setSidebarExps (p => p.includes(e) ? p.filter(x=>x!==e) : [...p,e]);
   const handleReminder = e => {
     e.preventDefault();
     setReminderDone(true); setReminderEmail('');
@@ -409,7 +377,7 @@ export const Employers = () => {
       <section className="bg-[#FFF9F3] inline-block w-full py-[55px] relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <h4 className="text-[28px] leading-[34px] font-bold text-[#1f2938] mb-0">
-            There are <strong className="text-[#ff5e14]">500+</strong> companies<br />here for you!
+            There are <strong className="text-[#ff5e14]">{companies.length}</strong> companies<br />here for you!
           </h4>
 
           <div className="flex flex-wrap mt-[15px] mb-10 items-center justify-between">
@@ -606,40 +574,6 @@ export const Employers = () => {
                     <polyline points="6 9 12 15 18 9"/>
                   </svg>
                 </div>
-              </div>
-
-              {/* Job Type */}
-              <div className="mb-[30px]">
-                <h5 className="text-lg text-[#1f2938] font-semibold mb-[15px]">Job type</h5>
-                <ul className="list-none m-0 pt-[15px] pb-[5px]">
-                  {[
-                    {label:'Full Time Jobs',count:235},
-                    {label:'Part Time Jobs',count:28},
-                    {label:'Remote Jobs',count:67},
-                    {label:'Freelance',count:92},
-                    {label:'Temporary',count:14},
-                  ].map(({label,count}) => (
-                    <CheckRow key={label} label={label} count={count}
-                      checked={sidebarTypes.includes(label)}
-                      onChange={() => toggleType(label)} />
-                  ))}
-                </ul>
-              </div>
-
-              {/* Experience Level */}
-              <div className="mb-[30px]">
-                <h5 className="text-lg text-[#1f2938] font-semibold mb-[15px]">Experience Level</h5>
-                <ul className="list-none m-0 pt-[15px] pb-[5px]">
-                  {[
-                    {label:'Expert',count:76},{label:'Senior',count:89},
-                    {label:'Junior',count:54},{label:'Regular',count:23},
-                    {label:'Internship',count:22},{label:'Associate',count:14},
-                  ].map(({label,count}) => (
-                    <CheckRow key={label} label={label} count={count}
-                      checked={sidebarExps.includes(label)}
-                      onChange={() => toggleExp(label)} />
-                  ))}
-                </ul>
               </div>
 
               {/* buttons-filter */}

@@ -20,6 +20,19 @@ const getJobLocationLabels = (job) => {
   return labels;
 };
 
+const JOBS_PER_PAGE = 10;
+const MAX_VISIBLE_PAGES = 5;
+
+const getJobSortTime = (job) => {
+  const timestamp = Date.parse(job?.postedAt || '');
+  if (Number.isFinite(timestamp)) return timestamp;
+
+  const objectIdTime = /^[a-f\d]{24}$/i.test(String(job?.id || ''))
+    ? Number.parseInt(String(job.id).slice(0, 8), 16) * 1000
+    : 0;
+  return Number.isFinite(objectIdTime) ? objectIdTime : 0;
+};
+
 export const Jobs = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryCategory = searchParams.get('category') || '';
@@ -27,6 +40,7 @@ export const Jobs = () => {
   const queryEmployer = searchParams.get('employer') || '';
   const querySearch = searchParams.get('q') || '';
   const queryLocation = searchParams.get('location') || '';
+  const queryPage = Math.max(1, Number.parseInt(searchParams.get('page') || '1', 10) || 1);
 
   // Search state (top bar)
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -54,6 +68,7 @@ export const Jobs = () => {
   const [reminderEmail, setReminderEmail] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [currentPage, setCurrentPage] = useState(queryPage);
 
   // Fetch jobs from database on mount
   useEffect(() => {
@@ -74,6 +89,7 @@ export const Jobs = () => {
           type: j.jobType?.jobType || j.workMode || 'Full Time',
           category: j.jobCategory?.categoryName || 'IT & Software',
           experience: j.experience,
+          postedAt: j.postingDate || j.createDate || j.createdAt || '',
           logoLetter: j.companyName ? j.companyName.charAt(0).toUpperCase() : 'J',
           logoBg: ['bg-red-500', 'bg-blue-600', 'bg-emerald-500', 'bg-purple-500', 'bg-amber-500'][Math.floor(Math.random() * 5)]
         }));
@@ -123,6 +139,10 @@ export const Jobs = () => {
   useEffect(() => {
     setSearchLoc(queryLocation);
   }, [queryLocation]);
+
+  useEffect(() => {
+    setCurrentPage(queryPage);
+  }, [queryPage]);
 
   const filterJobs = () => {
     let result = [...dbJobs];
@@ -192,9 +212,9 @@ export const Jobs = () => {
 
     // Sort
     if (sortBy === 'newest') {
-      result.sort((a, b) => String(b.id).localeCompare(String(a.id)));
+      result.sort((a, b) => getJobSortTime(b) - getJobSortTime(a));
     } else {
-      result.sort((a, b) => String(a.id).localeCompare(String(b.id)));
+      result.sort((a, b) => getJobSortTime(a) - getJobSortTime(b));
     }
 
     setFilteredJobs(result);
@@ -203,6 +223,17 @@ export const Jobs = () => {
   useEffect(() => {
     filterJobs();
   }, [dbJobs, sortBy, queryCategory, queryCompany, queryEmployer, querySearch, queryLocation]);
+
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(filteredJobs.length / JOBS_PER_PAGE));
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+      const nextParams = new URLSearchParams(searchParams);
+      if (totalPages > 1) nextParams.set('page', String(totalPages));
+      else nextParams.delete('page');
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [currentPage, filteredJobs.length, searchParams, setSearchParams]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -221,10 +252,16 @@ export const Jobs = () => {
     else nextParams.delete('q');
     if (searchLoc.trim()) nextParams.set('location', searchLoc.trim());
     else nextParams.delete('location');
+    nextParams.delete('page');
+    setCurrentPage(1);
     setSearchParams(nextParams);
   };
 
   const applySidebarFilters = () => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('page');
+    setCurrentPage(1);
+    setSearchParams(nextParams, { replace: true });
     filterJobs();
   };
 
@@ -233,6 +270,8 @@ export const Jobs = () => {
     if (queryCategory) {
       const nextParams = new URLSearchParams(searchParams);
       nextParams.delete('category');
+      nextParams.delete('page');
+      setCurrentPage(1);
       setSearchParams(nextParams);
     }
   };
@@ -249,6 +288,7 @@ export const Jobs = () => {
     setSearchType('');
     setSearchLoc('');
     setTagFilter('');
+    setCurrentPage(1);
     setFilteredJobs(dbJobs);
   };
 
@@ -268,6 +308,44 @@ export const Jobs = () => {
     e.preventDefault();
     alert(`Reminder successfully set for: ${reminderEmail}`);
     setReminderEmail('');
+  };
+
+  const totalJobs = filteredJobs.length;
+  const totalPages = Math.max(1, Math.ceil(totalJobs / JOBS_PER_PAGE));
+  const safeCurrentPage = Math.min(Math.max(currentPage, 1), totalPages);
+  const firstJobIndex = totalJobs ? (safeCurrentPage - 1) * JOBS_PER_PAGE : 0;
+  const lastJobIndex = Math.min(firstJobIndex + JOBS_PER_PAGE, totalJobs);
+  const paginatedJobs = filteredJobs.slice(firstJobIndex, lastJobIndex);
+  const visibleStartPage = Math.max(1, Math.min(
+    safeCurrentPage - Math.floor(MAX_VISIBLE_PAGES / 2),
+    totalPages - MAX_VISIBLE_PAGES + 1
+  ));
+  const visibleEndPage = Math.min(totalPages, visibleStartPage + MAX_VISIBLE_PAGES - 1);
+  const visiblePages = Array.from(
+    { length: visibleEndPage - visibleStartPage + 1 },
+    (_, index) => visibleStartPage + index
+  );
+  const jobTypeCounts = dbJobs.reduce((acc, job) => {
+    const type = String(job.type || '').trim();
+    if (type) acc[type] = (acc[type] || 0) + 1;
+    return acc;
+  }, {});
+  const experienceCounts = dbJobs.reduce((acc, job) => {
+    const experience = String(job.experience || '').trim();
+    if (experience) acc[experience] = (acc[experience] || 0) + 1;
+    return acc;
+  }, {});
+  const jobTypeOptions = Object.keys(jobTypeCounts).sort((a, b) => a.localeCompare(b));
+  const experienceOptions = Object.keys(experienceCounts).sort((a, b) => a.localeCompare(b));
+
+  const goToPage = (page) => {
+    const nextPage = Math.min(Math.max(page, 1), totalPages);
+    const nextParams = new URLSearchParams(searchParams);
+    if (nextPage > 1) nextParams.set('page', String(nextPage));
+    else nextParams.delete('page');
+    setCurrentPage(nextPage);
+    setSearchParams(nextParams);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -433,13 +511,19 @@ export const Jobs = () => {
             {/* Header / Info bar */}
             <div className="flex items-center justify-between pb-2">
               <span className="text-sm text-[#37404e]">
-                Showing <strong className="text-[#37404e]">{filteredJobs.length}</strong> jobs
+                Showing <strong className="text-[#37404e]">{totalJobs ? firstJobIndex + 1 : 0}-{lastJobIndex}</strong> of <strong className="text-[#37404e]">{totalJobs}</strong> jobs
               </span>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-semibold text-[#9c9ca3]">Sort by:</span>
                 <select
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
+                  onChange={(e) => {
+                    const nextParams = new URLSearchParams(searchParams);
+                    nextParams.delete('page');
+                    setSortBy(e.target.value);
+                    setCurrentPage(1);
+                    setSearchParams(nextParams, { replace: true });
+                  }}
                   className="text-sm font-semibold text-[#37404e] bg-transparent border-0 focus:outline-none cursor-pointer"
                 >
                   <option value="newest">Newest Post</option>
@@ -480,7 +564,7 @@ export const Jobs = () => {
               </div>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2">
-                {filteredJobs.map((job) => (
+                {paginatedJobs.map((job) => (
                   <div key={job.id} className="job-card">
                     <div className="flex items-start">
                       <div className="flex-shrink-0">
@@ -517,13 +601,66 @@ export const Jobs = () => {
 
             {/* Pagination Controls */}
             {filteredJobs.length > 0 && (
-              <div className="flex items-center pt-10">
+              <div className="flex items-center justify-between gap-4 pt-10">
+                <span className="text-sm font-medium text-[#88929b]">
+                  Page {safeCurrentPage} of {totalPages}
+                </span>
                 <nav className="flex items-center gap-1">
-                  <button className="px-3 py-2 text-sm font-semibold text-[#37404e] hover:font-bold transition cursor-pointer">Previous</button>
-                  <button className="px-3.5 py-2 rounded-[8px] text-sm font-bold text-[#37404e]" style={{ backgroundColor: 'rgba(0,71,199,0.3)' }}>1</button>
-                  <button className="px-3.5 py-2 rounded-[8px] text-sm font-semibold text-[#37404e] hover:bg-[rgba(0,71,199,0.3)] transition cursor-pointer">2</button>
-                  <button className="px-3.5 py-2 rounded-[8px] text-sm font-semibold text-[#37404e] hover:bg-[rgba(0,71,199,0.3)] transition cursor-pointer">3</button>
-                  <button className="px-3 py-2 text-sm font-semibold text-[#37404e] hover:font-bold transition cursor-pointer">Next</button>
+                  <button
+                    type="button"
+                    onClick={() => goToPage(safeCurrentPage - 1)}
+                    disabled={safeCurrentPage === 1}
+                    className="px-3 py-2 text-sm font-semibold text-[#37404e] transition enabled:cursor-pointer enabled:hover:font-bold disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Previous
+                  </button>
+                  {visibleStartPage > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => goToPage(1)}
+                        className="px-3.5 py-2 rounded-[8px] text-sm font-semibold text-[#37404e] transition hover:bg-[rgba(0,71,199,0.3)]"
+                      >
+                        1
+                      </button>
+                      {visibleStartPage > 2 && <span className="px-2 text-sm font-semibold text-[#88929b]">...</span>}
+                    </>
+                  )}
+                  {visiblePages.map((page) => (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => goToPage(page)}
+                      className={`px-3.5 py-2 rounded-[8px] text-sm transition ${
+                        safeCurrentPage === page
+                          ? 'font-bold text-[#37404e]'
+                          : 'font-semibold text-[#37404e] hover:bg-[rgba(0,71,199,0.3)]'
+                      }`}
+                      style={safeCurrentPage === page ? { backgroundColor: 'rgba(0,71,199,0.3)' } : undefined}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  {visibleEndPage < totalPages && (
+                    <>
+                      {visibleEndPage < totalPages - 1 && <span className="px-2 text-sm font-semibold text-[#88929b]">...</span>}
+                      <button
+                        type="button"
+                        onClick={() => goToPage(totalPages)}
+                        className="px-3.5 py-2 rounded-[8px] text-sm font-semibold text-[#37404e] transition hover:bg-[rgba(0,71,199,0.3)]"
+                      >
+                        {totalPages}
+                      </button>
+                    </>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => goToPage(safeCurrentPage + 1)}
+                    disabled={safeCurrentPage === totalPages}
+                    className="px-3 py-2 text-sm font-semibold text-[#37404e] transition enabled:cursor-pointer enabled:hover:font-bold disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Next
+                  </button>
                 </nav>
               </div>
             )}
@@ -646,12 +783,9 @@ export const Jobs = () => {
               <div className="space-y-3">
                 <h4 className="text-[18px] font-semibold text-[#1f2938]">Job type</h4>
                 <div className="space-y-3 pt-1">
-                  {[
-                    ['Full Time', 235],
-                    ['Part Time', 28],
-                    ['Remote', 67],
-                    ['Freelance', 92]
-                  ].map(([t, count]) => (
+                  {jobTypeOptions.length === 0 ? (
+                    <p className="text-sm font-medium text-[#88929b]">No job types found.</p>
+                  ) : jobTypeOptions.map((t) => (
                     <label key={t} className="flex items-center justify-between gap-2.5 text-sm text-[#37404e] cursor-pointer select-none">
                       <span className="flex items-center gap-3">
                         <input
@@ -663,7 +797,7 @@ export const Jobs = () => {
                         {t}
                       </span>
                       <span className="text-xs px-2 py-1 rounded-[5px] text-[#9c9ca3]" style={{ backgroundColor: 'rgba(156,156,163,0.18)' }}>
-                        {count}
+                        {jobTypeCounts[t]}
                       </span>
                     </label>
                   ))}
@@ -674,12 +808,9 @@ export const Jobs = () => {
               <div className="space-y-3">
                 <h4 className="text-[18px] font-semibold text-[#1f2938]">Experience Level</h4>
                 <div className="space-y-3 pt-1">
-                  {[
-                    ['Junior', 54],
-                    ['Regular', 23],
-                    ['Senior', 89],
-                    ['Expert', 76]
-                  ].map(([exp, count]) => (
+                  {experienceOptions.length === 0 ? (
+                    <p className="text-sm font-medium text-[#88929b]">No experience levels found.</p>
+                  ) : experienceOptions.map((exp) => (
                     <label key={exp} className="flex items-center justify-between gap-2.5 text-sm text-[#37404e] cursor-pointer select-none">
                       <span className="flex items-center gap-3">
                         <input
@@ -691,7 +822,7 @@ export const Jobs = () => {
                         {exp}
                       </span>
                       <span className="text-xs px-2 py-1 rounded-[5px] text-[#9c9ca3]" style={{ backgroundColor: 'rgba(156,156,163,0.18)' }}>
-                        {count}
+                        {experienceCounts[exp]}
                       </span>
                     </label>
                   ))}

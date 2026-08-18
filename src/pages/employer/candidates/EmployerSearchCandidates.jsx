@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Activity,
   Bookmark,
@@ -17,13 +17,13 @@ import {
   Search,
   SlidersHorizontal,
   Star,
-  Trash2,
   User,
   UserCheck,
   UserPlus,
   Users
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import ClearFilterButton from '../../../components/ClearFilterButton';
 
 const initialFilters = {
   search: '',
@@ -66,6 +66,26 @@ const getTokenHeaders = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
+const downloadCandidateResume = async (candidate) => {
+  if (!candidate?.id) return;
+  try {
+    const response = await axios.get(`${BASE_API_URL}/employer/candidates/${candidate.id}/resume-download`, {
+      headers: getTokenHeaders(),
+      responseType: 'blob'
+    });
+    const blobUrl = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = `${candidate.name || 'candidate'}-resume`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(blobUrl);
+  } catch (err) {
+    alert(err.response?.data?.message || 'Resume could not be downloaded.');
+  }
+};
+
 const filterLabelClass = 'mb-2 block text-xs font-extrabold text-slate-500';
 const filterControlClass = 'candidate-filter-control h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100';
 
@@ -90,18 +110,19 @@ const CandidateActions = ({ candidate, isOpen, onToggle, onClose, align = 'right
           <Link to="/employer/candidates" className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"><User className="h-4 w-4" /> View Profile</Link>
           <Link to="/employer/messages" className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"><MessageCircle className="h-4 w-4" /> Contact</Link>
           {candidate.hasResume ? (
-            <a 
-              href={candidate.resume ? `${BASE_API_URL.replace(/\/api$/, '')}/${candidate.resume}` : '#'} 
-              onClick={(e) => {
+            <button
+              type="button"
+              onClick={() => {
                 if (!candidate.allowResumeDownload) {
-                  e.preventDefault();
                   alert('Upgrade Plan: Resume downloads are not supported under your current plan. Please upgrade to download resumes.');
+                  return;
                 }
+                downloadCandidateResume(candidate);
               }}
-              className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-bold text-slate-600 hover:bg-slate-50"
             >
               <Download className="h-4 w-4" /> Download Resume
-            </a>
+            </button>
           ) : (
             <button type="button" className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-bold text-slate-400" disabled>
               <Download className="h-4 w-4" /> No Resume
@@ -114,7 +135,12 @@ const CandidateActions = ({ candidate, isOpen, onToggle, onClose, align = 'right
 );
 
 export const EmployerSearchCandidates = () => {
-  const [filters, setFilters] = useState(initialFilters);
+  const [searchParams] = useSearchParams();
+  const [filters, setFilters] = useState(() => ({
+    ...initialFilters,
+    search: searchParams.get('search') || '',
+    location: searchParams.get('location') || ''
+  }));
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -159,11 +185,11 @@ export const EmployerSearchCandidates = () => {
 
   useEffect(() => {
     let alive = true;
-    setLoading(true);
-    setError('');
     axios.get(`${BASE_API_URL}/employer/candidates?${queryParams}`, { headers: getTokenHeaders() })
       .then((response) => {
-        if (alive) setData({ stats: {}, filters: {}, candidates: [], pagination: { page: 1, limit: pageSize, total: 0, totalPages: 1 }, ...response.data });
+        if (!alive) return;
+        setError('');
+        setData({ stats: {}, filters: {}, candidates: [], pagination: { page: 1, limit: pageSize, total: 0, totalPages: 1 }, ...response.data });
       })
       .catch((err) => {
         if (alive) setError(err.response?.data?.message || 'Candidates could not be loaded.');
@@ -182,6 +208,7 @@ export const EmployerSearchCandidates = () => {
   const employmentOptions = optionFilters.employmentTypes?.length ? optionFilters.employmentTypes : ['Full Time', 'Part Time', 'Contract', 'Internship'];
   const goToPage = (page) => setCurrentPage(Math.min(Math.max(page, 1), totalPages));
   const visibleRows = data.candidates || [];
+  const hasActiveFilters = Object.values(filters).some((value) => Array.isArray(value) ? value.length > 0 : Boolean(value)) || Boolean(tableSearch);
 
   return (
     <div className="space-y-4 px-3 sm:space-y-5 sm:px-0">
@@ -222,7 +249,7 @@ export const EmployerSearchCandidates = () => {
             <div><label className={filterLabelClass}>Location</label><input className={filterControlClass} value={filters.location} onChange={(event) => setFilter('location', event.target.value)} placeholder="City, State" /></div>
             <SelectField label="Experience" value={filters.experience} onChange={(value) => setFilter('experience', value)}><option value="">All Experience</option>{(optionFilters.experiences || ['Fresher', '1 - 2 Years', '2 - 5 Years', '5+ Years']).map((item) => <option key={item}>{item}</option>)}</SelectField>
             <SelectField label="Qualification" value={filters.qualification} onChange={(value) => setFilter('qualification', value)}><option value="">All Qualifications</option>{(optionFilters.qualifications || []).map((item) => <option key={item}>{item}</option>)}</SelectField>
-            <div className="flex items-end"><button type="button" onClick={resetFilters} className="h-10 w-full rounded-md bg-[#18b99b] px-4 text-sm font-extrabold text-white transition hover:bg-[#13a98d] xl:w-auto">Reset</button></div>
+            <div className="flex items-end"><ClearFilterButton active={hasActiveFilters} onClick={resetFilters} /></div>
           </div>
 
           {advancedOpen && (
@@ -232,7 +259,7 @@ export const EmployerSearchCandidates = () => {
                   <h3 className="flex items-center gap-2 text-sm font-extrabold text-[#3f4254]"><SlidersHorizontal className="h-4 w-4" />Advanced Filters</h3>
                   <p className="mt-1 text-xs font-semibold text-slate-500">Refine candidates with profile, salary, and availability filters.</p>
                 </div>
-                <button type="button" onClick={resetFilters} className="candidate-clear-button inline-flex h-9 w-full items-center justify-center gap-2 rounded-md border border-rose-200 bg-white px-3 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50 sm:w-auto"><Trash2 className="h-3.5 w-3.5" />Clear All Filters</button>
+                <ClearFilterButton active={hasActiveFilters} onClick={resetFilters} className="h-9 text-xs sm:w-auto" label="Clear All Filters" />
               </div>
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <SelectField uppercase label="Skills" value={filters.skill} onChange={(value) => setFilter('skill', value)}><option value="">All Skills</option></SelectField>

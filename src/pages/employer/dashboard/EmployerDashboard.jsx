@@ -39,10 +39,11 @@ const formatDate = (value, fallback = '-') => {
 };
 
 const actionConfig = [
+  { key: 'activeJobs', title: 'Active Jobs', subtitle: 'Currently live', action: 'View active', to: '/employer/jobs?status=Active', icon: Briefcase, tone: 'bg-emerald-50 text-emerald-500', card: 'bg-[#f0fbf7]' },
   { key: 'newApplications', title: 'New Applications', subtitle: 'Need Review', action: 'View all', to: '/employer/applications', icon: FileText, tone: 'bg-[#f3f0ff] text-[#6658dd]', card: 'bg-[#f7f4ff]' },
   { key: 'interviews', title: 'Interviews', subtitle: 'To Confirm', action: 'View schedule', to: '/employer/interviews', icon: CalendarCheck, tone: 'bg-amber-50 text-amber-500', card: 'bg-[#fff9ef]' },
   { key: 'candidates', title: 'Candidates', subtitle: 'Ready for Selection', action: 'View list', to: '/employer/shortlisted', icon: UserCheck, tone: 'bg-emerald-50 text-emerald-500', card: 'bg-[#f0fbf7]' },
-  { key: 'jobsExpiring', title: 'Expired Jobs', subtitle: 'Needs renewal', action: 'View jobs', to: '/employer/jobs', icon: Clock, tone: 'bg-rose-50 text-rose-500', card: 'bg-[#fff3f5]' }
+  { key: 'jobsExpiring', title: 'Expired Jobs', subtitle: 'Needs renewal', action: 'View jobs', to: '/employer/jobs?status=Expired', icon: Clock, tone: 'bg-rose-50 text-rose-500', card: 'bg-[#fff3f5]' }
 ];
 
 const quickActions = [
@@ -55,12 +56,12 @@ const quickActions = [
 ];
 
 const pipelineRows = [
-  { key: 'applied', title: 'Applied', icon: FileText, tone: 'bg-[#6658dd]' },
-  { key: 'underReview', title: 'Under Review', icon: Eye, tone: 'bg-sky-500' },
-  { key: 'shortlisted', title: 'Shortlisted', icon: UserCheck, tone: 'bg-emerald-500' },
-  { key: 'interview', title: 'Interview', icon: CalendarCheck, tone: 'bg-amber-500' },
-  { key: 'selected', title: 'Selected', icon: Check, tone: 'bg-slate-500' },
-  { key: 'notSelected', title: 'Not Selected', icon: X, tone: 'bg-rose-500' }
+  { key: 'applied', title: 'Applied', icon: FileText, tone: 'bg-[#6658dd]', to: '/employer/applications?status=Applied' },
+  { key: 'underReview', title: 'Under Review', icon: Eye, tone: 'bg-sky-500', to: '/employer/applications?status=Reviewed' },
+  { key: 'shortlisted', title: 'Shortlisted', icon: UserCheck, tone: 'bg-emerald-500', to: '/employer/shortlisted?status=Pending+Interview' },
+  { key: 'interview', title: 'Interview', icon: CalendarCheck, tone: 'bg-amber-500', to: '/employer/interviews?status=Scheduled' },
+  { key: 'selected', title: 'Selected', icon: Check, tone: 'bg-slate-500', to: '/employer/selected' },
+  { key: 'notSelected', title: 'Not Selected', icon: X, tone: 'bg-rose-500', to: '/employer/applications?status=Rejected' }
 ];
 
 const activityIcon = {
@@ -77,23 +78,45 @@ export const EmployerDashboard = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    let alive = true;
+
     const loadDashboard = async () => {
       setLoading(true);
       setError('');
       try {
-        const token = localStorage.getItem('publicToken');
-        const response = await axios.get(`${BASE_API_URL}/employer/dashboard`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {}
-        });
-        setDashboard({ ...emptyDashboard, ...response.data });
+        let lastError = null;
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          try {
+            const token = localStorage.getItem('publicToken');
+            const response = await axios.get(`${BASE_API_URL}/employer/dashboard`, {
+              headers: token ? { Authorization: `Bearer ${token}` } : {}
+            });
+            if (alive) {
+              setDashboard({ ...emptyDashboard, ...response.data });
+            }
+            return;
+          } catch (err) {
+            lastError = err;
+            if (err.response?.status === 401 || attempt === 2) throw err;
+            await new Promise((resolve) => setTimeout(resolve, 450 * (attempt + 1)));
+          }
+        }
+        throw lastError;
       } catch (err) {
-        setError(err.response?.data?.message || 'Dashboard data could not be loaded.');
+        if (alive) {
+          setError(err.response?.data?.message || 'Dashboard data could not be loaded.');
+        }
       } finally {
-        setLoading(false);
+        if (alive) {
+          setLoading(false);
+        }
       }
     };
 
     loadDashboard();
+    return () => {
+      alive = false;
+    };
   }, []);
 
   const subscription = dashboard.subscription || {};
@@ -170,7 +193,7 @@ export const EmployerDashboard = () => {
           </div>
           <div className="grid gap-4 p-4 sm:grid-cols-2 sm:p-5">
             {actionConfig.map((item) => (
-              <div key={item.key} className={`rounded-md border border-slate-100 p-4 sm:p-5 ${item.card}`}>
+              <Link key={item.key} to={item.to} className={`block rounded-md border border-slate-100 p-4 transition hover:-translate-y-0.5 hover:shadow-sm sm:p-5 ${item.card}`}>
                 <div className="flex items-start gap-4 sm:gap-5">
                   <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11 ${item.tone}`}>
                     <item.icon className="h-5 w-5" />
@@ -179,12 +202,12 @@ export const EmployerDashboard = () => {
                     <p className="text-xl font-black text-[#3f4254] sm:text-2xl">{dashboard.actionCenter?.[item.key] || 0}</p>
                     <h3 className="mt-1.5 text-sm font-extrabold text-[#3f4254] sm:text-base">{item.title}</h3>
                     <p className="mt-2 text-xs font-semibold text-[#3f4254] sm:text-sm">{item.subtitle}</p>
-                    <Link to={item.to} className={`mt-4 inline-flex items-center gap-2 text-sm font-extrabold sm:mt-5 ${item.tone.split(' ')[1]}`}>
+                    <span className={`mt-4 inline-flex items-center gap-2 text-sm font-extrabold sm:mt-5 ${item.tone.split(' ')[1]}`}>
                       {item.action} <ArrowRight className="h-4 w-4" />
-                    </Link>
+                    </span>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </section>
@@ -217,7 +240,7 @@ export const EmployerDashboard = () => {
       <section className="rounded-md border border-slate-100 bg-white shadow-sm">
         <div className="flex flex-col gap-2 border-b border-dashed border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
           <h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Your Active Jobs</h2>
-          <Link to="/employer/jobs" className="text-xs font-extrabold text-[#6658dd] sm:text-sm">View All Jobs <ArrowRight className="inline h-4 w-4" /></Link>
+          <Link to="/employer/jobs?status=Active" className="text-xs font-extrabold text-[#6658dd] sm:text-sm">View All Jobs <ArrowRight className="inline h-4 w-4" /></Link>
         </div>
         {/* Card list — mobile only */}
         <div className="divide-y divide-slate-100 sm:hidden">
@@ -225,28 +248,28 @@ export const EmployerDashboard = () => {
             <div key={job.id} className="px-4 py-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-extrabold text-slate-800">{job.title}</p>
+                  <Link to={`/employer/jobs/${job.id}`} className="truncate text-sm font-extrabold text-slate-800 hover:text-[#6658dd]">{job.title}</Link>
                   <p className="text-xs font-semibold text-slate-400">{job.location || '-'} • {job.workMode || '-'}</p>
                 </div>
                 <span className="shrink-0 rounded bg-emerald-50 px-2 py-1 text-[11px] font-black text-emerald-600">{job.status}</span>
               </div>
               <div className="mt-3 grid grid-cols-4 gap-2 text-center">
-                <div>
+                <Link to={`/employer/applications?jobTitle=${encodeURIComponent(job.title)}`} className="rounded transition hover:bg-slate-50">
                   <p className="text-sm font-black text-slate-700">{job.applications}</p>
                   <p className="text-[10px] font-bold uppercase text-slate-400">Applied</p>
-                </div>
-                <div>
+                </Link>
+                <Link to={`/employer/shortlisted?jobTitle=${encodeURIComponent(job.title)}&status=Pending+Interview`} className="rounded transition hover:bg-slate-50">
                   <p className="text-sm font-black text-slate-700">{job.shortlisted}</p>
                   <p className="text-[10px] font-bold uppercase text-slate-400">Shortlist</p>
-                </div>
-                <div>
+                </Link>
+                <Link to={`/employer/interviews?jobTitle=${encodeURIComponent(job.title)}`} className="rounded transition hover:bg-slate-50">
                   <p className="text-sm font-black text-slate-700">{job.interviews}</p>
                   <p className="text-[10px] font-bold uppercase text-slate-400">Interview</p>
-                </div>
-                <div>
+                </Link>
+                <Link to={`/employer/selected?jobTitle=${encodeURIComponent(job.title)}`} className="rounded transition hover:bg-slate-50">
                   <p className="text-sm font-black text-slate-700">{job.selected}</p>
                   <p className="text-[10px] font-bold uppercase text-slate-400">Selected</p>
-                </div>
+                </Link>
               </div>
             </div>
           ))}
@@ -272,13 +295,13 @@ export const EmployerDashboard = () => {
               {(dashboard.activeJobs || []).map((job) => (
                 <tr key={job.id} className="text-sm">
                   <td className="px-4 py-3 sm:px-6 sm:py-4">
-                    <p className="font-extrabold text-slate-800">{job.title}</p>
+                    <Link to={`/employer/jobs/${job.id}`} className="font-extrabold text-slate-800 hover:text-[#6658dd]">{job.title}</Link>
                     <p className="text-xs font-semibold text-slate-400">{job.location || '-'} • {job.workMode || '-'}</p>
                   </td>
-                  <td className="px-4 py-3 font-bold text-slate-600 sm:px-6 sm:py-4">{job.applications}</td>
-                  <td className="px-4 py-3 font-bold text-slate-600 sm:px-6 sm:py-4">{job.shortlisted}</td>
-                  <td className="px-4 py-3 font-bold text-slate-600 sm:px-6 sm:py-4">{job.interviews}</td>
-                  <td className="px-4 py-3 font-bold text-slate-600 sm:px-6 sm:py-4">{job.selected}</td>
+                  <td className="px-4 py-3 sm:px-6 sm:py-4"><Link to={`/employer/applications?jobTitle=${encodeURIComponent(job.title)}`} className="font-bold text-slate-600 hover:text-[#6658dd]">{job.applications}</Link></td>
+                  <td className="px-4 py-3 sm:px-6 sm:py-4"><Link to={`/employer/shortlisted?jobTitle=${encodeURIComponent(job.title)}&status=Pending+Interview`} className="font-bold text-slate-600 hover:text-[#6658dd]">{job.shortlisted}</Link></td>
+                  <td className="px-4 py-3 sm:px-6 sm:py-4"><Link to={`/employer/interviews?jobTitle=${encodeURIComponent(job.title)}`} className="font-bold text-slate-600 hover:text-[#6658dd]">{job.interviews}</Link></td>
+                  <td className="px-4 py-3 sm:px-6 sm:py-4"><Link to={`/employer/selected?jobTitle=${encodeURIComponent(job.title)}`} className="font-bold text-slate-600 hover:text-[#6658dd]">{job.selected}</Link></td>
                   <td className="px-4 py-3 sm:px-6 sm:py-4"><span className="rounded bg-emerald-50 px-2 py-1 text-xs font-black text-emerald-600">{job.status}</span></td>
                 </tr>
               ))}
@@ -301,7 +324,7 @@ export const EmployerDashboard = () => {
               const value = dashboard.pipeline?.[row.key] || 0;
               const percent = Math.round((value / pipelineTotal) * 100);
               return (
-                <div key={row.key} className="flex items-center justify-between gap-2 border-b border-slate-100 py-3 last:border-b-0">
+                <Link key={row.key} to={row.to} className="flex items-center justify-between gap-2 border-b border-slate-100 py-3 transition hover:bg-slate-50 last:border-b-0">
                   <div className="flex min-w-0 items-center gap-3">
                     <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white ${row.tone}`}><row.icon className="h-4 w-4" /></span>
                     <div className="min-w-0">
@@ -310,7 +333,7 @@ export const EmployerDashboard = () => {
                     </div>
                   </div>
                   <p className="shrink-0 text-sm font-black text-slate-700">{value} <span className="text-xs text-slate-400">({percent}%)</span></p>
-                </div>
+                </Link>
               );
             })}
           </div>

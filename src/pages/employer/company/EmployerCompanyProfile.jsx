@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
 import {
   Building2,
   Crown,
@@ -395,12 +396,13 @@ export const EmployerCompanyProfile = () => {
       {/* SECTION 3: STATS GRID */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
-          { title: 'Active Jobs', value: stats.activeJobs, icon: Briefcase, color: 'bg-indigo-50 text-indigo-500' },
-          { title: 'Hired Candidates', value: stats.hired, icon: UserCheck, color: 'bg-emerald-50 text-emerald-500' },
+          { title: 'Active Jobs', value: stats.activeJobs, icon: Briefcase, color: 'bg-indigo-50 text-indigo-500', to: '/employer/jobs?status=Active' },
+          { title: 'Hired Candidates', value: stats.hired, icon: UserCheck, color: 'bg-emerald-50 text-emerald-500', to: '/employer/selected?status=Hired' },
           { title: 'Profile Views', value: stats.profileViews, icon: Eye, color: 'bg-sky-50 text-sky-500' },
           { title: 'Rating', value: `${stats.rating} / 5`, icon: Star, color: 'bg-amber-50 text-amber-500' }
-        ].map((item, index) => (
-          <div key={index} className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm flex items-center gap-4">
+        ].map((item, index) => {
+          const cardContent = (
+            <>
             <span className={`flex h-12 w-12 items-center justify-center rounded-full ${item.color}`}>
               <item.icon className="h-6 w-6" />
             </span>
@@ -408,8 +410,18 @@ export const EmployerCompanyProfile = () => {
               <p className="text-xs font-bold text-slate-400">{item.title}</p>
               <p className="mt-1 text-xl font-black text-[#3f4254]">{item.value}</p>
             </div>
-          </div>
-        ))}
+            </>
+          );
+          return item.to ? (
+            <Link key={index} to={item.to} className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm flex items-center gap-4 transition hover:-translate-y-0.5 hover:shadow-md">
+              {cardContent}
+            </Link>
+          ) : (
+            <div key={index} className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm flex items-center gap-4">
+              {cardContent}
+            </div>
+          );
+        })}
       </div>
 
       {/* SECTION 4: TABS PANEL */}

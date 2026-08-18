@@ -8,6 +8,7 @@ import {
   CalendarPlus,
   Check,
   Download,
+  Loader,
   Mail,
   MapPin,
   MessageCircle,
@@ -16,14 +17,36 @@ import {
   User,
   UserCheck,
   UserPlus,
-  UserX
+  UserX,
+  X
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
+import InterviewLocationPicker from '../../../components/InterviewLocationPicker';
 
 const getTokenHeaders = () => {
   const token = localStorage.getItem('publicToken');
   return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+const downloadCandidateResume = async (candidate) => {
+  if (!candidate?.id) return;
+  try {
+    const response = await axios.get(`${BASE_API_URL}/employer/candidates/${candidate.id}/resume-download`, {
+      headers: getTokenHeaders(),
+      responseType: 'blob'
+    });
+    const blobUrl = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = `${candidate.name || 'candidate'}-resume`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(blobUrl);
+  } catch (err) {
+    alert(err.response?.data?.message || 'Resume could not be downloaded.');
+  }
 };
 
 const statusTone = {
@@ -36,6 +59,34 @@ const statusTone = {
 };
 
 const timelineSteps = ['Applied', 'Reviewed', 'Shortlisted', 'Interview', 'Offered'];
+const actionStepIndex = {
+  Shortlisted: 2,
+  Interview: 3,
+  Offered: 4
+};
+
+const getInterviewLocationField = (type) => {
+  const normalizedType = String(type || '').toLowerCase();
+  if (normalizedType.includes('phone')) return null;
+  if (normalizedType.includes('person')) {
+    return {
+      label: 'Interview Location',
+      placeholder: 'Office address or interview venue'
+    };
+  }
+  if (normalizedType.includes('other')) {
+    return {
+      label: 'Interview Details',
+      placeholder: 'Location, link, or custom interview instructions'
+    };
+  }
+  return {
+    label: 'Meeting Link',
+    placeholder: 'Zoom link, Google Meet, or Teams link'
+  };
+};
+
+const isInPersonInterview = (type) => String(type || '').toLowerCase().includes('person');
 
 const Field = ({ label, children }) => (
   <div className="mb-5">
@@ -63,18 +114,17 @@ const ActionButton = ({ tone, icon: Icon, children, onClick, disabled }) => (
   </button>
 );
 
-const ResumeDownloadLink = ({ href, candidate }) => {
+const ResumeDownloadLink = ({ candidate }) => {
   if (!candidate.hasResume || !candidate.allowResumeDownload) return null;
 
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
+    <button
+      type="button"
+      onClick={() => downloadCandidateResume(candidate)}
       className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-600 transition hover:bg-slate-50"
     >
       <Download className="h-4 w-4" /> Download Resume
-    </a>
+    </button>
   );
 };
 
@@ -85,6 +135,15 @@ const EmployerApplicationDetails = () => {
   const [saving, setSaving] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [showInterviewModal, setShowInterviewModal] = useState(false);
+  const [interviewForm, setInterviewForm] = useState({
+    date: '',
+    time: '',
+    type: 'Video Call',
+    locationOrLink: '',
+    notes: '',
+    onHold: false
+  });
 
   const loadDetails = async () => {
     setLoading(true);
@@ -123,17 +182,42 @@ const EmployerApplicationDetails = () => {
     }
   };
 
-  const scheduleInterview = async () => {
+  const openInterviewModal = () => {
+    setError('');
+    setMessage('');
+    setInterviewForm({
+      date: '',
+      time: '',
+      type: 'Video Call',
+      locationOrLink: '',
+      notes: '',
+      onHold: false
+    });
+    setShowInterviewModal(true);
+  };
+
+  const scheduleInterview = async (event) => {
+    event.preventDefault();
+    if (!interviewForm.onHold && (!interviewForm.date || !interviewForm.time)) {
+      setError('Please specify interview date and time.');
+      return;
+    }
+    if (!interviewForm.onHold && isInPersonInterview(interviewForm.type) && !interviewForm.locationOrLink) {
+      setError('Please select interview location from the map.');
+      return;
+    }
     setSaving('Interview');
     setError('');
     setMessage('');
     try {
       await axios.post(
         `${BASE_API_URL}/employer/applications/${id}/schedule-interview`,
-        { date: new Date().toISOString().slice(0, 10), time: '10:00', type: 'Video Call', status: 'Scheduled' },
+        interviewForm,
         { headers: getTokenHeaders() }
       );
-      setMessage('Interview scheduled successfully.');
+      setShowInterviewModal(false);
+      setInterviewForm({ date: '', time: '', type: 'Video Call', locationOrLink: '', notes: '', onHold: false });
+      setMessage(interviewForm.onHold ? 'Application moved to interview on hold.' : 'Interview scheduled successfully.');
       await loadDetails();
     } catch (err) {
       setError(err.response?.data?.message || 'Interview schedule failed.');
@@ -164,7 +248,35 @@ const EmployerApplicationDetails = () => {
 
   const candidate = application.candidate || {};
   const job = application.job || {};
-  const resumeHref = candidate.resume ? `${BASE_API_URL.replace(/\/api$/, '')}/${candidate.resume}` : '#';
+  const currentStepIndex = application.status === 'Rejected'
+    ? Number.POSITIVE_INFINITY
+    : Math.max(timelineSteps.findIndex((step) => step === application.status), 0);
+  const availableActions = [
+    {
+      status: 'Shortlisted',
+      label: 'Shortlist',
+      tone: 'bg-amber-400 text-white hover:bg-amber-500',
+      icon: UserCheck,
+      onClick: () => updateStatus('Shortlisted')
+    },
+    {
+      status: 'Interview',
+      label: 'Schedule Interview',
+      tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
+      icon: CalendarPlus,
+      onClick: openInterviewModal
+    },
+    {
+      status: 'Offered',
+      label: 'Select',
+      tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
+      icon: UserPlus,
+      onClick: () => updateStatus('Offered')
+    }
+  ].filter((action) => actionStepIndex[action.status] > currentStepIndex);
+  const canReject = application.status !== 'Rejected' && application.status !== 'Offered';
+  const interviewLocationField = getInterviewLocationField(interviewForm.type);
+  const showMapPicker = isInPersonInterview(interviewForm.type);
 
   return (
     <div className="space-y-5">
@@ -195,15 +307,15 @@ const EmployerApplicationDetails = () => {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        {application.status !== 'Rejected' && (
-          <>
-            <ActionButton tone="bg-amber-400 text-white hover:bg-amber-500" icon={UserCheck} onClick={() => updateStatus('Shortlisted')} disabled={Boolean(saving)}>Shortlist</ActionButton>
-            <ActionButton tone="bg-[#6658dd] text-white hover:bg-[#5848d8]" icon={CalendarPlus} onClick={scheduleInterview} disabled={Boolean(saving)}>Schedule Interview</ActionButton>
-            <ActionButton tone="bg-emerald-500 text-white hover:bg-emerald-600" icon={UserPlus} onClick={() => updateStatus('Offered')} disabled={Boolean(saving)}>Select</ActionButton>
-            <ActionButton tone="border border-rose-200 bg-white text-rose-600 hover:bg-rose-50" icon={UserX} onClick={() => updateStatus('Rejected')} disabled={Boolean(saving)}>Reject</ActionButton>
-          </>
+        {availableActions.map((action) => (
+          <ActionButton key={action.status} tone={action.tone} icon={action.icon} onClick={action.onClick} disabled={Boolean(saving)}>
+            {action.label}
+          </ActionButton>
+        ))}
+        {canReject && (
+          <ActionButton tone="border border-rose-200 bg-white text-rose-600 hover:bg-rose-50" icon={UserX} onClick={() => updateStatus('Rejected')} disabled={Boolean(saving)}>Reject</ActionButton>
         )}
-        <ResumeDownloadLink href={resumeHref} candidate={candidate} />
+          <ResumeDownloadLink candidate={candidate} />
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[1fr_360px]">
@@ -312,19 +424,152 @@ const EmployerApplicationDetails = () => {
 
           <Card title="Quick Actions">
             <div className="grid gap-2">
-              {application.status !== 'Rejected' && (
-                <>
-                  <ActionButton tone="bg-amber-400 text-white hover:bg-amber-500" icon={UserCheck} onClick={() => updateStatus('Shortlisted')} disabled={Boolean(saving)}>Shortlist Candidate</ActionButton>
-                  <ActionButton tone="bg-[#6658dd] text-white hover:bg-[#5848d8]" icon={CalendarPlus} onClick={scheduleInterview} disabled={Boolean(saving)}>Schedule Interview</ActionButton>
-                  <ActionButton tone="bg-emerald-500 text-white hover:bg-emerald-600" icon={UserPlus} onClick={() => updateStatus('Offered')} disabled={Boolean(saving)}>Move to Selected</ActionButton>
-                  <ActionButton tone="border border-rose-200 bg-white text-rose-600 hover:bg-rose-50" icon={UserX} onClick={() => updateStatus('Rejected')} disabled={Boolean(saving)}>Reject Application</ActionButton>
-                </>
+              {availableActions.map((action) => (
+                <ActionButton key={action.status} tone={action.tone} icon={action.icon} onClick={action.onClick} disabled={Boolean(saving)}>
+                  {action.label}
+                </ActionButton>
+              ))}
+              {canReject && (
+                <ActionButton tone="border border-rose-200 bg-white text-rose-600 hover:bg-rose-50" icon={UserX} onClick={() => updateStatus('Rejected')} disabled={Boolean(saving)}>Reject Application</ActionButton>
               )}
               <ResumeDownloadLink href={resumeHref} candidate={candidate} />
             </div>
           </Card>
         </aside>
       </div>
+
+      {showInterviewModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-3 backdrop-blur-sm sm:p-4">
+          <div className="relative flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-slate-100 bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-4 sm:px-5">
+              <h3 className="text-sm font-extrabold text-[#3f4254] sm:text-base">Schedule Interview</h3>
+              <button
+                type="button"
+                onClick={() => setShowInterviewModal(false)}
+                disabled={Boolean(saving)}
+                className="rounded p-1 text-slate-400 hover:bg-slate-50 hover:text-slate-600 disabled:opacity-60"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {error && (
+              <div className="mx-4 mt-4 rounded border border-rose-100 bg-rose-50 px-4 py-2 text-xs font-bold text-rose-700 sm:mx-5">
+                {error}
+              </div>
+            )}
+
+            <div className="overflow-y-auto p-4 sm:p-5">
+              <form onSubmit={scheduleInterview} className="space-y-4">
+                <p className="text-xs font-semibold text-slate-400">
+                  Schedule a dynamic interview with <span className="font-extrabold text-[#3f4254]">{candidate.name}</span> for the position of <span className="font-extrabold text-[#3f4254]">{job.title}</span>.
+                </p>
+
+                <label className={`flex cursor-pointer items-start gap-3 rounded-md border px-3 py-3 transition ${interviewForm.onHold ? 'border-amber-200 bg-amber-50' : 'border-slate-200 bg-white'}`}>
+                  <input
+                    type="checkbox"
+                    checked={interviewForm.onHold}
+                    onChange={(event) => setInterviewForm({ ...interviewForm, onHold: event.target.checked })}
+                    className="mt-1 h-4 w-4 rounded border-slate-300 text-[#6658dd] focus:ring-[#6658dd]"
+                  />
+                  <span>
+                    <span className="block text-sm font-extrabold text-[#3f4254]">On Hold</span>
+                    <span className="mt-0.5 block text-xs font-semibold text-slate-500">Move this candidate to the interview stage now. You can add the schedule details later from the Interviews page.</span>
+                  </span>
+                </label>
+
+                {!interviewForm.onHold && (
+                  <>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Date</label>
+                        <input
+                          type="date"
+                          required
+                          value={interviewForm.date}
+                          onChange={(event) => setInterviewForm({ ...interviewForm, date: event.target.value })}
+                          className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Time</label>
+                        <input
+                          type="time"
+                          required
+                          value={interviewForm.time}
+                          onChange={(event) => setInterviewForm({ ...interviewForm, time: event.target.value })}
+                          className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Type</label>
+                      <select
+                        value={interviewForm.type}
+                        onChange={(event) => setInterviewForm({ ...interviewForm, type: event.target.value, locationOrLink: '' })}
+                        className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 outline-none focus:border-[#6658dd]"
+                      >
+                        <option>Video Call</option>
+                        <option>Phone Call</option>
+                        <option>In-Person</option>
+                        <option>Other</option>
+                      </select>
+                    </div>
+
+                    {showMapPicker ? (
+                      <InterviewLocationPicker
+                        value={interviewForm.locationOrLink}
+                        onChange={(locationOrLink) => setInterviewForm({ ...interviewForm, locationOrLink })}
+                      />
+                    ) : interviewLocationField && (
+                      <div>
+                        <label className="mb-1.5 block text-xs font-extrabold text-slate-500">{interviewLocationField.label}</label>
+                        <input
+                          type="text"
+                          placeholder={interviewLocationField.placeholder}
+                          value={interviewForm.locationOrLink}
+                          onChange={(event) => setInterviewForm({ ...interviewForm, locationOrLink: event.target.value })}
+                          className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                        />
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interviewer Notes</label>
+                      <textarea
+                        rows="3"
+                        placeholder="Topics to discuss or instruction notes..."
+                        value={interviewForm.notes}
+                        onChange={(event) => setInterviewForm({ ...interviewForm, notes: event.target.value })}
+                        className="w-full rounded-md border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div className="flex flex-col-reverse justify-end gap-2 border-t border-slate-100 pt-2 sm:flex-row">
+                  <button
+                    type="button"
+                    disabled={Boolean(saving)}
+                    onClick={() => setShowInterviewModal(false)}
+                    className="h-10 rounded-md bg-slate-100 px-4 text-sm font-extrabold text-slate-600 transition hover:bg-slate-200 disabled:opacity-60"
+                  >
+                    Close
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={Boolean(saving)}
+                    className="flex h-10 items-center justify-center gap-2 rounded-md bg-[#6658dd] px-4 text-sm font-extrabold text-white transition hover:bg-[#5848d8] disabled:opacity-60"
+                  >
+                    {saving === 'Interview' ? <Loader className="h-4 w-4 animate-spin" /> : interviewForm.onHold ? 'Mark On Hold' : 'Confirm Interview'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

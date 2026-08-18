@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Briefcase,
   ChevronRight,
@@ -9,6 +9,7 @@ import {
   Edit,
   Eye,
   FilePenLine,
+  Layers,
   Lock,
   Loader,
   Pause,
@@ -19,9 +20,10 @@ import {
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
+import ClearFilterButton from '../../../components/ClearFilterButton';
 
 const emptyJobs = {
-  stats: { active: 0, draft: 0, expired: 0, closed: 0 },
+  stats: { total: 0, active: 0, draft: 0, expired: 0, closed: 0 },
   filters: { locations: [], jobTypes: [] },
   jobs: []
 };
@@ -45,10 +47,11 @@ const statusTone = {
 };
 
 const statCards = [
-  { key: 'active', title: 'Active Jobs', icon: Briefcase, tone: 'bg-emerald-50 text-emerald-500' },
-  { key: 'draft', title: 'Draft Jobs', icon: FilePenLine, tone: 'bg-amber-50 text-amber-500' },
-  { key: 'expired', title: 'Expired Jobs', icon: Clock, tone: 'bg-rose-50 text-rose-500' },
-  { key: 'closed', title: 'Closed Jobs', icon: Lock, tone: 'bg-slate-100 text-slate-500' }
+  { key: 'total', title: 'Total Jobs', status: '', icon: Layers, tone: 'bg-indigo-50 text-[#6658dd]' },
+  { key: 'active', title: 'Active Jobs', status: 'Active', icon: Briefcase, tone: 'bg-emerald-50 text-emerald-500' },
+  { key: 'draft', title: 'Draft Jobs', status: 'Draft', icon: FilePenLine, tone: 'bg-amber-50 text-amber-500' },
+  { key: 'expired', title: 'Expired Jobs', status: 'Expired', icon: Clock, tone: 'bg-rose-50 text-rose-500' },
+  { key: 'closed', title: 'Closed Jobs', status: 'Closed', icon: Lock, tone: 'bg-slate-100 text-slate-500' }
 ];
 
 const parseJobDate = (value) => {
@@ -78,6 +81,7 @@ const buildJobsData = (payload) => {
     ...payload,
     jobs,
     stats: {
+      total: jobs.length,
       active: jobs.filter((job) => job.status === 'Active').length,
       draft: jobs.filter((job) => job.status === 'Draft').length,
       expired: jobs.filter((job) => job.status === 'Expired').length,
@@ -87,19 +91,21 @@ const buildJobsData = (payload) => {
 };
 
 export const EmployerJobs = () => {
+  const [searchParams] = useSearchParams();
+  const getUrlFilters = () => ({
+    search: searchParams.get('search') || '',
+    status: searchParams.get('status') || '',
+    location: searchParams.get('location') || '',
+    jobType: searchParams.get('jobType') || '',
+    postDate: searchParams.get('postDate') || ''
+  });
   const [data, setData] = useState(emptyJobs);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [duplicatingJobId, setDuplicatingJobId] = useState('');
   const [actionState, setActionState] = useState({ jobId: '', action: '' });
-  const [filters, setFilters] = useState({
-    search: '',
-    status: '',
-    location: '',
-    jobType: '',
-    postDate: ''
-  });
+  const [filters, setFilters] = useState(getUrlFilters);
 
   const loadJobs = async ({ silent = false } = {}) => {
     if (!silent) setLoading(true);
@@ -136,6 +142,7 @@ export const EmployerJobs = () => {
 
   const setFilter = (key, value) => setFilters((current) => ({ ...current, [key]: value }));
   const resetFilters = () => setFilters({ search: '', status: '', location: '', jobType: '', postDate: '' });
+  const hasActiveFilters = Object.values(filters).some(Boolean);
   const duplicateJob = async (jobId) => {
     setDuplicatingJobId(jobId);
     setMessage('');
@@ -238,9 +245,14 @@ export const EmployerJobs = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-5">
         {statCards.map((card) => (
-          <section key={card.key} className="rounded-md border border-slate-100 bg-white p-3 shadow-sm sm:p-5">
+          <button
+            key={card.key}
+            type="button"
+            onClick={() => setFilter('status', card.status)}
+            className={`rounded-md border bg-white p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-5 ${card.status && filters.status === card.status ? 'border-[#6658dd] ring-2 ring-indigo-100' : 'border-slate-100'}`}
+          >
             <div className="flex items-center gap-2 sm:gap-3">
               <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${card.tone}`}>
                 <card.icon className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -250,7 +262,7 @@ export const EmployerJobs = () => {
                 <p className="mt-1 text-lg font-black text-[#3f4254] sm:text-2xl">{data.stats?.[card.key] || 0}</p>
               </div>
             </div>
-          </section>
+          </button>
         ))}
       </div>
 
@@ -310,9 +322,7 @@ export const EmployerJobs = () => {
               <input className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]" type="date" value={filters.postDate} onChange={(event) => setFilter('postDate', event.target.value)} />
             </div>
             <div className="flex items-end">
-              <button type="button" onClick={resetFilters} className="h-10 w-full rounded-md bg-emerald-500 px-4 text-sm font-extrabold text-white transition hover:bg-emerald-600 xl:w-auto">
-                Reset
-              </button>
+              <ClearFilterButton active={hasActiveFilters} onClick={resetFilters} />
             </div>
           </div>
 
@@ -339,6 +349,9 @@ export const EmployerJobs = () => {
                   <p><span className="text-slate-400">Expiry:</span> {formatDate(job.expiry, 'Not set')}</p>
                   <p className="truncate"><span className="text-slate-400">Location:</span> {job.location}</p>
                   <p className="truncate"><span className="text-slate-400">Type:</span> {job.jobType}</p>
+                  <Link to={`/employer/applications?jobTitle=${encodeURIComponent(job.title || '')}`} className="col-span-2 inline-flex items-center gap-1 font-extrabold text-[#6658dd]">
+                    <span className="text-slate-400">Applications:</span> {Number(job.applications || job.applicants || 0).toLocaleString('en-IN')}
+                  </Link>
                 </div>
                 <div className="mt-3 flex justify-end gap-1 border-t border-slate-100 pt-3">
                   {renderRowActions(job)}
@@ -351,16 +364,17 @@ export const EmployerJobs = () => {
 
           {/* Table — sm and up */}
           <div className="hidden overflow-x-auto sm:block">
-            <table className="w-full min-w-[920px] text-left">
+            <table className="w-full min-w-[980px] text-left">
               <thead className="bg-slate-100 text-[11px] uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-4 py-3">Job Title</th>
+                  <th className="px-4 py-3">Action</th>
+                  <th className="px-4 py-3">Applications</th>
                   <th className="px-4 py-3">Post Date</th>
                   <th className="px-4 py-3">Location</th>
                   <th className="px-4 py-3">Job Type</th>
                   <th className="px-4 py-3">Expiry</th>
                   <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -377,6 +391,16 @@ export const EmployerJobs = () => {
                         </div>
                       </div>
                     </td>
+                    <td className="px-4 py-4">
+                      <div className="flex justify-start gap-1">
+                        {renderRowActions(job)}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <Link to={`/employer/applications?jobTitle=${encodeURIComponent(job.title || '')}`} className="inline-flex min-w-12 justify-center rounded bg-indigo-50 px-2.5 py-1 text-sm font-black text-[#6658dd] transition hover:bg-indigo-100">
+                        {Number(job.applications || job.applicants || 0).toLocaleString('en-IN')}
+                      </Link>
+                    </td>
                     <td className="px-4 py-4 text-sm font-semibold text-slate-500">{formatDate(job.postDate)}</td>
                     <td className="px-4 py-4 text-sm font-semibold text-slate-500">{job.location}</td>
                     <td className="px-4 py-4 text-sm font-semibold text-slate-500">{job.jobType}</td>
@@ -386,15 +410,10 @@ export const EmployerJobs = () => {
                         {job.status}
                       </span>
                     </td>
-                    <td className="px-4 py-4">
-                      <div className="flex justify-end gap-1">
-                        {renderRowActions(job)}
-                      </div>
-                    </td>
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan="7" className="px-4 py-12 text-center text-sm font-bold text-slate-400">
+                    <td colSpan="8" className="px-4 py-12 text-center text-sm font-bold text-slate-400">
                       No jobs found.
                     </td>
                   </tr>

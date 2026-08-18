@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import ClearFilterButton from '../../../components/ClearFilterButton';
 
 const getTokenHeaders = () => {
   const token = localStorage.getItem('publicToken');
@@ -33,6 +34,13 @@ export const EmployerSupport = () => {
   const [activeFaq, setActiveFaq] = useState('faq1');
   const [faqCategory, setFaqCategory] = useState('all'); // all, billing, technical, general
   const [articleFilter, setArticleFilter] = useState('all'); // all, started, jobs, account
+  const hasActiveFilters = Boolean(searchQuery || faqCategory !== 'all' || articleFilter !== 'all');
+
+  const resetFilters = () => {
+    setSearchQuery('');
+    setFaqCategory('all');
+    setArticleFilter('all');
+  };
   
   // Ticket Form state
   const [ticketForm, setTicketForm] = useState({
@@ -174,9 +182,7 @@ export const EmployerSupport = () => {
               <button onClick={() => setSearchQuery('post job')} className="rounded bg-white/20 px-3 py-1.5 text-white hover:bg-white/30 transition">Posting Jobs</button>
               <button onClick={() => setSearchQuery('invoice')} className="rounded bg-white/20 px-3 py-1.5 text-white hover:bg-white/30 transition">Invoices</button>
               <button onClick={() => setSearchQuery('2fa')} className="rounded bg-white/20 px-3 py-1.5 text-white hover:bg-white/30 transition">2FA</button>
-              {searchQuery && (
-                <button onClick={() => setSearchQuery('')} className="rounded bg-rose-500 px-3 py-1.5 text-white font-extrabold shadow-sm transition">Reset Search</button>
-              )}
+              <ClearFilterButton active={hasActiveFilters} onClick={resetFilters} className="h-8 px-3 py-1.5 text-xs sm:w-auto" />
             </div>
           </div>
           

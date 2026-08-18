@@ -271,7 +271,7 @@ export const EmployerSubscription = () => {
                 <th className="py-3 px-4">Plan Name</th>
                 <th className="py-3 px-4">Price</th>
                 <th className="py-3 px-4">Contact Unlocks</th>
-                <th className="py-3 px-4">Free Job Posts</th>
+                <th className="py-3 px-4">Job Posts</th>
                 <th className="py-3 px-4">Included Features</th>
                 <th className="py-3 px-4 text-center">Action</th>
               </tr>

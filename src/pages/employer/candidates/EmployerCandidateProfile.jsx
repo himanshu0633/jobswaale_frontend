@@ -24,6 +24,26 @@ const getTokenHeaders = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
+const downloadCandidateResume = async (candidate) => {
+  if (!candidate?.id) return;
+  try {
+    const response = await axios.get(`${BASE_API_URL}/employer/candidates/${candidate.id}/resume-download`, {
+      headers: getTokenHeaders(),
+      responseType: 'blob'
+    });
+    const blobUrl = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = `${candidate.name || 'candidate'}-resume`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(blobUrl);
+  } catch (err) {
+    alert(err.response?.data?.message || 'Resume could not be downloaded.');
+  }
+};
+
 const Card = ({ title, children }) => (
   <section className="rounded-md border border-slate-100 bg-white shadow-sm">
     <div className="border-b border-dashed border-slate-200 px-5 py-4">
@@ -75,14 +95,14 @@ const EmployerCandidateProfile = () => {
     return <div className="rounded-md border border-rose-100 bg-rose-50 p-6 text-sm font-bold text-rose-700">{error || 'Candidate not found.'}</div>;
   }
 
-  const resumeHref = candidate.resume ? `${BASE_API_URL.replace(/\/api$/, '')}/${candidate.resume}` : '#';
   const matchScore = candidate.application?.matchScore || 0;
 
-  const handleResumeDownload = (e) => {
+  const handleResumeDownload = () => {
     if (candidate.hasResume && !candidate.allowResumeDownload) {
-      e.preventDefault();
       alert('Upgrade Plan: Resume downloads are not supported under your current plan. Please upgrade to download resumes.');
+      return;
     }
+    downloadCandidateResume(candidate);
   };
 
   return (
@@ -105,15 +125,13 @@ const EmployerCandidateProfile = () => {
         <ActionButton tone="bg-emerald-500 text-white hover:bg-emerald-600" icon={UserPlus}>Select</ActionButton>
         <ActionButton tone="bg-slate-500 text-white hover:bg-slate-600" icon={Bookmark}>Save to Talent Pool</ActionButton>
         <ActionButton tone="border border-rose-200 bg-white text-rose-600 hover:bg-rose-50" icon={UserX}>Reject</ActionButton>
-        <a 
-          href={resumeHref} 
-          target="_blank" 
-          rel="noreferrer" 
+        <button
+          type="button"
           onClick={handleResumeDownload}
           className={`inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-600 transition hover:bg-slate-50 ${!candidate.hasResume ? 'pointer-events-none opacity-60' : ''}`}
         >
           <Download className="h-4 w-4" /> Download Resume
-        </a>
+        </button>
       </div>
 
       <section className="rounded-md border border-slate-100 bg-white p-5 shadow-sm">

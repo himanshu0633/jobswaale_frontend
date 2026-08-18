@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Building2,
   Calendar,
@@ -13,30 +13,46 @@ import {
   ChevronsLeft,
   ChevronsRight,
   ChevronUp,
+  Edit,
   Eye,
   Loader,
   Phone,
   Search,
-  Video
+  Video,
+  X
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import ClearFilterButton from '../../../components/ClearFilterButton';
+import InterviewLocationPicker from '../../../components/InterviewLocationPicker';
 
 const initialFilters = { search: '', jobTitle: '', status: '', type: '', fromDate: '' };
 
 const statConfig = [
-  { key: 'total', title: 'Total', icon: CalendarCheck, tone: 'bg-violet-50 text-[#6658dd]' },
-  { key: 'scheduled', title: 'Scheduled', icon: Calendar, tone: 'bg-cyan-50 text-cyan-500' },
-  { key: 'completed', title: 'Completed', icon: CalendarCheck, tone: 'bg-emerald-50 text-emerald-500' },
-  { key: 'rescheduled', title: 'Rescheduled', icon: CalendarClock, tone: 'bg-amber-50 text-amber-500' },
-  { key: 'cancelled', title: 'Cancelled', icon: CalendarX, tone: 'bg-rose-50 text-rose-500' }
+  { key: 'total', title: 'Total', status: '', icon: CalendarCheck, tone: 'bg-violet-50 text-[#6658dd]' },
+  { key: 'scheduled', title: 'Scheduled', status: 'Scheduled', icon: Calendar, tone: 'bg-cyan-50 text-cyan-500' },
+  { key: 'onHold', title: 'On Hold', status: 'On Hold', icon: CalendarClock, tone: 'bg-amber-50 text-amber-500' },
+  { key: 'completed', title: 'Completed', status: 'Completed', icon: CalendarCheck, tone: 'bg-emerald-50 text-emerald-500' },
+  { key: 'rescheduled', title: 'Rescheduled', status: 'Rescheduled', icon: CalendarClock, tone: 'bg-amber-50 text-amber-500' },
+  { key: 'cancelled', title: 'Cancelled', status: 'Cancelled', icon: CalendarX, tone: 'bg-rose-50 text-rose-500' }
 ];
 
 const statusTone = {
   Scheduled: 'bg-cyan-50 text-cyan-500',
+  'On Hold': 'bg-amber-50 text-amber-600',
   Completed: 'bg-emerald-50 text-emerald-500',
   Rescheduled: 'bg-amber-50 text-amber-500',
   Cancelled: 'bg-rose-50 text-rose-500'
 };
+
+const getInterviewLocationField = (type) => {
+  const normalizedType = String(type || '').toLowerCase();
+  if (normalizedType.includes('phone')) return null;
+  if (normalizedType.includes('person')) return { label: 'Interview Location', placeholder: 'Office address or interview venue' };
+  if (normalizedType.includes('other')) return { label: 'Interview Details', placeholder: 'Location, link, or custom interview instructions' };
+  return { label: 'Meeting Link', placeholder: 'Zoom link, Google Meet, or Teams link' };
+};
+
+const isInPersonInterview = (type) => String(type || '').toLowerCase().includes('person');
 
 const typeTone = {
   'Video Call': { className: 'bg-cyan-50 text-cyan-500', icon: Video },
@@ -74,18 +90,30 @@ const SelectField = ({ label, value, onChange, children }) => (
 );
 
 export const EmployerInterviews = () => {
-  const [filters, setFilters] = useState(initialFilters);
+  const [searchParams] = useSearchParams();
+  const getUrlFilters = () => ({
+    search: searchParams.get('search') || '',
+    jobTitle: searchParams.get('jobTitle') || '',
+    status: searchParams.get('status') || '',
+    type: searchParams.get('type') || '',
+    fromDate: searchParams.get('fromDate') || ''
+  });
+  const [filters, setFilters] = useState(getUrlFilters);
   const [tableSearch, setTableSearch] = useState('');
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [data, setData] = useState({
-    stats: { total: 0, scheduled: 0, completed: 0, rescheduled: 0, cancelled: 0 },
+    stats: { total: 0, scheduled: 0, onHold: 0, completed: 0, rescheduled: 0, cancelled: 0 },
     filters: { jobTitles: [], types: [] },
     interviews: [],
     pagination: { page: 1, limit: 10, total: 0, totalPages: 1 }
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [editingInterview, setEditingInterview] = useState(null);
+  const [editForm, setEditForm] = useState({ date: '', time: '', type: 'Video Call', locationOrLink: '', notes: '' });
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState('');
 
   const queryParams = useMemo(() => {
     const params = new URLSearchParams();
@@ -109,7 +137,7 @@ export const EmployerInterviews = () => {
       .then((response) => {
         if (!alive) return;
         setData({
-          stats: { total: 0, scheduled: 0, completed: 0, rescheduled: 0, cancelled: 0 },
+          stats: { total: 0, scheduled: 0, onHold: 0, completed: 0, rescheduled: 0, cancelled: 0 },
           filters: { jobTitles: [], types: [] },
           interviews: [],
           pagination: { page: 1, limit: pageSize, total: 0, totalPages: 1 },
@@ -140,13 +168,63 @@ export const EmployerInterviews = () => {
   };
 
   const optionFilters = data.filters || { jobTitles: [], types: [] };
-  const stats = data.stats || { total: 0, scheduled: 0, completed: 0, rescheduled: 0, cancelled: 0 };
+  const stats = data.stats || { total: 0, scheduled: 0, onHold: 0, completed: 0, rescheduled: 0, cancelled: 0 };
   const pagination = data.pagination || { page: currentPage, limit: pageSize, total: 0, totalPages: 1 };
   const totalPages = pagination.totalPages || 1;
   const safePage = pagination.page || 1;
   const startIndex = pagination.total ? (safePage - 1) * pagination.limit : 0;
   const visibleRows = data.interviews || [];
   const goToPage = (page) => setCurrentPage(Math.min(Math.max(page, 1), totalPages));
+  const hasActiveFilters = Object.values(filters).some(Boolean) || Boolean(tableSearch);
+  const editLocationField = getInterviewLocationField(editForm.type);
+  const showEditMapPicker = isInPersonInterview(editForm.type);
+
+  const openEditModal = (interview) => {
+    setEditingInterview(interview);
+    setEditError('');
+    setEditForm({
+      date: interview.interviewDate || '',
+      time: interview.time || '',
+      type: interview.type === 'Telephonic' ? 'Phone Call' : (interview.type || 'Video Call'),
+      locationOrLink: interview.locationOrLink || '',
+      notes: interview.notes || ''
+    });
+  };
+
+  const submitEditInterview = async (event) => {
+    event.preventDefault();
+    if (!editForm.date || !editForm.time) {
+      setEditError('Please specify interview date and time.');
+      return;
+    }
+    if (isInPersonInterview(editForm.type) && !editForm.locationOrLink) {
+      setEditError('Please select interview location from the map.');
+      return;
+    }
+    setEditLoading(true);
+    setEditError('');
+    try {
+      await axios.post(
+        `${BASE_API_URL}/employer/applications/${editingInterview.applicationId}/schedule-interview`,
+        { ...editForm, onHold: false, status: 'Scheduled' },
+        { headers: getTokenHeaders() }
+      );
+      setEditingInterview(null);
+      setEditForm({ date: '', time: '', type: 'Video Call', locationOrLink: '', notes: '' });
+      const response = await axios.get(`${BASE_API_URL}/employer/interviews?${queryParams}`, { headers: getTokenHeaders() });
+      setData({
+        stats: { total: 0, scheduled: 0, onHold: 0, completed: 0, rescheduled: 0, cancelled: 0 },
+        filters: { jobTitles: [], types: [] },
+        interviews: [],
+        pagination: { page: 1, limit: pageSize, total: 0, totalPages: 1 },
+        ...response.data
+      });
+    } catch (err) {
+      setEditError(err.response?.data?.message || 'Interview update failed.');
+    } finally {
+      setEditLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-4 px-3 sm:space-y-5 sm:px-0">
@@ -157,14 +235,19 @@ export const EmployerInterviews = () => {
 
       {error && <div className="rounded-md border border-amber-100 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700">{error}</div>}
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-6">
         {statConfig.map((card) => (
-          <section key={card.key} className="rounded-md border border-slate-100 bg-white p-3 shadow-sm sm:p-5">
+          <button
+            key={card.key}
+            type="button"
+            onClick={() => setFilter('status', card.status)}
+            className={`rounded-md border bg-white p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-5 ${filters.status === card.status ? 'border-[#6658dd] ring-2 ring-indigo-100' : 'border-slate-100'}`}
+          >
             <div className="flex items-center gap-2 sm:gap-4">
               <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${card.tone}`}><card.icon className="h-4 w-4 sm:h-5 sm:w-5" /></span>
               <div className="min-w-0"><p className="truncate text-xs font-semibold text-slate-400 sm:text-sm">{card.title}</p><p className="mt-1 text-base font-black text-[#3f4254] sm:text-xl">{Number(stats[card.key] || 0).toLocaleString('en-IN')}</p></div>
             </div>
-          </section>
+          </button>
         ))}
       </div>
 
@@ -183,10 +266,10 @@ export const EmployerInterviews = () => {
               <div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input className="h-10 w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100" value={filters.search} onChange={(event) => setFilter('search', event.target.value)} placeholder="Name, email, job, interviewer" /></div>
             </div>
             <SelectField label="Job Title" value={filters.jobTitle} onChange={(value) => setFilter('jobTitle', value)}><option value="">All Jobs</option>{optionFilters.jobTitles.map((item) => <option key={item}>{item}</option>)}</SelectField>
-            <SelectField label="Status" value={filters.status} onChange={(value) => setFilter('status', value)}><option value="">All Status</option>{['Scheduled', 'Completed', 'Cancelled', 'Rescheduled'].map((item) => <option key={item}>{item}</option>)}</SelectField>
+            <SelectField label="Status" value={filters.status} onChange={(value) => setFilter('status', value)}><option value="">All Status</option>{['Scheduled', 'On Hold', 'Completed', 'Cancelled', 'Rescheduled'].map((item) => <option key={item}>{item}</option>)}</SelectField>
             <SelectField label="Interview Type" value={filters.type} onChange={(value) => setFilter('type', value)}><option value="">All Types</option>{optionFilters.types.map((item) => <option key={item}>{item}</option>)}</SelectField>
             <div><label className="mb-2 block text-xs font-extrabold text-slate-500">From Date</label><input type="date" value={filters.fromDate} onChange={(event) => setFilter('fromDate', event.target.value)} className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100" /></div>
-            <div className="flex items-end"><button type="button" onClick={resetFilters} className="h-10 w-full rounded-md bg-[#18b99b] px-4 text-sm font-extrabold text-white transition hover:bg-[#13a98d] xl:w-auto">Reset</button></div>
+            <div className="flex items-end"><ClearFilterButton active={hasActiveFilters} onClick={resetFilters} /></div>
           </div>
 
           <div className="mb-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
@@ -227,7 +310,8 @@ export const EmployerInterviews = () => {
                     </div>
                   </div>
 
-                  <div className="mt-3 flex justify-end">
+                  <div className="mt-3 flex justify-end gap-2">
+                    <button type="button" onClick={() => openEditModal(interview)} className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-amber-200 px-3 text-xs font-extrabold text-amber-600 transition hover:bg-amber-50"><Edit className="h-4 w-4" />Edit</button>
                     <Link to="/employer/applications" className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-[#6658dd] px-3 text-xs font-extrabold text-[#6658dd] transition hover:bg-violet-50"><Eye className="h-4 w-4" />View</Link>
                   </div>
                 </div>
@@ -252,7 +336,12 @@ export const EmployerInterviews = () => {
                       <td className="px-5 py-4 text-sm font-semibold leading-6 text-slate-600">{interview.displayDate || formatDate(interview.interviewDate)}<br />{normalizeTime(interview.time)}</td>
                       <td className="px-5 py-4"><div className="flex items-center gap-3"><span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${interview.interviewerTone} text-[11px] font-black text-slate-700 ring-2 ring-white`}>{interview.interviewer.split(' ').map((part) => part[0]).join('').slice(0, 2)}</span><span className="text-sm font-semibold text-slate-600">{interview.interviewer}</span></div></td>
                       <td className="px-5 py-4"><span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${statusTone[interview.status] || 'bg-slate-100 text-slate-600'}`}>{interview.status}</span></td>
-                      <td className="px-5 py-4 text-center"><Link to="/employer/applications" className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-[#6658dd] px-3 text-xs font-extrabold text-[#6658dd] transition hover:bg-violet-50"><Eye className="h-4 w-4" />View</Link></td>
+                      <td className="px-5 py-4 text-center">
+                        <div className="flex justify-center gap-2">
+                          <button type="button" onClick={() => openEditModal(interview)} className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-amber-200 px-3 text-xs font-extrabold text-amber-600 transition hover:bg-amber-50"><Edit className="h-4 w-4" />Edit</button>
+                          <Link to="/employer/applications" className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-[#6658dd] px-3 text-xs font-extrabold text-[#6658dd] transition hover:bg-violet-50"><Eye className="h-4 w-4" />View</Link>
+                        </div>
+                      </td>
                     </tr>
                   );
                 }) : <tr><td colSpan="7" className="px-5 py-12 text-center text-sm font-bold text-slate-400">No interviews found.</td></tr>}
@@ -266,6 +355,122 @@ export const EmployerInterviews = () => {
           </div>
         </div>
       </section>
+
+      {editingInterview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-3 backdrop-blur-sm sm:p-4">
+          <div className="relative flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-slate-100 bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-4 sm:px-5">
+              <h3 className="text-sm font-extrabold text-[#3f4254] sm:text-base">Edit Interview</h3>
+              <button
+                type="button"
+                onClick={() => setEditingInterview(null)}
+                disabled={editLoading}
+                className="rounded p-1 text-slate-400 hover:bg-slate-50 hover:text-slate-600 disabled:opacity-60"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {editError && (
+              <div className="mx-4 mt-4 rounded border border-rose-100 bg-rose-50 px-4 py-2 text-xs font-bold text-rose-700 sm:mx-5">
+                {editError}
+              </div>
+            )}
+
+            <div className="overflow-y-auto p-4 sm:p-5">
+              <form onSubmit={submitEditInterview} className="space-y-4">
+                <p className="text-xs font-semibold text-slate-400">
+                  Add schedule details for <span className="font-extrabold text-[#3f4254]">{editingInterview.name}</span> for <span className="font-extrabold text-[#3f4254]">{editingInterview.jobTitle}</span>.
+                </p>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Date</label>
+                    <input
+                      type="date"
+                      required
+                      value={editForm.date}
+                      onChange={(event) => setEditForm({ ...editForm, date: event.target.value })}
+                      className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Time</label>
+                    <input
+                      type="time"
+                      required
+                      value={editForm.time}
+                      onChange={(event) => setEditForm({ ...editForm, time: event.target.value })}
+                      className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Type</label>
+                  <select
+                    value={editForm.type}
+                    onChange={(event) => setEditForm({ ...editForm, type: event.target.value, locationOrLink: '' })}
+                    className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 outline-none focus:border-[#6658dd]"
+                  >
+                    <option>Video Call</option>
+                    <option>Phone Call</option>
+                    <option>In-Person</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+
+                {showEditMapPicker ? (
+                  <InterviewLocationPicker
+                    value={editForm.locationOrLink}
+                    onChange={(locationOrLink) => setEditForm({ ...editForm, locationOrLink })}
+                  />
+                ) : editLocationField && (
+                  <div>
+                    <label className="mb-1.5 block text-xs font-extrabold text-slate-500">{editLocationField.label}</label>
+                    <input
+                      type="text"
+                      placeholder={editLocationField.placeholder}
+                      value={editForm.locationOrLink}
+                      onChange={(event) => setEditForm({ ...editForm, locationOrLink: event.target.value })}
+                      className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interviewer Notes</label>
+                  <textarea
+                    rows="3"
+                    placeholder="Topics to discuss or instruction notes..."
+                    value={editForm.notes}
+                    onChange={(event) => setEditForm({ ...editForm, notes: event.target.value })}
+                    className="w-full rounded-md border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                  />
+                </div>
+
+                <div className="flex flex-col-reverse justify-end gap-2 border-t border-slate-100 pt-2 sm:flex-row">
+                  <button
+                    type="button"
+                    disabled={editLoading}
+                    onClick={() => setEditingInterview(null)}
+                    className="h-10 rounded-md bg-slate-100 px-4 text-sm font-extrabold text-slate-600 transition hover:bg-slate-200 disabled:opacity-60"
+                  >
+                    Close
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={editLoading}
+                    className="flex h-10 items-center justify-center gap-2 rounded-md bg-[#6658dd] px-4 text-sm font-extrabold text-white transition hover:bg-[#5848d8] disabled:opacity-60"
+                  >
+                    {editLoading ? <Loader className="h-4 w-4 animate-spin" /> : 'Confirm Interview'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
