@@ -412,10 +412,6 @@ export const EmployerDashboard = () => {
                     <span className="inline-flex items-center rounded bg-amber-50 px-2.5 py-1 text-xs font-extrabold text-amber-600">{item.scheduledTime}</span>
                   )}
                 </div>
-                <div className="flex shrink-0 gap-2">
-                  <button type="button" className="rounded bg-emerald-500 p-2 text-white"><Check className="h-4 w-4" /></button>
-                  <button type="button" className="rounded bg-slate-100 p-2 text-slate-600"><Eye className="h-4 w-4" /></button>
-                </div>
               </div>
             ))}
           </div>
