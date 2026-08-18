@@ -432,7 +432,7 @@ const EmployerApplicationDetails = () => {
               {canReject && (
                 <ActionButton tone="border border-rose-200 bg-white text-rose-600 hover:bg-rose-50" icon={UserX} onClick={() => updateStatus('Rejected')} disabled={Boolean(saving)}>Reject Application</ActionButton>
               )}
-              <ResumeDownloadLink href={resumeHref} candidate={candidate} />
+              <ResumeDownloadLink candidate={candidate} />
             </div>
           </Card>
         </aside>
