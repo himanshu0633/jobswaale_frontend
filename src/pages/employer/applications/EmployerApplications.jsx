@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Calendar,
   CalendarCheck,
@@ -75,6 +75,7 @@ const SelectField = ({ label, value, onChange, children }) => (
 );
 
 export const EmployerApplications = () => {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const searchParamString = searchParams.toString();
   const getUrlFilters = () => ({
@@ -91,6 +92,32 @@ export const EmployerApplications = () => {
   const [data, setData] = useState({ stats: {}, pipeline: {}, filters: {}, applications: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 1 } });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const handleStatCardClick = (card) => {
+    if (card.key === 'shortlisted') {
+      navigate('/employer/shortlisted');
+    } else if (card.key === 'interviews') {
+      navigate('/employer/interviews');
+    } else if (card.key === 'rejected') {
+      navigate('/employer/applicant-history?status=Rejected');
+    } else {
+      setFilter('status', card.status);
+    }
+  };
+
+  const handlePipelineClick = (item) => {
+    if (item.status === 'Shortlisted') {
+      navigate('/employer/shortlisted');
+    } else if (item.status === 'Interview') {
+      navigate('/employer/interviews');
+    } else if (item.status === 'Offered') {
+      navigate('/employer/selected');
+    } else if (item.status === 'Rejected') {
+      navigate('/employer/applicant-history?status=Rejected');
+    } else {
+      setFilter('status', item.status);
+    }
+  };
 
   useEffect(() => {
     setFilters(getUrlFilters());
@@ -114,7 +141,11 @@ export const EmployerApplications = () => {
     const search = [filters.search, tableSearch].filter(Boolean).join(' ').trim();
     if (search) params.set('search', search);
     if (filters.jobTitle) params.set('jobTitle', filters.jobTitle);
-    if (filters.status) params.set('status', filters.status);
+    if (filters.status) {
+      params.set('status', filters.status);
+    } else {
+      params.set('statusGroup', 'queue');
+    }
     if (filters.experience) params.set('experience', filters.experience);
     if (filters.appliedAfter) params.set('appliedAfter', filters.appliedAfter);
     params.set('page', String(currentPage));
@@ -190,7 +221,7 @@ export const EmployerApplications = () => {
           <button
             key={card.key}
             type="button"
-            onClick={() => setFilter('status', card.status)}
+            onClick={() => handleStatCardClick(card)}
             className={`rounded-md border bg-white p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-5 ${filters.status === card.status ? 'border-[#6658dd] ring-2 ring-indigo-100' : 'border-slate-100'}`}
           >
             <div className="flex items-center gap-2 sm:gap-4">
@@ -205,7 +236,7 @@ export const EmployerApplications = () => {
         <div className="border-b border-dashed border-slate-200 px-4 py-4 sm:px-5"><h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Hiring Pipeline</h2></div>
         <div className="grid grid-cols-2 gap-4 p-4 sm:p-5 md:grid-cols-3 xl:grid-cols-6">
           {pipelineConfig.map((item) => (
-            <button key={item.key} type="button" onClick={() => setFilter('status', item.status)} className={`flex min-w-0 items-center gap-3 rounded-md p-1 text-left transition hover:bg-slate-50 ${filters.status === item.status ? 'ring-2 ring-indigo-100' : ''}`}>
+            <button key={item.key} type="button" onClick={() => handlePipelineClick(item)} className={`flex min-w-0 items-center gap-3 rounded-md p-1 text-left transition hover:bg-slate-50 ${filters.status === item.status ? 'ring-2 ring-indigo-100' : ''}`}>
               <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11 ${item.tone}`}><item.icon className="h-4 w-4" /></span>
               <div className="min-w-0"><p className="text-sm font-black text-[#3f4254] sm:text-base">{Number(data.pipeline?.[item.key] || 0).toLocaleString('en-IN')}</p><p className="truncate text-xs font-semibold text-slate-400">{item.title}</p></div>
             </button>
@@ -223,13 +254,9 @@ export const EmployerApplications = () => {
           {/* Quick Status Filter Tabs */}
           <div className="flex flex-wrap gap-1.5 border-b border-dashed border-slate-100 pb-4 mb-5">
               {[
-              { key: '', label: 'Application' },
+              { key: '', label: 'All Queue' },
               { key: 'Applied', label: 'Waiting for Review' },
-              { key: 'Reviewed', label: 'Reviewed' },
-              { key: 'Shortlisted', label: 'Shortlisted' },
-              { key: 'Interview', label: 'Interview' },
-              { key: 'Offered', label: 'Offered' },
-              { key: 'Rejected', label: 'Rejected' }
+              { key: 'Reviewed', label: 'Reviewed' }
             ].map((tab) => (
               <button
                 key={tab.key}
