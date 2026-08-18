@@ -1,7 +1,26 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
 const EmployerPlan = () => {
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        try {
+            const user = JSON.parse(localStorage.getItem('publicUser') || 'null');
+            const token = localStorage.getItem('publicToken');
+            if (user && token) {
+                const normalize = (value) => String(value || '').trim().toLowerCase().replace(/\s+/g, '');
+                const accountType = normalize(user.accountType);
+                const role = normalize(user.role);
+                const roleName = normalize(user.roleName);
+                if (accountType === 'jobseeker' || role === 'jobseeker' || roleName === 'jobseeker') {
+                    navigate('/jobseeker-plan', { replace: true });
+                }
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }, [navigate]);
     return (
         <main className="py-5">
             <div className="max-w-7xl mx-auto px-4 sm:px-6">

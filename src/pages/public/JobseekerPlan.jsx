@@ -1,8 +1,28 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import TrustedCompanies from './TrustedCompanies';
 import bannerPrice from "./JobSeekerPlanImage/banner-price.png";
 
 const JobseekerPlan = () => {
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        try {
+            const user = JSON.parse(localStorage.getItem('publicUser') || 'null');
+            const token = localStorage.getItem('publicToken');
+            if (user && token) {
+                const normalize = (value) => String(value || '').trim().toLowerCase().replace(/\s+/g, '');
+                const accountType = normalize(user.accountType);
+                const role = normalize(user.role);
+                const roleName = normalize(user.roleName);
+                if (accountType === 'employer' || role === 'employer' || roleName === 'employer') {
+                    navigate('/employer-plan', { replace: true });
+                }
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }, [navigate]);
     return (
         <main className="main">
 

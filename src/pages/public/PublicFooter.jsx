@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Mail, Phone, MapPin } from 'lucide-react';
 import logoAsset from '../../assets/logo.png';
 
@@ -26,6 +26,35 @@ const GithubIcon = ({ className }) => (
 );
 
 export const PublicFooter = () => {
+  const location = useLocation();
+  const [authUser, setAuthUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('publicUser') || 'null');
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    const syncUser = () => {
+      try {
+        setAuthUser(JSON.parse(localStorage.getItem('publicUser') || 'null'));
+      } catch {
+        setAuthUser(null);
+      }
+    };
+    syncUser();
+  }, [location]);
+
+  const token = localStorage.getItem('publicToken');
+  const isLoggedIn = Boolean(authUser && token);
+
+  const normalize = (value) => String(value || '').trim().toLowerCase().replace(/\s+/g, '');
+  const accountType = normalize(authUser?.accountType || authUser?.role || authUser?.roleName);
+
+  const isJobseeker = isLoggedIn && (accountType === 'jobseeker');
+  const isEmployer = isLoggedIn && (accountType === 'employer');
+
   return (
     <footer className="bg-[#001c3d] text-white/75">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 pb-8">
@@ -35,7 +64,7 @@ export const PublicFooter = () => {
         <div className="col-span-2 lg:col-span-1 space-y-4">
           <Link to="/" className="inline-flex items-center mb-2">
             <img
-              src={logoAsset}
+               src={logoAsset}
               alt="JobsWaale"
               className="h-12 w-auto object-contain"
             />
@@ -58,26 +87,30 @@ export const PublicFooter = () => {
           </div>
 
           {/* Candidates Column */}
-          <div>
-            <h4 className="font-semibold text-white text-[1.1rem] mb-7">For Job Seekers</h4>
-            <ul className="space-y-3 text-sm text-white/70">
-              <li><Link to="/login" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Browse Jobs</Link></li>
-              <li><Link to="/jobseeker-plan" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Candidate Plans</Link></li>
-              <li><Link to="/login" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Upload Resume</Link></li>
-              <li><Link to="/login?role=employer" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Browse Employer</Link></li>
-            </ul>
-          </div>
+          {!isEmployer && (
+            <div>
+              <h4 className="font-semibold text-white text-[1.1rem] mb-7">For Job Seekers</h4>
+              <ul className="space-y-3 text-sm text-white/70">
+                <li><Link to="/login" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Browse Jobs</Link></li>
+                <li><Link to="/jobseeker-plan" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Candidate Plans</Link></li>
+                <li><Link to="/login" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Upload Resume</Link></li>
+                <li><Link to="/login?role=employer" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Browse Employer</Link></li>
+              </ul>
+            </div>
+          )}
 
           {/* Employers Column */}
-          <div>
-            <h4 className="font-semibold text-white text-[1.1rem] mb-7">For Employers</h4>
-            <ul className="space-y-3 text-sm text-white/70">
-              <li><Link to="/employer-plan" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Employer Plans</Link></li>
-              <li><Link to="/employer/jobs/create" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Post a Job</Link></li>
-              <li><Link to="/login?role=employer" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Browse Candidates</Link></li>
-              <li><Link to="/contact" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Hiring Solutions</Link></li>
-            </ul>
-          </div>
+          {!isJobseeker && (
+            <div>
+              <h4 className="font-semibold text-white text-[1.1rem] mb-7">For Employers</h4>
+              <ul className="space-y-3 text-sm text-white/70">
+                <li><Link to="/employer-plan" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Employer Plans</Link></li>
+                <li><Link to="/employer/jobs/create" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Post a Job</Link></li>
+                <li><Link to="/login?role=employer" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Browse Candidates</Link></li>
+                <li><Link to="/contact" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Hiring Solutions</Link></li>
+              </ul>
+            </div>
+          )}
 
           {/* Company Column */}
           <div>
