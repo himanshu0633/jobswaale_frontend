@@ -29,10 +29,7 @@ const initialFilters = { search: '', jobTitle: '', status: '', experience: '', a
 
 const statCards = [
   { key: 'applied', title: 'Applied', status: 'Applied', icon: FileText, tone: 'bg-violet-50 text-[#6658dd]' },
-  { key: 'reviewed', title: 'Reviewed', status: 'Reviewed', icon: Eye, tone: 'bg-emerald-50 text-emerald-500' },
-  { key: 'shortlisted', title: 'Shortlisted', status: 'Shortlisted', icon: UserCheck, tone: 'bg-amber-50 text-amber-500' },
-  { key: 'interviews', title: 'Interviews', status: 'Interview', icon: CalendarCheck, tone: 'bg-sky-50 text-sky-500' },
-  { key: 'rejected', title: 'Rejected', status: 'Rejected', icon: UserX, tone: 'bg-rose-50 text-rose-500' }
+  { key: 'reviewed', title: 'Reviewed', status: 'Reviewed', icon: Eye, tone: 'bg-emerald-50 text-emerald-500' }
 ];
 
 const pipelineConfig = [
@@ -228,7 +225,7 @@ export const EmployerApplications = () => {
 
       {error && <div className="rounded-md border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{error}</div>}
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-2">
         {statCards.map((card) => (
           <button
             key={card.key}
