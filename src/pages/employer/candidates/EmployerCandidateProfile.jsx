@@ -242,35 +242,41 @@ const EmployerCandidateProfile = () => {
 
   const matchScore = candidate.application?.matchScore || 0;
 
-  const currentStepIndex = candidate.application?.status === 'Rejected'
-    ? Number.POSITIVE_INFINITY
-    : Math.max(timelineSteps.findIndex((step) => step === candidate.application?.status), 0);
+  let availableActions = [];
+  const appStatus = candidate.application?.status;
+  if (appStatus === 'Applied' || appStatus === 'Reviewed') {
+    availableActions = [
+      {
+        status: 'Shortlisted',
+        label: 'Shortlist',
+        tone: 'bg-amber-400 text-white hover:bg-amber-500',
+        icon: UserCheck,
+        onClick: () => updateStatus('Shortlisted')
+      }
+    ];
+  } else if (appStatus === 'Shortlisted') {
+    availableActions = [
+      {
+        status: 'Interview',
+        label: 'Schedule Interview',
+        tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
+        icon: CalendarPlus,
+        onClick: openInterviewModal
+      }
+    ];
+  } else if (appStatus === 'Interview') {
+    availableActions = [
+      {
+        status: 'Offered',
+        label: 'Select',
+        tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
+        icon: UserPlus,
+        onClick: () => updateStatus('Offered')
+      }
+    ];
+  }
 
-  const availableActions = [
-    {
-      status: 'Shortlisted',
-      label: 'Shortlist',
-      tone: 'bg-amber-400 text-white hover:bg-amber-500',
-      icon: UserCheck,
-      onClick: () => updateStatus('Shortlisted')
-    },
-    {
-      status: 'Interview',
-      label: 'Schedule Interview',
-      tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
-      icon: CalendarPlus,
-      onClick: openInterviewModal
-    },
-    {
-      status: 'Offered',
-      label: 'Select',
-      tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
-      icon: UserPlus,
-      onClick: () => updateStatus('Offered')
-    }
-  ].filter((action) => actionStepIndex[action.status] > currentStepIndex);
-
-  const canReject = candidate.application && candidate.application.status !== 'Rejected' && candidate.application.status !== 'Offered';
+  const canReject = candidate.application && ['Applied', 'Reviewed', 'Shortlisted', 'Interview'].includes(appStatus);
 
   const interviewLocationField = getInterviewLocationField(interviewForm.type);
   const showMapPicker = isInPersonInterview(interviewForm.type);
