@@ -19,6 +19,7 @@ import {
   RefreshCw,
   UserCheck,
   UserPlus,
+  UserX,
   Users
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
@@ -174,7 +175,8 @@ export const EmployerJobDetails = () => {
     { key: 'reviewed', title: 'Reviewed', icon: Eye, tone: 'bg-sky-500' },
     { key: 'shortlisted', title: 'Shortlisted', icon: UserCheck, tone: 'bg-amber-500' },
     { key: 'interviews', title: 'Interviews', icon: Calendar, tone: 'bg-[#6658dd]' },
-    { key: 'selected', title: 'Selected / Hired', icon: UserPlus, tone: 'bg-emerald-500' }
+    { key: 'selected', title: 'Selected / Hired', icon: UserPlus, tone: 'bg-emerald-500' },
+    { key: 'rejected', title: 'Rejected', icon: UserX, tone: 'bg-rose-500' }
   ];
 
   return (
