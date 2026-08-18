@@ -54,10 +54,16 @@ export const PublicFooter = () => {
   const isJobseeker = isLoggedIn && (accountType === 'jobseeker');
   const isEmployer = isLoggedIn && (accountType === 'employer');
 
+  const gridClass = `grid gap-8 grid-cols-2 ${
+    isEmployer || isJobseeker 
+      ? 'md:grid-cols-3 lg:grid-cols-4' 
+      : 'md:grid-cols-4 lg:grid-cols-5'
+  }`;
+
   return (
     <footer className="bg-[#001c3d] text-white/75">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 pb-8">
-        <div className="grid gap-8 grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
+        <div className={gridClass}>
           {/* Logo & Info */}
           {/* Logo & Info */}
         <div className="col-span-2 lg:col-span-1 space-y-4">
