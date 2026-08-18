@@ -140,13 +140,7 @@ export const EmployerShortlisted = () => {
     if (search) params.set('search', search);
     if (filters.jobTitle) params.set('jobTitle', filters.jobTitle);
     
-    // Status mapping from frontend UI selections to DB statuses
-    if (filters.status) {
-      if (filters.status === 'Pending Interview') params.set('status', 'Shortlisted');
-      else if (filters.status === 'Interview Scheduled') params.set('status', 'Interview');
-      else if (filters.status === 'Selected') params.set('status', 'Offered');
-      else if (filters.status === 'Rejected') params.set('status', 'Rejected');
-    }
+    params.set('status', 'Shortlisted');
     
     if (filters.minMatchScore) params.set('minMatchScore', filters.minMatchScore);
     if (filters.shortlistedAfter) params.set('appliedAfter', filters.shortlistedAfter); // filter dates
@@ -169,22 +163,6 @@ export const EmployerShortlisted = () => {
       .then((response) => {
         const resData = response.data;
         let filteredApps = resData.applications || [];
-        
-        // If status filter is not set on the query side, we restrict strictly to shortlisted items on client side
-        if (!filters.status) {
-          filteredApps = filteredApps.filter(app => app.status === 'Shortlisted');
-        } else {
-          // Since we fetched all applications, we manually apply the status filter to the list
-          let targetStatus = '';
-          if (filters.status === 'Pending Interview') targetStatus = 'Shortlisted';
-          else if (filters.status === 'Interview Scheduled') targetStatus = 'Interview';
-          else if (filters.status === 'Selected') targetStatus = 'Offered';
-          else if (filters.status === 'Rejected') targetStatus = 'Rejected';
-          
-          if (targetStatus) {
-            filteredApps = filteredApps.filter(app => app.status === targetStatus);
-          }
-        }
 
         // Perform client-side pagination on the filtered results
         const total = filteredApps.length;
@@ -385,33 +363,7 @@ export const EmployerShortlisted = () => {
         </div>
       )}
 
-      {/* Stats Section */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
-        {[
-          { title: 'Total Shortlisted', value: statsCounts.total, status: '', icon: UserCheck, tone: 'bg-warning-subtle text-amber-500 bg-amber-50 border border-amber-100' },
-          { title: 'Pending Interview', value: statsCounts.pending, status: 'Pending Interview', icon: Loader, tone: 'bg-info-subtle text-sky-500 bg-sky-50 border border-sky-100' },
-          { title: 'Interview Scheduled', value: statsCounts.scheduled, status: 'Interview Scheduled', icon: CalendarCheck, tone: 'bg-primary-subtle text-indigo-500 bg-indigo-50 border border-indigo-100' },
-          { title: 'Selected Candidates', value: statsCounts.selected, status: 'Selected', icon: UserPlus, tone: 'bg-success-subtle text-emerald-500 bg-emerald-50 border border-emerald-100' },
-          { title: 'Rejected Candidates', value: statsCounts.rejected, status: 'Rejected', icon: UserX, tone: 'bg-danger-subtle text-rose-500 bg-rose-50 border border-rose-100' }
-        ].map((stat, idx) => (
-          <button
-            key={idx}
-            type="button"
-            onClick={() => setFilter('status', stat.status)}
-            className={`rounded-md border bg-white p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-5 ${filters.status === stat.status ? 'border-[#6658dd] ring-2 ring-indigo-100' : 'border-slate-100'}`}
-          >
-            <div className="flex items-center gap-2 sm:gap-4">
-              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${stat.tone}`}>
-                <stat.icon className="h-4 w-4 sm:h-5 sm:w-5" />
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-xs font-semibold text-slate-400 sm:text-sm">{stat.title}</p>
-                <p className="mt-1 text-base font-black text-[#3f4254] sm:text-xl">{stat.value}</p>
-              </div>
-            </div>
-          </button>
-        ))}
-      </div>
+
 
       {/* Filter and Table Card */}
       <section className="rounded-md border border-slate-100 bg-white shadow-sm">
@@ -432,7 +384,7 @@ export const EmployerShortlisted = () => {
 
         <div className="p-4 sm:p-5">
           {/* Multi-Criteria Filters */}
-          <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.5fr_1fr_1fr_1.2fr_1fr_auto]">
+          <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.5fr_1fr_1.2fr_1fr_auto]">
             <div>
               <label className="mb-2 block text-xs font-extrabold text-slate-500">Search Candidate / Job</label>
               <div className="relative">
@@ -443,10 +395,6 @@ export const EmployerShortlisted = () => {
             <SelectField label="Job Title" value={filters.jobTitle} onChange={(value) => setFilter('jobTitle', value)}>
               <option value="">All Jobs</option>
               {(optionFilters.jobTitles || []).map((item) => <option key={item}>{item}</option>)}
-            </SelectField>
-            <SelectField label="Status" value={filters.status} onChange={(value) => setFilter('status', value)}>
-              <option value="">All Status</option>
-              {['Pending Interview', 'Interview Scheduled', 'Selected', 'Rejected'].map((item) => <option key={item}>{item}</option>)}
             </SelectField>
             <div>
               <label className="mb-2 block text-xs font-extrabold text-slate-500">Shortlisted After</label>
