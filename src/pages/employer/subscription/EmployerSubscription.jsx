@@ -345,8 +345,13 @@ export const EmployerSubscription = () => {
 
               <div className="pt-3 grid grid-cols-2 gap-4 sm:flex sm:flex-wrap sm:items-center sm:gap-6 text-sm">
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 block">Current Plan Jobs</span>
+                  <span className="text-[10px] font-bold text-slate-400 block">Job Posts (Used/Limit)</span>
                   <span className="font-extrabold text-[#3f4254]">{sub.jobsUsed} <span className="font-medium text-slate-400">/ {sub.jobLimit}</span></span>
+                </div>
+                <div className="hidden h-8 w-px bg-slate-100 sm:block"></div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 block">Job Posts Left</span>
+                  <span className="font-extrabold text-emerald-600">{sub.remainingCredits || 0}</span>
                 </div>
                 <div className="hidden h-8 w-px bg-slate-100 sm:block"></div>
                 <div>

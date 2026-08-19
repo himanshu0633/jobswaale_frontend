@@ -160,20 +160,24 @@ export const EmployerDashboard = () => {
               <p className="mt-2 text-xs font-semibold text-slate-400 sm:text-sm">
                 Valid until: <span className="font-extrabold text-[#3f4254]">{formatDate(subscription.validUntil, 'Not assigned')}</span>
               </p>
-              <div className="mt-4 grid grid-cols-2 gap-4 sm:max-w-[780px] sm:grid-cols-[140px_150px_130px_180px] sm:gap-5">
+              <div className="mt-4 grid grid-cols-2 gap-4 sm:max-w-[780px] sm:grid-cols-[150px_140px_170px_130px] sm:gap-5">
                 <div>
-                  <p className="text-xs font-bold text-slate-400 sm:text-sm">Job Posts Limit</p>
+                  <p className="text-xs font-bold text-slate-400 sm:text-sm">Job Posts (Used/Limit)</p>
                   <p className="mt-1 text-sm font-extrabold text-[#3f4254]">{subscription.jobsUsed || 0} <span className="text-slate-400">/ {subscription.jobLimit || 0}</span></p>
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-slate-400 sm:text-sm">Resume Unlocks Limit</p>
+                  <p className="text-xs font-bold text-slate-400 sm:text-sm">Job Posts Left</p>
+                  <p className="mt-1 text-sm font-extrabold text-emerald-500">{subscription.remainingCredits || 0}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-400 sm:text-sm">Resumes Unlocked (Used/Limit)</p>
                   <p className="mt-1 text-sm font-extrabold text-[#3f4254]">{subscription.unlocksUsed || 0} <span className="text-slate-400">/ {subscription.unlockLimit || 0}</span></p>
                 </div>
                 <div>
                   <p className="text-xs font-bold text-slate-400 sm:text-sm">Remaining Unlocks</p>
                   <p className="mt-1 text-sm font-extrabold text-emerald-500">{subscription.remainingUnlocks ?? 0}</p>
                 </div>
-                <div className="col-span-2 pt-1 sm:col-span-1 sm:pt-3">
+                <div className="col-span-2 pt-1 sm:col-span-4">
                   <div className="h-2 overflow-hidden rounded-full bg-slate-100">
                     <div className="h-full bg-[#6658dd]" style={{ width: `${subscription.utilization || 0}%` }} />
                   </div>
