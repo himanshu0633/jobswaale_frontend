@@ -863,18 +863,20 @@ export const JobDetail = () => {
           </section>
 
           {/* Recruiting CTA */}
-          <section className="rounded-md bg-[#0047C7] p-6 text-white shadow-sm">
-            <h3 className="mb-2 text-base font-extrabold">Recruiting?</h3>
-            <p className="mb-5 text-sm font-semibold text-white/80">
-              Advertise your jobs to millions of monthly users and search 16.8 million CVs in our database.
-            </p>
-            <Link
-              to="/employer/post-job"
-              className="inline-block rounded-md border border-white/40 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-white/10"
-            >
-              Post a Job →
-            </Link>
-          </section>
+          {!isJobseeker && (
+            <section className="rounded-md bg-[#0047C7] p-6 text-white shadow-sm">
+              <h3 className="mb-2 text-base font-extrabold">Recruiting?</h3>
+              <p className="mb-5 text-sm font-semibold text-white/80">
+                Advertise your jobs to millions of monthly users and search 16.8 million CVs in our database.
+              </p>
+              <Link
+                to="/employer/post-job"
+                className="inline-block rounded-md border border-white/40 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-white/10"
+              >
+                Post a Job →
+              </Link>
+            </section>
+          )}
 
         </div>
       </div>
