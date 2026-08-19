@@ -74,7 +74,20 @@ const downloadCandidateResume = async (candidate) => {
     link.remove();
     window.URL.revokeObjectURL(blobUrl);
   } catch (err) {
-    alert(err.response?.data?.message || 'Resume could not be downloaded.');
+    if (err.response?.data instanceof Blob) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const errorObj = JSON.parse(reader.result);
+          alert(errorObj.message || 'Resume could not be downloaded.');
+        } catch {
+          alert('Resume could not be downloaded.');
+        }
+      };
+      reader.readAsText(err.response.data);
+    } else {
+      alert(err.response?.data?.message || 'Resume could not be downloaded.');
+    }
   }
 };
 
