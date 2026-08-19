@@ -160,28 +160,56 @@ export const EmployerDashboard = () => {
               <p className="mt-2 text-xs font-semibold text-slate-400 sm:text-sm">
                 Valid until: <span className="font-extrabold text-[#3f4254]">{formatDate(subscription.validUntil, 'Not assigned')}</span>
               </p>
-              <div className="mt-4 grid grid-cols-2 gap-4 sm:max-w-[780px] sm:grid-cols-[150px_140px_170px_130px] sm:gap-5">
-                <div>
-                  <p className="text-xs font-bold text-slate-400 sm:text-sm">Job Posts (Used/Limit)</p>
-                  <p className="mt-1 text-sm font-extrabold text-[#3f4254]">{subscription.jobsUsed || 0} <span className="text-slate-400">/ {subscription.jobLimit || 0}</span></p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-400 sm:text-sm">Job Posts Left</p>
-                  <p className="mt-1 text-sm font-extrabold text-emerald-500">{subscription.remainingCredits || 0}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-400 sm:text-sm">Resumes Unlocked (Used/Limit)</p>
-                  <p className="mt-1 text-sm font-extrabold text-[#3f4254]">{subscription.unlocksUsed || 0} <span className="text-slate-400">/ {subscription.unlockLimit || 0}</span></p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-400 sm:text-sm">Remaining Unlocks</p>
-                  <p className="mt-1 text-sm font-extrabold text-emerald-500">{subscription.remainingUnlocks ?? 0}</p>
-                </div>
-                <div className="col-span-2 pt-1 sm:col-span-4">
-                  <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                    <div className="h-full bg-[#6658dd]" style={{ width: `${subscription.utilization || 0}%` }} />
+              <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2 sm:max-w-[780px]">
+                <div className="rounded-xl border border-slate-100 bg-[#f8fafc] p-4">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-500">Job Posts</h4>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <div>
+                      <p className="text-[11px] font-bold text-slate-400">Used / Limit</p>
+                      <p className="text-sm font-extrabold text-[#3f4254]">{subscription.jobsUsed || 0} <span className="text-slate-400">/ {subscription.jobLimit || 0}</span></p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-bold text-slate-400">Remaining</p>
+                      <p className="text-sm font-extrabold text-emerald-600">{subscription.remainingCredits || 0}</p>
+                    </div>
                   </div>
-                  <p className="mt-2 text-xs font-bold text-slate-400">{subscription.utilization || 0}% utilized</p>
+                  <div className="mt-4">
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+                      <div className="h-full bg-indigo-500 transition-all duration-350" style={{ width: `${subscription.utilization || 0}%` }} />
+                    </div>
+                    <p className="mt-1.5 text-[10px] font-bold text-slate-400">{subscription.utilization || 0}% utilized</p>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-slate-100 bg-[#f8fafc] p-4">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-500">Resume Unlocks</h4>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <div>
+                      <p className="text-[11px] font-bold text-slate-400">Unlocked / Limit</p>
+                      <p className="text-sm font-extrabold text-[#3f4254]">{subscription.unlocksUsed || 0} <span className="text-slate-400">/ {subscription.unlockLimit || 0}</span></p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-bold text-slate-400">Remaining</p>
+                      <p className="text-sm font-extrabold text-emerald-600">{subscription.remainingUnlocks ?? 0}</p>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    {(() => {
+                      const total = Number(subscription.unlockLimit);
+                      const used = Number(subscription.unlocksUsed || 0);
+                      const percent = total > 0 && total !== Number.MAX_SAFE_INTEGER
+                        ? Math.min(Math.round((used / total) * 100), 100)
+                        : 0;
+                      return (
+                        <>
+                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+                            <div className="h-full bg-emerald-500 transition-all duration-350" style={{ width: `${percent}%` }} />
+                          </div>
+                          <p className="mt-1.5 text-[10px] font-bold text-slate-400">{percent}% utilized</p>
+                        </>
+                      );
+                    })()}
+                  </div>
                 </div>
               </div>
             </div>

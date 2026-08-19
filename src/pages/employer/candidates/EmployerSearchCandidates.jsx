@@ -20,7 +20,8 @@ import {
   User,
   UserCheck,
   UserPlus,
-  Users
+  Users,
+  Check
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import ClearFilterButton from '../../../components/ClearFilterButton';
@@ -86,7 +87,8 @@ const downloadCandidateResume = async (candidate) => {
     const isNewUnlock = response.headers['x-is-new-unlock'] === 'true';
 
     if (isNewUnlock && remainingUnlocks !== undefined) {
-      alert(`Resume unlocked and downloaded successfully! Remaining unlocks: ${remainingUnlocks}`);
+      const event = new CustomEvent('resume-unlock-success', { detail: { remainingUnlocks } });
+      window.dispatchEvent(event);
     }
   } catch (err) {
     if (err.response?.data instanceof Blob) {
@@ -169,6 +171,23 @@ export const EmployerSearchCandidates = () => {
   const [data, setData] = useState({ stats: {}, filters: {}, candidates: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 1 } });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [unlockSuccessModal, setUnlockSuccessModal] = useState({
+    show: false,
+    remainingUnlocks: ''
+  });
+
+  useEffect(() => {
+    const handleUnlockSuccess = (e) => {
+      setUnlockSuccessModal({
+        show: true,
+        remainingUnlocks: e.detail.remainingUnlocks
+      });
+    };
+    window.addEventListener('resume-unlock-success', handleUnlockSuccess);
+    return () => {
+      window.removeEventListener('resume-unlock-success', handleUnlockSuccess);
+    };
+  }, []);
 
   const setFilter = (key, value) => {
     setFilters((current) => ({ ...current, [key]: value }));
@@ -371,6 +390,33 @@ export const EmployerSearchCandidates = () => {
           </div>
         </div>
       </section>
+      {/* Resume Unlock Success Modal */}
+      {unlockSuccessModal.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-xs">
+          <div className="relative w-full max-w-md rounded-2xl border border-emerald-100 bg-white p-6 shadow-2xl text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-500">
+              <Check className="h-8 w-8" />
+            </div>
+            <h3 className="text-lg font-black text-slate-800">Resume Unlocked!</h3>
+            <p className="mt-2 text-sm text-slate-500 font-semibold leading-relaxed">
+              Candidate's resume has been successfully unlocked and downloaded.
+            </p>
+            <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+              <span>Remaining Unlocks:</span>
+              <span className="font-extrabold">{unlockSuccessModal.remainingUnlocks}</span>
+            </div>
+            <div className="mt-6">
+              <button
+                type="button"
+                onClick={() => setUnlockSuccessModal({ show: false, remainingUnlocks: '' })}
+                className="w-full h-11 rounded-xl bg-slate-900 text-white font-extrabold text-sm transition hover:bg-slate-800 shadow-md shadow-slate-900/10 cursor-pointer"
+              >
+                Awesome
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

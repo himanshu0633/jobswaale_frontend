@@ -374,12 +374,32 @@ export const EmployerSubscription = () => {
                   <span className="font-extrabold text-[#3f4254]">{sub.teamMembersCount} <span className="font-medium text-slate-400">/ {sub.teamMembersLimit}</span></span>
                 </div>
                 <div className="hidden h-8 w-px bg-slate-100 sm:block"></div>
-                <div className="col-span-2 w-full sm:w-36">
-                  <span className="text-[10px] font-bold text-slate-400 block mb-1">Utilization</span>
-                  <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                    <div className="h-full bg-[#6658dd]" style={{ width: `${sub.utilization}%` }}></div>
+                <div className="col-span-2 w-full pt-2 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:w-auto sm:min-w-[400px]">
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 block mb-1">Job Posts Utilization</span>
+                    <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                      <div className="h-full bg-indigo-500" style={{ width: `${sub.utilization}%` }}></div>
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-400 mt-1 block">{sub.utilization}% utilized</span>
                   </div>
-                  <span className="text-[10px] font-bold text-slate-400 mt-1 block">{sub.utilization}% utilized</span>
+                  <div>
+                    {(() => {
+                      const total = Number(sub.unlockLimit);
+                      const used = Number(sub.unlocksUsed || 0);
+                      const percent = total > 0 && total !== Number.MAX_SAFE_INTEGER
+                        ? Math.min(Math.round((used / total) * 100), 100)
+                        : 0;
+                      return (
+                        <>
+                          <span className="text-[10px] font-bold text-slate-400 block mb-1">Resume Unlocks Utilization</span>
+                          <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                            <div className="h-full bg-emerald-500" style={{ width: `${percent}%` }}></div>
+                          </div>
+                          <span className="text-[10px] font-bold text-slate-400 mt-1 block">{percent}% utilized</span>
+                        </>
+                      );
+                    })()}
+                  </div>
                 </div>
               </div>
             </div>
