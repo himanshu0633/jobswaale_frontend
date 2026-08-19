@@ -72,9 +72,12 @@ export const MessageSocketProvider = ({ role, children }) => {
     const token = localStorage.getItem('publicToken');
     if (!token) return undefined;
 
+    const isVercel = SOCKET_URL.includes('vercel.app');
+    const transports = isVercel ? ['polling'] : ['polling', 'websocket'];
+
     const nextSocket = io(SOCKET_URL, {
       auth: { token },
-      transports: ['websocket', 'polling']
+      transports
     });
 
     nextSocket.on('message:new', (payload) => {
