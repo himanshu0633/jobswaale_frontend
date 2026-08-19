@@ -1,29 +1,37 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
+  Briefcase,
   CalendarCheck,
   CheckCircle,
+  Eye,
   MapPin,
   MessageCircle,
   Send,
-  XCircle
+  XCircle,
+  Award
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
 
 const statConfig = [
-  { key: 'total', label: 'Total Applied', icon: Send, tone: 'bg-sky-50 text-sky-600' },
+  { key: 'total', label: 'Total Applied', icon: Briefcase, tone: 'bg-blue-50 text-blue-600' },
+  { key: 'applied', label: 'Applied', icon: Send, tone: 'bg-sky-50 text-sky-600' },
+  { key: 'reviewed', label: 'Reviewed', icon: Eye, tone: 'bg-cyan-50 text-cyan-600' },
   { key: 'shortlisted', label: 'Shortlisted', icon: CheckCircle, tone: 'bg-emerald-50 text-emerald-600' },
   { key: 'interview', label: 'Interview', icon: CalendarCheck, tone: 'bg-amber-50 text-amber-600' },
-  { key: 'rejected', label: 'Rejected', icon: XCircle, tone: 'bg-violet-50 text-violet-600' }
+  { key: 'offered', label: 'Offered / Selected', icon: Award, tone: 'bg-emerald-100 text-emerald-800' },
+  { key: 'rejected', label: 'Rejected', icon: XCircle, tone: 'bg-rose-50 text-rose-600' }
 ];
 
 const filterTabs = [
   { key: 'all', label: 'All' },
-  { key: 'pending', label: 'Pending' },
+  { key: 'applied', label: 'Applied' },
+  { key: 'reviewed', label: 'Reviewed' },
   { key: 'shortlisted', label: 'Shortlisted' },
   { key: 'interview', label: 'Interview' },
+  { key: 'offered', label: 'Offered / Selected' },
   { key: 'rejected', label: 'Rejected' }
 ];
 
@@ -87,8 +95,11 @@ export const JobseekerApplications = () => {
 
   const stats = {
     total: { value: appliedJobs.length },
+    applied: { value: countByStatus('applied') },
+    reviewed: { value: countByStatus('reviewed') },
     shortlisted: { value: countByStatus('shortlisted') },
     interview: { value: countByStatus('interview') },
+    offered: { value: countByStatus('offered') },
     rejected: { value: countByStatus('rejected') }
   };
 
@@ -114,8 +125,11 @@ export const JobseekerApplications = () => {
           const Icon = item.icon;
           const statFilterMap = {
             total: 'all',
+            applied: 'applied',
+            reviewed: 'reviewed',
             shortlisted: 'shortlisted',
             interview: 'interview',
+            offered: 'offered',
             rejected: 'rejected'
           };
           return (

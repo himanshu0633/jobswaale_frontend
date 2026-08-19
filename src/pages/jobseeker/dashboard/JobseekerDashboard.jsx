@@ -7,7 +7,9 @@ import {
   CheckCircle,
   Eye,
   MapPin,
-  Send
+  Send,
+  XCircle,
+  Award
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { BASE_API_URL } from '../../../context/AuthContext';
@@ -23,10 +25,24 @@ const emptyDashboard = {
 const statConfig = [
   {
     key: 'jobsApplied',
-    label: 'Jobs Applied',
+    label: 'Total Applied',
+    icon: Briefcase,
+    tone: 'bg-blue-50 text-blue-600',
+    to: '/jobseeker/jobs-applied?filter=all'
+  },
+  {
+    key: 'applied',
+    label: 'Applied',
     icon: Send,
     tone: 'bg-sky-50 text-sky-600',
-    to: '/jobseeker/jobs-applied?filter=all'
+    to: '/jobseeker/jobs-applied?filter=applied'
+  },
+  {
+    key: 'reviewed',
+    label: 'Reviewed',
+    icon: Eye,
+    tone: 'bg-cyan-50 text-cyan-600',
+    to: '/jobseeker/jobs-applied?filter=reviewed'
   },
   {
     key: 'shortlisted',
@@ -41,6 +57,20 @@ const statConfig = [
     icon: CalendarCheck,
     tone: 'bg-amber-50 text-amber-600',
     to: '/jobseeker/jobs-applied?filter=interview'
+  },
+  {
+    key: 'offered',
+    label: 'Offered',
+    icon: Award,
+    tone: 'bg-emerald-100 text-emerald-800',
+    to: '/jobseeker/jobs-applied?filter=offered'
+  },
+  {
+    key: 'rejected',
+    label: 'Rejected',
+    icon: XCircle,
+    tone: 'bg-rose-50 text-rose-600',
+    to: '/jobseeker/jobs-applied?filter=rejected'
   },
   {
     key: 'profileViews',
