@@ -193,7 +193,9 @@ export const JobseekerApplications = () => {
 
             <div className="flex-1">
               <div className="font-bold text-slate-800">
-                {job.title}
+                <Link to={`/jobs/${job.jobId}`} className="hover:text-[#0047C7] transition-colors">
+                  {job.title}
+                </Link>
               </div>
               <div className="text-sm font-semibold text-slate-500">
                 {job.company}
