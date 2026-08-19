@@ -18,7 +18,6 @@ import logoasset from '../../../assets/logo.png';
 
 const mainMenu = [
   { to: '/jobseeker/dashboard', icon: LayoutGrid, label: 'Dashboard', exact: true },
-  { to: '/jobseeker/profile', icon: User, label: 'My Profile' },
   { to: '/jobseeker/jobs-applied', icon: Briefcase, label: 'Jobs Applied', badgeKey: 'jobsApplied' },
   { to: '/jobseeker/saved-jobs', icon: Bookmark, label: 'Saved Jobs' },
   { to: '/jobseeker/saved-employers', icon: Building, label: 'Saved Employers' },
