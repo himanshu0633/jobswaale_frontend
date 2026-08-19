@@ -782,3 +782,28 @@ body {
   height: 0;
   display: none;              /* Chrome, Safari, Edge */
 }
+
+/* Action Center cards under dark mode */
+:root[data-employer-theme='dark'] .portal-content .bg-\[\#f0fbf7\],
+:root[data-jobseeker-theme='dark'] .portal-content .bg-\[\#f0fbf7\] {
+  background-color: #142a20 !important; /* Dark green */
+  border-color: #1b3d2f !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .bg-\[\#f7f4ff\],
+:root[data-jobseeker-theme='dark'] .portal-content .bg-\[\#f7f4ff\] {
+  background-color: #1a152d !important; /* Dark purple */
+  border-color: #272044 !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .bg-\[\#fff9ef\],
+:root[data-jobseeker-theme='dark'] .portal-content .bg-\[\#fff9ef\] {
+  background-color: #2b1f0f !important; /* Dark amber/yellow */
+  border-color: #3f2e16 !important;
+}
+
+:root[data-employer-theme='dark'] .portal-content .bg-\[\#fff3f5\],
+:root[data-jobseeker-theme='dark'] .portal-content .bg-\[\#fff3f5\] {
+  background-color: #2d0f14 !important; /* Dark rose/red */
+  border-color: #44171d !important;
+}

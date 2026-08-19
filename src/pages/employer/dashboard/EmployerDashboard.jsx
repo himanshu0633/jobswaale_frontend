@@ -201,7 +201,7 @@ export const EmployerDashboard = () => {
                   <div className="min-w-0">
                     <p className="text-xl font-black text-[#3f4254] sm:text-2xl">{dashboard.actionCenter?.[item.key] || 0}</p>
                     <h3 className="mt-1.5 text-sm font-extrabold text-[#3f4254] sm:text-base">{item.title}</h3>
-                    <p className="mt-2 text-xs font-semibold text-[#3f4254] sm:text-sm">{item.subtitle}</p>
+                    <p className="mt-2 text-xs font-semibold text-slate-400 sm:text-sm">{item.subtitle}</p>
                     <span className={`mt-4 inline-flex items-center gap-2 text-sm font-extrabold sm:mt-5 ${item.tone.split(' ')[1]}`}>
                       {item.action} <ArrowRight className="h-4 w-4" />
                     </span>
