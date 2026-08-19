@@ -164,14 +164,22 @@ export const NotificationDropdown = ({ theme }) => {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-1">
-                      <p className={`truncate text-xs font-bold ${notif.status === 'unseen' ? 'text-slate-800 dark:text-slate-100' : 'text-slate-500'}`}>
+                      <p className={`truncate text-xs font-bold ${
+                        notif.status === 'unseen'
+                          ? theme === 'dark' ? 'text-slate-100' : 'text-slate-800'
+                          : 'text-slate-500'
+                      }`}>
                         {notif.title}
                       </p>
                       <span className="shrink-0 text-[10px] text-slate-400">
                         {formatTimeAgo(notif.createDate)}
                       </span>
                     </div>
-                    <p className={`mt-0.5 text-[11px] leading-relaxed ${notif.status === 'unseen' ? 'text-slate-600 dark:text-slate-300 font-medium' : 'text-slate-400'}`}>
+                    <p className={`mt-0.5 text-[11px] leading-relaxed ${
+                      notif.status === 'unseen'
+                        ? theme === 'dark' ? 'text-slate-300 font-medium' : 'text-slate-600 font-medium'
+                        : 'text-slate-400'
+                    }`}>
                       {notif.message}
                     </p>
                   </div>
