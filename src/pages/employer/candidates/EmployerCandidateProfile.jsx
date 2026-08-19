@@ -73,6 +73,13 @@ const downloadCandidateResume = async (candidate) => {
     link.click();
     link.remove();
     window.URL.revokeObjectURL(blobUrl);
+
+    const remainingUnlocks = response.headers['x-remaining-unlocks'];
+    const isNewUnlock = response.headers['x-is-new-unlock'] === 'true';
+
+    if (isNewUnlock && remainingUnlocks !== undefined) {
+      alert(`Resume unlocked and downloaded successfully! Remaining unlocks: ${remainingUnlocks}`);
+    }
   } catch (err) {
     if (err.response?.data instanceof Blob) {
       const reader = new FileReader();
