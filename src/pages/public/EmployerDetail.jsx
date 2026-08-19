@@ -359,12 +359,6 @@ const EmployerDetail = () => {
                     <Bookmark className={`h-4 w-4 ${saved ? 'fill-current' : ''}`} />
                     {toggling ? 'Saving...' : (saved ? 'Saved' : 'Save')}
                   </button>
-                  <Link
-                    to={employer.jobs?.length > 0 ? `/jobs/${employer.jobs[0].id}` : openJobsUrl}
-                    className="inline-flex items-center gap-2 rounded-lg bg-[#0047C7] px-5 py-3 text-sm font-bold text-white hover:bg-[#003aa3] transition"
-                  >
-                    Apply for Job
-                  </Link>
                 </div>
               </div>
             </div>
