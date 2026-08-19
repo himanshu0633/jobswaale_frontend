@@ -194,6 +194,9 @@ export const JobDetail = () => {
   const [profileEmail, setProfileEmail] = useState('');
   const [profilePhone, setProfilePhone] = useState('');
   const [resumeFile, setResumeFile] = useState(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [verifiedDetails, setVerifiedDetails] = useState(false);
+  const [coverLetterText, setCoverLetterText] = useState('');
 
   useEffect(() => {
     if (isJobseeker) {
@@ -308,7 +311,7 @@ export const JobDetail = () => {
     fetchCategoryJobs();
   }, [id, data.job]);
 
-  const handleApply = async (event) => {
+  const handleApply = (event) => {
     event.preventDefault();
     setApplyError('');
 
@@ -330,11 +333,26 @@ export const JobDetail = () => {
       return;
     }
 
+    setVerifiedDetails(false);
+    setShowReviewModal(true);
+  };
+
+  const submitApplicationFinal = async () => {
+    if (!verifiedDetails) return;
     setApplying(true);
+    setShowReviewModal(false);
+    setApplyError('');
 
     try {
       const token = localStorage.getItem('publicToken');
-      const formData = new FormData(event.target);
+      const formData = new FormData();
+      formData.append('fullName', profileName);
+      formData.append('email', profileEmail);
+      formData.append('phone', profilePhone);
+      if (resumeFile) {
+        formData.append('resume', resumeFile);
+      }
+      formData.append('coverLetter', coverLetterText);
 
       const response = await axios.post(
         `${BASE_API_URL}/jobs/${id}/apply`,
@@ -348,15 +366,14 @@ export const JobDetail = () => {
 
       setApplied(true);
       setMatchScore(response.data?.application?.matchScore ?? matchScore);
-      event.target.reset();
       setResumeFile(null);
-
+      setCoverLetterText('');
     } catch (err) {
       const message = err.response?.data?.message || 'Failed to submit application. Please try again.';
       if (message.toLowerCase().includes('already applied')) {
         setApplied(true);
-        event.target.reset();
         setResumeFile(null);
+        setCoverLetterText('');
       } else {
         setApplyError(message);
       }
@@ -663,6 +680,8 @@ export const JobDetail = () => {
                       <textarea
                         name="coverLetter"
                         rows={5}
+                        value={coverLetterText}
+                        onChange={(e) => setCoverLetterText(e.target.value)}
                         placeholder="Write briefly why you are a good match for this role..."
                         className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none focus:border-[#0047C7]"
                       />
@@ -945,6 +964,104 @@ export const JobDetail = () => {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {showReviewModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-100 bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-extrabold text-[#0f172a] mb-2">Review Your Application</h3>
+            <p className="text-sm font-semibold text-slate-500 mb-5">
+              Please review the details below before submitting your application to <strong>{job.company}</strong>.
+            </p>
+
+            <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1 mb-5">
+              {/* Job Details */}
+              <div className="rounded-lg bg-slate-50 p-4 border border-slate-100">
+                <h4 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2">Job Details</h4>
+                <div className="grid grid-cols-2 gap-y-2 text-sm">
+                  <div>
+                    <span className="block text-xs font-bold text-slate-400">Position</span>
+                    <span className="font-semibold text-slate-700">{job.title}</span>
+                  </div>
+                  <div>
+                    <span className="block text-xs font-bold text-slate-400">Company</span>
+                    <span className="font-semibold text-slate-700">{job.company}</span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="block text-xs font-bold text-slate-400">Location</span>
+                    <span className="font-semibold text-slate-700">{job.location}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Applicant Details */}
+              <div className="rounded-lg bg-slate-50 p-4 border border-slate-100">
+                <h4 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2">Your Details</h4>
+                <div className="grid grid-cols-2 gap-y-3 text-sm">
+                  <div>
+                    <span className="block text-xs font-bold text-slate-400">Full Name</span>
+                    <span className="font-semibold text-slate-700">{profileName}</span>
+                  </div>
+                  <div>
+                    <span className="block text-xs font-bold text-slate-400">Email Address</span>
+                    <span className="font-semibold text-slate-700">{profileEmail}</span>
+                  </div>
+                  <div>
+                    <span className="block text-xs font-bold text-slate-400">Phone Number</span>
+                    <span className="font-semibold text-slate-700">{profilePhone}</span>
+                  </div>
+                  <div>
+                    <span className="block text-xs font-bold text-slate-400">Resume File</span>
+                    <span className="font-semibold text-emerald-700 truncate block max-w-[200px]">
+                      {resumeFile ? resumeFile.name : (profile?.resume ? profile.resume.split('/').pop() : 'No resume selected')}
+                    </span>
+                  </div>
+                  {coverLetterText.trim() && (
+                    <div className="col-span-2">
+                      <span className="block text-xs font-bold text-slate-400">Cover Letter</span>
+                      <p className="mt-1 font-semibold text-slate-600 text-xs whitespace-pre-wrap max-h-24 overflow-y-auto border-l-2 border-slate-200 pl-2 bg-white py-1.5 px-2 rounded">
+                        {coverLetterText}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Checkbox */}
+            <div className="mb-6 flex items-start gap-2.5">
+              <input
+                type="checkbox"
+                id="verifyCheckbox"
+                checked={verifiedDetails}
+                onChange={(e) => setVerifiedDetails(e.target.checked)}
+                className="mt-0.5 h-4.5 w-4.5 rounded border-slate-300 text-[#0047C7] focus:ring-[#0047C7]"
+              />
+              <label htmlFor="verifyCheckbox" className="text-xs font-bold text-slate-600 select-none cursor-pointer leading-tight">
+                I have verified that all the details are correct.
+              </label>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowReviewModal(false)}
+                className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={!verifiedDetails || applying}
+                onClick={submitApplicationFinal}
+                className="rounded-md bg-[#0047C7] px-5 py-2 text-sm font-bold text-white hover:bg-[#0035a0] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {applying ? 'Submitting...' : 'Confirm & Submit'}
+              </button>
+            </div>
           </div>
         </div>
       )}
