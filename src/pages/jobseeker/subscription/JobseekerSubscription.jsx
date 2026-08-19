@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { jsPDF } from 'jspdf';
+import logo from '../../../assets/logo.png';
 import {
   ArrowUpRight,
   BadgeCheck,
@@ -123,104 +124,202 @@ export const JobseekerSubscription = () => {
   };
 
   const generateInvoicePDF = (row) => {
+    // 1. Get client info from localStorage
+    let clientName = 'Valued Candidate';
+    let clientEmail = 'billing@jobswaale.com';
+    let clientPhone = 'N/A';
+    let clientLoc = 'India';
+
     try {
-      const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      const invoiceNo = row.invoiceNo || 'N/A';
-      const planName = row.plan || 'N/A';
-      const amountStr = String(row.amount || '').replace('₹', '').trim();
-      const paidAmount = Number(amountStr) || 0;
-      const paymentDate = row.date || 'N/A';
-      const paymentStatus = row.status || 'Paid';
-
-      // Fonts / styling
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(22);
-      doc.setTextColor(63, 66, 84); // #3f4254
-      doc.text("JobsWaale", 14, 20);
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.setTextColor(156, 163, 175); // #9ca3af
-      doc.text("WE CONNECT, YOU GROW", 14, 25);
-
-      // Line separator
-      doc.setDrawColor(241, 245, 249);
-      doc.setLineWidth(0.5);
-      doc.line(14, 30, 196, 30);
-
-      // Invoice Details Header
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(14);
-      doc.setTextColor(63, 66, 84);
-      doc.text("INVOICE", 14, 40);
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.setTextColor(100, 116, 139); // #64748b
-      doc.text(`Invoice No: ${invoiceNo}`, 14, 48);
-      doc.text(`Date: ${paymentDate}`, 14, 54);
-      doc.text(`Status: ${paymentStatus}`, 14, 60);
-
-      // Billed To
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.setTextColor(63, 66, 84);
-      doc.text("BILLED TO:", 140, 40);
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.setTextColor(100, 116, 139);
-      const seekerName = data?.profile?.name || 'Valued Candidate';
-      doc.text(seekerName, 140, 48);
-      doc.text("JobsWaale Jobseeker", 140, 54);
-
-      // Table header
-      doc.setFillColor(248, 250, 252);
-      doc.rect(14, 75, 182, 10, "F");
-
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(10);
-      doc.setTextColor(63, 66, 84);
-      doc.text("Plan Description", 18, 81);
-      doc.text("Amount", 160, 81);
-
-      // Table row
-      doc.setFont("helvetica", "normal");
-      doc.text(planName, 18, 93);
-      doc.text(`INR ${paidAmount.toLocaleString('en-IN')}`, 160, 93);
-
-      // Divider
-      doc.line(14, 100, 196, 100);
-
-      // Summary fields
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(100, 116, 139);
-      doc.text("Subtotal:", 130, 110);
-      doc.text(`INR ${paidAmount.toLocaleString('en-IN')}`, 160, 110);
-
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(63, 66, 84);
-      doc.text("Total Paid:", 130, 118);
-      doc.text(`INR ${paidAmount.toLocaleString('en-IN')}`, 160, 118);
-
-      // Footer / Thank you
-      doc.setFont("helvetica", "italic");
-      doc.setFontSize(9);
-      doc.setTextColor(156, 163, 175);
-      doc.text("Thank you for your support!", 14, 140);
-      doc.text("This is an electronically generated document. No signature required.", 14, 145);
-
-      doc.save(`Invoice_${invoiceNo}.pdf`);
-      setSuccess(`Invoice ${invoiceNo} PDF downloaded successfully.`);
-    } catch (pdfErr) {
-      console.error(pdfErr);
-      setError('Failed to generate PDF. Please try again.');
+      const publicUser = JSON.parse(localStorage.getItem('publicUser')) || {};
+      clientName = [publicUser.firstName, publicUser.lastName].filter(Boolean).join(' ') || 'Valued Candidate';
+      clientEmail = publicUser.email || 'billing@jobswaale.com';
+      clientPhone = publicUser.phone || 'N/A';
+      clientLoc = [publicUser.city, publicUser.state].filter(Boolean).join(', ') || 'India';
+    } catch (e) {
+      console.error(e);
     }
+
+    const logoImg = new Image();
+    logoImg.src = logo;
+
+    const drawPDF = () => {
+      try {
+        const doc = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4'
+        });
+
+        // Add Logo Image
+        try {
+          if (logoImg.complete && logoImg.naturalWidth !== 0) {
+            doc.addImage(logoImg, 'PNG', 14, 15, 38, 11);
+          } else {
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(22);
+            doc.setTextColor(63, 66, 84); // #3f4254
+            doc.text("JobsWaale", 14, 23);
+          }
+        } catch (logoErr) {
+          console.error(logoErr);
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(22);
+          doc.setTextColor(63, 66, 84); // #3f4254
+          doc.text("JobsWaale", 14, 23);
+        }
+
+        // JobsWaale Info (Top Right)
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(63, 66, 84);
+        doc.text("JobsWaale Technologies Pvt. Ltd.", 130, 18);
+        
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8.5);
+        doc.setTextColor(100, 116, 139); // #64748b
+        doc.text("Plot No. 12, Sector 18, Gurugram,", 130, 23);
+        doc.text("Haryana, India - 122015", 130, 27);
+        doc.text("GSTIN: 06AACJ1234F1Z5", 130, 31);
+        doc.text("Email: billing@jobswaale.com", 130, 35);
+
+        // Divider
+        doc.setDrawColor(226, 232, 240); // #e2e8f0
+        doc.setLineWidth(0.5);
+        doc.line(14, 40, 196, 40);
+
+        const invoiceNo = row.invoiceNo || 'N/A';
+        const planName = row.plan || 'N/A';
+        const amountStr = String(row.amount || '').replace('₹', '').trim();
+        const paidAmount = Number(amountStr) || 0;
+        const paymentDate = row.date || 'N/A';
+        const paymentStatus = row.status || 'Paid';
+        const paymentMethod = row.method || 'Razorpay';
+
+        // Columns Layout (y: 48)
+        // Column 1: Client Info
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9.5);
+        doc.setTextColor(148, 163, 184); // #94a3b8
+        doc.text("BILLED TO:", 14, 48);
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(11);
+        doc.setTextColor(63, 66, 84);
+        doc.text(clientName, 14, 54);
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(100, 116, 139);
+        doc.text(`Email: ${clientEmail}`, 14, 60);
+        doc.text(`Phone: ${clientPhone}`, 14, 65);
+        doc.text(`Location: ${clientLoc}`, 14, 70);
+
+        // Column 2: Invoice Info
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9.5);
+        doc.setTextColor(148, 163, 184); // #94a3b8
+        doc.text("INVOICE DETAILS:", 130, 48);
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(100, 116, 139);
+        
+        doc.setFont("helvetica", "bold");
+        doc.text(`Invoice No: ${invoiceNo}`, 130, 54);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Date: ${paymentDate}`, 130, 60);
+        doc.text(`Payment Method: ${paymentMethod}`, 130, 65);
+        doc.text(`Status: ${paymentStatus}`, 130, 70);
+
+        // Table
+        const tableY = 80;
+        doc.setFillColor(248, 250, 252);
+        doc.rect(14, tableY, 182, 8, "F");
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9);
+        doc.setTextColor(63, 66, 84);
+        doc.text("Plan Description", 18, tableY + 5.5);
+        doc.text("SAC Code", 95, tableY + 5.5);
+        doc.text("Base Price", 125, tableY + 5.5);
+        doc.text("GST (18%)", 150, tableY + 5.5);
+        doc.text("Total", 175, tableY + 5.5);
+
+        // SAC Code: 9973 (Leasing or licensing services)
+        // GST Calculations
+        const baseAmount = paidAmount / 1.18;
+        const gstAmount = paidAmount - baseAmount;
+        const cgst = gstAmount / 2;
+        const sgst = gstAmount / 2;
+
+        // Content Row
+        const rowY = tableY + 14;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9.5);
+        doc.setTextColor(63, 66, 84);
+        doc.text(planName, 18, rowY);
+        doc.text("9973", 95, rowY);
+        doc.text(`INR ${baseAmount.toFixed(2)}`, 125, rowY);
+        doc.text("18%", 150, rowY);
+        doc.text(`INR ${paidAmount.toFixed(2)}`, 175, rowY);
+
+        // Divider
+        doc.setDrawColor(241, 245, 249);
+        doc.line(14, rowY + 6, 196, rowY + 6);
+
+        // Summary Block (x: 130)
+        const summaryY = rowY + 16;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(100, 116, 139);
+        
+        doc.text("Subtotal (Base Value):", 120, summaryY);
+        doc.text(`INR ${baseAmount.toFixed(2)}`, 170, summaryY);
+
+        doc.text("CGST (9%):", 120, summaryY + 6);
+        doc.text(`INR ${cgst.toFixed(2)}`, 170, summaryY + 6);
+
+        doc.text("SGST (9%):", 120, summaryY + 12);
+        doc.text(`INR ${sgst.toFixed(2)}`, 170, summaryY + 12);
+
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(63, 66, 84);
+        doc.text("Total Amount Paid:", 120, summaryY + 20);
+        doc.text(`INR ${paidAmount.toLocaleString('en-IN')}`, 170, summaryY + 20);
+
+        // Footer Section
+        const footerY = 240;
+        doc.setDrawColor(226, 232, 240);
+        doc.line(14, footerY, 196, footerY);
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9);
+        doc.setTextColor(63, 66, 84);
+        doc.text("Terms & Conditions:", 14, footerY + 6);
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(148, 163, 184);
+        doc.text("1. This is a computer generated invoice and does not require physical signature.", 14, footerY + 11);
+        doc.text("2. All subscription plans activated are subject to standard Terms of Service.", 14, footerY + 15);
+        doc.text("3. For support or queries, write to support@jobswaale.com.", 14, footerY + 19);
+
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(9);
+        doc.setTextColor(100, 116, 139);
+        doc.text("Thank you for choosing JobsWaale!", 14, footerY + 28);
+
+        doc.save(`Invoice_${invoiceNo}.pdf`);
+        setSuccess(`Invoice ${invoiceNo} PDF downloaded successfully.`);
+      } catch (pdfErr) {
+        console.error(pdfErr);
+        setError('Failed to generate PDF. Please try again.');
+      }
+    };
+
+    logoImg.onload = drawPDF;
+    logoImg.onerror = drawPDF;
   };
 
   const scrollToCard = (index) => {
