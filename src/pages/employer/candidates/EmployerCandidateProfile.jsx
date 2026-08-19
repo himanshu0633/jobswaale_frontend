@@ -111,6 +111,8 @@ const EmployerCandidateProfile = () => {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [showInterviewModal, setShowInterviewModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false);
   const [interviewForm, setInterviewForm] = useState({
     date: '',
     time: '',
@@ -221,7 +223,14 @@ const EmployerCandidateProfile = () => {
     setError('');
     axios.get(`${BASE_API_URL}/employer/candidateProfile/${id}`, { headers: getTokenHeaders() })
       .then((response) => {
-        if (alive) setCandidate(response.data);
+        if (alive) {
+          setCandidate(response.data);
+          if (response.data.hasCandidateAccess === false) {
+            setShowUpgradeModal(true);
+          } else if (response.data.unlockLimitExhausted === true) {
+            setShowLimitModal(true);
+          }
+        }
       })
       .catch((err) => {
         if (alive) setError(err.response?.data?.message || 'Candidate profile could not be loaded.');
@@ -282,8 +291,16 @@ const EmployerCandidateProfile = () => {
   const showMapPicker = isInPersonInterview(interviewForm.type);
 
   const handleResumeDownload = () => {
+    if (candidate.hasCandidateAccess === false) {
+      setShowUpgradeModal(true);
+      return;
+    }
+    if (candidate.unlockLimitExhausted === true) {
+      setShowLimitModal(true);
+      return;
+    }
     if (candidate.hasResume && !candidate.allowResumeDownload) {
-      alert('Upgrade Plan: Resume downloads are not supported under your current plan. Please upgrade to download resumes.');
+      setShowUpgradeModal(true);
       return;
     }
     downloadCandidateResume(candidate);
@@ -570,6 +587,59 @@ const EmployerCandidateProfile = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Upgrade Plan Modal */}
+      {showUpgradeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-3 backdrop-blur-sm sm:p-4">
+          <div className="relative w-full max-w-md rounded-lg border border-slate-100 bg-white p-6 shadow-xl text-center">
+            <h3 className="text-lg font-extrabold text-slate-800">Upgrade Plan Required</h3>
+            <p className="mt-3 text-sm text-slate-500 font-semibold leading-relaxed">
+              Candidate contact details and resume downloads are not supported under your current plan. Please upgrade your plan to access candidate details.
+            </p>
+            <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
+              <Link
+                to="/employer/subscription"
+                className="inline-flex h-10 items-center justify-center rounded-md bg-[#6658dd] px-6 text-sm font-extrabold text-white transition hover:bg-[#5848d8]"
+              >
+                Upgrade Plan
+              </Link>
+              <button
+                type="button"
+                onClick={() => setShowUpgradeModal(false)}
+                className="h-10 rounded-md bg-slate-100 px-6 text-sm font-extrabold text-slate-600 transition hover:bg-slate-200"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Unlock Limit Exhausted Modal */}
+      {showLimitModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-3 backdrop-blur-sm sm:p-4">
+          <div className="relative w-full max-w-md rounded-lg border border-slate-100 bg-white p-6 shadow-xl text-center">
+            <h3 className="text-lg font-extrabold text-slate-800">Unlock Limit Exhausted</h3>
+            <p className="mt-3 text-sm text-slate-500 font-semibold leading-relaxed">
+              Your plan's resume unlock limit is exhausted. Please upgrade your plan to view more candidates' details or download resumes.
+            </p>
+            <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
+              <Link
+                to="/employer/subscription"
+                className="inline-flex h-10 items-center justify-center rounded-md bg-[#6658dd] px-6 text-sm font-extrabold text-white transition hover:bg-[#5848d8]"
+              >
+                Upgrade Plan
+              </Link>
+              <button
+                type="button"
+                onClick={() => setShowLimitModal(false)}
+                className="h-10 rounded-md bg-slate-100 px-6 text-sm font-extrabold text-slate-600 transition hover:bg-slate-200"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

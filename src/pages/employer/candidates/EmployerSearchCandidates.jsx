@@ -107,7 +107,7 @@ const CandidateActions = ({ candidate, isOpen, onToggle, onClose, align = 'right
       <>
         <button type="button" className="fixed inset-0 z-10 cursor-default" onClick={onClose} aria-label="Close menu" />
         <div className={`absolute ${align} z-20 w-44 rounded-md border border-slate-100 bg-white py-1.5 text-left shadow-lg`}>
-          <Link to="/employer/candidates" className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"><User className="h-4 w-4" /> View Profile</Link>
+          <Link to={`/employer/candidateProfile/${candidate.id}`} className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"><User className="h-4 w-4" /> View Profile</Link>
           <Link to="/employer/messages" className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"><MessageCircle className="h-4 w-4" /> Contact</Link>
           {candidate.hasResume ? (
             <button
@@ -290,7 +290,7 @@ export const EmployerSearchCandidates = () => {
                 <div className="flex items-start gap-3">
                   <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${candidate.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>{candidate.initials}</span>
                   <div className="min-w-0 flex-1">
-                    <Link to="/employer/candidates" className="truncate text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{candidate.name}</Link>
+                    <Link to={`/employer/candidateProfile/${candidate.id}`} className="truncate text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{candidate.name}</Link>
                     <p className="mt-0.5 truncate text-xs font-semibold text-slate-400">{candidate.email || candidate.phone}</p>
                     <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><MapPin className="h-3 w-3 shrink-0" />{candidate.location}</p>
                   </div>
@@ -325,7 +325,7 @@ export const EmployerSearchCandidates = () => {
               <tbody className="divide-y divide-slate-100">
                 {loading ? <tr><td colSpan="6" className="px-5 py-12 text-center"><Loader className="mx-auto h-7 w-7 animate-spin text-[#6658dd]" /></td></tr> : visibleRows.length ? visibleRows.map((candidate) => (
                   <tr key={candidate.id} className="transition hover:bg-slate-50">
-                    <td className="px-5 py-4"><div className="flex items-center gap-3"><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${candidate.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>{candidate.initials}</span><div><Link to="/employer/candidates" className="text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{candidate.name}</Link><p className="mt-0.5 text-xs font-semibold text-slate-400">{candidate.email || candidate.phone}</p><p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><MapPin className="h-3 w-3" />{candidate.location}</p></div></div></td>
+                    <td className="px-5 py-4"><div className="flex items-center gap-3"><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${candidate.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>{candidate.initials}</span><div><Link to={`/employer/candidateProfile/${candidate.id}`} className="text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{candidate.name}</Link><p className="mt-0.5 text-xs font-semibold text-slate-400">{candidate.email || candidate.phone}</p><p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><MapPin className="h-3 w-3" />{candidate.location}</p></div></div></td>
                     <td className="px-5 py-4 text-sm font-semibold text-slate-600">{candidate.experience}</td>
                     <td className="px-5 py-4 text-sm font-semibold text-slate-600">{candidate.qualification || '-'}</td>
                     <td className="px-5 py-4 text-sm font-extrabold text-slate-700">{candidate.expectedSalary || 'Not specified'}</td>
