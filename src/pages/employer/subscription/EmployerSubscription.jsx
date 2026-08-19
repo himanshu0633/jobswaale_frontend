@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { jsPDF } from 'jspdf';
 import {
   Crown,
   Briefcase,
@@ -76,6 +77,111 @@ export const EmployerSubscription = () => {
       setError(err.response?.data?.message || 'Plan could not be activated. Please try again.');
     } finally {
       setSubscribingPlanId('');
+    }
+  };
+
+  const generateInvoicePDF = (inv) => {
+    try {
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const invoiceNo = inv.invoiceNo || inv.paymentId || 'N/A';
+      const planName = inv.planName || 'N/A';
+      const paidAmount = inv.paidAmount || 0;
+      const discount = inv.discount || 0;
+      const totalPaid = inv.paidAmount || 0;
+      const paymentDate = formatDate(inv.createDate || inv.paymentDate);
+      const paymentStatus = inv.paymentStatus || 'Success';
+
+      // Fonts / styling
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      doc.setTextColor(63, 66, 84); // #3f4254
+      doc.text("JobsWaale", 14, 20);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(156, 163, 175); // #9ca3af
+      doc.text("WE CONNECT, YOU GROW", 14, 25);
+
+      // Line separator
+      doc.setDrawColor(241, 245, 249);
+      doc.setLineWidth(0.5);
+      doc.line(14, 30, 196, 30);
+
+      // Invoice Details Header
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.setTextColor(63, 66, 84);
+      doc.text("INVOICE", 14, 40);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139); // #64748b
+      doc.text(`Invoice No: ${invoiceNo}`, 14, 48);
+      doc.text(`Date: ${paymentDate}`, 14, 54);
+      doc.text(`Status: ${paymentStatus}`, 14, 60);
+
+      // Billed To
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(63, 66, 84);
+      doc.text("BILLED TO:", 140, 40);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      const compName = data?.companyProfile?.companyName || 'Valued Employer';
+      doc.text(compName, 140, 48);
+      doc.text("JobsWaale Portal User", 140, 54);
+
+      // Table header
+      doc.setFillColor(248, 250, 252);
+      doc.rect(14, 75, 182, 10, "F");
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(63, 66, 84);
+      doc.text("Plan Description", 18, 81);
+      doc.text("Amount", 160, 81);
+
+      // Table row
+      doc.setFont("helvetica", "normal");
+      doc.text(planName, 18, 93);
+      doc.text(`INR ${paidAmount.toLocaleString('en-IN')}`, 160, 93);
+
+      // Divider
+      doc.line(14, 100, 196, 100);
+
+      // Summary fields
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 116, 139);
+      doc.text("Subtotal:", 130, 110);
+      doc.text(`INR ${(paidAmount + discount).toLocaleString('en-IN')}`, 160, 110);
+
+      doc.text("Discount:", 130, 116);
+      doc.text(`INR ${discount.toLocaleString('en-IN')}`, 160, 116);
+
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(63, 66, 84);
+      doc.text("Total Paid:", 130, 124);
+      doc.text(`INR ${totalPaid.toLocaleString('en-IN')}`, 160, 124);
+
+      // Footer / Thank you
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(9);
+      doc.setTextColor(156, 163, 175);
+      doc.text("Thank you for your business!", 14, 150);
+      doc.text("This is an electronically generated document. No signature required.", 14, 155);
+
+      doc.save(`Invoice_${invoiceNo}.pdf`);
+      setSuccess(`Invoice ${invoiceNo} PDF downloaded successfully.`);
+    } catch (pdfErr) {
+      console.error(pdfErr);
+      setError('Failed to generate PDF. Please try again.');
     }
   };
 
@@ -408,7 +514,7 @@ export const EmployerSubscription = () => {
 
           <button
             disabled={!latestInvoice}
-            onClick={() => setSuccess('Invoice download will be available after PDF generation is configured.')}
+            onClick={() => latestInvoice && generateInvoicePDF(latestInvoice)}
             className="w-full inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white text-xs font-extrabold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Download className="h-4 w-4" />
@@ -446,7 +552,7 @@ export const EmployerSubscription = () => {
                 <p className="shrink-0 font-black">₹{inv.paidAmount?.toLocaleString('en-IN')}</p>
               </div>
               <button
-                onClick={() => setSuccess(`Invoice ${inv.invoiceNo || inv.paymentId} is available in billing records.`)}
+                onClick={() => generateInvoicePDF(inv)}
                 className="mt-3 inline-flex w-full items-center justify-center gap-1 rounded bg-slate-50 border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
               >
                 <Download className="h-3.5 w-3.5" />
@@ -489,7 +595,7 @@ export const EmployerSubscription = () => {
                   </td>
                   <td className="py-3.5 px-4 text-center">
                     <button
-                      onClick={() => setSuccess(`Invoice ${inv.invoiceNo || inv.paymentId} is available in billing records.`)}
+                      onClick={() => generateInvoicePDF(inv)}
                       className="inline-flex items-center justify-center gap-1 rounded bg-slate-50 border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
                     >
                       <Download className="h-3.5 w-3.5" />

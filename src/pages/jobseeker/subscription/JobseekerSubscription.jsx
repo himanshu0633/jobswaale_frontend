@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { jsPDF } from 'jspdf';
 import {
   ArrowUpRight,
   BadgeCheck,
@@ -118,6 +119,107 @@ export const JobseekerSubscription = () => {
       setPendingPlan(null);
     } finally {
       setSubscribing(false);
+    }
+  };
+
+  const generateInvoicePDF = (row) => {
+    try {
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const invoiceNo = row.invoiceNo || 'N/A';
+      const planName = row.plan || 'N/A';
+      const amountStr = String(row.amount || '').replace('₹', '').trim();
+      const paidAmount = Number(amountStr) || 0;
+      const paymentDate = row.date || 'N/A';
+      const paymentStatus = row.status || 'Paid';
+
+      // Fonts / styling
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      doc.setTextColor(63, 66, 84); // #3f4254
+      doc.text("JobsWaale", 14, 20);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(156, 163, 175); // #9ca3af
+      doc.text("WE CONNECT, YOU GROW", 14, 25);
+
+      // Line separator
+      doc.setDrawColor(241, 245, 249);
+      doc.setLineWidth(0.5);
+      doc.line(14, 30, 196, 30);
+
+      // Invoice Details Header
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.setTextColor(63, 66, 84);
+      doc.text("INVOICE", 14, 40);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139); // #64748b
+      doc.text(`Invoice No: ${invoiceNo}`, 14, 48);
+      doc.text(`Date: ${paymentDate}`, 14, 54);
+      doc.text(`Status: ${paymentStatus}`, 14, 60);
+
+      // Billed To
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(63, 66, 84);
+      doc.text("BILLED TO:", 140, 40);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      const seekerName = data?.profile?.name || 'Valued Candidate';
+      doc.text(seekerName, 140, 48);
+      doc.text("JobsWaale Jobseeker", 140, 54);
+
+      // Table header
+      doc.setFillColor(248, 250, 252);
+      doc.rect(14, 75, 182, 10, "F");
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(63, 66, 84);
+      doc.text("Plan Description", 18, 81);
+      doc.text("Amount", 160, 81);
+
+      // Table row
+      doc.setFont("helvetica", "normal");
+      doc.text(planName, 18, 93);
+      doc.text(`INR ${paidAmount.toLocaleString('en-IN')}`, 160, 93);
+
+      // Divider
+      doc.line(14, 100, 196, 100);
+
+      // Summary fields
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 116, 139);
+      doc.text("Subtotal:", 130, 110);
+      doc.text(`INR ${paidAmount.toLocaleString('en-IN')}`, 160, 110);
+
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(63, 66, 84);
+      doc.text("Total Paid:", 130, 118);
+      doc.text(`INR ${paidAmount.toLocaleString('en-IN')}`, 160, 118);
+
+      // Footer / Thank you
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(9);
+      doc.setTextColor(156, 163, 175);
+      doc.text("Thank you for your support!", 14, 140);
+      doc.text("This is an electronically generated document. No signature required.", 14, 145);
+
+      doc.save(`Invoice_${invoiceNo}.pdf`);
+      setSuccess(`Invoice ${invoiceNo} PDF downloaded successfully.`);
+    } catch (pdfErr) {
+      console.error(pdfErr);
+      setError('Failed to generate PDF. Please try again.');
     }
   };
 
@@ -395,9 +497,12 @@ export const JobseekerSubscription = () => {
                         index === billingHistory.length - 1 ? '' : 'border-b border-[#eef1f6]'
                       }`}
                     >
-                      <a href="#" className="font-semibold text-[#0047C7] hover:underline">
+                      <button
+                        onClick={() => generateInvoicePDF(row)}
+                        className="font-semibold text-[#0047C7] hover:underline cursor-pointer bg-transparent border-0 p-0"
+                      >
                         Download
-                      </a>
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -420,9 +525,12 @@ export const JobseekerSubscription = () => {
                 </div>
                 <div className="flex items-center justify-between border-t border-[#eef1f6] pt-2.5 text-[0.8rem]">
                   <span className="font-semibold text-[#475569]">{row.amount}</span>
-                  <a href="#" className="font-semibold text-[#0047C7] hover:underline">
+                  <button
+                    onClick={() => generateInvoicePDF(row)}
+                    className="font-semibold text-[#0047C7] hover:underline cursor-pointer bg-transparent border-0 p-0"
+                  >
                     Download invoice
-                  </a>
+                  </button>
                 </div>
               </div>
             ))}
