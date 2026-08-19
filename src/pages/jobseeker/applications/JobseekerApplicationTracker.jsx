@@ -171,7 +171,11 @@ export const JobseekerApplicationTracker = () => {
               {tracker.company?.charAt(0).toUpperCase()}
             </span>
             <div>
-              <h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">{tracker.title}</h2>
+              <h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">
+                <Link to={`/jobs/${tracker.jobId}`} className="hover:text-[#0047C7] transition-colors">
+                  {tracker.title}
+                </Link>
+              </h2>
               <p className="text-sm font-semibold text-slate-400">{tracker.company}</p>
               <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-400">
                 <MapPin className="h-3.5 w-3.5" />
