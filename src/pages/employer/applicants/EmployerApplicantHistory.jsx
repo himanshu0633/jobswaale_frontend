@@ -10,7 +10,11 @@ import {
   Search,
   UserCheck,
   UserRoundCheck,
-  UserX
+  UserX,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import ClearFilterButton from '../../../components/ClearFilterButton';
@@ -38,25 +42,45 @@ const statCards = [
 ];
 
 export const EmployerApplicantHistory = () => {
-  const [data, setData] = useState({ stats: {}, filters: {}, applicants: [] });
+  const [data, setData] = useState({ stats: {}, filters: {}, applicants: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 1 } });
   const [search, setSearch] = useState('');
   const [jobId, setJobId] = useState('');
   const [status, setStatus] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, jobId, status]);
 
   const queryParams = useMemo(() => {
     const params = new URLSearchParams();
     if (search.trim()) params.set('search', search.trim());
     if (jobId) params.set('jobId', jobId);
     if (status) params.set('status', status);
+    params.set('page', currentPage);
+    params.set('limit', 10);
     return params.toString();
-  }, [search, jobId, status]);
+  }, [search, jobId, status, currentPage]);
+
   const hasActiveFilters = Boolean(search.trim() || jobId || status);
   const resetFilters = () => {
     setSearch('');
     setJobId('');
     setStatus('');
+    setCurrentPage(1);
+  };
+
+  const pagination = data.pagination || { page: 1, limit: 10, total: 0, totalPages: 1 };
+  const safePage = Math.max(1, Math.min(currentPage, pagination.totalPages || 1));
+  const totalPages = pagination.totalPages || 1;
+  const startIndex = (safePage - 1) * (pagination.limit || 10);
+
+  const goToPage = (pageNumber) => {
+    const target = Math.max(1, Math.min(pageNumber, totalPages));
+    setCurrentPage(target);
   };
 
   useEffect(() => {
@@ -65,7 +89,15 @@ export const EmployerApplicantHistory = () => {
     setError('');
     axios.get(`${BASE_API_URL}/employer/applicant-history?${queryParams}`, { headers: getTokenHeaders() })
       .then((response) => {
-        if (alive) setData({ stats: {}, filters: {}, applicants: [], ...response.data });
+        if (alive) {
+          setData({
+            stats: {},
+            filters: {},
+            applicants: [],
+            pagination: { page: 1, limit: 10, total: 0, totalPages: 1 },
+            ...response.data
+          });
+        }
       })
       .catch((err) => {
         if (alive) setError(err.response?.data?.message || 'Applicant history could not be loaded.');
@@ -184,6 +216,52 @@ export const EmployerApplicantHistory = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Controls */}
+          {pagination.total > 0 && (
+            <div className="mt-5 flex flex-col justify-between gap-3 text-xs font-semibold text-slate-600 sm:flex-row sm:items-center sm:text-sm border-t border-dashed border-slate-100 pt-5">
+              <span>
+                Showing {startIndex + 1} to {Math.min(startIndex + (pagination.limit || 10), pagination.total)} of {pagination.total} entries
+              </span>
+              <div className="flex items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => goToPage(1)}
+                  disabled={safePage === 1}
+                  className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-400 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed transition hover:bg-slate-50"
+                >
+                  <ChevronsLeft className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => goToPage(safePage - 1)}
+                  disabled={safePage === 1}
+                  className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-400 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed transition hover:bg-slate-50"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button type="button" className="flex h-9 min-w-9 items-center justify-center rounded-md bg-[#6658dd] px-3 text-sm font-black text-white">
+                  {safePage}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => goToPage(safePage + 1)}
+                  disabled={safePage === totalPages}
+                  className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-400 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed transition hover:bg-slate-50"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => goToPage(totalPages)}
+                  disabled={safePage === totalPages}
+                  className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-400 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed transition hover:bg-slate-50"
+                >
+                  <ChevronsRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </section>
     </div>
