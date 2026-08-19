@@ -25,19 +25,22 @@ const statConfig = [
     key: 'jobsApplied',
     label: 'Jobs Applied',
     icon: Send,
-    tone: 'bg-sky-50 text-sky-600'
+    tone: 'bg-sky-50 text-sky-600',
+    to: '/jobseeker/jobs-applied?filter=all'
   },
   {
     key: 'shortlisted',
     label: 'Shortlisted',
     icon: CheckCircle,
-    tone: 'bg-emerald-50 text-emerald-600'
+    tone: 'bg-emerald-50 text-emerald-600',
+    to: '/jobseeker/jobs-applied?filter=shortlisted'
   },
   {
     key: 'interviews',
     label: 'Interviews',
     icon: CalendarCheck,
-    tone: 'bg-amber-50 text-amber-600'
+    tone: 'bg-amber-50 text-amber-600',
+    to: '/jobseeker/jobs-applied?filter=interview'
   },
   {
     key: 'profileViews',
@@ -109,35 +112,51 @@ export const JobseekerDashboard = () => {
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         {statConfig.map(item => {
           const Icon = item.icon;
+          const CardContent = (
+            <div className="flex items-center gap-4">
+              <div
+                className={`flex h-13 w-13 items-center justify-center rounded-xl ${item.tone}`}
+              >
+                <Icon className="h-6 w-6"/>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-400">
+                  {item.label}
+                </p>
+                <p className="text-2xl font-bold text-[#0f172a]">
+                  {stats[item.key]?.value || 0}
+                </p>
+                {stats[item.key]?.change && (
+                  <p className={`text-xs font-semibold ${
+                    stats[item.key].change.includes('+') || stats[item.key].change === 'Scheduled'
+                      ? 'text-emerald-500'
+                      : 'text-rose-500'
+                  }`}>
+                    {stats[item.key].change}
+                  </p>
+                )}
+              </div>
+            </div>
+          );
+
+          if (item.to) {
+            return (
+              <Link
+                key={item.key}
+                to={item.to}
+                className="block rounded-md border border-slate-100 bg-white p-5 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5"
+              >
+                {CardContent}
+              </Link>
+            );
+          }
+
           return (
             <div
               key={item.key}
               className="rounded-md border border-slate-100 bg-white p-5 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5"
             >
-              <div className="flex items-center gap-4">
-                <div
-                  className={`flex h-13 w-13 items-center justify-center rounded-xl ${item.tone}`}
-                >
-                  <Icon className="h-6 w-6"/>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-400">
-                    {item.label}
-                  </p>
-                  <p className="text-2xl font-bold text-[#0f172a]">
-                    {stats[item.key]?.value || 0}
-                  </p>
-                  {stats[item.key]?.change && (
-                    <p className={`text-xs font-semibold ${
-                      stats[item.key].change.includes('+') || stats[item.key].change === 'Scheduled'
-                        ? 'text-emerald-500'
-                        : 'text-rose-500'
-                    }`}>
-                      {stats[item.key].change}
-                    </p>
-                  )}
-                </div>
-              </div>
+              {CardContent}
             </div>
           );
         })}

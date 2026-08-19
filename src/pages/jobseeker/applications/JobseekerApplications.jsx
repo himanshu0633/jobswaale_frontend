@@ -8,7 +8,7 @@ import {
   Send,
   XCircle
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
 
@@ -50,10 +50,17 @@ const statusLabels = {
 const canJobseekerMessage = (status) => ['shortlisted', 'interview', 'offered'].includes(String(status || '').toLowerCase());
 
 export const JobseekerApplications = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filterParam = searchParams.get('filter') || 'all';
+  
   const [appliedJobs, setAppliedJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activeFilter, setActiveFilter] = useState('all');
+  const [activeFilter, setActiveFilter] = useState(filterParam);
+
+  useEffect(() => {
+    setActiveFilter(filterParam);
+  }, [filterParam]);
 
   useEffect(() => {
     const fetchApplications = async () => {
@@ -105,10 +112,21 @@ export const JobseekerApplications = () => {
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         {statConfig.map(item => {
           const Icon = item.icon;
+          const statFilterMap = {
+            total: 'all',
+            shortlisted: 'shortlisted',
+            interview: 'interview',
+            rejected: 'rejected'
+          };
           return (
             <div
               key={item.key}
-              className="rounded-md border border-slate-100 bg-white p-5 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5"
+              onClick={() => {
+                const targetFilter = statFilterMap[item.key] || 'all';
+                setActiveFilter(targetFilter);
+                setSearchParams({ filter: targetFilter });
+              }}
+              className="rounded-md border border-slate-100 bg-white p-5 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 cursor-pointer"
             >
               <div className="flex items-center gap-4">
                 <div
@@ -136,7 +154,10 @@ export const JobseekerApplications = () => {
           <button
             key={tab.key}
             type="button"
-            onClick={() => setActiveFilter(tab.key)}
+            onClick={() => {
+              setActiveFilter(tab.key);
+              setSearchParams({ filter: tab.key });
+            }}
             className={`rounded-full px-4 py-1.5 text-sm font-bold transition ${
               activeFilter === tab.key
                 ? 'bg-[#0047C7] text-white'
