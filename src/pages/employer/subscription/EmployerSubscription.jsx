@@ -350,6 +350,16 @@ export const EmployerSubscription = () => {
                 </div>
                 <div className="hidden h-8 w-px bg-slate-100 sm:block"></div>
                 <div>
+                  <span className="text-[10px] font-bold text-slate-400 block">Resume Unlocks</span>
+                  <span className="font-extrabold text-[#3f4254]">{sub.unlocksUsed || 0} <span className="font-medium text-slate-400">/ {sub.unlockLimit || 0}</span></span>
+                </div>
+                <div className="hidden h-8 w-px bg-slate-100 sm:block"></div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 block">Remaining Unlocks</span>
+                  <span className="font-extrabold text-emerald-600">{sub.remainingUnlocks ?? 0}</span>
+                </div>
+                <div className="hidden h-8 w-px bg-slate-100 sm:block"></div>
+                <div>
                   <span className="text-[10px] font-bold text-slate-400 block">Applications</span>
                   <span className="font-extrabold text-[#3f4254]">{sub.applicationsCount} <span className="font-medium text-slate-400">/ {sub.applicationsLimit}</span></span>
                 </div>
