@@ -49,6 +49,23 @@ const logoTones = {
   Flipkart: 'bg-amber-500 text-slate-800'
 };
 
+const getResumeUploadDateText = (resumePath) => {
+  if (!resumePath) return '';
+  const filename = resumePath.split('/').pop();
+  const parts = filename.split('-');
+  const timestampStr = parts[0];
+  const timestamp = Number(timestampStr);
+  
+  if (timestamp && timestamp > 1000000000000 && timestamp < 3000000000000) {
+    const date = new Date(timestamp);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+  return '';
+};
+
 const getJobLocationLabels = (job) => {
   const labels = [];
   const cityState = [job.city, job.state].map(value => String(value || '').trim()).filter(Boolean).join(', ');
@@ -613,11 +630,18 @@ export const JobDetail = () => {
                     <div>
                       <label className="mb-1 block text-sm font-bold text-[#0f172a]">Upload Resume (.PDF, .Docx)</label>
                       {profile?.resume ? (
-                        <div className="mb-2 flex items-center gap-2 rounded-md border border-emerald-100 bg-emerald-50/50 px-3 py-1.5 text-xs text-emerald-800">
-                          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                          <span className="font-semibold truncate max-w-xs">
-                            Using profile resume: {profile.resume.split('/').pop()}
-                          </span>
+                        <div className="mb-2 flex flex-col gap-1 rounded-md border border-emerald-100 bg-emerald-50/50 px-3 py-1.5 text-xs text-emerald-800">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                            <span className="font-semibold truncate max-w-xs">
+                              Using profile resume: {profile.resume.split('/').pop()}
+                            </span>
+                          </div>
+                          {getResumeUploadDateText(profile.resume) && (
+                            <span className="pl-6 text-[10px] font-bold text-slate-500">
+                              Last updated on: {getResumeUploadDateText(profile.resume)}
+                            </span>
+                          )}
                         </div>
                       ) : null}
                       <input
