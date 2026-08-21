@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
@@ -14,12 +14,12 @@ import {
   ShieldCheck,
   FileText,
   Trash2,
-  LayoutDashboard,
   ChevronRight,
   History,
   X,
 } from 'lucide-react';
 import ResponsiveCardList from '../../../components/ResponsiveCardList';
+import AdminPagination from '../../../components/AdminPagination';
 
 const formatDate = (value) => {
   if (!value) return '—';
@@ -42,9 +42,16 @@ export const Jobseekers = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('latest');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [historyModal, setHistoryModal] = useState({ open: false, loading: false, error: '', data: null });
+  const [autoOpenedCandidateId, setAutoOpenedCandidateId] = useState('');
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const querySearch = searchParams.get('q') || '';
+  const queryStatus = searchParams.get('status') || '';
+  const queryCandidateId = searchParams.get('candidate') || '';
 
   const showMessage = (type, text) => {
     setMessage({ type, text });
@@ -69,14 +76,20 @@ export const Jobseekers = () => {
   }, []);
 
   useEffect(() => {
+    setSearch(querySearch);
+  }, [querySearch]);
+
+  useEffect(() => {
     const q = search.toLowerCase();
     const filtered = list.filter(item =>
-      (item.name || '').toLowerCase().includes(q) ||
-      (item.phone || '').includes(q) ||
-      (item.userId?.email && item.userId.email.toLowerCase().includes(q)) ||
-      (item.experience || '').toLowerCase().includes(q) ||
-      (item.workStatus || '').toLowerCase().includes(q) ||
-      (item.source || '').toLowerCase().includes(q)
+      (!queryStatus || item.status === queryStatus) && (
+        (item.name || '').toLowerCase().includes(q) ||
+        (item.phone || '').includes(q) ||
+        (item.userId?.email && item.userId.email.toLowerCase().includes(q)) ||
+        (item.experience || '').toLowerCase().includes(q) ||
+        (item.workStatus || '').toLowerCase().includes(q) ||
+        (item.source || '').toLowerCase().includes(q)
+      )
     );
 
     const sorted = [...filtered].sort((a, b) => {
@@ -100,7 +113,19 @@ export const Jobseekers = () => {
     });
 
     setFilteredList(sorted);
-  }, [search, list, sortBy]);
+  }, [search, list, sortBy, queryStatus]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredList.length / entriesPerPage));
+  const startIndex = (currentPage - 1) * entriesPerPage;
+  const paginatedList = filteredList.slice(startIndex, startIndex + entriesPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, sortBy, queryStatus, entriesPerPage]);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
 
   const handleDelete = async (uid) => {
     if (!window.confirm('Delete this jobseeker profile and login user?')) return;
@@ -154,6 +179,24 @@ export const Jobseekers = () => {
 
   const closeHistory = () => setHistoryModal({ open: false, loading: false, error: '', data: null });
 
+  useEffect(() => {
+    if (!historyModal.open) return undefined;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [historyModal.open]);
+
+  useEffect(() => {
+    if (!queryCandidateId || loading || historyModal.open || autoOpenedCandidateId === queryCandidateId) return;
+    const target = list.find((item) => String(item._id) === String(queryCandidateId));
+    if (target) {
+      setAutoOpenedCandidateId(queryCandidateId);
+      openHistory(target);
+    }
+  }, [queryCandidateId, loading, list, historyModal.open, autoOpenedCandidateId]);
+
   if (loading) {
     return <PageSkeleton variant="table" />;
   }
@@ -161,21 +204,21 @@ export const Jobseekers = () => {
   return (
     <div className="min-w-0 space-y-5">
       {historyModal.open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4">
-          <div className="max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-xl bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-              <div>
-                <h2 className="text-lg font-extrabold text-slate-800">Application History</h2>
-                <p className="mt-1 text-xs font-semibold text-slate-400">
+        <div className="fixed inset-0 z-[100] grid place-items-center bg-slate-950/55 p-3 sm:p-5">
+          <div className="flex h-[min(860px,calc(100vh-40px))] w-[min(1180px,calc(100vw-32px))] max-w-full flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl">
+            <div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-200 bg-white px-4 py-3 sm:px-5">
+              <div className="min-w-0">
+                <h2 className="truncate text-base font-extrabold text-slate-800 sm:text-lg">Application History</h2>
+                <p className="mt-0.5 truncate text-xs font-semibold text-slate-400 sm:text-sm">
                   {historyModal.data?.jobseeker?.name || 'Jobseeker'} {historyModal.data?.jobseeker?.email ? `· ${historyModal.data.jobseeker.email}` : ''}
                 </p>
               </div>
-              <button type="button" onClick={closeHistory} className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Close history">
+              <button type="button" onClick={closeHistory} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Close history">
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="max-h-[calc(88vh-76px)] overflow-y-auto p-5">
+            <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50/40 p-4 sm:p-5">
               {historyModal.loading ? (
                 <div className="flex min-h-64 items-center justify-center">
                   <Loader className="h-8 w-8 animate-spin text-indigo-600" />
@@ -184,7 +227,32 @@ export const Jobseekers = () => {
                 <div className="rounded-lg border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{historyModal.error}</div>
               ) : (
                 <>
-                  <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+                  <div className="mb-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
+                      <div className="min-w-0"><span className="block text-[11px] font-extrabold uppercase text-slate-400">Phone</span><span className="block truncate font-bold text-slate-800">{historyModal.data?.jobseeker?.phone || '—'}</span></div>
+                      <div className="min-w-0"><span className="block text-[11px] font-extrabold uppercase text-slate-400">Location</span><span className="block truncate font-bold text-slate-800">{historyModal.data?.jobseeker?.location || '—'}</span></div>
+                      <div className="min-w-0"><span className="block text-[11px] font-extrabold uppercase text-slate-400">Qualification</span><span className="block truncate font-bold text-slate-800">{historyModal.data?.jobseeker?.qualification || '—'}</span></div>
+                      <div className="min-w-0"><span className="block text-[11px] font-extrabold uppercase text-slate-400">Experience</span><span className="block truncate font-bold text-slate-800">{historyModal.data?.jobseeker?.experience || '—'}</span></div>
+                      <div className="min-w-0"><span className="block text-[11px] font-extrabold uppercase text-slate-400">Status</span><span className="block truncate font-bold capitalize text-slate-800">{historyModal.data?.jobseeker?.status || '—'}</span></div>
+                      <div>
+                        <span className="block text-[11px] font-extrabold uppercase text-slate-400">Resume</span>
+                        {historyModal.data?.jobseeker?.resume ? (
+                          <a
+                            href={historyModal.data.jobseeker.resume.startsWith('http') ? historyModal.data.jobseeker.resume : `http://${historyModal.data.jobseeker.resume}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 font-bold text-indigo-600"
+                          >
+                            <FileText className="h-4 w-4" /> Resume
+                          </a>
+                        ) : (
+                          <span className="font-bold text-slate-800">—</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
                     {[
                       ['Total', historyModal.data?.stats?.total || 0],
                       ['Applied', historyModal.data?.stats?.applied || 0],
@@ -193,46 +261,48 @@ export const Jobseekers = () => {
                       ['Offered', historyModal.data?.stats?.offered || 0],
                       ['Rejected', historyModal.data?.stats?.rejected || 0],
                     ].map(([label, value]) => (
-                      <div key={label} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
-                        <p className="text-xs font-bold text-slate-400">{label}</p>
-                        <p className="mt-1 text-xl font-black text-slate-800">{value}</p>
+                      <div key={label} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+                        <p className="text-xs font-extrabold text-slate-400">{label}</p>
+                        <p className="mt-1 text-2xl font-black leading-none text-slate-800">{value}</p>
                       </div>
                     ))}
                   </div>
 
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[900px] text-left text-sm">
-                      <thead className="bg-slate-50 text-xs uppercase text-slate-400">
+                  <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                    <div className="max-w-full overflow-x-auto">
+                    <table className="w-full min-w-[920px] text-left text-sm">
+                      <thead className="bg-slate-100 text-[11px] uppercase text-slate-500">
                         <tr>
-                          <th className="px-4 py-3">Employer</th>
-                          <th className="px-4 py-3">Job</th>
-                          <th className="px-4 py-3">Applied</th>
-                          <th className="px-4 py-3">Application Status</th>
-                          <th className="px-4 py-3">Job Status</th>
-                          <th className="px-4 py-3">Match</th>
+                          <th className="w-[27%] px-4 py-3">Employer</th>
+                          <th className="w-[28%] px-4 py-3">Job</th>
+                          <th className="w-[13%] px-4 py-3">Applied</th>
+                          <th className="w-[14%] px-4 py-3">Application Status</th>
+                          <th className="w-[10%] px-4 py-3">Job Status</th>
+                          <th className="w-[8%] px-4 py-3 text-right">Match</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
                         {(historyModal.data?.history || []).length ? historyModal.data.history.map((row) => (
-                          <tr key={row.id}>
-                            <td className="px-4 py-3">
-                              <div className="font-bold text-slate-800">{row.employerName}</div>
-                              <div className="text-xs text-slate-400">{row.employerEmail || '—'}</div>
+                          <tr key={row.id} className="hover:bg-slate-50">
+                            <td className="px-4 py-3 align-top">
+                              <div className="max-w-[280px] truncate font-bold text-slate-800" title={row.employerName}>{row.employerName}</div>
+                              <div className="max-w-[280px] truncate text-xs font-semibold text-slate-400" title={row.employerEmail || ''}>{row.employerEmail || '—'}</div>
                             </td>
-                            <td className="px-4 py-3">
-                              <div className="font-bold text-slate-800">{row.jobTitle}</div>
-                              <div className="text-xs text-slate-400">{row.jobLocation || '—'}</div>
+                            <td className="px-4 py-3 align-top">
+                              <div className="max-w-[300px] truncate font-bold text-slate-800" title={row.jobTitle}>{row.jobTitle}</div>
+                              <div className="max-w-[300px] truncate text-xs font-semibold text-slate-400" title={row.jobLocation || ''}>{row.jobLocation || '—'}</div>
                             </td>
-                            <td className="px-4 py-3 text-slate-600">{row.appliedDisplayDate}</td>
-                            <td className="px-4 py-3"><span className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-600">{row.applicationStatus}</span></td>
-                            <td className="px-4 py-3 text-slate-600">{row.jobStatus || '—'}</td>
-                            <td className="px-4 py-3 font-black text-indigo-600">{row.matchScore}%</td>
+                            <td className="px-4 py-3 align-top font-semibold text-slate-600">{row.appliedDisplayDate}</td>
+                            <td className="px-4 py-3 align-top"><span className="inline-flex rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-extrabold text-indigo-600">{row.applicationStatus}</span></td>
+                            <td className="px-4 py-3 align-top font-semibold capitalize text-slate-600">{row.jobStatus || '—'}</td>
+                            <td className="px-4 py-3 text-right align-top font-black text-indigo-600">{row.matchScore}%</td>
                           </tr>
                         )) : (
                           <tr><td colSpan="6" className="px-4 py-10 text-center text-sm font-bold text-slate-400">No applications found for this jobseeker.</td></tr>
                         )}
                       </tbody>
                     </table>
+                    </div>
                   </div>
                 </>
               )}
@@ -316,10 +386,18 @@ export const Jobseekers = () => {
 
           {/* Mobile cards */}
           <ResponsiveCardList
-            items={filteredList}
+            items={paginatedList}
             emptyMessage="No candidates found."
             renderCard={(item, index) => (
-              <div className="flex flex-col gap-2">
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => openHistory(item)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') openHistory(item);
+                }}
+                className="flex cursor-pointer flex-col gap-2"
+              >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm shrink-0">
@@ -360,33 +438,34 @@ export const Jobseekers = () => {
                           href={item.resume?.startsWith('http') ? item.resume : `http://${item.resume}`}
                           target="_blank"
                           rel="noreferrer"
+                          onClick={(e) => e.stopPropagation()}
                           className={`w-8 h-8 rounded-full flex items-center justify-center ${item.resume ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-400'}`}
                         >
                           <FileText className="w-4 h-4" />
                         </a>
                         {item.status !== 'active' && (
-                          <button onClick={() => toggleStatus(item, 'active')} className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                          <button onClick={(e) => { e.stopPropagation(); toggleStatus(item, 'active'); }} className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
                             <ShieldCheck className="w-4 h-4" />
                           </button>
                         )}
                         {item.status !== 'blacklist' && (
-                          <button onClick={() => toggleStatus(item, 'blacklist')} className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
+                          <button onClick={(e) => { e.stopPropagation(); toggleStatus(item, 'blacklist'); }} className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
                             <Ban className="w-4 h-4" />
                           </button>
                         )}
-                        <button onClick={() => navigate(`/admin/jobseekers/edit/${item._id}`)} className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                        <button onClick={(e) => { e.stopPropagation(); navigate(`/admin/jobseekers/edit/${item._id}`); }} className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
                           <Edit2 className="w-4 h-4" />
                         </button>
-                        <button onClick={() => openHistory(item)} className="w-8 h-8 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center">
+                        <button onClick={(e) => { e.stopPropagation(); openHistory(item); }} className="w-8 h-8 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center">
                           <History className="w-4 h-4" />
                         </button>
-                        <button onClick={() => handleDelete(item._id)} className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
+                        <button onClick={(e) => { e.stopPropagation(); handleDelete(item._id); }} className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </>
                     )}
                     {item.profileIncomplete && (
-                      <button onClick={() => openHistory(item)} className="w-8 h-8 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center">
+                      <button onClick={(e) => { e.stopPropagation(); openHistory(item); }} className="w-8 h-8 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center">
                         <History className="w-4 h-4" />
                       </button>
                     )}
@@ -414,17 +493,17 @@ export const Jobseekers = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredList.length === 0 ? (
+                {paginatedList.length === 0 ? (
                   <tr>
                     <td colSpan="10" className="px-4 py-8 text-center text-slate-400 text-sm">
                       No candidates found.
                     </td>
                   </tr>
                 ) : (
-                  filteredList.map((item, index) => (
-                    <tr key={item._id} className="odd:bg-white even:bg-slate-50">
+                  paginatedList.map((item, index) => (
+                    <tr key={item._id} onClick={() => openHistory(item)} className="cursor-pointer odd:bg-white even:bg-slate-50 hover:bg-slate-100">
                       <td className="px-4 py-3 text-slate-400 text-xs font-medium">
-                        {String(index + 1).padStart(3, '0')}
+                        {String(startIndex + index + 1).padStart(3, '0')}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
@@ -491,7 +570,7 @@ export const Jobseekers = () => {
                             <>
                               <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-600">Profile pending</span>
                               <button
-                                onClick={() => openHistory(item)}
+                                onClick={(e) => { e.stopPropagation(); openHistory(item); }}
                                 title="Application History"
                                 className="w-7 h-7 rounded-full flex items-center justify-center bg-sky-50 hover:bg-sky-100 text-sky-600 transition-colors"
                               >
@@ -506,6 +585,7 @@ export const Jobseekers = () => {
                                   target="_blank"
                                   rel="noreferrer"
                                   title="View Resume"
+                                  onClick={(e) => e.stopPropagation()}
                                   className="w-7 h-7 rounded-full flex items-center justify-center bg-indigo-50 hover:bg-indigo-100 text-indigo-500 transition-colors"
                                 >
                                   <FileText className="w-3.5 h-3.5" />
@@ -513,7 +593,7 @@ export const Jobseekers = () => {
                               )}
                               {item.status !== 'active' && (
                                 <button
-                                  onClick={() => toggleStatus(item, 'active')}
+                                  onClick={(e) => { e.stopPropagation(); toggleStatus(item, 'active'); }}
                                   title="Activate"
                                   className="w-7 h-7 rounded-full flex items-center justify-center bg-emerald-50 hover:bg-emerald-100 text-emerald-600 transition-colors"
                                 >
@@ -522,7 +602,7 @@ export const Jobseekers = () => {
                               )}
                               {item.status !== 'blacklist' && (
                                 <button
-                                  onClick={() => toggleStatus(item, 'blacklist')}
+                                  onClick={(e) => { e.stopPropagation(); toggleStatus(item, 'blacklist'); }}
                                   title="Blacklist"
                                   className="w-7 h-7 rounded-full flex items-center justify-center bg-rose-50 hover:bg-rose-100 text-rose-500 transition-colors"
                                 >
@@ -530,21 +610,21 @@ export const Jobseekers = () => {
                                 </button>
                               )}
                               <button
-                                onClick={() => navigate(`/admin/jobseekers/edit/${item._id}`)}
+                                onClick={(e) => { e.stopPropagation(); navigate(`/admin/jobseekers/edit/${item._id}`); }}
                                 title="Edit"
                                 className="w-7 h-7 rounded-full flex items-center justify-center bg-emerald-50 hover:bg-emerald-100 text-emerald-600 transition-colors"
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
                               </button>
                               <button
-                                onClick={() => openHistory(item)}
+                                onClick={(e) => { e.stopPropagation(); openHistory(item); }}
                                 title="Application History"
                                 className="w-7 h-7 rounded-full flex items-center justify-center bg-sky-50 hover:bg-sky-100 text-sky-600 transition-colors"
                               >
                                 <History className="w-3.5 h-3.5" />
                               </button>
                               <button
-                                onClick={() => handleDelete(item._id)}
+                                onClick={(e) => { e.stopPropagation(); handleDelete(item._id); }}
                                 title="Delete"
                                 className="w-7 h-7 rounded-full flex items-center justify-center bg-rose-50 hover:bg-rose-100 text-rose-500 transition-colors"
                               >
@@ -560,6 +640,15 @@ export const Jobseekers = () => {
               </tbody>
             </table>
           </div>
+
+          <AdminPagination
+            currentPage={currentPage}
+            entriesPerPage={entriesPerPage}
+            total={filteredList.length}
+            label="jobseekers"
+            onPageChange={setCurrentPage}
+            onEntriesPerPageChange={setEntriesPerPage}
+          />
 
         </div>
       </div>

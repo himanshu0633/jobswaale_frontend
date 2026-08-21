@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import {
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 
 export const CandidateReports = () => {
+  const navigate = useNavigate();
   const [candidates, setCandidates] = useState([]);
   const [stats, setStats] = useState({ totalCandidates: 0, active: 0, newThisMonth: 0, verified: 0 });
   const [loading, setLoading] = useState(true);
@@ -66,6 +67,19 @@ export const CandidateReports = () => {
     setRegDate('');
     setCurrentPage(1);
   };
+
+  const currentMonthLabel = new Date().toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+
+  const showNewThisMonth = () => {
+    setRegDate(currentMonthLabel);
+    setSearch('');
+    setSelectedExperience('');
+    setSelectedLocation('');
+    setSelectedSkill('');
+    setCurrentPage(1);
+  };
+
+  const metricCardClass = "w-full bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between text-left transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500/20";
 
   // Filter Logic
   const filteredCandidates = useMemo(() => {
@@ -118,7 +132,7 @@ export const CandidateReports = () => {
       {/* Dashboard Mini Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Candidates */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between">
+        <button type="button" onClick={() => navigate('/admin/jobseekers')} className={metricCardClass}>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-indigo-50 text-indigo-600 rounded-lg">
               <Users className="w-6 h-6" />
@@ -128,10 +142,10 @@ export const CandidateReports = () => {
               <p className="text-xs text-slate-500 font-semibold">Total Candidates</p>
             </div>
           </div>
-        </div>
+        </button>
 
         {/* Active */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between">
+        <button type="button" onClick={() => navigate('/admin/jobseekers?status=active')} className={metricCardClass}>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg">
               <UserCheck className="w-6 h-6" />
@@ -141,10 +155,10 @@ export const CandidateReports = () => {
               <p className="text-xs text-slate-500 font-semibold">Active</p>
             </div>
           </div>
-        </div>
+        </button>
 
         {/* New This Month */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between">
+        <button type="button" onClick={showNewThisMonth} className={metricCardClass}>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-sky-50 text-sky-600 rounded-lg">
               <UserPlus className="w-6 h-6" />
@@ -154,10 +168,10 @@ export const CandidateReports = () => {
               <p className="text-xs text-slate-500 font-semibold">New This Month</p>
             </div>
           </div>
-        </div>
+        </button>
 
         {/* Verified */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between">
+        <button type="button" onClick={() => navigate('/admin/jobseekers?status=active')} className={metricCardClass}>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-warning-50 text-warning-600 rounded-lg">
               <ShieldCheck className="w-6 h-6" />
@@ -167,7 +181,7 @@ export const CandidateReports = () => {
               <p className="text-xs text-slate-500 font-semibold">Verified</p>
             </div>
           </div>
-        </div>
+        </button>
       </div>
 
       {/* Main Grid View / Card Listings */}

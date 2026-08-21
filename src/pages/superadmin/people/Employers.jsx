@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
@@ -16,6 +16,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import ResponsiveCardList from '../../../components/ResponsiveCardList';
+import AdminPagination from '../../../components/AdminPagination';
 
 const formatDate = (value) => {
   if (!value) return '—';
@@ -51,8 +52,12 @@ export const Employers = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('latest');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [message, setMessage] = useState({ type: '', text: '' });
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const queryStatus = searchParams.get('status') || '';
 
   const showMessage = (type, text) => {
     setMessage({ type, text });
@@ -88,6 +93,8 @@ export const Employers = () => {
     const filtered = list.filter(item => {
       const verificationText = isEmployerVerified(item) ? 'verified' : 'unverified';
       return (
+        (!queryStatus || item.status === queryStatus) &&
+        (
         (item.companyName || '').toLowerCase().includes(q) ||
         (item.contactPerson && item.contactPerson.toLowerCase().includes(q)) ||
         (item.phone || '').includes(q) ||
@@ -96,6 +103,7 @@ export const Employers = () => {
         (item.companyType || '').toLowerCase().includes(q) ||
         (item.companySize || '').toLowerCase().includes(q) ||
         verificationText.includes(q)
+        )
       );
     });
 
@@ -118,7 +126,19 @@ export const Employers = () => {
       }
       return 0;
     });
-  }, [search, list, sortBy]);
+  }, [search, list, sortBy, queryStatus]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredList.length / entriesPerPage));
+  const startIndex = (currentPage - 1) * entriesPerPage;
+  const paginatedList = filteredList.slice(startIndex, startIndex + entriesPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, sortBy, queryStatus, entriesPerPage]);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
 
   const handleDelete = async (uid) => {
     if (!window.confirm('Delete this employer profile and login user?')) return;
@@ -264,7 +284,7 @@ export const Employers = () => {
 
           {/* Mobile cards */}
           <ResponsiveCardList
-            items={filteredList}
+            items={paginatedList}
             emptyMessage="No employers found."
             renderCard={(item) => (
               <div className="flex flex-col gap-2">
@@ -357,17 +377,17 @@ export const Employers = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredList.length === 0 ? (
+                {paginatedList.length === 0 ? (
                   <tr>
                     <td colSpan="11" className="px-4 py-8 text-center text-slate-400 text-sm">
                       No employers found.
                     </td>
                   </tr>
                 ) : (
-                  filteredList.map((item, index) => (
+                  paginatedList.map((item, index) => (
                     <tr key={item._id} className="odd:bg-white even:bg-slate-50">
                       <td className="px-4 py-3 text-slate-400 text-xs font-medium">
-                        {String(index + 1).padStart(3, '0')}
+                        {String(startIndex + index + 1).padStart(3, '0')}
                       </td>
                       <td className="px-4 py-3">
                         <div className="font-semibold text-slate-800">{item.companyName}</div>
@@ -505,6 +525,15 @@ export const Employers = () => {
               </tbody>
             </table>
           </div>
+
+          <AdminPagination
+            currentPage={currentPage}
+            entriesPerPage={entriesPerPage}
+            total={filteredList.length}
+            label="employers"
+            onPageChange={setCurrentPage}
+            onEntriesPerPageChange={setEntriesPerPage}
+          />
 
         </div>
       </div>

@@ -66,6 +66,17 @@ export const ApplicationReports = () => {
     setCurrentPage(1);
   };
 
+  const showApplicationsByStatus = (status = '') => {
+    setSelectedStatus(status);
+    setSelectedEmployer('');
+    setSelectedJob('');
+    setSearch('');
+    setDateRange('');
+    setCurrentPage(1);
+  };
+
+  const metricCardClass = "w-full bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between text-left transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500/20";
+
   // Filter Logic
   const filteredApplications = useMemo(() => {
     setCurrentPage(1); // Reset to page 1 when filter changes
@@ -126,7 +137,7 @@ export const ApplicationReports = () => {
       {/* Dashboard Mini Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Applications */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between">
+        <button type="button" onClick={() => showApplicationsByStatus('')} className={metricCardClass}>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-indigo-50 text-indigo-600 rounded-lg">
               <FileText className="w-6 h-6" />
@@ -136,10 +147,10 @@ export const ApplicationReports = () => {
               <p className="text-xs text-slate-500 font-semibold">Total Applications</p>
             </div>
           </div>
-        </div>
+        </button>
 
         {/* Shortlisted */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between">
+        <button type="button" onClick={() => showApplicationsByStatus('Shortlisted')} className={metricCardClass}>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-sky-50 text-sky-600 rounded-lg">
               <UserCheck className="w-6 h-6" />
@@ -149,10 +160,10 @@ export const ApplicationReports = () => {
               <p className="text-xs text-slate-500 font-semibold">Shortlisted</p>
             </div>
           </div>
-        </div>
+        </button>
 
         {/* Rejected */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between">
+        <button type="button" onClick={() => showApplicationsByStatus('Rejected')} className={metricCardClass}>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-rose-50 text-rose-600 rounded-lg">
               <UserX className="w-6 h-6" />
@@ -162,10 +173,10 @@ export const ApplicationReports = () => {
               <p className="text-xs text-slate-500 font-semibold">Rejected</p>
             </div>
           </div>
-        </div>
+        </button>
 
         {/* Selected */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between">
+        <button type="button" onClick={() => showApplicationsByStatus('Selected')} className={metricCardClass}>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg">
               <UserCheck className="w-6 h-6" />
@@ -175,7 +186,7 @@ export const ApplicationReports = () => {
               <p className="text-xs text-slate-500 font-semibold">Selected</p>
             </div>
           </div>
-        </div>
+        </button>
       </div>
 
       {/* Main Grid View / Card Listings */}

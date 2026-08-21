@@ -131,6 +131,29 @@ export const Transactions = () => {
     setCurrentPage(1);
   };
 
+  const applyMetricFilter = (nextFilters = {}) => {
+    const merged = {
+      type: '',
+      category: '',
+      userType: '',
+      fromDate: '',
+      toDate: '',
+      search: '',
+      ...nextFilters
+    };
+    setType(merged.type);
+    setCategory(merged.category);
+    setUserType(merged.userType);
+    setFromDate(merged.fromDate);
+    setToDate(merged.toDate);
+    setSearchVal(merged.search);
+    setFilters(merged);
+    setCurrentPage(1);
+  };
+
+  const today = new Date().toISOString().slice(0, 10);
+  const metricCardClass = "w-full border border-slate-200 bg-white rounded-2xl shadow-sm p-4 flex items-center justify-between text-left transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500/20";
+
   const startIndex = (currentPage - 1) * entriesPerPage;
 
   const getPageNumbers = () => {
@@ -169,7 +192,7 @@ export const Transactions = () => {
       {/* Metrics Summary cards */}
       <div className="grid gap-4 md:grid-cols-4 -ml-3 lg:-ml-5">
         {/* Card 1: Total Credits */}
-        <div className="border border-slate-200 bg-white rounded-2xl shadow-sm p-4 flex items-center justify-between">
+        <button type="button" onClick={() => applyMetricFilter({ type: 'Credit' })} className={metricCardClass}>
           <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
             <ArrowDownLeft className="w-6 h-6" />
           </div>
@@ -179,10 +202,10 @@ export const Transactions = () => {
             </h3>
             <p className="text-xs text-slate-400 font-semibold mt-0.5">Total Credits</p>
           </div>
-        </div>
+        </button>
 
         {/* Card 2: Total Debits */}
-        <div className="border border-slate-200 bg-white rounded-2xl shadow-sm p-4 flex items-center justify-between">
+        <button type="button" onClick={() => applyMetricFilter({ type: 'Debit' })} className={metricCardClass}>
           <div className="w-12 h-12 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center">
             <ArrowUpRight className="w-6 h-6" />
           </div>
@@ -192,10 +215,10 @@ export const Transactions = () => {
             </h3>
             <p className="text-xs text-slate-400 font-semibold mt-0.5">Total Debits</p>
           </div>
-        </div>
+        </button>
 
         {/* Card 3: Net Balance */}
-        <div className="border border-slate-200 bg-white rounded-2xl shadow-sm p-4 flex items-center justify-between">
+        <button type="button" onClick={() => applyMetricFilter()} className={metricCardClass}>
           <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
             <Scale className="w-6 h-6" />
           </div>
@@ -205,10 +228,10 @@ export const Transactions = () => {
             </h3>
             <p className="text-xs text-slate-400 font-semibold mt-0.5">Net Balance</p>
           </div>
-        </div>
+        </button>
 
         {/* Card 4: Today's Activity */}
-        <div className="border border-slate-200 bg-white rounded-2xl shadow-sm p-4 flex items-center justify-between">
+        <button type="button" onClick={() => applyMetricFilter({ fromDate: today, toDate: today })} className={metricCardClass}>
           <div className="w-12 h-12 bg-sky-50 text-sky-600 rounded-xl flex items-center justify-center">
             <Activity className="w-6 h-6" />
           </div>
@@ -218,7 +241,7 @@ export const Transactions = () => {
             </h3>
             <p className="text-xs text-slate-400 font-semibold mt-0.5">Today's Activity</p>
           </div>
-        </div>
+        </button>
       </div>
 
       {/* Filter and Ledger section */}

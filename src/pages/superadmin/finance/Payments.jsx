@@ -169,10 +169,10 @@ export const Payments = () => {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 -ml-3 lg:-ml-5">
-        <SummaryCard icon={<span className="text-2xl font-bold">Rs.</span>} value={formatAmount(summary.revenue)} label="Total Revenue (Rs.)" tone="indigo" />
-        <SummaryCard icon={<CheckCircle2 className="w-6 h-6" />} value={summary.success} label="Successful" tone="emerald" />
-        <SummaryCard icon={<RefreshCcw className="w-6 h-6" />} value={summary.pending} label="Pending" tone="amber" />
-        <SummaryCard icon={<ReceiptText className="w-6 h-6" />} value={summary.failed} label="Failed / Refunded" tone="rose" />
+        <SummaryCard icon={<span className="text-2xl font-bold">Rs.</span>} value={formatAmount(summary.revenue)} label="Total Revenue (Rs.)" tone="indigo" onClick={resetFilters} />
+        <SummaryCard icon={<CheckCircle2 className="w-6 h-6" />} value={summary.success} label="Successful" tone="emerald" onClick={() => updateFilter('status', 'Success')} />
+        <SummaryCard icon={<RefreshCcw className="w-6 h-6" />} value={summary.pending} label="Pending" tone="amber" onClick={() => updateFilter('status', 'Pending')} />
+        <SummaryCard icon={<ReceiptText className="w-6 h-6" />} value={summary.failed} label="Failed / Refunded" tone="rose" onClick={() => updateFilter('status', 'Failed')} />
       </div>
 
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden -ml-3 lg:-ml-5">
@@ -368,7 +368,7 @@ export const Payments = () => {
   );
 };
 
-const SummaryCard = ({ icon, value, label, tone }) => {
+const SummaryCard = ({ icon, value, label, tone, onClick }) => {
   const tones = {
     indigo: 'bg-[#e8e6fa] text-[#6658dd]',
     emerald: 'bg-emerald-50 text-emerald-500',
@@ -377,7 +377,7 @@ const SummaryCard = ({ icon, value, label, tone }) => {
   };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl shadow-sm px-5 py-4 flex items-center justify-between">
+    <button type="button" onClick={onClick} className="w-full bg-white border border-slate-200 rounded-xl shadow-sm px-5 py-4 flex items-center justify-between text-left transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
       <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${tones[tone]}`}>
         {icon}
       </div>
@@ -385,7 +385,7 @@ const SummaryCard = ({ icon, value, label, tone }) => {
         <div className="text-2xl font-extrabold text-slate-800">{value}</div>
         <div className="text-sm font-semibold text-slate-400">{label}</div>
       </div>
-    </div>
+    </button>
   );
 };
 

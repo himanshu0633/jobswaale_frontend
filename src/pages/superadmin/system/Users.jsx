@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { AlertCircle, CheckCircle, Edit2, Loader, Plus, Search, Trash2, User, X } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
@@ -16,6 +16,9 @@ const Users = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [message, setMessage] = useState({ type: '', text: '' });
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const queryStatus = searchParams.get('status') || '';
+  const queryNew = searchParams.get('new') || '';
 
   const showMessage = (type, text) => {
     setMessage({ type, text });
@@ -40,16 +43,25 @@ const Users = () => {
     load();
   }, []);
 
+  useEffect(() => {
+    setStatusFilter(queryStatus);
+  }, [queryStatus]);
+
   const filteredUsers = useMemo(() => {
     const q = search.toLowerCase();
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
     return users.filter(user => {
       const fullName = `${user.firstName || ''} ${user.lastName || ''}`.toLowerCase();
       const matchesSearch = fullName.includes(q) || user.email.toLowerCase().includes(q) || (user.username || '').toLowerCase().includes(q);
       const matchesRole = !roleFilter || user.roleRef?._id === roleFilter;
       const matchesStatus = !statusFilter || user.status === statusFilter;
-      return matchesSearch && matchesRole && matchesStatus;
+      const createdDate = new Date(user.createDate || user.createdAt || user.registeredOn || 0);
+      const matchesNew = queryNew === 'month' ? createdDate >= monthStart : true;
+      return matchesSearch && matchesRole && matchesStatus && matchesNew;
     });
-  }, [users, search, roleFilter, statusFilter]);
+  }, [users, search, roleFilter, statusFilter, queryNew]);
 
   const deleteUser = async (id) => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;

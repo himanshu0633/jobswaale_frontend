@@ -67,6 +67,17 @@ export const FinanceReports = () => {
     setCurrentPage(1);
   };
 
+  const showTransactionsByStatus = (status = '') => {
+    setSelectedStatus(status);
+    setSelectedPaymentType('');
+    setSelectedGateway('');
+    setSearch('');
+    setDateRange('');
+    setCurrentPage(1);
+  };
+
+  const metricCardClass = "w-full bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between text-left transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500/20";
+
   // Filter Logic
   const filteredTransactions = useMemo(() => {
     setCurrentPage(1); // Reset to page 1 when filter changes
@@ -76,7 +87,9 @@ export const FinanceReports = () => {
         txn.id.toLowerCase().includes(search.toLowerCase());
 
       const matchPaymentType = selectedPaymentType ? txn.paymentType === selectedPaymentType : true;
-      const matchStatus = selectedStatus ? txn.status === selectedStatus : true;
+      const matchStatus = selectedStatus === 'Failed / Refunded'
+        ? ['Failed', 'Refunded'].includes(txn.status)
+        : selectedStatus ? txn.status === selectedStatus : true;
       const matchGateway = selectedGateway ? txn.gateway === selectedGateway : true;
       const matchDate = dateRange ? txn.date.includes(dateRange) : true;
 
@@ -126,7 +139,7 @@ export const FinanceReports = () => {
       {/* Dashboard Mini Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Revenue */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between">
+        <button type="button" onClick={() => showTransactionsByStatus('')} className={metricCardClass}>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-indigo-50 text-indigo-600 rounded-lg">
               <DollarSign className="w-6 h-6" />
@@ -136,10 +149,10 @@ export const FinanceReports = () => {
               <p className="text-xs text-slate-500 font-semibold">Total Revenue</p>
             </div>
           </div>
-        </div>
+        </button>
 
         {/* Successful */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between">
+        <button type="button" onClick={() => showTransactionsByStatus('Success')} className={metricCardClass}>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg">
               <CheckCircle className="w-6 h-6" />
@@ -149,10 +162,10 @@ export const FinanceReports = () => {
               <p className="text-xs text-slate-500 font-semibold">Successful</p>
             </div>
           </div>
-        </div>
+        </button>
 
         {/* Pending */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between">
+        <button type="button" onClick={() => showTransactionsByStatus('Pending')} className={metricCardClass}>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-warning-50 text-warning-600 rounded-lg">
               <Clock className="w-6 h-6" />
@@ -162,10 +175,10 @@ export const FinanceReports = () => {
               <p className="text-xs text-slate-500 font-semibold">Pending</p>
             </div>
           </div>
-        </div>
+        </button>
 
         {/* Failed / Refunded */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between">
+        <button type="button" onClick={() => showTransactionsByStatus('Failed / Refunded')} className={metricCardClass}>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-rose-50 text-rose-600 rounded-lg">
               <RefreshCw className="w-6 h-6" />
@@ -175,7 +188,7 @@ export const FinanceReports = () => {
               <p className="text-xs text-slate-500 font-semibold">Failed / Refunded</p>
             </div>
           </div>
-        </div>
+        </button>
       </div>
 
       {/* Main Grid View / Card Listings */}
@@ -238,6 +251,7 @@ export const FinanceReports = () => {
                 <option value="Success">Success</option>
                 <option value="Pending">Pending</option>
                 <option value="Failed">Failed</option>
+                <option value="Failed / Refunded">Failed / Refunded</option>
                 <option value="Refunded">Refunded</option>
                 <option value="Cancelled">Cancelled</option>
               </select>

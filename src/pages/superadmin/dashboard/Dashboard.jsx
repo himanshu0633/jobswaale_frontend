@@ -16,8 +16,6 @@ import {
   FileText,
   Home,
   Image,
-  Loader,
-  MoreVertical,
   Plus,
   UserRound,
   Users
@@ -100,10 +98,10 @@ const ViewAllButton = ({ to }) => (
   </Link>
 );
 
-const StatCard = ({ icon: Icon, value, title, tone }) => {
+const StatCard = ({ icon: Icon, value, title, tone, to }) => {
   const t = tones[tone];
-  return (
-    <div className="rounded-[5px] bg-white p-2 shadow-[0_0.75rem_6rem_rgba(56,65,74,0.03)]">
+  const content = (
+    <>
       <div className="flex items-center justify-between">
         <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[5px] ${t.bg} ${t.text}`}>
           <Icon className="h-7 w-7" />
@@ -120,8 +118,11 @@ const StatCard = ({ icon: Icon, value, title, tone }) => {
         </span>{' '}
         from last week
       </div>
-    </div>
+    </>
   );
+  const className = "block rounded-[5px] bg-white p-2 shadow-[0_0.75rem_6rem_rgba(56,65,74,0.03)] transition hover:-translate-y-0.5 hover:shadow-[0_0.75rem_3rem_rgba(56,65,74,0.12)] focus:outline-none focus:ring-2 focus:ring-[#6658dd]/30";
+
+  return to ? <Link to={to} className={className}>{content}</Link> : <div className={className}>{content}</div>;
 };
 
 const LineChart = ({ data = [] }) => {
@@ -241,12 +242,12 @@ export const Dashboard = () => {
   }
 
   const statCards = [
-    { title: 'Total Jobs', value: stats.jobsPosted, icon: Briefcase, tone: 'primary' },
-    { title: 'Active Jobs', value: stats.activeJobs, icon: ClipboardCheck, tone: 'success' },
-    { title: 'Total Users', value: stats.totalUsers, icon: Users, tone: 'warning' },
-    { title: 'Active Users', value: stats.activeUsers, icon: UserRound, tone: 'danger' },
-    { title: 'Companies', value: stats.employers, icon: Building2, tone: 'info' },
-    { title: 'Active Companies', value: stats.activeCompanies, icon: Home, tone: 'secondary' }
+    { title: 'Total Jobs', value: stats.jobsPosted, icon: Briefcase, tone: 'primary', to: '/admin/jobs' },
+    { title: 'Active Jobs', value: stats.activeJobs, icon: ClipboardCheck, tone: 'success', to: '/admin/jobs?status=active' },
+    { title: 'Total Users', value: stats.totalUsers, icon: Users, tone: 'warning', to: '/admin/jobseekers' },
+    { title: 'Active Users', value: stats.activeUsers, icon: UserRound, tone: 'danger', to: '/admin/jobseekers?status=active' },
+    { title: 'Companies', value: stats.employers, icon: Building2, tone: 'info', to: '/admin/employers' },
+    { title: 'Active Companies', value: stats.activeCompanies, icon: Home, tone: 'secondary', to: '/admin/employers?status=active' }
   ];
 
   return (
@@ -328,7 +329,11 @@ export const Dashboard = () => {
             </thead>
             <tbody>
               {stats.recentJobs.length ? stats.recentJobs.map((job) => (
-                <tr key={job.id} className="border-t border-[#e7e9eb]">
+                <tr
+                  key={job.id}
+                  onClick={() => navigate(`/admin/jobs?job=${encodeURIComponent(job.id || '')}&q=${encodeURIComponent(job.title || '')}`)}
+                  className="cursor-pointer border-t border-[#e7e9eb] transition hover:bg-[#f8f9fd]"
+                >
                   <td className="px-[18px] py-3">
                     <div className="flex items-center gap-2">
                       <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#6658dd]/10 text-[#6658dd]">
@@ -341,7 +346,7 @@ export const Dashboard = () => {
                   <td className="px-2 py-3 font-normal text-[#4c4c5c]">{formatNumber(job.vacancies)}</td>
                   <td className="px-2 py-3 font-normal text-[#4c4c5c]">{job.postedOn || '-'}</td>
                   <td className="px-2 py-3"><StatusBadge status={job.status} /></td>
-                  <td className="px-[18px] py-3 text-right text-[#9ba6b7]"><MoreVertical className="ml-auto h-[18px] w-[18px]" /></td>
+                  <td className="px-[18px] py-3 text-right text-[#9ba6b7]"><ChevronRight className="ml-auto h-[18px] w-[18px]" /></td>
                 </tr>
               )) : (
                 <tr><td colSpan="6" className="px-6 py-12 text-center text-[#9ba6b7]">No recent jobs found.</td></tr>
@@ -367,7 +372,11 @@ export const Dashboard = () => {
             </thead>
             <tbody>
               {stats.recentCandidates.length ? stats.recentCandidates.map((candidate) => (
-                <tr key={candidate.id} className="border-t border-[#e7e9eb]">
+                <tr
+                  key={candidate.id}
+                  onClick={() => navigate(`/admin/jobseekers?candidate=${encodeURIComponent(candidate.id || '')}&q=${encodeURIComponent(candidate.email || candidate.name || '')}`)}
+                  className="cursor-pointer border-t border-[#e7e9eb] transition hover:bg-[#f8f9fd]"
+                >
                   <td className="px-[18px] py-3">
                     <div className="flex items-center gap-2">
                       <span className={`flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br ${candidate.gradient || 'from-slate-400 to-slate-200'} text-xs font-bold text-white`}>
@@ -383,7 +392,7 @@ export const Dashboard = () => {
                   <td className="px-2 py-3 font-normal text-[#4c4c5c]">{candidate.company}</td>
                   <td className="px-2 py-3 font-normal text-[#4c4c5c]">{candidate.joinedOn || '-'}</td>
                   <td className="px-2 py-3"><StatusBadge status={candidate.status} /></td>
-                  <td className="px-[18px] py-3 text-right text-[#9ba6b7]"><MoreVertical className="ml-auto h-[18px] w-[18px]" /></td>
+                  <td className="px-[18px] py-3 text-right text-[#9ba6b7]"><ChevronRight className="ml-auto h-[18px] w-[18px]" /></td>
                 </tr>
               )) : (
                 <tr><td colSpan="6" className="px-6 py-12 text-center text-[#9ba6b7]">No recent candidates found.</td></tr>

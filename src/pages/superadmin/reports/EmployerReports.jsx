@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import {
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 
 export const EmployerReports = () => {
+  const navigate = useNavigate();
   const [employers, setEmployers] = useState([]);
   const [stats, setStats] = useState({ totalEmployers: 0, active: 0, newThisMonth: 0, totalJobsPosted: 0 });
   const [loading, setLoading] = useState(true);
@@ -65,6 +66,18 @@ export const EmployerReports = () => {
     setCurrentPage(1);
   };
 
+  const currentMonthLabel = new Date().toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+
+  const showNewThisMonth = () => {
+    setRegDate(currentMonthLabel);
+    setSearch('');
+    setSelectedCompany('');
+    setSelectedIndustry('');
+    setCurrentPage(1);
+  };
+
+  const metricCardClass = "w-full bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between text-left transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500/20";
+
   // Filter Logic
   const filteredEmployers = useMemo(() => {
     setCurrentPage(1); // Reset to page 1 when filter changes
@@ -108,7 +121,7 @@ export const EmployerReports = () => {
       {/* Dashboard Mini Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Employers */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between">
+        <button type="button" onClick={() => navigate('/admin/employers')} className={metricCardClass}>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-indigo-50 text-indigo-600 rounded-lg">
               <Building2 className="w-6 h-6" />
@@ -118,10 +131,10 @@ export const EmployerReports = () => {
               <p className="text-xs text-slate-500 font-semibold">Total Employers</p>
             </div>
           </div>
-        </div>
+        </button>
 
         {/* Active */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between">
+        <button type="button" onClick={() => navigate('/admin/employers?status=active')} className={metricCardClass}>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg">
               <UserCheck className="w-6 h-6" />
@@ -131,10 +144,10 @@ export const EmployerReports = () => {
               <p className="text-xs text-slate-500 font-semibold">Active</p>
             </div>
           </div>
-        </div>
+        </button>
 
         {/* New This Month */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between">
+        <button type="button" onClick={showNewThisMonth} className={metricCardClass}>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-sky-50 text-sky-600 rounded-lg">
               <PlusCircle className="w-6 h-6" />
@@ -144,10 +157,10 @@ export const EmployerReports = () => {
               <p className="text-xs text-slate-500 font-semibold">New This Month</p>
             </div>
           </div>
-        </div>
+        </button>
 
         {/* Total Jobs Posted */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between">
+        <button type="button" onClick={() => navigate('/admin/jobs')} className={metricCardClass}>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-warning-50 text-warning-600 rounded-lg">
               <Briefcase className="w-6 h-6" />
@@ -157,7 +170,7 @@ export const EmployerReports = () => {
               <p className="text-xs text-slate-500 font-semibold">Total Jobs Posted</p>
             </div>
           </div>
-        </div>
+        </button>
       </div>
 
       {/* Main Grid View / Card Listings */}

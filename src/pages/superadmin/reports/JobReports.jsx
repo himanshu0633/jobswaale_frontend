@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import { 
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 
 export const JobReports = () => {
+  const navigate = useNavigate();
   const [jobs, setJobs] = useState([]);
   const [stats, setStats] = useState({ totalJobs: 0, activeJobs: 0, expiredJobs: 0, totalApplications: 0 });
   const [loading, setLoading] = useState(true);
@@ -68,6 +69,18 @@ export const JobReports = () => {
     setSelectedLocation('');
     setCurrentPage(1);
   };
+
+  const showJobsByStatus = (status = '') => {
+    setSelectedStatus(status);
+    setSelectedEmployer('');
+    setSelectedType('');
+    setSelectedIndustry('');
+    setSelectedLocation('');
+    setSearch('');
+    setCurrentPage(1);
+  };
+
+  const metricCardClass = "w-full bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between text-left transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500/20";
 
   // Filter Logic
   const filteredJobs = useMemo(() => {
@@ -129,7 +142,7 @@ export const JobReports = () => {
       {/* Dashboard Mini Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Jobs */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between">
+        <button type="button" onClick={() => showJobsByStatus('')} className={metricCardClass}>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-indigo-50 text-indigo-600 rounded-lg">
               <Briefcase className="w-6 h-6" />
@@ -139,10 +152,10 @@ export const JobReports = () => {
               <p className="text-xs text-slate-500 font-semibold">Total Jobs</p>
             </div>
           </div>
-        </div>
+        </button>
 
         {/* Active Jobs */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between">
+        <button type="button" onClick={() => showJobsByStatus('Active')} className={metricCardClass}>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg">
               <ClipboardCheck className="w-6 h-6" />
@@ -152,10 +165,10 @@ export const JobReports = () => {
               <p className="text-xs text-slate-500 font-semibold">Active Jobs</p>
             </div>
           </div>
-        </div>
+        </button>
 
         {/* Expired Jobs */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between">
+        <button type="button" onClick={() => showJobsByStatus('Expired')} className={metricCardClass}>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-rose-50 text-rose-600 rounded-lg">
               <Clock className="w-6 h-6" />
@@ -165,10 +178,10 @@ export const JobReports = () => {
               <p className="text-xs text-slate-500 font-semibold">Expired Jobs</p>
             </div>
           </div>
-        </div>
+        </button>
 
         {/* Total Applications */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between">
+        <button type="button" onClick={() => navigate('/admin/reports/applications')} className={metricCardClass}>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-sky-50 text-sky-600 rounded-lg">
               <FileSpreadsheet className="w-6 h-6" />
@@ -178,7 +191,7 @@ export const JobReports = () => {
               <p className="text-xs text-slate-500 font-semibold">Total Applications</p>
             </div>
           </div>
-        </div>
+        </button>
       </div>
 
       {/* Main Grid View / Card Listings */}

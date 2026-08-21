@@ -7,10 +7,10 @@ import { BASE_API_URL } from '../../../context/AuthContext';
 // Colors pulled directly from the source template's CSS custom properties
 // (--ins-*-bg-subtle / --ins-* for the default light skin)
 const statCards = [
-  { key: 'totalUsers', label: 'Total Users', icon: Users, bg: '#e8e6fa', fg: '#6658dd', align: 'center' },
-  { key: 'activeUsers', label: 'Active Users', icon: UserCheck, bg: '#ddf5f0', fg: '#1abc9c', align: 'start' },
-  { key: 'totalRoles', label: 'Total Roles', icon: Shield, bg: '#fef4e4', fg: '#f7b84b', align: 'start' },
-  { key: 'newThisMonth', label: 'New This Month', icon: UserPlus, bg: '#e3f5fb', fg: '#43bfe5', align: 'start' },
+  { key: 'totalUsers', label: 'Total Users', icon: Users, bg: '#e8e6fa', fg: '#6658dd', align: 'center', to: '/admin/users-roles/users' },
+  { key: 'activeUsers', label: 'Active Users', icon: UserCheck, bg: '#ddf5f0', fg: '#1abc9c', align: 'start', to: '/admin/users-roles/users?status=active' },
+  { key: 'totalRoles', label: 'Total Roles', icon: Shield, bg: '#fef4e4', fg: '#f7b84b', align: 'start', to: '/admin/users-roles/roles' },
+  { key: 'newThisMonth', label: 'New This Month', icon: UserPlus, bg: '#e3f5fb', fg: '#43bfe5', align: 'start', to: '/admin/users-roles/users?new=month' },
 ];
 
 const actionItems = [
@@ -95,7 +95,7 @@ const UsersRoles = () => {
             const Icon = card.icon;
             return (
               /* .card-body p-3 (Bootstrap p-3 = 1rem = 16px) */
-              <div key={card.key} className={`${cardClass} p-4`}>
+              <Link key={card.key} to={card.to} className={`${cardClass} block p-4 transition hover:-translate-y-0.5 hover:shadow-[0_0.75rem_3rem_rgba(56,65,74,0.12)] focus:outline-none focus:ring-2 focus:ring-[#6658dd]/30`}>
                 <div className={`flex justify-between ${card.align === 'center' ? 'items-center' : 'items-start'}`}>
                   {/* .avatar-xl (48px) + .rounded (0.3rem) */}
                   <div
@@ -110,7 +110,7 @@ const UsersRoles = () => {
                     <p className="text-sm text-[#9ba6b7] mb-0">{card.label}</p>
                   </div>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>
