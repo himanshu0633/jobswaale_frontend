@@ -9,6 +9,7 @@ import {
   Check,
   Clock,
   Download,
+  FileText,
   Loader,
   Mail,
   MapPin,
@@ -129,19 +130,19 @@ const Card = ({ title, children, className = '' }) => (
   </section>
 );
 
-const ActionButton = ({ tone, icon: Icon, children, onClick, disabled }) => (
+const ActionButton = ({ tone, icon: Icon, children, onClick, disabled, className }) => (
   <button
     type="button"
     onClick={onClick}
     disabled={disabled}
-    className={`inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-extrabold transition disabled:cursor-not-allowed disabled:opacity-60 ${tone}`}
+    className={`inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-extrabold transition disabled:cursor-not-allowed disabled:opacity-60 ${tone} ${className || ''}`}
   >
     <Icon className="h-4 w-4" />
     {children}
   </button>
 );
 
-const ResumeDownloadLink = ({ candidate }) => {
+const ResumeDownloadLink = ({ candidate, className }) => {
   if (!candidate.hasResume) return null;
 
   const handleDownload = () => {
@@ -156,7 +157,7 @@ const ResumeDownloadLink = ({ candidate }) => {
     <button
       type="button"
       onClick={handleDownload}
-      className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-600 transition hover:bg-slate-50"
+      className={`inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-600 transition hover:bg-slate-50 ${className || ''}`}
     >
       <Download className="h-4 w-4" /> Download Resume
     </button>
@@ -463,10 +464,21 @@ const EmployerApplicationDetails = () => {
     const details = application.interviewDetails || {};
     const onHold = details.onHold;
 
-    if (['Offered', 'Hired', 'Rejected'].includes(status)) return list;
+    if (['Offered', 'Hired'].includes(status)) return list;
 
-    // 1. Shortlist button: shown if status is Applied or Reviewed
-    if (status === 'Applied' || status === 'Reviewed') {
+    // 0. Mark as Applied button: shown if status is not Applied
+    if (status !== 'Applied') {
+      list.push({
+        key: 'Applied',
+        label: 'Mark as Applied',
+        tone: 'border border-emerald-200 bg-white text-emerald-600 hover:bg-emerald-50',
+        icon: FileText,
+        onClick: () => updateStatus('Applied')
+      });
+    }
+
+    // 1. Shortlist button: shown if status is Applied, Reviewed, or Rejected
+    if (['Applied', 'Reviewed', 'Rejected'].includes(status)) {
       list.push({
         key: 'Shortlisted',
         label: 'Shortlist',
@@ -477,8 +489,8 @@ const EmployerApplicationDetails = () => {
     }
 
     // 2. Schedule Interview or Reschedule Interview button:
-    // shown if status is Applied, Reviewed, Shortlisted, or Interview
-    if (['Applied', 'Reviewed', 'Shortlisted', 'Interview'].includes(status)) {
+    // shown if status is Applied, Reviewed, Shortlisted, Interview, or Rejected
+    if (['Applied', 'Reviewed', 'Shortlisted', 'Interview', 'Rejected'].includes(status)) {
       const isInterview = status === 'Interview';
       list.push({
         key: 'InterviewSchedule',
@@ -490,8 +502,8 @@ const EmployerApplicationDetails = () => {
     }
 
     // 3. On Hold for Interview button:
-    // shown if status is Applied, Reviewed, Shortlisted, or Interview (and not already on hold)
-    if (['Applied', 'Reviewed', 'Shortlisted', 'Interview'].includes(status)) {
+    // shown if status is Applied, Reviewed, Shortlisted, Interview, or Rejected (and not already on hold)
+    if (['Applied', 'Reviewed', 'Shortlisted', 'Interview', 'Rejected'].includes(status)) {
       if (!(status === 'Interview' && onHold)) {
         list.push({
           key: 'InterviewOnHold',
@@ -504,8 +516,8 @@ const EmployerApplicationDetails = () => {
     }
 
     // 4. Select button:
-    // shown if status is Applied, Reviewed, Shortlisted, or Interview
-    if (['Applied', 'Reviewed', 'Shortlisted', 'Interview'].includes(status)) {
+    // shown if status is Applied, Reviewed, Shortlisted, Interview, or Rejected
+    if (['Applied', 'Reviewed', 'Shortlisted', 'Interview', 'Rejected'].includes(status)) {
       list.push({
         key: 'Offered',
         label: 'Select',
@@ -516,8 +528,8 @@ const EmployerApplicationDetails = () => {
     }
 
     // 5. Reject button:
-    // shown if status is Applied, Reviewed, Shortlisted, or Interview
-    if (['Applied', 'Reviewed', 'Shortlisted', 'Interview'].includes(status)) {
+    // shown if status is Applied, Reviewed, Shortlisted, Interview, or Rejected
+    if (['Applied', 'Reviewed', 'Shortlisted', 'Interview', 'Rejected'].includes(status)) {
       list.push({
         key: 'Rejected',
         label: 'Reject',
@@ -585,13 +597,13 @@ const EmployerApplicationDetails = () => {
         <span className="rounded bg-emerald-50 px-2.5 py-1 text-xs font-black text-emerald-600"><Star className="mr-1 inline h-3.5 w-3.5" />{application.matchScore}% Match</span>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3">
         {topActions.map((action) => (
-          <ActionButton key={action.key} tone={action.tone} icon={action.icon} onClick={action.onClick} disabled={Boolean(saving)}>
+          <ActionButton key={action.key} tone={action.tone} icon={action.icon} onClick={action.onClick} disabled={Boolean(saving)} className="w-full">
             {action.label}
           </ActionButton>
         ))}
-        <ResumeDownloadLink candidate={candidate} />
+        <ResumeDownloadLink candidate={candidate} className="w-full" />
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[1fr_360px]">

@@ -98,6 +98,29 @@ export const EmployerDashboard = () => {
     };
   }, []);
 
+  const pipelineData = useMemo(() => {
+    const pipeline = dashboard.pipeline || {};
+    return [
+      { name: 'Applied', value: pipeline.applied || 0, color: '#10b981', link: '/employer/applications?status=Applied' },
+      { name: 'Shortlisted', value: pipeline.shortlisted || 0, color: '#f59e0b', link: '/employer/shortlisted' },
+      { name: 'Interview', value: pipeline.interview || 0, color: '#6658dd', link: '/employer/interviews' },
+      { name: 'On Hold', value: pipeline.onHold || 0, color: '#f97316', link: '/employer/applications?status=OnHold' },
+      { name: 'Selected', value: pipeline.selected || 0, color: '#10b981', link: '/employer/selected?status=Selected' },
+      { name: 'Offered', value: pipeline.offered || 0, color: '#ec4899', link: '/employer/selected?status=Offer+Sent' },
+      { name: 'Rejected', value: pipeline.rejected || 0, color: '#ef4444', link: '/employer/applications?status=Rejected' },
+      { name: 'Expired', value: pipeline.expired || 0, color: '#64748b', link: '/employer/jobs?status=Expired' }
+    ];
+  }, [dashboard.pipeline]);
+
+  const maxPipelineVal = useMemo(() => {
+    const vals = pipelineData.map(d => d.value);
+    return Math.max(...vals, 1);
+  }, [pipelineData]);
+
+  const totalPipelineCandidates = useMemo(() => {
+    return pipelineData.reduce((sum, d) => sum + d.value, 0);
+  }, [pipelineData]);
+
   const filteredJobs = useMemo(() => {
     return (dashboard.activeJobs || []).filter(job => {
       const matchesSearch = String(job.title || '').toLowerCase().includes(searchTerm.toLowerCase());
@@ -386,6 +409,99 @@ export const EmployerDashboard = () => {
               </div>
             </div>
           </Link>
+        </div>
+
+        {/* Visual Graph Representation */}
+        <div className="mt-6 pt-6 border-t border-dashed border-slate-200">
+          <style>{`
+            @keyframes reportGrowY {
+              from { transform: scaleY(0); }
+              to { transform: scaleY(1); }
+            }
+          `}</style>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+            <div>
+              <h3 className="text-xs font-black uppercase tracking-wider text-slate-500">Pipeline Distribution Graph</h3>
+              <p className="text-[11px] font-bold text-slate-400 mt-0.5">Visual representation of candidates across pipeline stages</p>
+            </div>
+            {totalPipelineCandidates > 0 && (
+              <span className="inline-flex items-center rounded-full bg-slate-50 px-2.5 py-0.5 text-xs font-semibold text-slate-600 border border-slate-100">
+                Total Applicants: {totalPipelineCandidates}
+              </span>
+            )}
+          </div>
+
+          {totalPipelineCandidates === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 rounded-xl border border-dashed border-slate-150 bg-[#f8fafc]">
+              <span className="text-sm font-bold text-slate-400">No candidates in the hiring pipeline yet.</span>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Vertical Bar Chart Container */}
+              <div className="overflow-x-auto">
+                <div className="min-w-[600px] h-60 flex items-end gap-6 border-b border-slate-200 px-4 pb-2 pt-6">
+                  {pipelineData.map((stage, idx) => {
+                    const pct = totalPipelineCandidates > 0 ? (stage.value / totalPipelineCandidates) * 100 : 0;
+                    const heightPct = (stage.value / maxPipelineVal) * 100;
+                    return (
+                      <div key={stage.name} className="flex-1 flex flex-col items-center group h-full justify-end relative">
+                        {/* Tooltip on hover */}
+                        <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+                          <div className="bg-[#1e293b] text-white text-[10px] sm:text-xs font-bold rounded-lg px-2.5 py-1.5 shadow-md flex flex-col items-center whitespace-nowrap">
+                            <span className="text-[10px] font-medium opacity-85">{stage.name}</span>
+                            <span className="text-xs font-black mt-0.5">{stage.value} ({pct.toFixed(1)}%)</span>
+                          </div>
+                          {/* Triangle indicator */}
+                          <div className="w-2 h-2 bg-[#1e293b] rotate-45 mx-auto -mt-1" />
+                        </div>
+
+                        {/* Top indicator of exact value */}
+                        <span className="text-[10px] font-black text-slate-550 mb-1 transition-transform duration-200 group-hover:scale-110">
+                          {stage.value}
+                        </span>
+
+                        {/* The interactive bar */}
+                        <Link
+                          to={stage.link}
+                          className="w-full max-w-[42px] rounded-t-md transition-all duration-350 ease-out hover:brightness-95 hover:shadow-lg relative overflow-hidden"
+                          style={{
+                            height: `${Math.max(heightPct, stage.value ? 4 : 0)}%`,
+                            backgroundColor: stage.color,
+                            transformOrigin: 'bottom',
+                            animation: `reportGrowY 750ms ease-out ${idx * 60}ms both`
+                          }}
+                        >
+                          {/* Glass light effect inside bar */}
+                          <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                        </Link>
+
+                        {/* Label at bottom */}
+                        <span className="mt-2 text-center text-[10px] sm:text-xs font-bold text-slate-500 group-hover:text-slate-800 transition-colors duration-200 truncate w-full">
+                          {stage.name}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Grid representation for overview */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {pipelineData.map((stage) => {
+                  const pct = totalPipelineCandidates > 0 ? (stage.value / totalPipelineCandidates) * 100 : 0;
+                  return (
+                    <div key={stage.name} className="p-3 rounded-lg border border-slate-100 bg-[#f8fafc] flex items-center justify-between">
+                      <div className="min-w-0">
+                        <span className="block text-[10px] font-bold text-slate-400 truncate">{stage.name}</span>
+                        <span className="block text-xs font-black text-slate-700 mt-0.5">{stage.value} <span className="text-[10px] text-slate-400 font-semibold">({pct.toFixed(0)}%)</span></span>
+                      </div>
+                      <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: stage.color }} />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
