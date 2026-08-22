@@ -121,6 +121,16 @@ export const EmployerDashboard = () => {
     return pipelineData.reduce((sum, d) => sum + d.value, 0);
   }, [pipelineData]);
 
+  const jobSources = useMemo(() => {
+    const jobs = dashboard.stats?.jobs || {};
+    return [
+      { name: 'Active', value: jobs.active || 0, color: '#10b981' },
+      { name: 'Inactive', value: jobs.draft || 0, color: '#f59e0b' },
+      { name: 'Paused', value: jobs.closed || 0, color: '#8e44ad' },
+      { name: 'Expired', value: jobs.expired || 0, color: '#ef4444' }
+    ];
+  }, [dashboard.stats?.jobs]);
+
   const filteredJobs = useMemo(() => {
     return (dashboard.activeJobs || []).filter(job => {
       const matchesSearch = String(job.title || '').toLowerCase().includes(searchTerm.toLowerCase());
@@ -229,63 +239,125 @@ export const EmployerDashboard = () => {
         </div>
       </section>
 
-      {/* 4 Stats Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Card 1: Total Jobs */}
-        <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between h-36">
-          <div className="flex items-start justify-between">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0047C7] text-white">
-              <Briefcase className="h-5 w-5" />
+      {/* 4 Stats Cards + Donut Chart Layout */}
+      <section className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          {/* Stats Cards (Left Column) */}
+          <div className="lg:col-span-8 grid gap-4 sm:grid-cols-2">
+            {/* Card 1: Total Jobs */}
+            <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between h-36">
+              <div className="flex items-start justify-between">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0047C7] text-white">
+                  <Briefcase className="h-5 w-5" />
+                </div>
+                <div className="text-right">
+                  <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.jobs?.total || 0}</span>
+                  <span className="text-xs font-semibold text-slate-400 mt-1 block">Total Jobs</span>
+                </div>
+              </div>
+              <Link to="/employer/jobs" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
             </div>
-            <div className="text-right">
-              <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.jobs?.total || 0}</span>
-              <span className="text-xs font-semibold text-slate-400 mt-1 block">Total Jobs</span>
-            </div>
-          </div>
-          <Link to="/employer/jobs" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
-        </div>
 
-        {/* Card 2: Active Jobs */}
-        <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between h-36">
-          <div className="flex items-start justify-between">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-500 text-white">
-              <Send className="h-5 w-5 rotate-45" />
+            {/* Card 2: Active Jobs */}
+            <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between h-36">
+              <div className="flex items-start justify-between">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-500 text-white">
+                  <Send className="h-5 w-5 rotate-45" />
+                </div>
+                <div className="text-right">
+                  <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.jobs?.active || 0}</span>
+                  <span className="text-xs font-semibold text-slate-400 mt-1 block">Active Jobs</span>
+                </div>
+              </div>
+              <Link to="/employer/jobs?status=Active" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
             </div>
-            <div className="text-right">
-              <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.jobs?.active || 0}</span>
-              <span className="text-xs font-semibold text-slate-400 mt-1 block">Active Jobs</span>
-            </div>
-          </div>
-          <Link to="/employer/jobs?status=Active" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
-        </div>
-        {/* Card 3: Inactive Jobs */}
-        <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between h-36">
-          <div className="flex items-start justify-between">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-amber-500 text-white">
-              <XCircle className="h-5 w-5" />
-            </div>
-            <div className="text-right">
-              <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.jobs?.draft || 0}</span>
-              <span className="text-xs font-semibold text-slate-400 mt-1 block">Inactive Jobs</span>
-            </div>
-          </div>
-          <Link to="/employer/jobs?status=Draft" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
-        </div>
 
-        {/* Card 4: Paused Jobs */}
-        <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between h-36">
-          <div className="flex items-start justify-between">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#8e44ad] text-white">
-              <Pause className="h-5 w-5" />
+            {/* Card 3: Inactive Jobs */}
+            <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between h-36">
+              <div className="flex items-start justify-between">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-amber-500 text-white">
+                  <XCircle className="h-5 w-5" />
+                </div>
+                <div className="text-right">
+                  <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.jobs?.draft || 0}</span>
+                  <span className="text-xs font-semibold text-slate-400 mt-1 block">Inactive Jobs</span>
+                </div>
+              </div>
+              <Link to="/employer/jobs?status=Draft" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
             </div>
-            <div className="text-right">
-              <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.jobs?.closed || 0}</span>
-              <span className="text-xs font-semibold text-slate-400 mt-1 block">Paused Jobs</span>
+
+            {/* Card 4: Paused Jobs */}
+            <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between h-36">
+              <div className="flex items-start justify-between">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#8e44ad] text-white">
+                  <Pause className="h-5 w-5" />
+                </div>
+                <div className="text-right">
+                  <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.jobs?.closed || 0}</span>
+                  <span className="text-xs font-semibold text-slate-400 mt-1 block">Paused Jobs</span>
+                </div>
+              </div>
+              <Link to="/employer/jobs?status=Closed" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
             </div>
           </div>
-          <Link to="/employer/jobs?status=Closed" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
+
+          {/* Donut Chart (Right Column) */}
+          <div className="lg:col-span-4 flex flex-col items-center justify-center border-t border-slate-100 lg:border-t-0 lg:border-l lg:border-slate-100 pt-6 lg:pt-0 lg:pl-6">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-4">Jobs Distribution</h3>
+            <div className="relative h-32 w-32">
+              <svg viewBox="0 0 190 190" className="-rotate-90">
+                <circle cx="95" cy="95" r="70" fill="none" stroke="#f1f5f9" strokeWidth="24" />
+                {(() => {
+                  const radius = 70;
+                  const circumference = 2 * Math.PI * radius;
+                  let offset = 0;
+                  const total = dashboard.stats?.jobs?.total || 0;
+
+                  return jobSources.map((source) => {
+                    const dash = total ? (source.value / total) * circumference : 0;
+                    const strokeOffset = -offset;
+                    offset += dash;
+
+                    if (dash === 0) return null;
+
+                    return (
+                      <circle
+                        key={source.name}
+                        cx="95"
+                        cy="95"
+                        r={radius}
+                        fill="none"
+                        stroke={source.color}
+                        strokeWidth="24"
+                        strokeDasharray={`${dash} ${circumference - dash}`}
+                        strokeDashoffset={strokeOffset}
+                        className="transition-all duration-550 ease-in-out"
+                      />
+                    );
+                  });
+                })()}
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-2xl font-black text-slate-800">{dashboard.stats?.jobs?.total || 0}</span>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Jobs</span>
+              </div>
+            </div>
+
+            {/* Legend */}
+            <div className="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-1.5 max-w-[240px]">
+              {jobSources.map((source) => {
+                const pct = (dashboard.stats?.jobs?.total > 0) ? (source.value / dashboard.stats?.jobs?.total) * 100 : 0;
+                return (
+                  <div key={source.name} className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500">
+                    <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: source.color }} />
+                    <span>{source.name} ({pct.toFixed(0)}%)</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* Hiring Pipeline Block */}
       <section className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
