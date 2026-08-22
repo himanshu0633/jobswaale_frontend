@@ -362,202 +362,165 @@ export const EmployerDashboard = () => {
       {/* Hiring Pipeline Block */}
       <section className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
         <h2 className="text-sm font-extrabold text-[#111827] mb-4">Hiring Pipeline <span className="text-slate-400 font-medium">(All Jobs)</span></h2>
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Applied */}
-          <Link to="/employer/applications?status=Applied" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition w-full sm:w-auto min-w-[120px] justify-between">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                <FileText className="h-4 w-4" />
+        
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          {/* Pipeline Cards (Left Column) */}
+          <div className="lg:col-span-8 grid gap-3 grid-cols-2 sm:grid-cols-3">
+            {/* Applied */}
+            <Link to="/employer/applications?status=Applied" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                  <FileText className="h-4 w-4" />
+                </div>
+                <div className="text-left">
+                  <span className="block text-[11px] font-bold text-slate-450">Applied</span>
+                  <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.applied || 0}</span>
+                </div>
               </div>
-              <div className="text-left">
-                <span className="block text-[11px] font-bold text-slate-450">Applied</span>
-                <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.applied || 0}</span>
-              </div>
-            </div>
-          </Link>
-          
-          <ChevronRight className="hidden sm:block h-4 w-4 text-slate-300" />
+            </Link>
 
-          {/* Shortlisted */}
-          <Link to="/employer/shortlisted" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition w-full sm:w-auto min-w-[120px] justify-between">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
-                <Star className="h-4 w-4" />
+            {/* Shortlisted */}
+            <Link to="/employer/shortlisted" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                  <Star className="h-4 w-4" />
+                </div>
+                <div className="text-left">
+                  <span className="block text-[11px] font-bold text-slate-450">Shortlisted</span>
+                  <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.shortlisted || 0}</span>
+                </div>
               </div>
-              <div className="text-left">
-                <span className="block text-[11px] font-bold text-slate-450">Shortlisted</span>
-                <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.shortlisted || 0}</span>
-              </div>
-            </div>
-          </Link>
+            </Link>
 
-          <ChevronRight className="hidden sm:block h-4 w-4 text-slate-300" />
-
-          {/* Interview */}
-          <Link to="/employer/interviews" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition w-full sm:w-auto min-w-[120px] justify-between">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50 text-[#6658dd]">
-                <Calendar className="h-4 w-4" />
+            {/* Interview */}
+            <Link to="/employer/interviews" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50 text-[#6658dd]">
+                  <Calendar className="h-4 w-4" />
+                </div>
+                <div className="text-left">
+                  <span className="block text-[11px] font-bold text-slate-450">Interview</span>
+                  <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.interview || 0}</span>
+                </div>
               </div>
-              <div className="text-left">
-                <span className="block text-[11px] font-bold text-slate-450">Interview</span>
-                <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.interview || 0}</span>
-              </div>
-            </div>
-          </Link>
+            </Link>
 
-          <ChevronRight className="hidden sm:block h-4 w-4 text-slate-300" />
-
-          {/* On Hold */}
-          <Link to="/employer/applications?status=OnHold" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition w-full sm:w-auto min-w-[120px] justify-between">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 text-orange-600">
-                <Clock className="h-4 w-4" />
+            {/* On Hold */}
+            <Link to="/employer/applications?status=OnHold" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 text-orange-600">
+                  <Clock className="h-4 w-4" />
+                </div>
+                <div className="text-left">
+                  <span className="block text-[11px] font-bold text-slate-450">On Hold</span>
+                  <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.onHold || 0}</span>
+                </div>
               </div>
-              <div className="text-left">
-                <span className="block text-[11px] font-bold text-slate-450">On Hold for Interview</span>
-                <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.onHold || 0}</span>
-              </div>
-            </div>
-          </Link>
+            </Link>
 
-          <ChevronRight className="hidden sm:block h-4 w-4 text-slate-300" />
-
-          {/* Selected */}
-          <Link to="/employer/selected?status=Selected" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition w-full sm:w-auto min-w-[120px] justify-between">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                <UserCheck className="h-4 w-4" />
+            {/* Selected */}
+            <Link to="/employer/selected?status=Selected" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                  <UserCheck className="h-4 w-4" />
+                </div>
+                <div className="text-left">
+                  <span className="block text-[11px] font-bold text-slate-450">Selected</span>
+                  <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.selected || 0}</span>
+                </div>
               </div>
-              <div className="text-left">
-                <span className="block text-[11px] font-bold text-slate-450">Selected</span>
-                <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.selected || 0}</span>
-              </div>
-            </div>
-          </Link>
+            </Link>
 
-          <ChevronRight className="hidden sm:block h-4 w-4 text-slate-300" />
-
-          {/* Offered */}
-          <Link to="/employer/selected?status=Offer+Sent" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition w-full sm:w-auto min-w-[120px] justify-between">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
-                <Mail className="h-4 w-4" />
+            {/* Offered */}
+            <Link to="/employer/selected?status=Offer+Sent" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-pink-50 text-pink-600">
+                  <Mail className="h-4 w-4" />
+                </div>
+                <div className="text-left">
+                  <span className="block text-[11px] font-bold text-slate-450">Offered</span>
+                  <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.offered || 0}</span>
+                </div>
               </div>
-              <div className="text-left">
-                <span className="block text-[11px] font-bold text-slate-450">Offered</span>
-                <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.offered || 0}</span>
-              </div>
-            </div>
-          </Link>
+            </Link>
 
-          <ChevronRight className="hidden sm:block h-4 w-4 text-slate-300" />
-
-          {/* Rejected */}
-          <Link to="/employer/applications?status=Rejected" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition w-full sm:w-auto min-w-[120px] justify-between">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
-                <XCircle className="h-4 w-4" />
+            {/* Rejected */}
+            <Link to="/employer/applications?status=Rejected" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between col-span-2 sm:col-span-1">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
+                  <XCircle className="h-4 w-4" />
+                </div>
+                <div className="text-left">
+                  <span className="block text-[11px] font-bold text-slate-450">Rejected</span>
+                  <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.rejected || 0}</span>
+                </div>
               </div>
-              <div className="text-left">
-                <span className="block text-[11px] font-bold text-slate-450">Rejected</span>
-                <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.rejected || 0}</span>
-              </div>
-            </div>
-          </Link>
-        </div>
-
-        {/* Visual Graph Representation */}
-        <div className="mt-6 pt-6 border-t border-dashed border-slate-200">
-          <style>{`
-            @keyframes reportGrowY {
-              from { transform: scaleY(0); }
-              to { transform: scaleY(1); }
-            }
-          `}</style>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-            <div>
-              <h3 className="text-xs font-black uppercase tracking-wider text-slate-500">Pipeline Distribution Graph</h3>
-              <p className="text-[11px] font-bold text-slate-400 mt-0.5">Visual representation of candidates across pipeline stages</p>
-            </div>
-            {totalPipelineCandidates > 0 && (
-              <span className="inline-flex items-center rounded-full bg-slate-50 px-2.5 py-0.5 text-xs font-semibold text-slate-600 border border-slate-100">
-                Total Applicants: {totalPipelineCandidates}
-              </span>
-            )}
+            </Link>
           </div>
 
-          {totalPipelineCandidates === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 rounded-xl border border-dashed border-slate-150 bg-[#f8fafc]">
-              <span className="text-sm font-bold text-slate-400">No candidates in the hiring pipeline yet.</span>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {/* Vertical Bar Chart Container */}
-              <div className="overflow-x-auto">
-                <div className="min-w-[600px] h-64 flex items-end gap-6 border-b border-slate-200 px-4 pb-2 pt-16">
-                  {pipelineData.map((stage, idx) => {
+          {/* Donut Chart (Right Column) */}
+          <div className="lg:col-span-4 flex flex-col items-center justify-center border-t border-slate-100 lg:border-t-0 lg:border-l lg:border-slate-100 pt-6 lg:pt-0 lg:pl-6">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-4">Pipeline Distribution</h3>
+            {totalPipelineCandidates === 0 ? (
+              <div className="flex flex-col items-center justify-center h-40">
+                <span className="text-xs font-bold text-slate-400">No candidates in pipeline</span>
+              </div>
+            ) : (
+              <>
+                <div className="relative h-32 w-32">
+                  <svg viewBox="0 0 190 190" className="-rotate-90">
+                    <circle cx="95" cy="95" r="70" fill="none" stroke="#f1f5f9" strokeWidth="24" />
+                    {(() => {
+                      const radius = 70;
+                      const circumference = 2 * Math.PI * radius;
+                      let offset = 0;
+
+                      return pipelineData.map((stage) => {
+                        const dash = totalPipelineCandidates ? (stage.value / totalPipelineCandidates) * circumference : 0;
+                        const strokeOffset = -offset;
+                        offset += dash;
+
+                        if (dash === 0) return null;
+
+                        return (
+                          <circle
+                            key={stage.name}
+                            cx="95"
+                            cy="95"
+                            r={radius}
+                            fill="none"
+                            stroke={stage.color}
+                            strokeWidth="24"
+                            strokeDasharray={`${dash} ${circumference - dash}`}
+                            strokeDashoffset={strokeOffset}
+                            className="transition-all duration-550 ease-in-out"
+                          />
+                        );
+                      });
+                    })()}
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-2xl font-black text-slate-800">{totalPipelineCandidates}</span>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Candidates</span>
+                  </div>
+                </div>
+
+                {/* Legend */}
+                <div className="mt-4 flex flex-wrap justify-center gap-x-3 gap-y-1 max-w-[260px]">
+                  {pipelineData.map((stage) => {
                     const pct = totalPipelineCandidates > 0 ? (stage.value / totalPipelineCandidates) * 100 : 0;
-                    const heightPct = (stage.value / maxPipelineVal) * 100;
+                    if (stage.value === 0) return null;
                     return (
-                      <div key={stage.name} className="flex-1 flex flex-col items-center group h-full justify-end relative">
-                        {/* Tooltip on hover */}
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
-                          <div className="bg-[#1e293b] text-white text-[10px] sm:text-xs font-bold rounded-lg px-2.5 py-1.5 shadow-md flex flex-col items-center whitespace-nowrap">
-                            <span className="text-[10px] font-medium opacity-85">{stage.name}</span>
-                            <span className="text-xs font-black mt-0.5">{stage.value} ({pct.toFixed(1)}%)</span>
-                          </div>
-                          {/* Triangle indicator */}
-                          <div className="w-2 h-2 bg-[#1e293b] rotate-45 mx-auto -mt-1" />
-                        </div>
-
-                        {/* Top indicator of exact value */}
-                        <span className="text-[10px] font-black text-slate-550 mb-1 transition-transform duration-200 group-hover:scale-110">
-                          {stage.value}
-                        </span>
-
-                        {/* The interactive bar */}
-                        <Link
-                          to={stage.link}
-                          className="w-full max-w-[42px] rounded-t-md transition-all duration-350 ease-out hover:brightness-95 hover:shadow-lg relative overflow-hidden"
-                          style={{
-                            height: `${Math.max(heightPct, stage.value ? 4 : 0)}%`,
-                            backgroundColor: stage.color,
-                            transformOrigin: 'bottom',
-                            animation: `reportGrowY 750ms ease-out ${idx * 60}ms both`
-                          }}
-                        >
-                          {/* Glass light effect inside bar */}
-                          <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                        </Link>
-
-                        {/* Label at bottom */}
-                        <span className="mt-2 text-center text-[10px] sm:text-xs font-bold text-slate-500 group-hover:text-slate-800 transition-colors duration-200 truncate w-full">
-                          {stage.name}
-                        </span>
+                      <div key={stage.name} className="flex items-center gap-1.5 text-[9px] font-bold text-slate-500">
+                        <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: stage.color }} />
+                        <span>{stage.name} ({pct.toFixed(0)}%)</span>
                       </div>
                     );
                   })}
                 </div>
-              </div>
-
-              {/* Grid representation for overview */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {pipelineData.map((stage) => {
-                  const pct = totalPipelineCandidates > 0 ? (stage.value / totalPipelineCandidates) * 100 : 0;
-                  return (
-                    <div key={stage.name} className="p-3 rounded-lg border border-slate-100 bg-[#f8fafc] flex items-center justify-between">
-                      <div className="min-w-0">
-                        <span className="block text-[10px] font-bold text-slate-400 truncate">{stage.name}</span>
-                        <span className="block text-xs font-black text-slate-700 mt-0.5">{stage.value} <span className="text-[10px] text-slate-400 font-semibold">({pct.toFixed(0)}%)</span></span>
-                      </div>
-                      <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: stage.color }} />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+              </>
+            )}
+          </div>
         </div>
       </section>
 
