@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   Calendar,
   Check,
+  Clock,
   Eye,
   FileText,
   Loader,
@@ -97,24 +98,28 @@ export const JobseekerApplicationTracker = () => {
       },
       {
         key: 'interview',
-        title: 'Interview Round',
+        title: tracker.interviewDetails?.onHold ? 'Interview (On Hold)' : 'Interview Round',
         date: tracker.interviewDetails?.date ? formatDate(tracker.interviewDetails.date) : '',
-        icon: Calendar,
-        color: 'bg-violet-500',
-        text: tracker.interviewDetails?.date
-          ? `Scheduled a ${tracker.interviewDetails.type || 'Interview'} on ${formatDate(tracker.interviewDetails.date)} at ${tracker.interviewDetails.time || 'scheduled time'}.`
-          : 'Interview details will appear here once the employer schedules a meeting.',
+        icon: tracker.interviewDetails?.onHold ? Clock : Calendar,
+        color: tracker.interviewDetails?.onHold ? 'bg-amber-500' : 'bg-violet-500',
+        text: tracker.interviewDetails?.onHold
+          ? 'Your interview is kept on hold by the recruiter. We will notify you once they resume it.'
+          : tracker.interviewDetails?.date
+            ? `Scheduled a ${tracker.interviewDetails.type || 'Interview'} on ${formatDate(tracker.interviewDetails.date)} at ${tracker.interviewDetails.time || 'scheduled time'}.`
+            : 'Interview details will appear here once the employer schedules a meeting.',
         meetingDetails: tracker.interviewDetails
       },
       {
         key: 'offered',
-        title: 'Job Offer',
-        date: formatDate(tracker.selectionDetails?.selectedDate),
+        title: tracker.selectionDetails?.offerStatus === 'Selected' ? 'Selected' : 'Job Offer',
+        date: formatDate(tracker.selectionDetails?.selectedDate || tracker.selectionDetails?.offerSentAt),
         icon: MailCheck,
         color: 'bg-emerald-500',
-        text: tracker.selectionDetails?.salaryOffered
-          ? `Congratulations! You have received a job offer with an package of ${tracker.selectionDetails.salaryOffered} LPA.`
-          : 'Official job offer from the recruiter.',
+        text: tracker.selectionDetails?.offerStatus === 'Selected'
+          ? 'Congratulations! You have been selected for this position. The employer will send your job offer details soon.'
+          : tracker.selectionDetails?.salaryOffered
+            ? `Congratulations! You have received a job offer with an package of ${tracker.selectionDetails.salaryOffered} LPA.`
+            : 'Official job offer from the recruiter.',
         offerDetails: tracker.selectionDetails
       }
     ];

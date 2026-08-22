@@ -19,7 +19,9 @@ import {
   Phone,
   Search,
   Video,
-  X
+  X,
+  UserPlus,
+  UserX
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import ClearFilterButton from '../../../components/ClearFilterButton';
@@ -340,10 +342,42 @@ export const EmployerInterviews = () => {
                     </div>
                   </div>
 
-                  <div className="mt-3 flex justify-end gap-2">
-                    <button type="button" onClick={() => openEditModal(interview)} className="inline-flex h-9 items-center justify-center gap-1 rounded-md bg-amber-500 px-3 text-xs font-extrabold text-white transition hover:bg-amber-600">Update</button>
-                    <button type="button" onClick={() => handleStatusUpdate(interview.applicationId, 'Offered')} className="inline-flex h-9 items-center justify-center gap-1 rounded-md bg-emerald-500 px-3 text-xs font-extrabold text-white transition hover:bg-emerald-600">Select</button>
-                    <button type="button" onClick={() => handleStatusUpdate(interview.applicationId, 'Rejected')} className="inline-flex h-9 items-center justify-center gap-1 rounded-md bg-rose-500 px-3 text-xs font-extrabold text-white transition hover:bg-rose-600">Reject</button>
+                   <div className="mt-3 flex flex-wrap items-center gap-1.5 justify-end">
+                    <Link
+                      to={`/employer/applications/${interview.applicationId}`}
+                      title="View Application Details"
+                      className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-slate-500 transition hover:bg-slate-50"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      <span>View</span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => openEditModal(interview)}
+                      title="Reschedule Interview"
+                      className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50"
+                    >
+                      <Calendar className="h-3.5 w-3.5" />
+                      <span>Reschedule</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleStatusUpdate(interview.applicationId, 'Offered')}
+                      title="Select Candidate"
+                      className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50"
+                    >
+                      <UserPlus className="h-3.5 w-3.5" />
+                      <span>Select</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleStatusUpdate(interview.applicationId, 'Rejected')}
+                      title="Reject Candidate"
+                      className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50"
+                    >
+                      <UserX className="h-3.5 w-3.5" />
+                      <span>Reject</span>
+                    </button>
                   </div>
                 </div>
               );
@@ -368,10 +402,42 @@ export const EmployerInterviews = () => {
                       <td className="px-5 py-4"><div className="flex items-center gap-3"><span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${interview.interviewerTone} text-[11px] font-black text-slate-700 ring-2 ring-white`}>{interview.interviewer.split(' ').map((part) => part[0]).join('').slice(0, 2)}</span><span className="text-sm font-semibold text-slate-600">{interview.interviewer}</span></div></td>
                       <td className="px-5 py-4"><span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${statusTone[interview.status] || 'bg-slate-100 text-slate-600'}`}>{interview.status}</span></td>
                       <td className="px-5 py-4 text-center">
-                        <div className="flex justify-center gap-2">
-                          <button type="button" onClick={() => openEditModal(interview)} className="inline-flex h-9 items-center justify-center gap-1 rounded-md bg-amber-500 px-3 text-xs font-extrabold text-white transition hover:bg-amber-600">Update</button>
-                          <button type="button" onClick={() => handleStatusUpdate(interview.applicationId, 'Offered')} className="inline-flex h-9 items-center justify-center gap-1 rounded-md bg-emerald-500 px-3 text-xs font-extrabold text-white transition hover:bg-emerald-600">Select</button>
-                          <button type="button" onClick={() => handleStatusUpdate(interview.applicationId, 'Rejected')} className="inline-flex h-9 items-center justify-center gap-1 rounded-md bg-rose-500 px-3 text-xs font-extrabold text-white transition hover:bg-rose-600">Reject</button>
+                        <div className="flex flex-wrap items-center gap-1.5 justify-center max-w-[280px] mx-auto">
+                          <Link
+                            to={`/employer/applications/${interview.applicationId}`}
+                            title="View Application Details"
+                            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-slate-500 transition hover:bg-slate-50"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                            <span>View</span>
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(interview)}
+                            title="Reschedule Interview"
+                            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50"
+                          >
+                            <Calendar className="h-3.5 w-3.5" />
+                            <span>Reschedule</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleStatusUpdate(interview.applicationId, 'Offered')}
+                            title="Select Candidate"
+                            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50"
+                          >
+                            <UserPlus className="h-3.5 w-3.5" />
+                            <span>Select</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleStatusUpdate(interview.applicationId, 'Rejected')}
+                            title="Reject Candidate"
+                            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50"
+                          >
+                            <UserX className="h-3.5 w-3.5" />
+                            <span>Reject</span>
+                          </button>
                         </div>
                       </td>
                     </tr>

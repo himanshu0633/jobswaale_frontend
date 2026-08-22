@@ -19,17 +19,37 @@ import {
   MessageCircle,
   Search,
   UserCheck,
+  UserPlus,
   UserX,
-  X
+  X,
+  Clock,
+  AlertCircle
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import ClearFilterButton from '../../../components/ClearFilterButton';
+import InterviewLocationPicker from '../../../components/InterviewLocationPicker';
+
+const isInPersonInterview = (type) => String(type || '').toLowerCase().includes('person');
+
+const getInterviewLocationField = (type) => {
+  const t = String(type || '').toLowerCase();
+  if (t.includes('video')) return { label: 'Meeting Link', placeholder: 'Zoom link, Google Meet, or Teams link' };
+  if (t.includes('phone')) return { label: 'Phone Number', placeholder: 'Enter phone number for the interview' };
+  if (t.includes('other')) return { label: 'Interview Location / Details', placeholder: 'Enter meeting details/link/address' };
+  return null;
+};
 
 const initialFilters = { search: '', jobTitle: '', status: '', experience: '', appliedAfter: '' };
 
 const statCards = [
+  { key: 'total', title: 'Total', status: '', icon: Inbox, tone: 'bg-slate-50 text-slate-600' },
   { key: 'applied', title: 'Applied', status: 'Applied', icon: FileText, tone: 'bg-violet-50 text-[#6658dd]' },
-  { key: 'reviewed', title: 'Reviewed', status: 'Reviewed', icon: Eye, tone: 'bg-emerald-50 text-emerald-500' }
+  { key: 'reviewed', title: 'Reviewed', status: 'Reviewed', icon: Eye, tone: 'bg-emerald-50 text-emerald-500' },
+  { key: 'shortlisted', title: 'Shortlisted', status: 'Shortlisted', icon: UserCheck, tone: 'bg-amber-50 text-amber-500' },
+  { key: 'interview', title: 'Interview', status: 'Interview', icon: Calendar, tone: 'bg-sky-50 text-sky-500' },
+  { key: 'onHold', title: 'Hold', status: 'OnHold', icon: Clock, tone: 'bg-orange-50 text-orange-500' },
+  { key: 'offered', title: 'Selected', status: 'Offered', icon: MailCheck, tone: 'bg-blue-50 text-blue-500' },
+  { key: 'rejected', title: 'Rejected', status: 'Rejected', icon: UserX, tone: 'bg-rose-50 text-rose-500' }
 ];
 
 const pipelineConfig = [
@@ -37,7 +57,8 @@ const pipelineConfig = [
   { key: 'reviewed', title: 'Reviewed', status: 'Reviewed', icon: Eye, tone: 'bg-sky-500 text-white' },
   { key: 'shortlisted', title: 'Shortlisted', status: 'Shortlisted', icon: UserCheck, tone: 'bg-amber-400 text-white' },
   { key: 'interview', title: 'Interview', status: 'Interview', icon: Calendar, tone: 'bg-[#6658dd] text-white' },
-  { key: 'offered', title: 'Offered', status: 'Offered', icon: MailCheck, tone: 'bg-blue-500 text-white' },
+  { key: 'onHold', title: 'Hold', status: 'OnHold', icon: Clock, tone: 'bg-orange-400 text-white' },
+  { key: 'offered', title: 'Selected', status: 'Offered', icon: MailCheck, tone: 'bg-blue-500 text-white' },
   { key: 'rejected', title: 'Rejected', status: 'Rejected', icon: X, tone: 'bg-rose-500 text-white' }
 ];
 
@@ -46,6 +67,12 @@ const statusTone = {
   Reviewed: 'bg-sky-50 text-sky-500',
   Shortlisted: 'bg-amber-50 text-amber-500',
   Interview: 'bg-violet-50 text-[#6658dd]',
+  OnHold: 'bg-orange-50 text-orange-500',
+  Selected: 'bg-emerald-50 text-emerald-500',
+  'Offer Sent': 'bg-blue-50 text-blue-500',
+  'Offer Accepted': 'bg-cyan-50 text-cyan-500',
+  Hired: 'bg-emerald-50 text-emerald-500',
+  'Offer Declined': 'bg-rose-50 text-rose-500',
   Offered: 'bg-blue-50 text-blue-500',
   Rejected: 'bg-rose-50 text-rose-500'
 };
@@ -89,43 +116,70 @@ export const EmployerApplications = () => {
   const [data, setData] = useState({ stats: {}, pipeline: {}, filters: {}, applications: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 1 } });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [upgradePopup, setUpgradePopup] = useState({ open: false, message: '' });
 
-  const getRedirectUrl = (basePath, extraParams = {}) => {
-    const params = new URLSearchParams();
-    if (filters.jobTitle) {
-      params.set('jobTitle', filters.jobTitle);
-    }
-    Object.entries(extraParams).forEach(([key, val]) => {
-      if (val) params.set(key, val);
+  const [activeApplication, setActiveApplication] = useState(null);
+  const [showInterviewModal, setShowInterviewModal] = useState(false);
+  const [showHoldModal, setShowHoldModal] = useState(false);
+  const [savingInterview, setSavingInterview] = useState(false);
+  const [interviewForm, setInterviewForm] = useState({
+    date: '',
+    time: '',
+    type: 'Video Call',
+    locationOrLink: '',
+    notes: '',
+    manualAddress: ''
+  });
+
+  const openInterviewModal = (app) => {
+    setError('');
+    setMessage('');
+    setActiveApplication(app);
+    const details = app.interviewDetails || {};
+    setInterviewForm({
+      date: details.date ? new Date(details.date).toISOString().slice(0, 10) : '',
+      time: details.time || '',
+      type: details.type || 'Video Call',
+      locationOrLink: details.locationOrLink || '',
+      notes: details.notes || '',
+      manualAddress: ''
     });
-    const queryString = params.toString();
-    return queryString ? `${basePath}?${queryString}` : basePath;
+    setShowInterviewModal(true);
+  };
+
+  const scheduleInterviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!interviewForm.date || !interviewForm.time) {
+      setError('Please specify date and time.');
+      return;
+    }
+    setSavingInterview(true);
+    setError('');
+    setMessage('');
+    try {
+      const payload = {
+        ...interviewForm,
+        locationOrLink: interviewForm.manualAddress || interviewForm.locationOrLink || ''
+      };
+      await axios.post(
+        `${BASE_API_URL}/employer/applications/${activeApplication.id}/schedule-interview`,
+        payload,
+        { headers: getTokenHeaders() }
+      );
+      setShowInterviewModal(false);
+      setInterviewForm({ date: '', time: '', type: 'Video Call', locationOrLink: '', notes: '', manualAddress: '' });
+      setMessage(activeApplication.status === 'Interview' ? 'Interview rescheduled successfully.' : 'Interview scheduled successfully.');
+      loadData();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to schedule interview.');
+    } finally {
+      setSavingInterview(false);
+    }
   };
 
   const handleStatCardClick = (card) => {
-    if (card.key === 'shortlisted') {
-      navigate(getRedirectUrl('/employer/shortlisted'));
-    } else if (card.key === 'interviews') {
-      navigate(getRedirectUrl('/employer/interviews'));
-    } else if (card.key === 'rejected') {
-      navigate(getRedirectUrl('/employer/applicant-history', { status: 'Rejected', search: filters.jobTitle }));
-    } else {
-      setFilter('status', card.status);
-    }
-  };
-
-  const handlePipelineClick = (item) => {
-    if (item.status === 'Shortlisted') {
-      navigate(getRedirectUrl('/employer/shortlisted'));
-    } else if (item.status === 'Interview') {
-      navigate(getRedirectUrl('/employer/interviews'));
-    } else if (item.status === 'Offered') {
-      navigate(getRedirectUrl('/employer/selected'));
-    } else if (item.status === 'Rejected') {
-      navigate(getRedirectUrl('/employer/applicant-history', { status: 'Rejected', search: filters.jobTitle }));
-    } else {
-      setFilter('status', item.status);
-    }
+    setFilter('status', card.status);
   };
 
   useEffect(() => {
@@ -152,8 +206,6 @@ export const EmployerApplications = () => {
     if (filters.jobTitle) params.set('jobTitle', filters.jobTitle);
     if (filters.status) {
       params.set('status', filters.status);
-    } else {
-      params.set('statusGroup', 'queue');
     }
     if (filters.experience) params.set('experience', filters.experience);
     if (filters.appliedAfter) params.set('appliedAfter', filters.appliedAfter);
@@ -195,6 +247,59 @@ export const EmployerApplications = () => {
   const goToPage = (page) => setCurrentPage(Math.min(Math.max(page, 1), pagination.totalPages || 1));
   const hasActiveFilters = Object.values(filters).some(Boolean) || Boolean(tableSearch);
 
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000); // Check every second
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const getIsInterviewPassed = (app) => {
+    const details = app?.interviewDetails;
+    if (!details?.date || !details?.time || details?.onHold || app?.status !== 'Interview') {
+      return false;
+    }
+    const d = new Date(details.date);
+    let [hours, minutes] = String(details.time).split(':').map(Number);
+    if (String(details.time).toLowerCase().includes('pm') && hours < 12) {
+      hours += 12;
+    } else if (String(details.time).toLowerCase().includes('am') && hours === 12) {
+      hours = 0;
+    }
+    if (!isNaN(hours) && !isNaN(minutes)) {
+      d.setHours(hours, minutes, 0, 0);
+    }
+    return currentTime > d.getTime();
+  };
+
+  const handleInterviewOnHold = async (appId) => {
+    try {
+      await axios.post(
+        `${BASE_API_URL}/employer/applications/${appId}/schedule-interview`,
+        {
+          onHold: true,
+          type: 'Video Call',
+          notes: 'Interview kept on hold.'
+        },
+        { headers: getTokenHeaders() }
+      );
+      // Refresh the application list
+      const response = await axios.get(`${BASE_API_URL}/employer/applications?${queryParams}`, { headers: getTokenHeaders() });
+      const applications = response.data?.applications || [];
+      setData(prev => ({
+        ...prev,
+        ...response.data,
+        applications,
+        pagination: response.data?.pagination || prev.pagination || { page: 1, limit: pageSize, total: applications.length, totalPages: 1 }
+      }));
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to move application to interview on hold.');
+    }
+  };
+
   const handleStatusUpdate = async (appId, nextStatus) => {
     try {
       await axios.patch(
@@ -216,6 +321,46 @@ export const EmployerApplications = () => {
     }
   };
 
+  const downloadResume = async (candidateId, candidateName) => {
+    setError('');
+    setMessage('');
+    try {
+      const response = await axios.get(`${BASE_API_URL}/employer/candidates/${candidateId}/resume-download`, {
+        headers: getTokenHeaders(),
+        responseType: 'blob'
+      });
+      const blobUrl = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `${candidateName || 'candidate'}-resume`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
+      
+      setMessage('Resume downloaded successfully.');
+    } catch (err) {
+      if (err.response?.status === 451 || err.response?.status === 403) {
+        if (err.response.data instanceof Blob) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            try {
+              const errorObj = JSON.parse(reader.result);
+              setUpgradePopup({ open: true, message: errorObj.message });
+            } catch {
+              setUpgradePopup({ open: true, message: 'Resume downloads are not supported under your current plan.' });
+            }
+          };
+          reader.readAsText(err.response.data);
+        } else {
+          setUpgradePopup({ open: true, message: err.response?.data?.message });
+        }
+      } else {
+        setError(err.response?.data?.message || 'Resume could not be downloaded.');
+      }
+    }
+  };
+
   return (
     <div className="space-y-4 px-3 sm:space-y-5 sm:px-0">
       <div className="flex flex-col justify-between gap-2 md:flex-row md:items-center md:gap-3">
@@ -224,24 +369,37 @@ export const EmployerApplications = () => {
       </div>
 
       {error && <div className="rounded-md border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{error}</div>}
+      {message && <div className="rounded-md border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">{message}</div>}
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-2">
+      {filters.jobTitle && (
+        <div className="flex flex-wrap items-center gap-2 rounded-md border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm font-bold text-[#6658dd]">
+          <span className="text-slate-500">Showing job:</span>
+          <span className="max-w-full truncate">{filters.jobTitle}</span>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-7">
         {statCards.map((card) => (
           <button
             key={card.key}
             type="button"
             onClick={() => handleStatCardClick(card)}
-            className={`rounded-md border bg-white p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-5 ${filters.status === card.status ? 'border-[#6658dd] ring-2 ring-indigo-100' : 'border-slate-100'}`}
+            className={`rounded-md border bg-white p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-4 ${
+              filters.status === card.status ? 'border-[#6658dd] ring-2 ring-indigo-100' : 'border-slate-100'
+            }`}
           >
-            <div className="flex items-center gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-3">
               <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${card.tone}`}><card.icon className="h-4 w-4 sm:h-5 sm:w-5" /></span>
-              <div className="min-w-0"><p className="truncate text-xs font-semibold text-slate-400 sm:text-sm">{card.title}</p><p className="mt-1 text-base font-black text-[#3f4254] sm:text-xl">{Number(data.stats?.[card.key] || 0).toLocaleString('en-IN')}</p></div>
+              <div className="min-w-0">
+                <p className="truncate text-xs font-semibold text-slate-400 sm:text-sm">{card.title}</p>
+                <p className="mt-1 text-base font-black text-[#3f4254] sm:text-xl">
+                  {Number((card.key === 'total' ? data.stats?.total : data.pipeline?.[card.key] ?? data.stats?.[card.key]) || 0).toLocaleString('en-IN')}
+                </p>
+              </div>
             </div>
           </button>
         ))}
       </div>
-
-
 
       <section className="rounded-md border border-slate-100 bg-white shadow-sm">
         <div className="flex flex-col justify-between gap-4 border-b border-dashed border-slate-200 px-4 py-4 sm:px-5 lg:flex-row lg:items-center">
@@ -253,7 +411,7 @@ export const EmployerApplications = () => {
           {/* Quick Status Filter Tabs */}
           <div className="flex flex-wrap gap-1.5 border-b border-dashed border-slate-100 pb-4 mb-5">
               {[
-              { key: '', label: 'All Queue' },
+              { key: '', label: 'All Applications' },
               { key: 'Applied', label: 'Waiting for Review' },
               { key: 'Reviewed', label: 'Reviewed' }
             ].map((tab) => (
@@ -321,7 +479,9 @@ export const EmployerApplications = () => {
                     <p className="mt-0.5 truncate text-xs font-semibold text-slate-400">{application.email || application.phone}</p>
                     <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><MapPin className="h-3 w-3 shrink-0" /><span className="truncate">{application.location}</span></p>
                   </div>
-                  <span className={`shrink-0 rounded px-2 py-1 text-[11px] font-black ${statusTone[application.status] || statusTone.Applied}`}>{application.status}</span>
+                  <span className={`shrink-0 rounded px-2 py-1 text-[11px] font-black ${statusTone[application.status === 'Offered' ? (application.selectionDetails?.offerStatus || 'Selected') : application.status] || statusTone.Applied}`}>
+                    {application.status === 'Offered' ? (application.selectionDetails?.offerStatus || 'Selected') : application.status}
+                  </span>
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs font-semibold text-slate-500">
                   <p className="truncate"><span className="text-slate-400">Job:</span> {application.jobTitle}</p>
@@ -345,8 +505,7 @@ export const EmployerApplications = () => {
             )}
           </div>
 
-          {/* Table — sm and up */}
-          <div className="hidden overflow-x-auto sm:block">
+          <div className="hidden overflow-x-auto sm:block pb-24">
             <table className="w-full min-w-[1080px] text-left">
               <thead className="bg-[#dbe6f6] text-[11px] uppercase text-slate-600"><tr><th className="px-5 py-3">Candidate</th><th className="px-5 py-3">Job Applied</th><th className="px-5 py-3">Experience</th><th className="px-5 py-3"><span className="inline-flex items-center gap-1">Applied Date <ChevronUp className="h-3 w-3 text-slate-400" /></span></th><th className="px-5 py-3">Match Score</th><th className="px-5 py-3">Status</th><th className="px-5 py-3 text-center">Action</th></tr></thead>
               <tbody className="divide-y divide-slate-100">
@@ -363,11 +522,94 @@ export const EmployerApplications = () => {
                     <td className="px-5 py-4 text-sm font-semibold text-slate-600">{application.experience}</td>
                     <td className="px-5 py-4 text-sm font-semibold text-slate-600">{application.displayDate}</td>
                     <td className="px-5 py-4"><span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${scoreTone(application.matchScore)}`}>{application.matchScore}%</span></td>
-                    <td className="px-5 py-4"><span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${statusTone[application.status] || statusTone.Applied}`}>{application.status}</span></td>
+                    <td className="px-5 py-4"><span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${statusTone[application.status === 'Offered' ? (application.selectionDetails?.offerStatus || 'Selected') : (application.status === 'Interview' && application.interviewDetails?.onHold ? 'OnHold' : application.status)] || statusTone.Applied}`}>{application.status === 'Offered' ? (application.selectionDetails?.offerStatus || 'Selected') : (application.status === 'Interview' && application.interviewDetails?.onHold ? 'On Hold for Interview' : application.status)}</span></td>
                     <td className="px-5 py-4 text-center">
-                      <div className="inline-flex items-center gap-1.5 justify-center">
-                        <Link to={`/employer/applications/${application.id}`} className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-[#6658dd] px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-violet-50"><Eye className="h-3.5 w-3.5" />View</Link>
-                        <Link to={`/employer/messages?application=${application.id}`} className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-sky-200 px-2 text-xs font-extrabold text-sky-600 transition hover:bg-sky-50"><MessageCircle className="h-3.5 w-3.5" />Message</Link>
+                      <div className="flex flex-wrap items-center gap-1.5 justify-center max-w-[280px] mx-auto">
+                        <Link to={`/employer/applications/${application.id}`} title="View Application Details" className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-slate-500 transition hover:bg-slate-50">
+                          <Eye className="h-3.5 w-3.5" />
+                          <span>View</span>
+                        </Link>
+
+                        {/* Download Resume */}
+                        {application.hasResume && (
+                          <button
+                            type="button"
+                            onClick={() => downloadResume(application.candidateId, application.name)}
+                            title="Download Resume"
+                            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50"
+                          >
+                            <FileText className="h-3.5 w-3.5" />
+                            <span>Resume</span>
+                          </button>
+                        )}
+
+                        {/* Shortlist */}
+                        {['Applied', 'Reviewed'].includes(application.status) && (
+                          <button
+                            type="button"
+                            onClick={() => handleStatusUpdate(application.id, 'Shortlisted')}
+                            title="Shortlist"
+                            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-amber-500 transition hover:bg-amber-50"
+                          >
+                            <UserCheck className="h-3.5 w-3.5" />
+                            <span>Shortlist</span>
+                          </button>
+                        )}
+
+                        {/* Schedule / Reschedule Interview */}
+                        {(application.status === 'Shortlisted' || application.status === 'Interview') && (
+                          <button
+                            type="button"
+                            onClick={() => openInterviewModal(application)}
+                            title={application.status === 'Interview' ? "Reschedule Interview" : "Schedule Interview"}
+                            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50"
+                          >
+                            <Calendar className="h-3.5 w-3.5" />
+                            <span>{application.status === 'Interview' ? "Reschedule" : "Interview"}</span>
+                          </button>
+                        )}
+
+                        {/* On Hold for Interview */}
+                        {(application.status === 'Shortlisted' ||
+                          (application.status === 'Interview' && !application.interviewDetails?.onHold && !getIsInterviewPassed(application))) && (
+                          <button
+                            type="button"
+                            onClick={() => handleInterviewOnHold(application.id)}
+                            title="On Hold for Interview"
+                            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-amber-700 transition hover:bg-amber-50"
+                          >
+                            <Clock className="h-3.5 w-3.5" />
+                            <span>Hold</span>
+                          </button>
+                        )}
+
+                        {/* Select / Hire */}
+                        {application.status === 'Interview' && !application.interviewDetails?.onHold && getIsInterviewPassed(application) && (
+                          <button
+                            type="button"
+                            onClick={() => handleStatusUpdate(application.id, 'Offered')}
+                            title="Select / Hire"
+                            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50"
+                          >
+                            <UserPlus className="h-3.5 w-3.5" />
+                            <span>Select</span>
+                          </button>
+                        )}
+
+                        {/* Reject */}
+                        {['Applied', 'Reviewed', 'Shortlisted', 'Interview'].includes(application.status) && (
+                          <button
+                            type="button"
+                            onClick={() => handleStatusUpdate(application.id, 'Rejected')}
+                            title="Reject"
+                            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50"
+                          >
+                            <UserX className="h-3.5 w-3.5" />
+                            <span>Reject</span>
+                          </button>
+                        )}
+
+                        <Link to={`/employer/messages?application=${application.id}`} title="Message Candidate" className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-sky-200 px-2 text-xs font-extrabold text-sky-600 transition hover:bg-sky-50"><MessageCircle className="h-3.5 w-3.5" /><span>Message</span></Link>
                       </div>
                     </td>
                   </tr>
@@ -382,6 +624,165 @@ export const EmployerApplications = () => {
           </div>
         </div>
       </section>
+
+      {upgradePopup.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4">
+          <div className="w-full max-w-md rounded-lg border border-slate-100 bg-white shadow-2xl">
+            <div className="flex items-start gap-3 border-b border-slate-100 px-5 py-4">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-500">
+                <AlertCircle className="h-6 w-6" />
+              </span>
+              <div>
+                <h2 className="text-lg font-extrabold text-[#3f4254]">Upgrade Subscription Required</h2>
+                <p className="mt-1 text-sm font-semibold text-slate-500">
+                  {upgradePopup.message || 'Resume downloads are not supported under your current plan. Please upgrade your plan.'}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col-reverse gap-3 px-5 py-4 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setUpgradePopup({ open: false, message: '' })}
+                className="inline-flex h-10 items-center justify-center rounded-md border border-slate-200 px-4 text-sm font-extrabold text-slate-600 transition hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/employer/subscription')}
+                className="inline-flex h-10 items-center justify-center rounded-md bg-[#6658dd] px-4 text-sm font-extrabold text-white shadow-md shadow-indigo-500/20 transition hover:bg-[#5848d8]"
+              >
+                Upgrade Subscription
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showInterviewModal && activeApplication && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-3 backdrop-blur-sm sm:p-4">
+          <div className="relative flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-slate-100 bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-4 sm:px-5">
+              <h3 className="text-sm font-extrabold text-[#3f4254] sm:text-base">Schedule Interview</h3>
+              <button
+                type="button"
+                onClick={() => setShowInterviewModal(false)}
+                disabled={savingInterview}
+                className="rounded p-1 text-slate-400 hover:bg-slate-50 hover:text-slate-600 disabled:opacity-60"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="overflow-y-auto p-4 sm:p-5">
+              <form onSubmit={scheduleInterviewSubmit} className="space-y-4">
+                <p className="text-xs font-semibold text-slate-400">
+                  Schedule a dynamic interview with <span className="font-extrabold text-[#3f4254]">{activeApplication.name}</span> for the position of <span className="font-extrabold text-[#3f4254]">{activeApplication.jobTitle}</span>.
+                </p>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Date</label>
+                    <input
+                      type="date"
+                      required
+                      value={interviewForm.date}
+                      onChange={(event) => setInterviewForm({ ...interviewForm, date: event.target.value })}
+                      className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Time</label>
+                    <input
+                      type="time"
+                      required
+                      value={interviewForm.time}
+                      onChange={(event) => setInterviewForm({ ...interviewForm, time: event.target.value })}
+                      className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Type</label>
+                  <select
+                    value={interviewForm.type}
+                    onChange={(event) => setInterviewForm({ ...interviewForm, type: event.target.value, locationOrLink: '' })}
+                    className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 outline-none focus:border-[#6658dd]"
+                  >
+                    <option>Video Call</option>
+                    <option>Phone Call</option>
+                    <option>In-Person</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+
+                {isInPersonInterview(interviewForm.type) ? (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Manual Address / Office Location (Optional)</label>
+                      <input
+                        type="text"
+                        placeholder="Enter complete address manually"
+                        value={interviewForm.manualAddress || ''}
+                        onChange={(event) => setInterviewForm({ ...interviewForm, manualAddress: event.target.value })}
+                        className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                      />
+                    </div>
+                    <div className="rounded-md border border-slate-100 bg-slate-50 p-3">
+                      <p className="mb-2 text-xs font-bold text-slate-550">Or Select on Map (Optional)</p>
+                      <InterviewLocationPicker
+                        value={interviewForm.locationOrLink}
+                        onChange={(locationOrLink) => setInterviewForm({ ...interviewForm, locationOrLink })}
+                      />
+                    </div>
+                  </div>
+                ) : getInterviewLocationField(interviewForm.type) && (
+                  <div>
+                    <label className="mb-1.5 block text-xs font-extrabold text-slate-500">{getInterviewLocationField(interviewForm.type).label}</label>
+                    <input
+                      type="text"
+                      placeholder={getInterviewLocationField(interviewForm.type).placeholder}
+                      value={interviewForm.locationOrLink}
+                      onChange={(event) => setInterviewForm({ ...interviewForm, locationOrLink: event.target.value })}
+                      className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interviewer Notes</label>
+                  <textarea
+                    rows="3"
+                    placeholder="Topics to discuss or instruction notes..."
+                    value={interviewForm.notes}
+                    onChange={(event) => setInterviewForm({ ...interviewForm, notes: event.target.value })}
+                    className="w-full rounded-md border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                  />
+                </div>
+
+                <div className="flex flex-col-reverse justify-end gap-2 border-t border-slate-100 pt-2 sm:flex-row">
+                  <button
+                    type="button"
+                    disabled={savingInterview}
+                    onClick={() => setShowInterviewModal(false)}
+                    className="h-10 rounded-md bg-slate-100 px-4 text-sm font-extrabold text-slate-600 transition hover:bg-slate-200 disabled:opacity-60"
+                  >
+                    Close
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={savingInterview}
+                    className="h-10 rounded-md bg-[#6658dd] px-4 text-sm font-extrabold text-white transition hover:bg-[#5848d8] disabled:opacity-60"
+                  >
+                    {savingInterview ? 'Scheduling...' : 'Confirm Interview'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

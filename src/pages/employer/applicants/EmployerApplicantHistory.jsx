@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Briefcase,
   Calendar,
@@ -42,13 +42,21 @@ const statCards = [
 ];
 
 export const EmployerApplicantHistory = () => {
+  const [searchParams] = useSearchParams();
+  const searchParamString = searchParams.toString();
   const [data, setData] = useState({ stats: {}, filters: {}, applicants: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 1 } });
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(searchParams.get('search') || '');
   const [jobId, setJobId] = useState('');
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState(searchParams.get('status') || '');
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    setSearch(searchParams.get('search') || '');
+    setStatus(searchParams.get('status') || '');
+    setCurrentPage(1);
+  }, [searchParamString]);
 
   // Reset page to 1 when filters change
   useEffect(() => {

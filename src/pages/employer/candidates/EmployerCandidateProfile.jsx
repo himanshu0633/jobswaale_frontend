@@ -169,7 +169,8 @@ const EmployerCandidateProfile = () => {
       type: 'Video Call',
       locationOrLink: '',
       notes: '',
-      onHold: false
+      onHold: false,
+      manualAddress: ''
     });
     setShowInterviewModal(true);
   };
@@ -187,21 +188,21 @@ const EmployerCandidateProfile = () => {
         return;
       }
     }
-    if (!interviewForm.onHold && isInPersonInterview(interviewForm.type) && !interviewForm.locationOrLink) {
-      setError('Please select interview location from the map.');
-      return;
-    }
     setSaving('Interview');
     setError('');
     setMessage('');
     try {
+      const payload = {
+        ...interviewForm,
+        locationOrLink: interviewForm.manualAddress || interviewForm.locationOrLink || ''
+      };
       await axios.post(
         `${BASE_API_URL}/employer/applications/${candidate.application.id}/schedule-interview`,
-        interviewForm,
+        payload,
         { headers: getTokenHeaders() }
       );
       setShowInterviewModal(false);
-      setInterviewForm({ date: '', time: '', type: 'Video Call', locationOrLink: '', notes: '', onHold: false });
+      setInterviewForm({ date: '', time: '', type: 'Video Call', locationOrLink: '', notes: '', onHold: false, manualAddress: '' });
       setMessage(interviewForm.onHold ? 'Application moved to interview on hold.' : 'Interview scheduled successfully.');
       const response = await axios.get(`${BASE_API_URL}/employer/candidateProfile/${id}`, { headers: getTokenHeaders() });
       setCandidate(response.data);
@@ -577,10 +578,25 @@ const EmployerCandidateProfile = () => {
                     </div>
 
                     {showMapPicker ? (
-                      <InterviewLocationPicker
-                        value={interviewForm.locationOrLink}
-                        onChange={(locationOrLink) => setInterviewForm({ ...interviewForm, locationOrLink })}
-                      />
+                      <div className="space-y-4">
+                        <div>
+                          <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Manual Address / Office Location (Optional)</label>
+                          <input
+                            type="text"
+                            placeholder="Enter complete address manually"
+                            value={interviewForm.manualAddress || ''}
+                            onChange={(event) => setInterviewForm({ ...interviewForm, manualAddress: event.target.value })}
+                            className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                          />
+                        </div>
+                        <div className="rounded-md border border-slate-100 bg-slate-50 p-3">
+                          <p className="mb-2 text-xs font-bold text-slate-550">Or Select on Map (Optional)</p>
+                          <InterviewLocationPicker
+                            value={interviewForm.locationOrLink}
+                            onChange={(locationOrLink) => setInterviewForm({ ...interviewForm, locationOrLink })}
+                          />
+                        </div>
+                      </div>
                     ) : interviewLocationField && (
                       <div>
                         <label className="mb-1.5 block text-xs font-extrabold text-slate-500">{interviewLocationField.label}</label>

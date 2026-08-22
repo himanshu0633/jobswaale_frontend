@@ -18,7 +18,8 @@ import {
   Search,
   Send,
   UserPlus,
-  UserX
+  UserX,
+  Eye
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import ClearFilterButton from '../../../components/ClearFilterButton';
@@ -34,6 +35,7 @@ const statCards = [
 ];
 
 const statusTone = {
+  Selected: 'bg-emerald-50 text-emerald-500',
   'Offer Sent': 'bg-violet-50 text-[#6658dd]',
   'Offer Accepted': 'bg-cyan-50 text-cyan-500',
   Hired: 'bg-emerald-50 text-emerald-500',
@@ -61,25 +63,66 @@ const SelectField = ({ label, value, onChange, children }) => (
   </div>
 );
 
-const OfferActions = ({ candidate, isUpdating, isOpen, onToggle, buttonClassName = 'flex h-9 w-9 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-[#6658dd]', menuClassName = 'absolute right-0 z-20 mt-1.5 w-52 rounded-md border border-slate-100 bg-white py-1 shadow-lg', onUpdate }) => (
-  <div className="relative inline-block text-left">
-    <button type="button" disabled={isUpdating} onClick={onToggle} className={buttonClassName}>
-      {isUpdating ? <Loader className="h-4 w-4 animate-spin" /> : <MoreVertical className="h-4 w-4" />}
+const OfferActions = ({ candidate, isUpdating, onUpdate }) => (
+  <div className="flex flex-wrap items-center gap-1.5 justify-center max-w-[340px] mx-auto">
+    <Link
+      to={`/employer/applications/${candidate.applicationId}`}
+      title="View Application Details"
+      className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-slate-500 transition hover:bg-slate-50"
+    >
+      <Eye className="h-3.5 w-3.5" />
+      <span>View</span>
+    </Link>
+
+    <button
+      type="button"
+      disabled={isUpdating}
+      onClick={() => onUpdate(candidate, 'Offer Sent')}
+      title="Mark Offer Sent"
+      className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50 disabled:opacity-60"
+    >
+      <Send className="h-3.5 w-3.5" />
+      <span>Offer Sent</span>
     </button>
-    {isOpen && (
-      <div className={menuClassName}>
-        <Link to={`/employer/applications/${candidate.applicationId}`} className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"><FileText className="h-4 w-4 text-slate-500" />View Application</Link>
-        <button type="button" onClick={() => onUpdate(candidate, 'Offer Sent')} className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"><Send className="h-4 w-4 text-[#6658dd]" />Mark Offer Sent</button>
-        <button type="button" onClick={() => onUpdate(candidate, 'Offer Accepted')} className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"><CheckCircle2 className="h-4 w-4 text-cyan-500" />Mark Accepted</button>
-        <button type="button" onClick={() => onUpdate(candidate, 'Hired')} className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"><Briefcase className="h-4 w-4 text-emerald-500" />Mark Hired</button>
-        <button type="button" onClick={() => onUpdate(candidate, 'Offer Declined')} className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm font-semibold text-rose-600 hover:bg-rose-50"><UserX className="h-4 w-4" />Mark Declined</button>
-      </div>
-    )}
+
+    <button
+      type="button"
+      disabled={isUpdating}
+      onClick={() => onUpdate(candidate, 'Offer Accepted')}
+      title="Mark Accepted"
+      className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-cyan-500 transition hover:bg-cyan-50 disabled:opacity-60"
+    >
+      <CheckCircle2 className="h-3.5 w-3.5" />
+      <span>Accept</span>
+    </button>
+
+    <button
+      type="button"
+      disabled={isUpdating}
+      onClick={() => onUpdate(candidate, 'Hired')}
+      title="Mark Hired"
+      className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50 disabled:opacity-60"
+    >
+      <Briefcase className="h-3.5 w-3.5" />
+      <span>Hire</span>
+    </button>
+
+    <button
+      type="button"
+      disabled={isUpdating}
+      onClick={() => onUpdate(candidate, 'Offer Declined')}
+      title="Mark Declined"
+      className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50 disabled:opacity-60"
+    >
+      <UserX className="h-3.5 w-3.5" />
+      <span>Decline</span>
+    </button>
   </div>
 );
 
 export const EmployerSelected = () => {
   const [searchParams] = useSearchParams();
+  const searchParamString = searchParams.toString();
   const getUrlFilters = () => ({
     search: searchParams.get('search') || '',
     jobTitle: searchParams.get('jobTitle') || '',
@@ -88,11 +131,18 @@ export const EmployerSelected = () => {
     minSalary: searchParams.get('minSalary') || ''
   });
   const [filters, setFilters] = useState(getUrlFilters);
+  
+  useEffect(() => {
+    setFilters(getUrlFilters());
+    setTableSearch('');
+    setCurrentPage(1);
+  }, [searchParamString]);
+
   const [tableSearch, setTableSearch] = useState('');
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [data, setData] = useState({
-    stats: { total: 0, offerSent: 0, offerAccepted: 0, hired: 0, offerDeclined: 0 },
+    stats: { total: 0, selected: 0, offerSent: 0, offerAccepted: 0, hired: 0, offerDeclined: 0 },
     filters: { jobTitles: [] },
     selected: [],
     pagination: { page: 1, limit: 10, total: 0, totalPages: 1 }
@@ -136,7 +186,7 @@ export const EmployerSelected = () => {
       .then((response) => {
         if (!alive) return;
         setData({
-          stats: { total: 0, offerSent: 0, offerAccepted: 0, hired: 0, offerDeclined: 0 },
+          stats: { total: 0, selected: 0, offerSent: 0, offerAccepted: 0, hired: 0, offerDeclined: 0 },
           filters: { jobTitles: [] },
           selected: [],
           pagination: { page: 1, limit: pageSize, total: 0, totalPages: 1 },
@@ -227,7 +277,7 @@ export const EmployerSelected = () => {
               <div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input className="h-10 w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100" value={filters.search} onChange={(event) => setFilter('search', event.target.value)} placeholder="Name, email, job, location" /></div>
             </div>
             <SelectField label="Job Title" value={filters.jobTitle} onChange={(value) => setFilter('jobTitle', value)}><option value="">All Jobs</option>{(optionFilters.jobTitles || []).map((item) => <option key={item}>{item}</option>)}</SelectField>
-            <SelectField label="Status" value={filters.status} onChange={(value) => setFilter('status', value)}><option value="">All Status</option>{['Offer Sent', 'Offer Accepted', 'Offer Declined', 'Hired'].map((item) => <option key={item}>{item}</option>)}</SelectField>
+            <SelectField label="Status" value={filters.status} onChange={(value) => setFilter('status', value)}><option value="">All Status</option>{['Selected', 'Offer Sent', 'Offer Accepted', 'Offer Declined', 'Hired'].map((item) => <option key={item}>{item}</option>)}</SelectField>
             <div><label className="mb-2 block text-xs font-extrabold text-slate-500">Selection Date</label><input type="date" value={filters.selectionDate} onChange={(event) => setFilter('selectionDate', event.target.value)} className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100" /></div>
             <SelectField label="Min Salary (LPA)" value={filters.minSalary} onChange={(value) => setFilter('minSalary', value)}><option value="">All Salaries</option>{[5, 10, 15, 20].map((item) => <option key={item} value={item}>{item}</option>)}</SelectField>
             <div className="flex items-end"><ClearFilterButton active={hasActiveFilters} onClick={resetFilters} /></div>
@@ -266,8 +316,6 @@ export const EmployerSelected = () => {
                   <OfferActions
                     candidate={candidate}
                     isUpdating={updatingId === candidate.id}
-                    isOpen={openDropdownId === candidate.id}
-                    onToggle={() => setOpenDropdownId(openDropdownId === candidate.id ? '' : candidate.id)}
                     onUpdate={updateOfferStatus}
                   />
                 </div>
@@ -294,8 +342,6 @@ export const EmployerSelected = () => {
                       <OfferActions
                         candidate={candidate}
                         isUpdating={updatingId === candidate.id}
-                        isOpen={openDropdownId === candidate.id}
-                        onToggle={() => setOpenDropdownId(openDropdownId === candidate.id ? '' : candidate.id)}
                         onUpdate={updateOfferStatus}
                       />
                     </td>

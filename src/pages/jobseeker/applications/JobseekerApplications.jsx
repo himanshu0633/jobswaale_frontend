@@ -42,6 +42,11 @@ const statusStyles = {
   shortlisted: 'bg-emerald-50 text-emerald-600',
   interview: 'bg-indigo-50 text-indigo-600',
   offered: 'bg-emerald-100 text-emerald-800',
+  selected: 'bg-emerald-50 text-emerald-600',
+  'offer sent': 'bg-blue-50 text-blue-600',
+  'offer accepted': 'bg-cyan-50 text-cyan-600',
+  hired: 'bg-emerald-50 text-emerald-600',
+  'offer declined': 'bg-rose-50 text-rose-600',
   rejected: 'bg-rose-50 text-rose-600'
 };
 
@@ -52,6 +57,11 @@ const statusLabels = {
   shortlisted: 'Shortlisted',
   interview: 'Interview',
   offered: 'Offered / Selected',
+  selected: 'Selected',
+  'offer sent': 'Offer Sent',
+  'offer accepted': 'Offer Accepted',
+  hired: 'Hired',
+  'offer declined': 'Offer Declined',
   rejected: 'Rejected'
 };
 
@@ -221,9 +231,11 @@ export const JobseekerApplications = () => {
             </div>
 
             <span
-              className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${statusStyles[job.status] || 'bg-slate-50 text-slate-500'}`}
+              className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${
+                statusStyles[String(job.status === 'offered' ? (job.selectionDetails?.offerStatus || 'selected') : job.status).toLowerCase()] || 'bg-slate-50 text-slate-500'
+              }`}
             >
-              {statusLabels[job.status] || job.status}
+              {statusLabels[String(job.status === 'offered' ? (job.selectionDetails?.offerStatus || 'selected') : job.status).toLowerCase()] || (job.status === 'offered' ? (job.selectionDetails?.offerStatus || 'Selected') : job.status)}
             </span>
 
             <div className="flex shrink-0 flex-wrap gap-2">

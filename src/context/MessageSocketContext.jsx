@@ -59,6 +59,12 @@ export const MessageSocketProvider = ({ role, children }) => {
 
   useEffect(() => {
     refreshUnread();
+
+    const isVercel = SOCKET_URL.includes('vercel.app');
+    if (isVercel) {
+      const interval = setInterval(refreshUnread, 15000);
+      return () => clearInterval(interval);
+    }
   }, [endpoint]);
 
   useEffect(() => {
@@ -73,7 +79,14 @@ export const MessageSocketProvider = ({ role, children }) => {
     if (!token) return undefined;
 
     const isVercel = SOCKET_URL.includes('vercel.app');
-    const transports = isVercel ? ['polling'] : ['polling', 'websocket'];
+    if (isVercel) {
+      // Vercel serverless functions do not support persistent WebSockets/Socket.IO connections.
+      // We set socket to null and rely on HTTP polling fallbacks.
+      setSocket(null);
+      return undefined;
+    }
+
+    const transports = ['polling', 'websocket'];
 
     const nextSocket = io(SOCKET_URL, {
       auth: { token },

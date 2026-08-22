@@ -425,6 +425,7 @@ export const JobDetail = () => {
     );
   }
 
+  const isExpired = job.jobExpiry && new Date(job.jobExpiry) < new Date();
   const logoTone = logoTones[job.company] || 'bg-slate-600';
   const displaySalary = formatJobSalary(job);
   const categoryLabel = currentCategoryName || job.jobCategory?.categoryName || job.category || 'this category';
@@ -479,7 +480,11 @@ export const JobDetail = () => {
               <Bookmark className={`h-4 w-4 ${saved ? 'fill-amber-500' : ''}`}/>
               {toggling ? 'Saving...' : (saved ? 'Saved' : 'Save')}
             </button>
-            {isJobseeker && applied ? (
+            {isExpired ? (
+              <span className="rounded-md border border-rose-100 bg-rose-50 px-5 py-2 text-sm font-bold text-rose-700">
+                Job Expired
+              </span>
+            ) : isJobseeker && applied ? (
               <span className="rounded-md border border-emerald-100 bg-emerald-50 px-5 py-2 text-sm font-bold text-emerald-700">
                 Already Applied
               </span>
@@ -575,7 +580,7 @@ export const JobDetail = () => {
           </section>
 
           {/* Apply Section */}
-          {isJobseeker && (
+          {isJobseeker && !isExpired && (
             <section id="applyForm" className="rounded-md border border-slate-100 bg-[#EAF2FF] p-6 shadow-sm sm:p-8">
               <h2 className="text-lg font-extrabold text-[#0f172a]">Apply For This Position</h2>
               <p className="mt-1 mb-6 text-sm font-semibold text-slate-500">

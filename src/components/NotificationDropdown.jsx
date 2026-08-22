@@ -49,6 +49,16 @@ export const NotificationDropdown = ({ theme }) => {
     };
   }, [socket]);
 
+  useEffect(() => {
+    if (socket) return undefined;
+
+    const interval = setInterval(() => {
+      fetchNotifications();
+    }, 15000);
+
+    return () => clearInterval(interval);
+  }, [socket]);
+
   const unseenCount = notifications.filter((n) => n.status === 'unseen').length;
 
   const markAllAsRead = async () => {

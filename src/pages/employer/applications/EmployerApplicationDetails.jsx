@@ -7,6 +7,7 @@ import {
   Calendar,
   CalendarPlus,
   Check,
+  Clock,
   Download,
   Loader,
   Mail,
@@ -75,6 +76,11 @@ const statusTone = {
   Reviewed: 'bg-sky-50 text-sky-600',
   Shortlisted: 'bg-amber-50 text-amber-600',
   Interview: 'bg-violet-50 text-violet-600',
+  Selected: 'bg-emerald-50 text-emerald-600',
+  'Offer Sent': 'bg-blue-50 text-blue-600',
+  'Offer Accepted': 'bg-cyan-50 text-cyan-600',
+  Hired: 'bg-emerald-50 text-emerald-600',
+  'Offer Declined': 'bg-rose-50 text-rose-600',
   Offered: 'bg-blue-50 text-blue-600',
   Rejected: 'bg-rose-50 text-rose-600'
 };
@@ -136,12 +142,20 @@ const ActionButton = ({ tone, icon: Icon, children, onClick, disabled }) => (
 );
 
 const ResumeDownloadLink = ({ candidate }) => {
-  if (!candidate.hasResume || !candidate.allowResumeDownload) return null;
+  if (!candidate.hasResume) return null;
+
+  const handleDownload = () => {
+    if (!candidate.allowResumeDownload) {
+      alert("Please upgrade your plan to download candidate resumes.");
+      return;
+    }
+    downloadCandidateResume(candidate);
+  };
 
   return (
     <button
       type="button"
-      onClick={() => downloadCandidateResume(candidate)}
+      onClick={handleDownload}
       className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-600 transition hover:bg-slate-50"
     >
       <Download className="h-4 w-4" /> Download Resume
@@ -162,8 +176,7 @@ const EmployerApplicationDetails = () => {
     time: '',
     type: 'Video Call',
     locationOrLink: '',
-    notes: '',
-    onHold: false
+    notes: ''
   });
   const [unlockSuccessModal, setUnlockSuccessModal] = useState({
     show: false,
@@ -182,6 +195,39 @@ const EmployerApplicationDetails = () => {
       window.removeEventListener('resume-unlock-success', handleUnlockSuccess);
     };
   }, []);
+
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000); // Check every second to auto-update view on interview time passed
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const interviewDateTime = useMemo(() => {
+    const details = application?.interviewDetails;
+    if (!details?.date || !details?.time || details?.onHold || application?.status !== 'Interview') {
+      return null;
+    }
+    const d = new Date(details.date);
+    let [hours, minutes] = String(details.time).split(':').map(Number);
+    if (String(details.time).toLowerCase().includes('pm') && hours < 12) {
+      hours += 12;
+    } else if (String(details.time).toLowerCase().includes('am') && hours === 12) {
+      hours = 0;
+    }
+    if (!isNaN(hours) && !isNaN(minutes)) {
+      d.setHours(hours, minutes, 0, 0);
+    }
+    return d;
+  }, [application]);
+
+  const isInterviewPassed = useMemo(() => {
+    if (!interviewDateTime) return false;
+    return currentTime > interviewDateTime.getTime();
+  }, [interviewDateTime, currentTime]);
 
   const loadDetails = async () => {
     setLoading(true);
@@ -211,7 +257,7 @@ const EmployerApplicationDetails = () => {
     setMessage('');
     try {
       await axios.patch(`${BASE_API_URL}/employer/applications/${id}/status`, { status }, { headers: getTokenHeaders() });
-      setMessage(`Application ${status} successfully.`);
+      setMessage(status === 'Offered' ? 'Application Selected successfully.' : `Application ${status} successfully.`);
       await loadDetails();
     } catch (err) {
       setError(err.response?.data?.message || 'Status update failed.');
@@ -229,33 +275,33 @@ const EmployerApplicationDetails = () => {
       type: 'Video Call',
       locationOrLink: '',
       notes: '',
-      onHold: false
+      manualAddress: ''
     });
     setShowInterviewModal(true);
   };
 
   const scheduleInterview = async (event) => {
     event.preventDefault();
-    if (!interviewForm.onHold && (!interviewForm.date || !interviewForm.time)) {
+    if (!interviewForm.date || !interviewForm.time) {
       setError('Please specify interview date and time.');
-      return;
-    }
-    if (!interviewForm.onHold && isInPersonInterview(interviewForm.type) && !interviewForm.locationOrLink) {
-      setError('Please select interview location from the map.');
       return;
     }
     setSaving('Interview');
     setError('');
     setMessage('');
     try {
+      const payload = {
+        ...interviewForm,
+        locationOrLink: interviewForm.manualAddress || interviewForm.locationOrLink || ''
+      };
       await axios.post(
         `${BASE_API_URL}/employer/applications/${id}/schedule-interview`,
-        interviewForm,
+        payload,
         { headers: getTokenHeaders() }
       );
       setShowInterviewModal(false);
-      setInterviewForm({ date: '', time: '', type: 'Video Call', locationOrLink: '', notes: '', onHold: false });
-      setMessage(interviewForm.onHold ? 'Application moved to interview on hold.' : 'Interview scheduled successfully.');
+      setInterviewForm({ date: '', time: '', type: 'Video Call', locationOrLink: '', notes: '' });
+      setMessage('Interview scheduled successfully.');
       await loadDetails();
     } catch (err) {
       setError(err.response?.data?.message || 'Interview schedule failed.');
@@ -264,13 +310,233 @@ const EmployerApplicationDetails = () => {
     }
   };
 
+  const scheduleInterviewOnHold = async () => {
+    setSaving('InterviewOnHold');
+    setError('');
+    setMessage('');
+    try {
+      await axios.post(
+        `${BASE_API_URL}/employer/applications/${id}/schedule-interview`,
+        {
+          onHold: true,
+          type: application?.interviewDetails?.type || 'Video Call',
+          notes: application?.interviewDetails?.notes || 'Interview kept on hold.'
+        },
+        { headers: getTokenHeaders() }
+      );
+      setMessage('Application moved to interview on hold.');
+      await loadDetails();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to move application to interview on hold.');
+    } finally {
+      setSaving('');
+    }
+  };
+
+  const topActions = useMemo(() => {
+    const list = [];
+    if (!application) return list;
+
+    const status = application.status;
+    const details = application.interviewDetails || {};
+    const onHold = details.onHold;
+
+    // 1. If status is Applied or Reviewed:
+    // Only show: Shortlist, Reject
+    if (status === 'Applied' || status === 'Reviewed') {
+      list.push({
+        key: 'Shortlisted',
+        label: 'Shortlist',
+        tone: 'bg-amber-500 text-white hover:bg-amber-600',
+        icon: UserCheck,
+        onClick: () => updateStatus('Shortlisted')
+      });
+      list.push({
+        key: 'Rejected',
+        label: 'Reject',
+        tone: 'border border-rose-200 bg-white text-rose-600 hover:bg-rose-50',
+        icon: UserX,
+        onClick: () => updateStatus('Rejected')
+      });
+    }
+
+    // 2. If status is Shortlisted:
+    // Only show: Schedule Interview, On Hold for Interview, Reject
+    else if (status === 'Shortlisted') {
+      list.push({
+        key: 'InterviewSchedule',
+        label: 'Schedule Interview',
+        tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
+        icon: CalendarPlus,
+        onClick: openInterviewModal
+      });
+      list.push({
+        key: 'InterviewOnHold',
+        label: 'On Hold for Interview',
+        tone: 'border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100',
+        icon: Clock,
+        onClick: scheduleInterviewOnHold
+      });
+      list.push({
+        key: 'Rejected',
+        label: 'Reject',
+        tone: 'border border-rose-200 bg-white text-rose-600 hover:bg-rose-50',
+        icon: UserX,
+        onClick: () => updateStatus('Rejected')
+      });
+    }
+
+    // 3. If status is Interview:
+    else if (status === 'Interview') {
+      if (onHold) {
+        // If on hold:
+        // Only show: Schedule Interview, Reject
+        list.push({
+          key: 'InterviewSchedule',
+          label: 'Schedule Interview',
+          tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
+          icon: CalendarPlus,
+          onClick: openInterviewModal
+        });
+        list.push({
+          key: 'Rejected',
+          label: 'Reject',
+          tone: 'border border-rose-200 bg-white text-rose-600 hover:bg-rose-50',
+          icon: UserX,
+          onClick: () => updateStatus('Rejected')
+        });
+      } else {
+        // If NOT on hold:
+        if (isInterviewPassed) {
+          // If interview time has passed:
+          // Only show: Select, Reject
+          list.push({
+            key: 'Offered',
+            label: 'Select',
+            tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
+            icon: UserPlus,
+            onClick: () => updateStatus('Offered')
+          });
+          list.push({
+            key: 'Rejected',
+            label: 'Reject',
+            tone: 'border border-rose-200 bg-white text-rose-600 hover:bg-rose-50',
+            icon: UserX,
+            onClick: () => updateStatus('Rejected')
+          });
+        } else {
+          // If interview time has NOT passed:
+          // Only show: Reschedule Interview, On Hold for Interview, Reject
+          list.push({
+            key: 'InterviewSchedule',
+            label: 'Reschedule Interview',
+            tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
+            icon: CalendarPlus,
+            onClick: openInterviewModal
+          });
+          list.push({
+            key: 'InterviewOnHold',
+            label: 'On Hold for Interview',
+            tone: 'border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100',
+            icon: Clock,
+            onClick: scheduleInterviewOnHold
+          });
+          list.push({
+            key: 'Rejected',
+            label: 'Reject',
+            tone: 'border border-rose-200 bg-white text-rose-600 hover:bg-rose-50',
+            icon: UserX,
+            onClick: () => updateStatus('Rejected')
+          });
+        }
+      }
+    }
+
+    return list;
+  }, [application, isInterviewPassed]);
+
+  const quickActions = useMemo(() => {
+    const list = [];
+    if (!application) return list;
+
+    const status = application.status;
+    const details = application.interviewDetails || {};
+    const onHold = details.onHold;
+
+    if (['Offered', 'Hired', 'Rejected'].includes(status)) return list;
+
+    // 1. Shortlist button: shown if status is Applied or Reviewed
+    if (status === 'Applied' || status === 'Reviewed') {
+      list.push({
+        key: 'Shortlisted',
+        label: 'Shortlist',
+        tone: 'bg-amber-500 text-white hover:bg-amber-600',
+        icon: UserCheck,
+        onClick: () => updateStatus('Shortlisted')
+      });
+    }
+
+    // 2. Schedule Interview or Reschedule Interview button:
+    // shown if status is Applied, Reviewed, Shortlisted, or Interview
+    if (['Applied', 'Reviewed', 'Shortlisted', 'Interview'].includes(status)) {
+      const isInterview = status === 'Interview';
+      list.push({
+        key: 'InterviewSchedule',
+        label: (isInterview && !onHold) ? 'Reschedule Interview' : 'Schedule Interview',
+        tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
+        icon: CalendarPlus,
+        onClick: openInterviewModal
+      });
+    }
+
+    // 3. On Hold for Interview button:
+    // shown if status is Applied, Reviewed, Shortlisted, or Interview (and not already on hold)
+    if (['Applied', 'Reviewed', 'Shortlisted', 'Interview'].includes(status)) {
+      if (!(status === 'Interview' && onHold)) {
+        list.push({
+          key: 'InterviewOnHold',
+          label: 'On Hold for Interview',
+          tone: 'border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100',
+          icon: Clock,
+          onClick: scheduleInterviewOnHold
+        });
+      }
+    }
+
+    // 4. Select button:
+    // shown if status is Applied, Reviewed, Shortlisted, or Interview
+    if (['Applied', 'Reviewed', 'Shortlisted', 'Interview'].includes(status)) {
+      list.push({
+        key: 'Offered',
+        label: 'Select',
+        tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
+        icon: UserPlus,
+        onClick: () => updateStatus('Offered')
+      });
+    }
+
+    // 5. Reject button:
+    // shown if status is Applied, Reviewed, Shortlisted, or Interview
+    if (['Applied', 'Reviewed', 'Shortlisted', 'Interview'].includes(status)) {
+      list.push({
+        key: 'Rejected',
+        label: 'Reject',
+        tone: 'border border-rose-200 bg-white text-rose-600 hover:bg-rose-50',
+        icon: UserX,
+        onClick: () => updateStatus('Rejected')
+      });
+    }
+
+    return list;
+  }, [application]);
+
   const activeStepIndex = useMemo(() => {
     if (!application?.status) return 0;
     if (application.status === 'Rejected') {
       return Math.max(timelineSteps.findIndex((step) => step === application.rejectedFromStatus), 0);
     }
     return Math.max(timelineSteps.findIndex((step) => step === application.status), 0);
-  }, [application?.rejectedFromStatus, application?.status]);
+  }, [application]);
 
   if (loading) {
     return <PageSkeleton variant="detail" />;
@@ -286,39 +552,6 @@ const EmployerApplicationDetails = () => {
 
   const candidate = application.candidate || {};
   const job = application.job || {};
-  let availableActions = [];
-  if (application.status === 'Applied' || application.status === 'Reviewed') {
-    availableActions = [
-      {
-        status: 'Shortlisted',
-        label: 'Shortlist',
-        tone: 'bg-amber-400 text-white hover:bg-amber-500',
-        icon: UserCheck,
-        onClick: () => updateStatus('Shortlisted')
-      }
-    ];
-  } else if (application.status === 'Shortlisted') {
-    availableActions = [
-      {
-        status: 'Interview',
-        label: 'Schedule Interview',
-        tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
-        icon: CalendarPlus,
-        onClick: openInterviewModal
-      }
-    ];
-  } else if (application.status === 'Interview') {
-    availableActions = [
-      {
-        status: 'Offered',
-        label: 'Select',
-        tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
-        icon: UserPlus,
-        onClick: () => updateStatus('Offered')
-      }
-    ];
-  }
-  const canReject = ['Applied', 'Reviewed', 'Shortlisted', 'Interview'].includes(application.status);
   const interviewLocationField = getInterviewLocationField(interviewForm.type);
   const showMapPicker = isInPersonInterview(interviewForm.type);
 
@@ -339,7 +572,9 @@ const EmployerApplicationDetails = () => {
 
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-slate-100 bg-slate-50 px-4 py-3">
         <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-[#3f4254]">
-          <span className={`rounded px-2.5 py-1 text-xs font-black ${statusTone[application.status] || statusTone.Applied}`}>{application.status}</span>
+          <span className={`rounded px-2.5 py-1 text-xs font-black ${statusTone[application.status === 'Offered' ? (application.selectionDetails?.offerStatus || 'Selected') : application.status] || statusTone.Applied}`}>
+            {application.status === 'Offered' ? (application.selectionDetails?.offerStatus || 'Selected') : application.status}
+          </span>
           <span className="inline-flex items-center gap-1"><User className="h-4 w-4" /><strong>{candidate.name}</strong></span>
           <span className="inline-flex items-center gap-1"><Briefcase className="h-4 w-4" />{job.title}</span>
           <span className="inline-flex items-center gap-1"><Calendar className="h-4 w-4" />Applied: {application.appliedDisplayDate}</span>
@@ -351,15 +586,12 @@ const EmployerApplicationDetails = () => {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        {availableActions.map((action) => (
-          <ActionButton key={action.status} tone={action.tone} icon={action.icon} onClick={action.onClick} disabled={Boolean(saving)}>
+        {topActions.map((action) => (
+          <ActionButton key={action.key} tone={action.tone} icon={action.icon} onClick={action.onClick} disabled={Boolean(saving)}>
             {action.label}
           </ActionButton>
         ))}
-        {canReject && (
-          <ActionButton tone="border border-rose-200 bg-white text-rose-600 hover:bg-rose-50" icon={UserX} onClick={() => updateStatus('Rejected')} disabled={Boolean(saving)}>Reject</ActionButton>
-        )}
-          <ResumeDownloadLink candidate={candidate} />
+        <ResumeDownloadLink candidate={candidate} />
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[1fr_360px]">
@@ -456,10 +688,38 @@ const EmployerApplicationDetails = () => {
             <div className="space-y-4">
               {timelineSteps.map((step, index) => {
                 const done = index <= activeStepIndex;
+                let BulletIcon = done ? Check : Calendar;
+                let bulletBg = done ? 'bg-emerald-500' : 'bg-slate-300';
+                let statusText = done ? 'Completed' : 'Pending';
+                let statusColor = 'text-slate-400';
+
+                if (step === 'Applied' && done) {
+                  statusText = application.appliedDisplayDate;
+                } else if (step === 'Interview' && application.status === 'Interview') {
+                  if (application.interviewDetails?.onHold) {
+                    BulletIcon = Clock;
+                    bulletBg = 'bg-amber-500';
+                    statusText = 'On Hold';
+                    statusColor = 'text-amber-600 font-extrabold';
+                  } else {
+                    BulletIcon = Calendar;
+                    bulletBg = 'bg-violet-500';
+                    statusText = 'Scheduled';
+                    statusColor = 'text-violet-600 font-extrabold';
+                  }
+                }
+
                 return (
                   <div key={step} className="flex items-start gap-3">
-                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white ${done ? 'bg-emerald-500' : 'bg-slate-300'}`}>{done ? <Check className="h-4 w-4" /> : <Calendar className="h-4 w-4" />}</span>
-                    <div><p className="text-sm font-extrabold text-[#3f4254]">{step === 'Offered' ? 'Selected / Hired' : step}</p><span className="text-xs font-semibold text-slate-400">{done ? (step === 'Applied' ? application.appliedDisplayDate : 'Completed') : 'Pending'}</span></div>
+                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white ${bulletBg}`}>
+                      <BulletIcon className="h-4 w-4" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-extrabold text-[#3f4254]">
+                        {step === 'Offered' ? (application.selectionDetails?.offerStatus || 'Selected') : step}
+                      </p>
+                      <span className={`text-xs font-semibold ${statusColor}`}>{statusText}</span>
+                    </div>
                   </div>
                 );
               })}
@@ -468,14 +728,11 @@ const EmployerApplicationDetails = () => {
 
           <Card title="Quick Actions">
             <div className="grid gap-2">
-              {availableActions.map((action) => (
-                <ActionButton key={action.status} tone={action.tone} icon={action.icon} onClick={action.onClick} disabled={Boolean(saving)}>
+              {quickActions.map((action) => (
+                <ActionButton key={action.key} tone={action.tone} icon={action.icon} onClick={action.onClick} disabled={Boolean(saving)}>
                   {action.label}
                 </ActionButton>
               ))}
-              {canReject && (
-                <ActionButton tone="border border-rose-200 bg-white text-rose-600 hover:bg-rose-50" icon={UserX} onClick={() => updateStatus('Rejected')} disabled={Boolean(saving)}>Reject Application</ActionButton>
-              )}
               <ResumeDownloadLink candidate={candidate} />
             </div>
           </Card>
@@ -509,88 +766,86 @@ const EmployerApplicationDetails = () => {
                   Schedule a dynamic interview with <span className="font-extrabold text-[#3f4254]">{candidate.name}</span> for the position of <span className="font-extrabold text-[#3f4254]">{job.title}</span>.
                 </p>
 
-                <label className={`flex cursor-pointer items-start gap-3 rounded-md border px-3 py-3 transition ${interviewForm.onHold ? 'border-amber-200 bg-amber-50' : 'border-slate-200 bg-white'}`}>
-                  <input
-                    type="checkbox"
-                    checked={interviewForm.onHold}
-                    onChange={(event) => setInterviewForm({ ...interviewForm, onHold: event.target.checked })}
-                    className="mt-1 h-4 w-4 rounded border-slate-300 text-[#6658dd] focus:ring-[#6658dd]"
-                  />
-                  <span>
-                    <span className="block text-sm font-extrabold text-[#3f4254]">On Hold</span>
-                    <span className="mt-0.5 block text-xs font-semibold text-slate-500">Move this candidate to the interview stage now. You can add the schedule details later from the Interviews page.</span>
-                  </span>
-                </label>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Date</label>
+                    <input
+                      type="date"
+                      required
+                      value={interviewForm.date}
+                      onChange={(event) => setInterviewForm({ ...interviewForm, date: event.target.value })}
+                      className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Time</label>
+                    <input
+                      type="time"
+                      required
+                      value={interviewForm.time}
+                      onChange={(event) => setInterviewForm({ ...interviewForm, time: event.target.value })}
+                      className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                    />
+                  </div>
+                </div>
 
-                {!interviewForm.onHold && (
-                  <>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <div>
-                        <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Date</label>
-                        <input
-                          type="date"
-                          required
-                          value={interviewForm.date}
-                          onChange={(event) => setInterviewForm({ ...interviewForm, date: event.target.value })}
-                          className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Time</label>
-                        <input
-                          type="time"
-                          required
-                          value={interviewForm.time}
-                          onChange={(event) => setInterviewForm({ ...interviewForm, time: event.target.value })}
-                          className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
-                        />
-                      </div>
-                    </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Type</label>
+                  <select
+                    value={interviewForm.type}
+                    onChange={(event) => setInterviewForm({ ...interviewForm, type: event.target.value, locationOrLink: '' })}
+                    className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 outline-none focus:border-[#6658dd]"
+                  >
+                    <option>Video Call</option>
+                    <option>Phone Call</option>
+                    <option>In-Person</option>
+                    <option>Other</option>
+                  </select>
+                </div>
 
+                {showMapPicker ? (
+                  <div className="space-y-4">
                     <div>
-                      <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Type</label>
-                      <select
-                        value={interviewForm.type}
-                        onChange={(event) => setInterviewForm({ ...interviewForm, type: event.target.value, locationOrLink: '' })}
-                        className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 outline-none focus:border-[#6658dd]"
-                      >
-                        <option>Video Call</option>
-                        <option>Phone Call</option>
-                        <option>In-Person</option>
-                        <option>Other</option>
-                      </select>
+                      <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Manual Address / Office Location (Optional)</label>
+                      <input
+                        type="text"
+                        placeholder="Enter complete address manually"
+                        value={interviewForm.manualAddress || ''}
+                        onChange={(event) => setInterviewForm({ ...interviewForm, manualAddress: event.target.value })}
+                        className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                      />
                     </div>
-
-                    {showMapPicker ? (
+                    <div className="rounded-md border border-slate-100 bg-slate-50 p-3">
+                      <p className="mb-2 text-xs font-bold text-slate-550">Or Select on Map (Optional)</p>
                       <InterviewLocationPicker
                         value={interviewForm.locationOrLink}
                         onChange={(locationOrLink) => setInterviewForm({ ...interviewForm, locationOrLink })}
                       />
-                    ) : interviewLocationField && (
-                      <div>
-                        <label className="mb-1.5 block text-xs font-extrabold text-slate-500">{interviewLocationField.label}</label>
-                        <input
-                          type="text"
-                          placeholder={interviewLocationField.placeholder}
-                          value={interviewForm.locationOrLink}
-                          onChange={(event) => setInterviewForm({ ...interviewForm, locationOrLink: event.target.value })}
-                          className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
-                        />
-                      </div>
-                    )}
-
-                    <div>
-                      <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interviewer Notes</label>
-                      <textarea
-                        rows="3"
-                        placeholder="Topics to discuss or instruction notes..."
-                        value={interviewForm.notes}
-                        onChange={(event) => setInterviewForm({ ...interviewForm, notes: event.target.value })}
-                        className="w-full rounded-md border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
-                      />
                     </div>
-                  </>
+                  </div>
+                ) : interviewLocationField && (
+                  <div>
+                    <label className="mb-1.5 block text-xs font-extrabold text-slate-500">{interviewLocationField.label}</label>
+                    <input
+                      type="text"
+                      placeholder={interviewLocationField.placeholder}
+                      value={interviewForm.locationOrLink}
+                      onChange={(event) => setInterviewForm({ ...interviewForm, locationOrLink: event.target.value })}
+                      className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                    />
+                  </div>
                 )}
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interviewer Notes</label>
+                  <textarea
+                    rows="3"
+                    placeholder="Topics to discuss or instruction notes..."
+                    value={interviewForm.notes}
+                    onChange={(event) => setInterviewForm({ ...interviewForm, notes: event.target.value })}
+                    className="w-full rounded-md border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                  />
+                </div>
 
                 <div className="flex flex-col-reverse justify-end gap-2 border-t border-slate-100 pt-2 sm:flex-row">
                   <button
@@ -606,7 +861,7 @@ const EmployerApplicationDetails = () => {
                     disabled={Boolean(saving)}
                     className="flex h-10 items-center justify-center gap-2 rounded-md bg-[#6658dd] px-4 text-sm font-extrabold text-white transition hover:bg-[#5848d8] disabled:opacity-60"
                   >
-                    {saving === 'Interview' ? <Loader className="h-4 w-4 animate-spin" /> : interviewForm.onHold ? 'Mark On Hold' : 'Confirm Interview'}
+                    {saving === 'Interview' ? <Loader className="h-4 w-4 animate-spin" /> : 'Confirm Interview'}
                   </button>
                 </div>
               </form>

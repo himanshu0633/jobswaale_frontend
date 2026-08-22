@@ -327,6 +327,21 @@ export const EmployerPostJob = () => {
   const selectedDistrictMeta = meta.districts.find((item) => item.did === form.district) || {};
   const selectedLocationMeta = meta.locations.find((item) => item.name === form.location[0]) || {};
 
+  const scrollToFirstInvalidField = () => {
+    setTimeout(() => {
+      const firstInvalidEl = document.querySelector('.border-rose-500, .border-rose-400');
+      if (firstInvalidEl) {
+        firstInvalidEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const inputEl = ['INPUT', 'SELECT', 'TEXTAREA'].includes(firstInvalidEl.tagName)
+          ? firstInvalidEl
+          : firstInvalidEl.querySelector('input, select, textarea');
+        if (inputEl) {
+          inputEl.focus();
+        }
+      }
+    }, 150);
+  };
+
   const validateStep = () => {
     if (upgradePopup.open) return false;
 
@@ -343,6 +358,7 @@ export const EmployerPostJob = () => {
     setMissingFields(stepMissingFields);
     if (stepMissingFields.length) {
       setMessage({ type: 'error', text: 'Please fill required fields before continuing.' });
+      scrollToFirstInvalidField();
       return false;
     }
     setMessage({ type: '', text: '' });
@@ -365,6 +381,7 @@ export const EmployerPostJob = () => {
       setMissingFields(submitMissingFields);
       setMessage({ type: 'error', text: 'Please complete required job information.' });
       setStep(submitMissingFields.includes('description') ? 1 : 0);
+      scrollToFirstInvalidField();
       return;
     }
 

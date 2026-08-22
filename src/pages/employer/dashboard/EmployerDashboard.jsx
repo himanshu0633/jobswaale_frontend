@@ -1,34 +1,51 @@
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import {
-  ArrowRight,
   Briefcase,
-  CalendarCheck,
-  Check,
-  ChevronRight,
+  Send,
   Clock,
-  Crown,
-  Download,
-  Eye,
-  FileText,
-  Plus,
-  Search,
+  Users,
+  Star,
+  Calendar,
   UserCheck,
-  X
+  Mail,
+  XCircle,
+  Search,
+  ChevronRight,
+  Eye,
+  MoreVertical,
+  SlidersHorizontal,
+  Plus,
+  Crown,
+  FileText
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
 
 const emptyDashboard = {
-  company: {},
-  subscription: {},
-  actionCenter: {},
-  pipeline: {},
+  stats: {
+    jobs: { total: 0, active: 0, draft: 0, expired: 0, closed: 0 },
+    applications: 0,
+    reviewed: 0,
+    shortlisted: 0,
+    interviews: 0,
+    selected: 0,
+    offered: 0,
+    rejected: 0,
+    expired: 0
+  },
+  pipeline: {
+    active: 0,
+    shortlisted: 0,
+    interview: 0,
+    selected: 0,
+    offered: 0,
+    rejected: 0,
+    expired: 0
+  },
   activeJobs: [],
-  latestApplications: [],
-  upcomingInterviews: [],
-  recentActivity: []
+  subscription: {}
 };
 
 const formatDate = (value, fallback = '-') => {
@@ -38,44 +55,17 @@ const formatDate = (value, fallback = '-') => {
   return `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
 };
 
-const actionConfig = [
-  { key: 'activeJobs', title: 'Active Jobs', subtitle: 'Currently live', action: 'View active', to: '/employer/jobs?status=Active', icon: Briefcase, tone: 'bg-emerald-50 text-emerald-500', card: 'bg-[#f0fbf7]' },
-  { key: 'newApplications', title: 'New Applications', subtitle: 'Need Review', action: 'View all', to: '/employer/applications', icon: FileText, tone: 'bg-[#f3f0ff] text-[#6658dd]', card: 'bg-[#f7f4ff]' },
-  { key: 'interviews', title: 'Interviews', subtitle: 'To Confirm', action: 'View schedule', to: '/employer/interviews', icon: CalendarCheck, tone: 'bg-amber-50 text-amber-500', card: 'bg-[#fff9ef]' },
-  { key: 'candidates', title: 'Candidates', subtitle: 'Ready for Selection', action: 'View list', to: '/employer/shortlisted', icon: UserCheck, tone: 'bg-emerald-50 text-emerald-500', card: 'bg-[#f0fbf7]' },
-  { key: 'jobsExpiring', title: 'Expired Jobs', subtitle: 'Needs renewal', action: 'View jobs', to: '/employer/jobs?status=Expired', icon: Clock, tone: 'bg-rose-50 text-rose-500', card: 'bg-[#fff3f5]' }
-];
-
-const quickActions = [
-  { title: 'Post a Job', subtitle: 'Post a new job opening', to: '/employer/jobs/create', icon: Plus, tone: 'bg-[#e8e6fa] text-[#6658dd]' },
-  { title: 'Review Applications', subtitle: 'View and manage job applications', to: '/employer/applications', icon: FileText, tone: 'bg-emerald-50 text-emerald-500' },
-  { title: 'Search Candidates', subtitle: 'Find and connect with potential hires', to: '/employer/candidates', icon: Search, tone: 'bg-sky-50 text-sky-500' },
-  { title: 'Schedule Interview', subtitle: 'Manage and organize your interviews', to: '/employer/interviews', icon: CalendarCheck, tone: 'bg-amber-50 text-amber-500' },
-  { title: 'Download Report', subtitle: 'Access and download your reports', to: '/employer/reports', icon: Download, tone: 'bg-blue-50 text-blue-500' },
-  { title: 'Upgrade Plan', subtitle: 'Enhance your experience', to: '/employer/subscription', icon: Crown, tone: 'bg-rose-50 text-rose-500' }
-];
-
-const pipelineRows = [
-  { key: 'applied', title: 'Applied', icon: FileText, tone: 'bg-[#6658dd]', to: '/employer/applications?status=Applied' },
-  { key: 'underReview', title: 'Under Review', icon: Eye, tone: 'bg-sky-500', to: '/employer/applications?status=Reviewed' },
-  { key: 'shortlisted', title: 'Shortlisted', icon: UserCheck, tone: 'bg-emerald-500', to: '/employer/shortlisted?status=Pending+Interview' },
-  { key: 'interview', title: 'Interview', icon: CalendarCheck, tone: 'bg-amber-500', to: '/employer/interviews?status=Scheduled' },
-  { key: 'selected', title: 'Selected', icon: Check, tone: 'bg-slate-500', to: '/employer/selected' },
-  { key: 'notSelected', title: 'Not Selected', icon: X, tone: 'bg-rose-500', to: '/employer/applications?status=Rejected' }
-];
-
-const activityIcon = {
-  application: FileText,
-  shortlisted: UserCheck,
-  interview: CalendarCheck,
-  job: Briefcase,
-  expiry: Clock
-};
-
 export const EmployerDashboard = () => {
+  const navigate = useNavigate();
   const [dashboard, setDashboard] = useState(emptyDashboard);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  // Search & Filter state for table
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
+  const [activeMenuJobId, setActiveMenuJobId] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -84,24 +74,13 @@ export const EmployerDashboard = () => {
       setLoading(true);
       setError('');
       try {
-        let lastError = null;
-        for (let attempt = 0; attempt < 3; attempt += 1) {
-          try {
-            const token = localStorage.getItem('publicToken');
-            const response = await axios.get(`${BASE_API_URL}/employer/dashboard`, {
-              headers: token ? { Authorization: `Bearer ${token}` } : {}
-            });
-            if (alive) {
-              setDashboard({ ...emptyDashboard, ...response.data });
-            }
-            return;
-          } catch (err) {
-            lastError = err;
-            if (err.response?.status === 401 || attempt === 2) throw err;
-            await new Promise((resolve) => setTimeout(resolve, 450 * (attempt + 1)));
-          }
+        const token = localStorage.getItem('publicToken');
+        const response = await axios.get(`${BASE_API_URL}/employer/dashboard`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        if (alive) {
+          setDashboard({ ...emptyDashboard, ...response.data });
         }
-        throw lastError;
       } catch (err) {
         if (alive) {
           setError(err.response?.data?.message || 'Dashboard data could not be loaded.');
@@ -119,46 +98,52 @@ export const EmployerDashboard = () => {
     };
   }, []);
 
-  const subscription = dashboard.subscription || {};
-  const pipelineTotal = useMemo(() => {
-    return Object.values(dashboard.pipeline || {}).reduce((sum, value) => sum + Number(value || 0), 0) || 1;
-  }, [dashboard.pipeline]);
+  const filteredJobs = useMemo(() => {
+    return (dashboard.activeJobs || []).filter(job => {
+      const matchesSearch = String(job.title || '').toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = !statusFilter || job.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [dashboard.activeJobs, searchTerm, statusFilter]);
 
   if (loading) {
     return <PageSkeleton variant="dashboard" />;
   }
 
+  const subscription = dashboard.subscription || {};
+
   return (
-    <div className="space-y-4 px-3 sm:space-y-5 sm:px-0">
+    <div className="space-y-6 px-3 sm:px-0" style={{ fontFamily: "'Inter', sans-serif" }}>
       {error && (
         <div className="rounded-md border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
           {error}
         </div>
       )}
 
+      {/* Header section with page title */}
       <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center sm:gap-4">
-        <h1 className="text-lg font-extrabold text-[#3f4254] sm:text-xl">Employer Dashboard</h1>
+        <h1 className="text-xl font-extrabold text-[#111827] sm:text-2xl">Dashboard Overview</h1>
         <div className="flex items-center gap-2 text-xs font-bold text-slate-400 sm:text-sm">
           <span className="text-[#3f4254]">JobsWaale</span>
-          <ChevronRight className="h-4 w-4" />
-          <span>Dashboard</span>
+          <ChevronRight className="h-4 w-4 text-slate-300" />
+          <span className="text-slate-500">Dashboard</span>
         </div>
       </div>
 
       {/* Subscription card */}
-      <section className="rounded-md border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
+      <section className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex gap-3 sm:gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-400 sm:h-12 sm:w-12">
-              <Crown className="h-5 w-5 sm:h-6 sm:w-6" />
+          <div className="flex gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-500">
+              <Crown className="h-6 w-6" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                <h2 className="text-sm font-extrabold text-[#3f4254] sm:text-base">{subscription.planName || 'Premium Plan'}</h2>
-                <span className="inline-flex items-center rounded bg-emerald-500 px-2 py-1 text-xs font-black text-white">{subscription.status || 'Active'}</span>
+              <div className="flex flex-wrap items-center gap-3">
+                <h2 className="text-base font-extrabold text-[#111827]">{subscription.planName || 'Premium Plan'}</h2>
+                <span className="inline-flex items-center rounded bg-emerald-500 px-2 py-0.5 text-[10px] font-black text-white">{subscription.status || 'Active'}</span>
               </div>
-              <p className="mt-2 text-xs font-semibold text-slate-400 sm:text-sm">
-                Valid until: <span className="font-extrabold text-[#3f4254]">{formatDate(subscription.validUntil, 'Not assigned')}</span>
+              <p className="mt-1 text-xs font-semibold text-slate-400">
+                Valid until: <span className="font-extrabold text-slate-700">{formatDate(subscription.validUntil, 'Not assigned')}</span>
               </p>
               <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2 sm:max-w-[780px]">
                 <div className="rounded-xl border border-slate-100 bg-[#f8fafc] p-4">
@@ -166,7 +151,7 @@ export const EmployerDashboard = () => {
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <div>
                       <p className="text-[11px] font-bold text-slate-400">Used / Limit</p>
-                      <p className="text-sm font-extrabold text-[#3f4254]">{subscription.jobsUsed || 0} <span className="text-slate-400">/ {subscription.jobLimit || 0}</span></p>
+                      <p className="text-sm font-extrabold text-slate-750">{subscription.jobsUsed || 0} <span className="text-slate-400">/ {subscription.jobLimit || 0}</span></p>
                     </div>
                     <div>
                       <p className="text-[11px] font-bold text-slate-400">Remaining</p>
@@ -186,7 +171,7 @@ export const EmployerDashboard = () => {
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <div>
                       <p className="text-[11px] font-bold text-slate-400">Unlocked / Limit</p>
-                      <p className="text-sm font-extrabold text-[#3f4254]">{subscription.unlocksUsed || 0} <span className="text-slate-400">/ {subscription.unlockLimit || 0}</span></p>
+                      <p className="text-sm font-extrabold text-slate-750">{subscription.unlocksUsed || 0} <span className="text-slate-400">/ {subscription.unlockLimit || 0}</span></p>
                     </div>
                     <div>
                       <p className="text-[11px] font-bold text-slate-400">Remaining</p>
@@ -214,267 +199,394 @@ export const EmployerDashboard = () => {
               </div>
             </div>
           </div>
-          <Link to="/employer/subscription" className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#6658dd] px-5 text-[13px] font-extrabold text-white shadow-md shadow-indigo-600/10 transition hover:bg-[#5848d8] lg:w-auto">
+          <Link to="/employer/subscription" className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#6658dd] px-5 text-[13px] font-extrabold text-white shadow-md shadow-indigo-605/10 transition hover:bg-[#5848d8] lg:w-auto">
             <Crown className="h-4 w-4" />
             Upgrade Plan
           </Link>
         </div>
       </section>
 
-      <div className="grid gap-4 sm:gap-5 xl:grid-cols-[1.42fr_1fr]">
-        {/* Action Center */}
-        <section className="rounded-md border border-slate-100 bg-white shadow-sm">
-          <div className="border-b border-dashed border-slate-200 px-4 py-4 sm:px-5">
-            <h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Action Center</h2>
+      {/* 4 Stats Cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Card 1: Total Jobs */}
+        <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between h-36">
+          <div className="flex items-start justify-between">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0047C7] text-white">
+              <Briefcase className="h-5 w-5" />
+            </div>
+            <div className="text-right">
+              <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.jobs?.total || 0}</span>
+              <span className="text-xs font-semibold text-slate-400 mt-1 block">Total Jobs</span>
+            </div>
           </div>
-          <div className="grid gap-4 p-4 sm:grid-cols-2 sm:p-5">
-            {actionConfig.map((item) => (
-              <Link key={item.key} to={item.to} className={`block rounded-md border border-slate-100 p-4 transition hover:-translate-y-0.5 hover:shadow-sm sm:p-5 ${item.card}`}>
-                <div className="flex items-start gap-4 sm:gap-5">
-                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11 ${item.tone}`}>
-                    <item.icon className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xl font-black text-[#3f4254] sm:text-2xl">{dashboard.actionCenter?.[item.key] || 0}</p>
-                    <h3 className="mt-1.5 text-sm font-extrabold text-[#3f4254] sm:text-base">{item.title}</h3>
-                    <p className="mt-2 text-xs font-semibold text-slate-400 sm:text-sm">{item.subtitle}</p>
-                    <span className={`mt-4 inline-flex items-center gap-2 text-sm font-extrabold sm:mt-5 ${item.tone.split(' ')[1]}`}>
-                      {item.action} <ArrowRight className="h-4 w-4" />
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
+          <Link to="/employer/jobs" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
+        </div>
 
-        {/* Quick Actions */}
-        <section className="rounded-md border border-slate-100 bg-white shadow-sm">
-          <div className="border-b border-dashed border-slate-200 px-4 py-4 sm:px-5">
-            <h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Quick Actions</h2>
+        {/* Card 2: Active Jobs */}
+        <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between h-36">
+          <div className="flex items-start justify-between">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-500 text-white">
+              <Send className="h-5 w-5 rotate-45" />
+            </div>
+            <div className="text-right">
+              <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.jobs?.active || 0}</span>
+              <span className="text-xs font-semibold text-slate-400 mt-1 block">Active Jobs</span>
+            </div>
           </div>
-          <div className="space-y-2 p-4 sm:space-y-0 sm:p-5">
-            {quickActions.map((item) => (
-              <Link key={item.title} to={item.to} className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 px-3 py-3 transition hover:bg-slate-50 sm:px-4">
-                <span className="flex min-w-0 items-center gap-3">
-                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-10 sm:w-10 ${item.tone}`}>
-                    <item.icon className="h-5 w-5" />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-extrabold text-slate-900">{item.title}</span>
-                    <span className="mt-0.5 block truncate text-xs font-semibold text-slate-500">{item.subtitle}</span>
-                  </span>
-                </span>
-                <ChevronRight className="h-5 w-5 shrink-0 text-slate-800" />
-              </Link>
-            ))}
+          <Link to="/employer/jobs?status=Active" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
+        </div>
+
+        {/* Card 3: Interview Scheduled */}
+        <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between h-36">
+          <div className="flex items-start justify-between">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-amber-500 text-white">
+              <Clock className="h-5 w-5" />
+            </div>
+            <div className="text-right">
+              <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.interviews || 0}</span>
+              <span className="text-xs font-semibold text-slate-400 mt-1 block">Interview Scheduled</span>
+            </div>
           </div>
-        </section>
+          <Link to="/employer/interviews" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
+        </div>
+
+        {/* Card 4: Total Candidates */}
+        <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between h-36">
+          <div className="flex items-start justify-between">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#8e44ad] text-white">
+              <Users className="h-5 w-5" />
+            </div>
+            <div className="text-right">
+              <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.applications || 0}</span>
+              <span className="text-xs font-semibold text-slate-400 mt-1 block">Total Candidates</span>
+            </div>
+          </div>
+          <Link to="/employer/applications" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
+        </div>
       </div>
 
-      {/* Active Jobs */}
-      <section className="rounded-md border border-slate-100 bg-white shadow-sm">
-        <div className="flex flex-col gap-2 border-b border-dashed border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
-          <h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Your Active Jobs</h2>
-          <Link to="/employer/jobs?status=Active" className="text-xs font-extrabold text-[#6658dd] sm:text-sm">View All Jobs <ArrowRight className="inline h-4 w-4" /></Link>
-        </div>
-        {/* Card list — mobile only */}
-        <div className="divide-y divide-slate-100 sm:hidden">
-          {(dashboard.activeJobs || []).map((job) => (
-            <div key={job.id} className="px-4 py-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <Link to={`/employer/jobs/${job.id}`} className="truncate text-sm font-extrabold text-slate-800 hover:text-[#6658dd]">{job.title}</Link>
-                  <p className="text-xs font-semibold text-slate-400">{job.location || '-'} • {job.workMode || '-'}</p>
-                </div>
-                <span className="shrink-0 rounded bg-emerald-50 px-2 py-1 text-[11px] font-black text-emerald-600">{job.status}</span>
+      {/* Hiring Pipeline Block */}
+      <section className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
+        <h2 className="text-sm font-extrabold text-[#111827] mb-4">Hiring Pipeline <span className="text-slate-400 font-medium">(All Jobs)</span></h2>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Applied */}
+          <Link to="/employer/applications?status=Applied" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition w-full sm:w-auto min-w-[120px] justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                <FileText className="h-4 w-4" />
               </div>
-              <div className="mt-3 grid grid-cols-4 gap-2 text-center">
-                <Link to={`/employer/applications?jobTitle=${encodeURIComponent(job.title)}`} className="rounded transition hover:bg-slate-50">
-                  <p className="text-sm font-black text-slate-700">{job.applications}</p>
-                  <p className="text-[10px] font-bold uppercase text-slate-400">Applied</p>
-                </Link>
-                <Link to={`/employer/shortlisted?jobTitle=${encodeURIComponent(job.title)}&status=Pending+Interview`} className="rounded transition hover:bg-slate-50">
-                  <p className="text-sm font-black text-slate-700">{job.shortlisted}</p>
-                  <p className="text-[10px] font-bold uppercase text-slate-400">Shortlist</p>
-                </Link>
-                <Link to={`/employer/interviews?jobTitle=${encodeURIComponent(job.title)}`} className="rounded transition hover:bg-slate-50">
-                  <p className="text-sm font-black text-slate-700">{job.interviews}</p>
-                  <p className="text-[10px] font-bold uppercase text-slate-400">Interview</p>
-                </Link>
-                <Link to={`/employer/selected?jobTitle=${encodeURIComponent(job.title)}`} className="rounded transition hover:bg-slate-50">
-                  <p className="text-sm font-black text-slate-700">{job.selected}</p>
-                  <p className="text-[10px] font-bold uppercase text-slate-400">Selected</p>
-                </Link>
+              <div className="text-left">
+                <span className="block text-[11px] font-bold text-slate-450">Applied</span>
+                <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.applied || 0}</span>
               </div>
             </div>
-          ))}
-          {dashboard.activeJobs?.length === 0 && (
-            <p className="px-4 py-8 text-center text-sm font-bold text-slate-400">No jobs posted yet.</p>
-          )}
+          </Link>
+          
+          <ChevronRight className="hidden sm:block h-4 w-4 text-slate-300" />
+
+          {/* Shortlisted */}
+          <Link to="/employer/shortlisted" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition w-full sm:w-auto min-w-[120px] justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                <Star className="h-4 w-4" />
+              </div>
+              <div className="text-left">
+                <span className="block text-[11px] font-bold text-slate-450">Shortlisted</span>
+                <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.shortlisted || 0}</span>
+              </div>
+            </div>
+          </Link>
+
+          <ChevronRight className="hidden sm:block h-4 w-4 text-slate-300" />
+
+          {/* Interview */}
+          <Link to="/employer/interviews" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition w-full sm:w-auto min-w-[120px] justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50 text-[#6658dd]">
+                <Calendar className="h-4 w-4" />
+              </div>
+              <div className="text-left">
+                <span className="block text-[11px] font-bold text-slate-450">Interview</span>
+                <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.interview || 0}</span>
+              </div>
+            </div>
+          </Link>
+
+          <ChevronRight className="hidden sm:block h-4 w-4 text-slate-300" />
+
+          {/* On Hold */}
+          <Link to="/employer/applications?status=OnHold" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition w-full sm:w-auto min-w-[120px] justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 text-orange-600">
+                <Clock className="h-4 w-4" />
+              </div>
+              <div className="text-left">
+                <span className="block text-[11px] font-bold text-slate-450">On Hold for Interview</span>
+                <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.onHold || 0}</span>
+              </div>
+            </div>
+          </Link>
+
+          <ChevronRight className="hidden sm:block h-4 w-4 text-slate-300" />
+
+          {/* Selected */}
+          <Link to="/employer/selected?status=Selected" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition w-full sm:w-auto min-w-[120px] justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                <UserCheck className="h-4 w-4" />
+              </div>
+              <div className="text-left">
+                <span className="block text-[11px] font-bold text-slate-450">Selected</span>
+                <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.selected || 0}</span>
+              </div>
+            </div>
+          </Link>
+
+          <ChevronRight className="hidden sm:block h-4 w-4 text-slate-300" />
+
+          {/* Offered */}
+          <Link to="/employer/selected?status=Offer+Sent" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition w-full sm:w-auto min-w-[120px] justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                <Mail className="h-4 w-4" />
+              </div>
+              <div className="text-left">
+                <span className="block text-[11px] font-bold text-slate-450">Offered</span>
+                <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.offered || 0}</span>
+              </div>
+            </div>
+          </Link>
+
+          <ChevronRight className="hidden sm:block h-4 w-4 text-slate-300" />
+
+          {/* Rejected */}
+          <Link to="/employer/applications?status=Rejected" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition w-full sm:w-auto min-w-[120px] justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
+                <XCircle className="h-4 w-4" />
+              </div>
+              <div className="text-left">
+                <span className="block text-[11px] font-bold text-slate-450">Rejected</span>
+                <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.rejected || 0}</span>
+              </div>
+            </div>
+          </Link>
+
+          <ChevronRight className="hidden sm:block h-4 w-4 text-slate-300" />
+
+          {/* Expired */}
+          <Link to="/employer/jobs?status=Expired" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition w-full sm:w-auto min-w-[120px] justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
+                <Clock className="h-4 w-4" />
+              </div>
+              <div className="text-left">
+                <span className="block text-[11px] font-bold text-slate-450">Expired</span>
+                <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.expired || 0}</span>
+              </div>
+            </div>
+          </Link>
+        </div>
+      </section>
+
+      {/* Your Jobs Table Block */}
+      <section className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm space-y-4">
+        {/* Top bar of Table */}
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <h2 className="text-base font-extrabold text-[#111827]">Your Jobs</h2>
+          
+          <div className="flex flex-wrap items-center gap-2 sm:self-end">
+            {/* Search job input */}
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                <Search className="h-4 w-4" />
+              </span>
+              <input
+                type="text"
+                placeholder="Search job title..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-10 w-full sm:w-56 rounded-lg border border-slate-200 bg-white pl-9 pr-4 text-sm font-medium text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#0047C7] transition"
+              />
+            </div>
+
+            {/* Filter button */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setFilterDropdownOpen(current => !current)}
+                className="flex h-10 items-center gap-2 rounded-lg border border-slate-250 bg-white px-4 text-sm font-bold text-slate-600 hover:bg-slate-50 transition"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                <span>Filter</span>
+              </button>
+              {filterDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setFilterDropdownOpen(false)} />
+                  <div className="absolute right-0 z-20 mt-1.5 w-40 rounded-lg border border-slate-100 bg-white py-1 shadow-lg">
+                    <button
+                      type="button"
+                      onClick={() => { setStatusFilter(''); setFilterDropdownOpen(false); }}
+                      className={`flex w-full px-4 py-2 text-left text-xs font-semibold hover:bg-slate-50 ${!statusFilter ? 'text-[#0047C7] bg-[#f8fafc]' : 'text-slate-600'}`}
+                    >
+                      All Jobs
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setStatusFilter('Active'); setFilterDropdownOpen(false); }}
+                      className={`flex w-full px-4 py-2 text-left text-xs font-semibold hover:bg-slate-50 ${statusFilter === 'Active' ? 'text-[#0047C7] bg-[#f8fafc]' : 'text-slate-600'}`}
+                    >
+                      Active Jobs
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setStatusFilter('Expired'); setFilterDropdownOpen(false); }}
+                      className={`flex w-full px-4 py-2 text-left text-xs font-semibold hover:bg-slate-50 ${statusFilter === 'Expired' ? 'text-[#0047C7] bg-[#f8fafc]' : 'text-slate-600'}`}
+                    >
+                      Expired Jobs
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Post Job Button */}
+            <Link
+              to="/employer/jobs/create"
+              className="flex h-10 items-center justify-center gap-2 rounded-lg bg-[#0047C7] px-4 text-sm font-bold text-white shadow-md shadow-blue-600/10 transition hover:bg-[#0035a0]"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Post a Job</span>
+            </Link>
+          </div>
         </div>
 
-        {/* Table — sm and up */}
-        <div className="hidden overflow-x-auto sm:block">
-          <table className="w-full min-w-[720px] text-left">
-            <thead className="bg-slate-50 text-xs font-black uppercase tracking-wide text-slate-400">
-              <tr>
-                <th className="px-4 py-3 sm:px-6 sm:py-4">Job Title</th>
-                <th className="px-4 py-3 sm:px-6 sm:py-4">Applications</th>
-                <th className="px-4 py-3 sm:px-6 sm:py-4">Shortlisted</th>
-                <th className="px-4 py-3 sm:px-6 sm:py-4">Interviews</th>
-                <th className="px-4 py-3 sm:px-6 sm:py-4">Selected</th>
-                <th className="px-4 py-3 sm:px-6 sm:py-4">Status</th>
+        {/* Table view */}
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[780px] text-left border-collapse">
+            <thead>
+              <tr className="border-b border-slate-100 text-xs font-black uppercase tracking-wider text-slate-400">
+                <th className="pb-3 text-left w-[220px]">Job Title</th>
+                <th className="pb-3 text-left w-[100px]">Status</th>
+                <th className="pb-3 text-center">Applicants</th>
+                <th className="pb-3 text-center">Shortlisted</th>
+                <th className="pb-3 text-center">Interview</th>
+                <th className="pb-3 text-center">On Hold</th>
+                <th className="pb-3 text-center">Selected</th>
+                <th className="pb-3 text-center">Offered</th>
+                <th className="pb-3 text-right pr-2">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {(dashboard.activeJobs || []).map((job) => (
-                <tr key={job.id} className="text-sm">
-                  <td className="px-4 py-3 sm:px-6 sm:py-4">
-                    <Link to={`/employer/jobs/${job.id}`} className="font-extrabold text-slate-800 hover:text-[#6658dd]">{job.title}</Link>
-                    <p className="text-xs font-semibold text-slate-400">{job.location || '-'} • {job.workMode || '-'}</p>
+              {filteredJobs.map((job) => (
+                <tr key={job.id} className="text-sm hover:bg-slate-50/40">
+                  <td className="py-4">
+                    <Link to={`/employer/jobs/${job.id}`} className="font-bold text-slate-800 hover:text-[#0047C7] transition block truncate max-w-[210px]">{job.title}</Link>
+                    <span className="text-[11px] font-semibold text-slate-400">{job.location || '-'}</span>
                   </td>
-                  <td className="px-4 py-3 sm:px-6 sm:py-4"><Link to={`/employer/applications?jobTitle=${encodeURIComponent(job.title)}`} className="font-bold text-slate-600 hover:text-[#6658dd]">{job.applications}</Link></td>
-                  <td className="px-4 py-3 sm:px-6 sm:py-4"><Link to={`/employer/shortlisted?jobTitle=${encodeURIComponent(job.title)}&status=Pending+Interview`} className="font-bold text-slate-600 hover:text-[#6658dd]">{job.shortlisted}</Link></td>
-                  <td className="px-4 py-3 sm:px-6 sm:py-4"><Link to={`/employer/interviews?jobTitle=${encodeURIComponent(job.title)}`} className="font-bold text-slate-600 hover:text-[#6658dd]">{job.interviews}</Link></td>
-                  <td className="px-4 py-3 sm:px-6 sm:py-4"><Link to={`/employer/selected?jobTitle=${encodeURIComponent(job.title)}`} className="font-bold text-slate-600 hover:text-[#6658dd]">{job.selected}</Link></td>
-                  <td className="px-4 py-3 sm:px-6 sm:py-4"><span className="rounded bg-emerald-50 px-2 py-1 text-xs font-black text-emerald-600">{job.status}</span></td>
+                  <td className="py-4">
+                    <span className={`inline-flex items-center rounded px-2 py-0.5 text-[10px] font-extrabold uppercase border ${
+                      job.status === 'Active'
+                        ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                        : 'bg-rose-50 text-rose-600 border-rose-155'
+                    }`}>
+                      {job.status}
+                    </span>
+                  </td>
+                  <td className="py-4 text-center font-bold text-slate-700">
+                    <Link to={`/employer/applications?jobTitle=${encodeURIComponent(job.title)}`} className="hover:text-[#0047C7]">{job.applications || 0}</Link>
+                  </td>
+                  <td className="py-4 text-center font-bold text-slate-700">
+                    <Link to={`/employer/shortlisted?jobTitle=${encodeURIComponent(job.title)}`} className="hover:text-[#0047C7]">{job.shortlisted || 0}</Link>
+                  </td>
+                  <td className="py-4 text-center font-bold text-slate-700">
+                    <Link to={`/employer/interviews?jobTitle=${encodeURIComponent(job.title)}`} className="hover:text-[#0047C7]">{job.interviews || 0}</Link>
+                  </td>
+                  <td className="py-4 text-center font-bold text-slate-700">
+                    <Link to={`/employer/applications?jobTitle=${encodeURIComponent(job.title)}&status=OnHold`} className="hover:text-[#0047C7]">{job.onHold || 0}</Link>
+                  </td>
+                  <td className="py-4 text-center font-bold text-slate-700">
+                    <Link to={`/employer/selected?jobTitle=${encodeURIComponent(job.title)}&status=Selected`} className="hover:text-[#0047C7]">{job.selected || 0}</Link>
+                  </td>
+                  <td className="py-4 text-center font-bold text-slate-700">
+                    <Link to={`/employer/selected?jobTitle=${encodeURIComponent(job.title)}&status=Offer+Sent`} className="hover:text-[#0047C7]">{job.offered || 0}</Link>
+                  </td>
+                  <td className="py-4 text-right pr-2">
+                    <div className="flex items-center justify-end gap-2 relative">
+                      {/* View Job detail link */}
+                      <Link
+                        to={`/employer/jobs/${job.id}`}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition"
+                        title="View Job"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Link>
+                      
+                      {/* View Candidates link */}
+                      <Link
+                        to={`/employer/applications?jobTitle=${encodeURIComponent(job.title)}`}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition"
+                        title="Candidates"
+                      >
+                        <Users className="h-4 w-4" />
+                      </Link>
+
+                      {/* Dropdown Menu for Action */}
+                      <button
+                        type="button"
+                        onClick={() => setActiveMenuJobId(current => current === job.id ? null : job.id)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
+
+                      {activeMenuJobId === job.id && (
+                        <>
+                          <div className="fixed inset-0 z-10" onClick={() => setActiveMenuJobId(null)} />
+                          <div className="absolute right-0 top-9 z-20 w-40 rounded-lg border border-slate-100 bg-white py-1 shadow-lg text-left">
+                            <Link
+                              to={`/employer/jobs/${job.id}`}
+                              className="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                              onClick={() => setActiveMenuJobId(null)}
+                            >
+                              Edit Job
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                try {
+                                  const token = localStorage.getItem('publicToken');
+                                  await axios.post(`${BASE_API_URL}/employer/jobs/${job.id}/duplicate`, {}, {
+                                    headers: token ? { Authorization: `Bearer ${token}` } : {}
+                                  });
+                                  window.location.reload();
+                                } catch (e) {
+                                  console.error(e);
+                                }
+                                setActiveMenuJobId(null);
+                              }}
+                              className="block w-full text-left px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                            >
+                              Duplicate Job
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </td>
                 </tr>
               ))}
-              {dashboard.activeJobs?.length === 0 && (
-                <tr><td colSpan="6" className="px-6 py-8 text-center text-sm font-bold text-slate-400">No jobs posted yet.</td></tr>
+              {filteredJobs.length === 0 && (
+                <tr>
+                  <td colSpan="8" className="py-8 text-center text-sm font-bold text-slate-400">No jobs found matching the search/filters.</td>
+                </tr>
               )}
             </tbody>
           </table>
         </div>
       </section>
 
-      <div className="grid gap-5 sm:gap-7 xl:grid-cols-[0.8fr_1.2fr]">
-        {/* Hiring Pipeline */}
-        <section className="rounded-md border border-slate-100 bg-white shadow-sm">
-          <div className="border-b border-dashed border-slate-200 px-4 py-4 sm:px-6 sm:py-5">
-            <h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Hiring Pipeline</h2>
-          </div>
-          <div className="p-4 sm:p-6">
-            {pipelineRows.map((row) => {
-              const value = dashboard.pipeline?.[row.key] || 0;
-              const percent = Math.round((value / pipelineTotal) * 100);
-              return (
-                <Link key={row.key} to={row.to} className="flex items-center justify-between gap-2 border-b border-slate-100 py-3 transition hover:bg-slate-50 last:border-b-0">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white ${row.tone}`}><row.icon className="h-4 w-4" /></span>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-extrabold text-slate-800">{row.title}</p>
-                      <p className="text-xs font-semibold text-slate-400">{value} Candidates</p>
-                    </div>
-                  </div>
-                  <p className="shrink-0 text-sm font-black text-slate-700">{value} <span className="text-xs text-slate-400">({percent}%)</span></p>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Latest Applications */}
-        <section className="rounded-md border border-slate-100 bg-white shadow-sm">
-          <div className="flex flex-col gap-2 border-b border-dashed border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
-            <h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Latest Applications</h2>
-            <Link to="/employer/applications" className="text-xs font-extrabold text-[#6658dd] sm:text-sm">View All <ArrowRight className="inline h-4 w-4" /></Link>
-          </div>
-          {/* Card list — mobile only */}
-          <div className="divide-y divide-slate-100 sm:hidden">
-            {(dashboard.latestApplications || []).map((item) => (
-              <div key={item.id} className="flex items-start justify-between gap-3 px-4 py-4">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-extrabold text-slate-800">{item.candidateName}</p>
-                  <p className="truncate text-xs text-slate-400">{item.email}</p>
-                  <p className="mt-1 truncate text-xs font-semibold text-slate-600">{item.position}</p>
-                  <p className="mt-1 text-[11px] font-semibold text-slate-400">{formatDate(item.appliedAt)}</p>
-                </div>
-                <span className="shrink-0 rounded bg-indigo-50 px-2 py-1 text-[11px] font-black text-indigo-600">{item.status}</span>
-              </div>
-            ))}
-            {dashboard.latestApplications?.length === 0 && (
-              <p className="px-4 py-8 text-center text-sm font-bold text-slate-400">No applications yet.</p>
-            )}
-          </div>
-
-          {/* Table — sm and up */}
-          <div className="hidden overflow-x-auto sm:block">
-            <table className="w-full min-w-[560px] text-left">
-              <thead className="bg-slate-50 text-xs font-black uppercase tracking-wide text-slate-400">
-                <tr>
-                  <th className="px-4 py-3 sm:px-6 sm:py-4">Candidate</th>
-                  <th className="px-4 py-3 sm:px-6 sm:py-4">Position</th>
-                  <th className="px-4 py-3 sm:px-6 sm:py-4">Applied</th>
-                  <th className="px-4 py-3 sm:px-6 sm:py-4">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {(dashboard.latestApplications || []).map((item) => (
-                  <tr key={item.id} className="text-sm">
-                    <td className="px-4 py-3 sm:px-6 sm:py-4"><p className="font-extrabold text-slate-800">{item.candidateName}</p><p className="text-xs text-slate-400">{item.email}</p></td>
-                    <td className="px-4 py-3 font-semibold text-slate-600 sm:px-6 sm:py-4">{item.position}</td>
-                    <td className="px-4 py-3 font-semibold text-slate-400 sm:px-6 sm:py-4">{formatDate(item.appliedAt)}</td>
-                    <td className="px-4 py-3 sm:px-6 sm:py-4"><span className="rounded bg-indigo-50 px-2 py-1 text-xs font-black text-indigo-600">{item.status}</span></td>
-                  </tr>
-                ))}
-                {dashboard.latestApplications?.length === 0 && (
-                  <tr><td colSpan="4" className="px-6 py-8 text-center text-sm font-bold text-slate-400">No applications yet.</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      </div>
-
-      <div className="grid gap-5 pb-2 sm:gap-7 xl:grid-cols-[1.2fr_0.8fr]">
-        {/* Upcoming Interviews */}
-        <section className="rounded-md border border-slate-100 bg-white shadow-sm">
-          <div className="flex flex-col gap-2 border-b border-dashed border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
-            <h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Upcoming Interviews</h2>
-            <Link to="/employer/interviews" className="text-xs font-extrabold text-[#6658dd] sm:text-sm">View Calendar <ArrowRight className="inline h-4 w-4" /></Link>
-          </div>
-          <div className="divide-y divide-slate-100">
-            {(dashboard.upcomingInterviews || []).map((item) => (
-              <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:flex-nowrap sm:px-6">
-                <div className="min-w-0 flex-1 sm:flex-none">
-                  <p className="truncate text-sm font-extrabold text-slate-800">{item.candidateName}</p>
-                  <p className="truncate text-xs font-semibold text-slate-400">{item.position}</p>
-                </div>
-                <div className="order-3 flex flex-wrap gap-2 sm:order-none sm:justify-end">
-                  <span className="inline-flex items-center rounded bg-indigo-50 px-2.5 py-1 text-xs font-extrabold text-[#6658dd]">{formatDate(item.scheduledAt)}</span>
-                  {item.scheduledTime && (
-                    <span className="inline-flex items-center rounded bg-amber-50 px-2.5 py-1 text-xs font-extrabold text-amber-600">{item.scheduledTime}</span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Recent Activity */}
-        <section className="rounded-md border border-slate-100 bg-white shadow-sm">
-          <div className="border-b border-dashed border-slate-200 px-4 py-4 sm:px-6 sm:py-5">
-            <h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Recent Activity</h2>
-          </div>
-          <div className="divide-y divide-slate-100 p-4 sm:p-6">
-            {(dashboard.recentActivity || []).map((item, index) => {
-              const Icon = activityIcon[item.type] || FileText;
-              return (
-                <div key={`${item.title}-${index}`} className="flex gap-3 py-3 first:pt-0 last:pb-0">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-[#6658dd]"><Icon className="h-4 w-4" /></span>
-                  <div className="min-w-0">
-                    <p className="text-sm font-extrabold text-slate-800">{item.title}</p>
-                    <p className="text-xs font-semibold text-slate-500">{item.description}</p>
-                    <p className="mt-1 text-[11px] font-bold text-slate-400">{item.time}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      </div>
+  
     </div>
   );
 };

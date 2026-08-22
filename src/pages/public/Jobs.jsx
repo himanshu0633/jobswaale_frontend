@@ -91,7 +91,9 @@ export const Jobs = () => {
           experience: j.experience,
           postedAt: j.postingDate || j.createDate || j.createdAt || '',
           logoLetter: j.companyName ? j.companyName.charAt(0).toUpperCase() : 'J',
-          logoBg: ['bg-red-500', 'bg-blue-600', 'bg-emerald-500', 'bg-purple-500', 'bg-amber-500'][Math.floor(Math.random() * 5)]
+          logoBg: ['bg-red-500', 'bg-blue-600', 'bg-emerald-500', 'bg-purple-500', 'bg-amber-500'][Math.floor(Math.random() * 5)],
+          jobExpiry: j.jobExpiry || null,
+          expiry: j.jobExpiry || null
         }));
         setDbJobs(mappedJobs);
         setFilteredJobs(mappedJobs);
@@ -573,10 +575,15 @@ export const Jobs = () => {
                         </div>
                       </div>
                       <div className="flex-grow-1 ms-4 min-w-0">
-                        <h3 className="job-title font-bold text-[#1f2938] text-base leading-snug truncate">
-                          <Link to={`/jobs/${job.id}`} className="text-dark hover:text-[#0047C7]">
+                        <h3 className="job-title font-bold text-[#1f2938] text-base leading-snug truncate flex items-center gap-2 flex-wrap">
+                          <Link to={`/jobs/${job.id}`} className="text-dark hover:text-[#0047C7] truncate">
                             {job.title}
                           </Link>
+                          {job.jobExpiry && new Date(job.jobExpiry) < new Date() && (
+                            <span className="shrink-0 rounded bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-600 border border-rose-100 uppercase tracking-wide">
+                              Expired
+                            </span>
+                          )}
                         </h3>
                         <p className="company-name text-xs font-bold text-[black] truncate mb-2 mt-2">
                           {job.company}

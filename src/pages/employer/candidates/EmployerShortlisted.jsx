@@ -20,7 +20,8 @@ import {
   Calendar,
   Phone,
   Building,
-  Briefcase
+  Briefcase,
+  Clock
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import ClearFilterButton from '../../../components/ClearFilterButton';
@@ -88,6 +89,7 @@ const SelectField = ({ label, value, onChange, children }) => (
 
 export const EmployerShortlisted = () => {
   const [searchParams] = useSearchParams();
+  const searchParamString = searchParams.toString();
   const getUrlFilters = () => ({
     search: searchParams.get('search') || '',
     jobTitle: searchParams.get('jobTitle') || '',
@@ -118,10 +120,16 @@ export const EmployerShortlisted = () => {
     type: 'Video Call',
     locationOrLink: '',
     notes: '',
-    onHold: false
+    manualAddress: ''
   });
   const [modalLoading, setModalLoading] = useState(false);
   const [modalError, setModalError] = useState('');
+
+  useEffect(() => {
+    setFilters(getUrlFilters());
+    setTableSearch('');
+    setCurrentPage(1);
+  }, [searchParamString]);
 
   const setFilter = (key, value) => {
     setFilters((current) => ({ ...current, [key]: value }));
@@ -214,28 +222,52 @@ export const EmployerShortlisted = () => {
 
   const handleScheduleInterview = async (e) => {
     e.preventDefault();
-    if (!interviewForm.onHold && (!interviewForm.date || !interviewForm.time)) {
+    if (!interviewForm.date || !interviewForm.time) {
       setModalError('Please specify date and time.');
-      return;
-    }
-    if (!interviewForm.onHold && isInPersonInterview(interviewForm.type) && !interviewForm.locationOrLink) {
-      setModalError('Please select interview location from the map.');
       return;
     }
     setModalLoading(true);
     setModalError('');
     try {
+      const payload = {
+        ...interviewForm,
+        locationOrLink: interviewForm.manualAddress || interviewForm.locationOrLink || ''
+      };
       await axios.post(
         `${BASE_API_URL}/employer/applications/${activeCandidate.id}/schedule-interview`,
-        interviewForm,
+        payload,
         { headers: getTokenHeaders() }
       );
       setActiveCandidate(null);
       setModalType(null);
-      setInterviewForm({ date: '', time: '', type: 'Video Call', locationOrLink: '', notes: '', onHold: false });
+      setInterviewForm({ date: '', time: '', type: 'Video Call', locationOrLink: '', notes: '', manualAddress: '' });
       loadData();
     } catch (err) {
       setModalError(err.response?.data?.message || 'Failed to schedule interview.');
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const handleInterviewOnHold = async () => {
+    if (!activeCandidate?.id) return;
+    setModalLoading(true);
+    setModalError('');
+    try {
+      await axios.post(
+        `${BASE_API_URL}/employer/applications/${activeCandidate.id}/schedule-interview`,
+        {
+          onHold: true,
+          type: activeCandidate.interviewDetails?.type || 'Video Call',
+          notes: activeCandidate.interviewDetails?.notes || 'Interview kept on hold.'
+        },
+        { headers: getTokenHeaders() }
+      );
+      setActiveCandidate(null);
+      setModalType(null);
+      loadData();
+    } catch (err) {
+      setModalError(err.response?.data?.message || 'Failed to move candidate to interview on hold.');
     } finally {
       setModalLoading(false);
     }
@@ -276,71 +308,68 @@ export const EmployerShortlisted = () => {
         type: details.type || 'Video Call',
         locationOrLink: details.locationOrLink || '',
         notes: details.notes || '',
-        onHold: Boolean(details.onHold || details.status === 'On Hold')
+        manualAddress: ''
       });
     }
   };
 
   const renderRowMenu = (app) => (
-    <div className="relative inline-block text-left">
+    <div className="flex flex-wrap items-center gap-1.5 justify-center max-w-[280px] mx-auto">
       <button
         type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          const rect = e.currentTarget.getBoundingClientRect();
-          const menuWidth = 208;
-          const menuHeight = app.status !== 'Offered' && app.status !== 'Rejected' ? 178 : 136;
-          const hasSpaceBelow = window.innerHeight - rect.bottom > menuHeight + 16;
-          setDropdownPosition({
-            top: hasSpaceBelow ? rect.bottom + 6 : Math.max(12, rect.top - menuHeight - 6),
-            left: Math.min(window.innerWidth - menuWidth - 12, Math.max(12, rect.right - menuWidth))
-          });
-          setOpenDropdownId(openDropdownId === app.id ? null : app.id);
-        }}
-        className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-600 transition hover:bg-slate-50"
+        onClick={() => openModal(app, 'viewProfile')}
+        title="View Profile"
+        className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-slate-500 transition hover:bg-slate-50"
       >
-        <MoreVertical className="h-4 w-4" />
+        <Eye className="h-3.5 w-3.5" />
+        <span>View</span>
       </button>
 
-      {openDropdownId === app.id && (
-        <div
-          className="fixed z-[70] w-52 origin-top-right rounded-md bg-white py-1 shadow-xl ring-1 ring-black/5 focus:outline-none"
-          style={{ top: dropdownPosition.top, left: dropdownPosition.left }}
-          onClick={(e) => e.stopPropagation()}
+      <button
+        type="button"
+        onClick={() => openModal(app, 'interview')}
+        title={app.status === 'Interview' ? "Reschedule Interview" : "Schedule Interview"}
+        className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50"
+      >
+        <Calendar className="h-3.5 w-3.5" />
+        <span>{app.status === 'Interview' ? "Reschedule" : "Interview"}</span>
+      </button>
+
+      {app.status !== 'Interview' && app.status !== 'Offered' && app.status !== 'Rejected' && (
+        <button
+          type="button"
+          disabled={modalLoading}
+          onClick={() => openModal(app, 'interviewHold')}
+          title="On Hold for Interview"
+          className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-amber-700 transition hover:bg-amber-50"
         >
-          <button
-            type="button"
-            onClick={() => openModal(app, 'viewProfile')}
-            className="flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 font-semibold"
-          >
-            <Eye className="mr-2 h-4 w-4 text-slate-500" /> View Profile
-          </button>
-          <button
-            type="button"
-            onClick={() => openModal(app, 'interview')}
-            className="flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 font-semibold"
-          >
-            <CalendarPlus className="mr-2 h-4 w-4 text-indigo-500" /> Schedule Interview
-          </button>
-          {app.status !== 'Offered' && (
-            <button
-              type="button"
-              onClick={() => openModal(app, 'select')}
-              className="flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 font-semibold"
-            >
-              <UserPlus className="mr-2 h-4 w-4 text-emerald-500" /> Move to Selected
-            </button>
-          )}
-          {app.status !== 'Rejected' && (
-            <button
-              type="button"
-              onClick={() => openModal(app, 'reject')}
-              className="flex w-full items-center px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 font-semibold"
-            >
-              <UserX className="mr-2 h-4 w-4 text-rose-500" /> Reject
-            </button>
-          )}
-        </div>
+          <Clock className="h-3.5 w-3.5" />
+          <span>Hold</span>
+        </button>
+      )}
+
+      {app.status !== 'Offered' && (
+        <button
+          type="button"
+          onClick={() => openModal(app, 'select')}
+          title="Select Candidate"
+          className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50"
+        >
+          <UserPlus className="h-3.5 w-3.5" />
+          <span>Select</span>
+        </button>
+      )}
+
+      {app.status !== 'Rejected' && (
+        <button
+          type="button"
+          onClick={() => openModal(app, 'reject')}
+          title="Reject Candidate"
+          className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50"
+        >
+          <UserX className="h-3.5 w-3.5" />
+          <span>Reject</span>
+        </button>
       )}
     </div>
   );
@@ -360,6 +389,13 @@ export const EmployerShortlisted = () => {
       {error && (
         <div className="rounded-md border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
           {error}
+        </div>
+      )}
+
+      {filters.jobTitle && (
+        <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-100 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700">
+          <span className="text-slate-500">Showing job:</span>
+          <span className="max-w-full truncate">{filters.jobTitle}</span>
         </div>
       )}
 
@@ -586,6 +622,7 @@ export const EmployerShortlisted = () => {
             <div className="flex items-center justify-between border-b border-slate-200 px-4 py-4 sm:px-5">
               <h3 className="text-sm font-extrabold text-[#3f4254] sm:text-base">
                 {modalType === 'interview' && 'Schedule Interview'}
+                {modalType === 'interviewHold' && 'On Hold for Interview'}
                 {modalType === 'select' && 'Move Candidate to Selected'}
                 {modalType === 'reject' && 'Reject Candidate'}
                 {modalType === 'viewProfile' && 'Candidate Profile Summary'}
@@ -610,89 +647,87 @@ export const EmployerShortlisted = () => {
                   <p className="text-xs font-semibold text-slate-400">
                     Schedule a dynamic interview with <span className="font-extrabold text-[#3f4254]">{activeCandidate?.name}</span> for the position of <span className="font-extrabold text-[#3f4254]">{activeCandidate?.jobTitle}</span>.
                   </p>
-
-                  <label className={`flex cursor-pointer items-start gap-3 rounded-md border px-3 py-3 transition ${interviewForm.onHold ? 'border-amber-200 bg-amber-50' : 'border-slate-200 bg-white'}`}>
-                    <input
-                      type="checkbox"
-                      checked={interviewForm.onHold}
-                      onChange={(e) => setInterviewForm({ ...interviewForm, onHold: e.target.checked })}
-                      className="mt-1 h-4 w-4 rounded border-slate-300 text-[#6658dd] focus:ring-[#6658dd]"
-                    />
-                    <span>
-                      <span className="block text-sm font-extrabold text-[#3f4254]">On Hold</span>
-                      <span className="mt-0.5 block text-xs font-semibold text-slate-500">Move this candidate to the interview stage now. You can add the schedule details later from the Interviews page.</span>
-                    </span>
-                  </label>
                   
-                  {!interviewForm.onHold && (
-                    <>
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <div>
-                          <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Date</label>
-                          <input
-                            type="date"
-                            required
-                            value={interviewForm.date}
-                            onChange={(e) => setInterviewForm({ ...interviewForm, date: e.target.value })}
-                            className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
-                          />
-                        </div>
-                        <div>
-                          <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Time</label>
-                          <input
-                            type="time"
-                            required
-                            value={interviewForm.time}
-                            onChange={(e) => setInterviewForm({ ...interviewForm, time: e.target.value })}
-                            className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
-                          />
-                        </div>
-                      </div>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Date</label>
+                      <input
+                        type="date"
+                        required
+                        value={interviewForm.date}
+                        onChange={(e) => setInterviewForm({ ...interviewForm, date: e.target.value })}
+                        className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Time</label>
+                      <input
+                        type="time"
+                        required
+                        value={interviewForm.time}
+                        onChange={(e) => setInterviewForm({ ...interviewForm, time: e.target.value })}
+                        className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                      />
+                    </div>
+                  </div>
 
+                  <div>
+                    <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Type</label>
+                    <select
+                      value={interviewForm.type}
+                      onChange={(e) => setInterviewForm({ ...interviewForm, type: e.target.value, locationOrLink: '' })}
+                      className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 outline-none focus:border-[#6658dd]"
+                    >
+                      <option>Video Call</option>
+                      <option>Phone Call</option>
+                      <option>In-Person</option>
+                      <option>Other</option>
+                    </select>
+                  </div>
+
+                  {showMapPicker ? (
+                    <div className="space-y-4">
                       <div>
-                        <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Type</label>
-                        <select
-                          value={interviewForm.type}
-                          onChange={(e) => setInterviewForm({ ...interviewForm, type: e.target.value, locationOrLink: '' })}
-                          className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 outline-none focus:border-[#6658dd]"
-                        >
-                          <option>Video Call</option>
-                          <option>Phone Call</option>
-                          <option>In-Person</option>
-                          <option>Other</option>
-                        </select>
+                        <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Manual Address / Office Location (Optional)</label>
+                        <input
+                          type="text"
+                          placeholder="Enter complete address manually"
+                          value={interviewForm.manualAddress || ''}
+                          onChange={(e) => setInterviewForm({ ...interviewForm, manualAddress: e.target.value })}
+                          className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                        />
                       </div>
-
-                      {showMapPicker ? (
+                      <div className="rounded-md border border-slate-100 bg-slate-50 p-3">
+                        <p className="mb-2 text-xs font-bold text-slate-550">Or Select on Map (Optional)</p>
                         <InterviewLocationPicker
                           value={interviewForm.locationOrLink}
                           onChange={(locationOrLink) => setInterviewForm({ ...interviewForm, locationOrLink })}
                         />
-                      ) : interviewLocationField && (
-                        <div>
-                          <label className="mb-1.5 block text-xs font-extrabold text-slate-500">{interviewLocationField.label}</label>
-                          <input
-                            type="text"
-                            placeholder={interviewLocationField.placeholder}
-                            value={interviewForm.locationOrLink}
-                            onChange={(e) => setInterviewForm({ ...interviewForm, locationOrLink: e.target.value })}
-                            className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
-                          />
-                        </div>
-                      )}
-
-                      <div>
-                        <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interviewer Notes</label>
-                        <textarea
-                          rows="3"
-                          placeholder="Topics to discuss or instruction notes..."
-                          value={interviewForm.notes}
-                          onChange={(e) => setInterviewForm({ ...interviewForm, notes: e.target.value })}
-                          className="w-full rounded-md border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
-                        />
                       </div>
-                    </>
+                    </div>
+                  ) : interviewLocationField && (
+                    <div>
+                      <label className="mb-1.5 block text-xs font-extrabold text-slate-500">{interviewLocationField.label}</label>
+                      <input
+                        type="text"
+                        placeholder={interviewLocationField.placeholder}
+                        value={interviewForm.locationOrLink}
+                        onChange={(e) => setInterviewForm({ ...interviewForm, locationOrLink: e.target.value })}
+                        className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                      />
+                    </div>
                   )}
+
+                  <div>
+                    <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interviewer Notes</label>
+                    <textarea
+                      rows="3"
+                      placeholder="Topics to discuss or instruction notes..."
+                      value={interviewForm.notes}
+                      onChange={(e) => setInterviewForm({ ...interviewForm, notes: e.target.value })}
+                      className="w-full rounded-md border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                    />
+                  </div>
 
                   <div className="flex flex-col-reverse justify-end gap-2 pt-2 border-t border-slate-100 sm:flex-row">
                     <button
@@ -708,10 +743,54 @@ export const EmployerShortlisted = () => {
                       disabled={modalLoading}
                       className="h-10 rounded-md bg-[#6658dd] px-4 text-sm font-extrabold text-white transition hover:bg-[#5848d8] flex items-center justify-center gap-2"
                     >
-                      {modalLoading ? <Loader className="h-4 w-4 animate-spin" /> : interviewForm.onHold ? 'Mark On Hold' : 'Confirm Interview'}
+                      {modalLoading ? <Loader className="h-4 w-4 animate-spin" /> : 'Confirm Interview'}
                     </button>
                   </div>
                 </form>
+              )}
+
+              {/* ON HOLD FOR INTERVIEW MODAL */}
+              {modalType === 'interviewHold' && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-500">
+                      <Calendar className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-800">Confirm Interview On Hold</p>
+                      <p className="text-xs font-semibold text-slate-400">Candidate ko interview stage me on hold mark karna hai?</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1 rounded-md border border-slate-100 bg-slate-50 p-4 text-sm font-semibold text-slate-600">
+                    <p>Candidate: <span className="font-extrabold text-slate-800">{activeCandidate?.name}</span></p>
+                    <p>Job Applied: <span className="font-extrabold text-slate-800">{activeCandidate?.jobTitle}</span></p>
+                    <p>Current Status: <span className="font-extrabold text-amber-600">{statusLabel[activeCandidate?.status] || activeCandidate?.status}</span></p>
+                  </div>
+
+                  <p className="text-[11px] leading-relaxed text-slate-400">
+                    * Is action ke baad candidate Interviews pipeline me chala jayega. Schedule details baad me Interviews page se add kar sakte hain.
+                  </p>
+
+                  <div className="flex flex-col-reverse justify-end gap-2 border-t border-slate-100 pt-2 sm:flex-row">
+                    <button
+                      type="button"
+                      disabled={modalLoading}
+                      onClick={() => { setActiveCandidate(null); setModalType(null); }}
+                      className="h-10 rounded-md bg-slate-100 px-4 text-sm font-extrabold text-slate-600 transition hover:bg-slate-200 disabled:opacity-60"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      disabled={modalLoading}
+                      onClick={handleInterviewOnHold}
+                      className="flex h-10 items-center justify-center gap-2 rounded-md bg-amber-500 px-4 text-sm font-extrabold text-white transition hover:bg-amber-600 disabled:opacity-60"
+                    >
+                      {modalLoading ? <Loader className="h-4 w-4 animate-spin" /> : 'Confirm On Hold'}
+                    </button>
+                  </div>
+                </div>
               )}
 
               {/* MOVE TO SELECTED MODAL */}

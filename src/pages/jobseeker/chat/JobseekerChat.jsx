@@ -107,9 +107,11 @@ export const JobseekerChat = ({ portal = 'jobseeker' }) => {
     return [...map.entries()].map(([id, title]) => ({ id, title }));
   }, [threads]);
 
-  const loadThreads = async (preferredId = activeId) => {
-    setLoadingThreads(true);
-    setError('');
+  const loadThreads = async (preferredId = activeId, silent = false) => {
+    if (!silent) {
+      setLoadingThreads(true);
+      setError('');
+    }
     try {
       const response = await axios.get(config.endpoint, { headers: getTokenHeaders() });
       const rawThreads = response.data?.threads || [];
@@ -118,30 +120,34 @@ export const JobseekerChat = ({ portal = 'jobseeker' }) => {
         : rawThreads;
       const nextThreads = sortThreadsByRecentMessage(filteredThreadsList);
       setThreads(nextThreads);
-      const nextActive = nextThreads.some(thread => String(thread.id) === String(preferredId))
-        ? preferredId
-        : '';
-      setActiveId(nextActive);
-      if (nextActive) {
-        setSearchParams({ application: nextActive });
-      } else if (searchParams.get('application')) {
-        setSearchParams({});
+      if (!silent) {
+        const nextActive = nextThreads.some(thread => String(thread.id) === String(preferredId))
+          ? preferredId
+          : '';
+        setActiveId(nextActive);
+        if (nextActive) {
+          setSearchParams({ application: nextActive });
+        } else if (searchParams.get('application')) {
+          setSearchParams({});
+        }
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Messages could not be loaded.');
+      if (!silent) setError(err.response?.data?.message || 'Messages could not be loaded.');
     } finally {
-      setLoadingThreads(false);
+      if (!silent) setLoadingThreads(false);
     }
   };
 
-  const loadMessages = async (applicationId) => {
+  const loadMessages = async (applicationId, silent = false) => {
     if (!applicationId) {
       setMessages([]);
       return;
     }
 
-    setLoadingMessages(true);
-    setError('');
+    if (!silent) {
+      setLoadingMessages(true);
+      setError('');
+    }
     try {
       const response = await axios.get(`${config.endpoint}/${applicationId}`, { headers: getTokenHeaders() });
       setMessages(response.data?.messages || []);
@@ -151,10 +157,12 @@ export const JobseekerChat = ({ portal = 'jobseeker' }) => {
           : thread
       ))));
     } catch (err) {
-      setError(err.response?.data?.message || 'Conversation could not be loaded.');
-      setMessages([]);
+      if (!silent) {
+        setError(err.response?.data?.message || 'Conversation could not be loaded.');
+        setMessages([]);
+      }
     } finally {
-      setLoadingMessages(false);
+      if (!silent) setLoadingMessages(false);
     }
   };
 
@@ -227,6 +235,20 @@ export const JobseekerChat = ({ portal = 'jobseeker' }) => {
       socket.off('message:typing', handleTyping);
     };
   }, [socket, activeId, portal]);
+
+  useEffect(() => {
+    if (socket) return undefined;
+
+    const interval = setInterval(() => {
+      loadThreads(activeId, true);
+      if (activeId) {
+        loadMessages(activeId, true);
+      }
+      refreshUnread();
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [socket, activeId, portal, refreshUnread]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ block: 'end' });
