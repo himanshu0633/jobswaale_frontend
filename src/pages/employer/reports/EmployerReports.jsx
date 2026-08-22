@@ -16,7 +16,12 @@ import {
   RefreshCcw,
   UserCheck,
   Users,
-  X
+  X,
+  Star,
+  Calendar,
+  Clock,
+  Mail,
+  XCircle
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
@@ -162,6 +167,23 @@ export const EmployerReports = () => {
   const maxMonthly = Math.max(...(data.monthlyOverview || []).map((month) => statusConfig.reduce((sum, item) => sum + Number(month[item.key] || 0), 0)), 1);
   const sourceTotal = (data.sources || []).reduce((sum, item) => sum + Number(item.value || 0), 0);
   const funnelMax = Math.max(...(data.funnel || []).map((item) => Number(item.value || 0)), 1);
+
+  const pipelineData = useMemo(() => {
+    const pipeline = data.pipeline || {};
+    return [
+      { name: 'Applied', value: pipeline.applied || 0, color: '#3b82f6', link: '/employer/applications?status=Applied' },
+      { name: 'Shortlisted', value: pipeline.shortlisted || 0, color: '#10b981', link: '/employer/shortlisted' },
+      { name: 'Interview', value: pipeline.interview || 0, color: '#6658dd', link: '/employer/interviews' },
+      { name: 'On Hold', value: pipeline.onHold || 0, color: '#f97316', link: '/employer/applications?status=OnHold' },
+      { name: 'Selected', value: pipeline.selected || 0, color: '#06b6d4', link: '/employer/selected?status=Selected' },
+      { name: 'Offered', value: pipeline.offered || 0, color: '#ec4899', link: '/employer/selected?status=Offer+Sent' },
+      { name: 'Rejected', value: pipeline.rejected || 0, color: '#ef4444', link: '/employer/applications?status=Rejected' }
+    ];
+  }, [data.pipeline]);
+
+  const totalPipelineCandidates = useMemo(() => {
+    return pipelineData.reduce((sum, d) => sum + d.value, 0);
+  }, [pipelineData]);
 
   const exportRows = useMemo(() => {
     const statsRows = statCards.map((item) => ['Summary', item.title, data.stats?.[item.key] ?? 0, '', '', '']);
@@ -353,34 +375,194 @@ export const EmployerReports = () => {
         </Card>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-2">
-        <Card delay={220}>
-          <div className="border-b border-dashed border-slate-200 px-4 py-4 sm:px-5"><h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Hiring Funnel</h2><p className="text-xs font-semibold text-slate-400 sm:text-sm">Conversion rates across hiring stages</p></div>
-          <div className="space-y-4 p-4 sm:space-y-5 sm:p-5">
-            {(data.funnel || []).map((item, index) => (
-              <div key={item.key} className="grid grid-cols-[72px_1fr_44px] items-center gap-2 sm:grid-cols-[110px_1fr_90px] sm:gap-3">
-                <span className="truncate text-xs font-extrabold text-slate-600 sm:text-sm">{item.title}</span>
-                <div className="h-6 overflow-hidden rounded bg-slate-100 sm:h-7"><div className="flex h-full items-center justify-end rounded bg-[#3b82f6] pr-2 text-[11px] font-black text-white transition-all duration-700 sm:text-xs" style={{ width: `${Math.max((item.value / funnelMax) * 100, item.value ? 7 : 0)}%`, transitionDelay: `${index * 90}ms` }}>{item.value}</div></div>
-                <span className="text-[11px] font-black text-slate-500 sm:text-xs">{item.percent}%</span>
-              </div>
-            ))}
-          </div>
-        </Card>
+      {/* Hiring Pipeline Block */}
+      <Card delay={220}>
+        <div className="border-b border-dashed border-slate-200 px-4 py-4 sm:px-5">
+          <h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Hiring Pipeline <span className="text-slate-400 font-medium">(All Jobs)</span></h2>
+        </div>
+        <div className="p-4 sm:p-5">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+            {/* Pipeline Cards (Left Column) */}
+            <div className="lg:col-span-8 grid gap-3 grid-cols-2 sm:grid-cols-3">
+              {/* Applied */}
+              <Link to="/employer/applications?status=Applied" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                    <FileText className="h-4 w-4" />
+                  </div>
+                  <div className="text-left">
+                    <span className="block text-[11px] font-bold text-slate-450">Applied</span>
+                    <span className="block text-sm font-extrabold text-slate-800">{data.pipeline?.applied || 0}</span>
+                  </div>
+                </div>
+              </Link>
 
-        <Card delay={260}>
-          <div className="flex items-center justify-between border-b border-dashed border-slate-200 px-4 py-4 sm:px-5"><div><h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Recent Activity</h2></div><button className="rounded-md border border-slate-200 px-3 py-2 text-xs font-bold text-slate-500">All Activity</button></div>
-          <div className="divide-y divide-slate-100 p-4 sm:p-5">
-            {(data.recentActivity || []).map((item, index) => (
-              <div key={item.id || index} className="flex items-start gap-3 py-3" style={{ animation: `reportFadeUp 500ms ease-out ${index * 70}ms both` }}>
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-50 text-[#6658dd]"><RefreshCcw className="h-4 w-4" /></span>
-                <div className="min-w-0 flex-1"><p className="text-sm font-extrabold text-[#3f4254]">{item.title}</p><p className="mt-0.5 truncate text-xs font-semibold text-slate-400">{item.description}</p></div>
-                <span className="shrink-0 text-xs font-bold text-slate-400">{item.time}</span>
-              </div>
-            ))}
-            {!data.recentActivity?.length && <p className="py-8 text-center text-sm font-bold text-slate-400">No recent activity found.</p>}
+              {/* Shortlisted */}
+              <Link to="/employer/shortlisted" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                    <Star className="h-4 w-4" />
+                  </div>
+                  <div className="text-left">
+                    <span className="block text-[11px] font-bold text-slate-450">Shortlisted</span>
+                    <span className="block text-sm font-extrabold text-slate-800">{data.pipeline?.shortlisted || 0}</span>
+                  </div>
+                </div>
+              </Link>
+
+              {/* Interview */}
+              <Link to="/employer/interviews" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50 text-[#6658dd]">
+                    <Calendar className="h-4 w-4" />
+                  </div>
+                  <div className="text-left">
+                    <span className="block text-[11px] font-bold text-slate-450">Interview</span>
+                    <span className="block text-sm font-extrabold text-slate-800">{data.pipeline?.interview || 0}</span>
+                  </div>
+                </div>
+              </Link>
+
+              {/* On Hold */}
+              <Link to="/employer/applications?status=OnHold" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 text-orange-600">
+                    <Clock className="h-4 w-4" />
+                  </div>
+                  <div className="text-left">
+                    <span className="block text-[11px] font-bold text-slate-450">On Hold</span>
+                    <span className="block text-sm font-extrabold text-slate-800">{data.pipeline?.onHold || 0}</span>
+                  </div>
+                </div>
+              </Link>
+
+              {/* Selected */}
+              <Link to="/employer/selected?status=Selected" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-50 text-cyan-600">
+                    <UserCheck className="h-4 w-4" />
+                  </div>
+                  <div className="text-left">
+                    <span className="block text-[11px] font-bold text-slate-450">Selected</span>
+                    <span className="block text-sm font-extrabold text-slate-800">{data.pipeline?.selected || 0}</span>
+                  </div>
+                </div>
+              </Link>
+
+              {/* Offered */}
+              <Link to="/employer/selected?status=Offer+Sent" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-pink-50 text-pink-600">
+                    <Mail className="h-4 w-4" />
+                  </div>
+                  <div className="text-left">
+                    <span className="block text-[11px] font-bold text-slate-450">Offered</span>
+                    <span className="block text-sm font-extrabold text-slate-800">{data.pipeline?.offered || 0}</span>
+                  </div>
+                </div>
+              </Link>
+
+              {/* Rejected */}
+              <Link to="/employer/applications?status=Rejected" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between col-span-2 sm:col-span-1">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
+                    <XCircle className="h-4 w-4" />
+                  </div>
+                  <div className="text-left">
+                    <span className="block text-[11px] font-bold text-slate-450">Rejected</span>
+                    <span className="block text-sm font-extrabold text-slate-800">{data.pipeline?.rejected || 0}</span>
+                  </div>
+                </div>
+              </Link>
+            </div>
+
+            {/* Donut Chart (Right Column) */}
+            <div className="lg:col-span-4 flex flex-col items-center justify-center border-t border-slate-100 lg:border-t-0 lg:border-l lg:border-slate-100 pt-6 lg:pt-0 lg:pl-6">
+              <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-4">Pipeline Distribution</h3>
+              {totalPipelineCandidates === 0 ? (
+                <div className="flex flex-col items-center justify-center h-40">
+                  <span className="text-xs font-bold text-slate-400">No candidates in pipeline</span>
+                </div>
+              ) : (
+                <>
+                  <div className="relative h-32 w-32">
+                    <svg viewBox="0 0 190 190" className="-rotate-90">
+                      <circle cx="95" cy="95" r="70" fill="none" stroke="#f1f5f9" strokeWidth="24" />
+                      {(() => {
+                        const radius = 70;
+                        const circumference = 2 * Math.PI * radius;
+                        let offset = 0;
+
+                        return pipelineData.map((stage) => {
+                          const dash = totalPipelineCandidates ? (stage.value / totalPipelineCandidates) * circumference : 0;
+                          const strokeOffset = -offset;
+                          offset += dash;
+
+                          if (dash === 0) return null;
+
+                          return (
+                            <circle
+                              key={stage.name}
+                              cx="95"
+                              cy="95"
+                              r={radius}
+                              fill="none"
+                              stroke={stage.color}
+                              strokeWidth="24"
+                              strokeDasharray={`${dash} ${circumference - dash}`}
+                              strokeDashoffset={strokeOffset}
+                              className="transition-all duration-550 ease-in-out"
+                            />
+                          );
+                        });
+                      })()}
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-2xl font-black text-slate-800">{totalPipelineCandidates}</span>
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Candidates</span>
+                    </div>
+                  </div>
+
+                  {/* Legend */}
+                  <div className="mt-4 flex flex-wrap justify-center gap-x-3 gap-y-1 max-w-[260px]">
+                    {pipelineData.map((stage) => {
+                      const pct = totalPipelineCandidates > 0 ? (stage.value / totalPipelineCandidates) * 100 : 0;
+                      if (stage.value === 0) return null;
+                      return (
+                        <div key={stage.name} className="flex items-center gap-1.5 text-[9px] font-bold text-slate-500">
+                          <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: stage.color }} />
+                          <span>{stage.name} ({pct.toFixed(0)}%)</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-        </Card>
-      </div>
+        </div>
+      </Card>
+
+      {/* Recent Activity Block */}
+      <Card delay={260}>
+        <div className="flex items-center justify-between border-b border-dashed border-slate-200 px-4 py-4 sm:px-5">
+          <div><h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Recent Activity</h2></div>
+          <button className="rounded-md border border-slate-200 px-3 py-2 text-xs font-bold text-slate-500">All Activity</button>
+        </div>
+        <div className="divide-y divide-slate-100 p-4 sm:p-5">
+          {(data.recentActivity || []).map((item, index) => (
+            <div key={item.id || index} className="flex items-start gap-3 py-3" style={{ animation: `reportFadeUp 500ms ease-out ${index * 70}ms both` }}>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-50 text-[#6658dd]"><RefreshCcw className="h-4 w-4" /></span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-extrabold text-[#3f4254]">{item.title}</p>
+                <p className="mt-0.5 truncate text-xs font-semibold text-slate-400">{item.description}</p>
+              </div>
+              <span className="shrink-0 text-xs font-bold text-slate-400">{item.time}</span>
+            </div>
+          ))}
+          {!data.recentActivity?.length && <p className="py-8 text-center text-sm font-bold text-slate-400">No recent activity found.</p>}
+        </div>
+      </Card>
 
       <Card delay={300}>
         <div className="flex items-center justify-between border-b border-dashed border-slate-200 px-4 py-4 sm:px-5"><div><h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Top Job Postings</h2><p className="text-xs font-semibold text-slate-400 sm:text-sm">Performance metrics by job</p></div><Link to="/employer/jobs" className="text-xs font-extrabold text-[#6658dd] sm:text-sm">View All Jobs</Link></div>
