@@ -37,8 +37,10 @@ const statusConfig = [
   { key: 'applied', label: 'Applied', color: '#3b82f6' },
   { key: 'reviewed', label: 'Under Review', color: '#8b5cf6' },
   { key: 'shortlisted', label: 'Shortlisted', color: '#10b981' },
-  { key: 'interview', label: 'Interviewed', color: '#f59e0b' },
+  { key: 'interview', label: 'Interviewed', color: '#6658dd' },
+  { key: 'onHold', label: 'On Hold', color: '#f97316' },
   { key: 'selected', label: 'Selected', color: '#06b6d4' },
+  { key: 'offered', label: 'Offered', color: '#ec4899' },
   { key: 'rejected', label: 'Rejected', color: '#ef4444' }
 ];
 
@@ -170,7 +172,9 @@ export const EmployerReports = () => {
       item.reviewed || 0,
       item.shortlisted || 0,
       item.interview || 0,
+      item.onHold || 0,
       item.selected || 0,
+      item.offered || 0,
       item.rejected || 0
     ]);
     const sourceRows = (data.sources || []).map((item) => ['Application Sources', item.name, item.value || 0, `${item.percent || 0}%`, '', '']);
@@ -196,7 +200,7 @@ export const EmployerReports = () => {
       ['Section', 'Metric', 'Value A', 'Value B', 'Value C', 'Value D', 'Value E', 'Value F'],
       ...exportRows.statsRows,
       [],
-      ['Section', 'Month', 'Applied', 'Reviewed', 'Shortlisted', 'Interviewed', 'Selected', 'Rejected'],
+      ['Section', 'Month', 'Applied', 'Reviewed', 'Shortlisted', 'Interviewed', 'On Hold', 'Selected', 'Offered', 'Rejected'],
       ...exportRows.monthlyRows,
       [],
       ['Section', 'Source', 'Applications', 'Percent'],
@@ -243,7 +247,7 @@ export const EmployerReports = () => {
           <h2>Summary</h2>
           <table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>${statCards.map((item) => `<tr><td>${item.title}</td><td>${data.stats?.[item.key] ?? 0}${item.suffix || ''}</td></tr>`).join('')}</tbody></table>
           <h2>Monthly Overview</h2>
-          <table><thead><tr><th>Month</th><th>Applied</th><th>Reviewed</th><th>Shortlisted</th><th>Interviewed</th><th>Selected</th><th>Rejected</th></tr></thead><tbody>${rows('Monthly', exportRows.monthlyRows.map((row) => row.slice(1)))}</tbody></table>
+          <table><thead><tr><th>Month</th><th>Applied</th><th>Reviewed</th><th>Shortlisted</th><th>Interviewed</th><th>On Hold</th><th>Selected</th><th>Offered</th><th>Rejected</th></tr></thead><tbody>${rows('Monthly', exportRows.monthlyRows.map((row) => row.slice(1)))}</tbody></table>
           <h2>Application Sources</h2>
           <table><thead><tr><th>Source</th><th>Applications</th><th>Percent</th></tr></thead><tbody>${rows('Sources', exportRows.sourceRows.map((row) => row.slice(1, 4)))}</tbody></table>
           <h2>Hiring Funnel</h2>
