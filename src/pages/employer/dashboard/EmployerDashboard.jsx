@@ -107,8 +107,7 @@ export const EmployerDashboard = () => {
       { name: 'On Hold', value: pipeline.onHold || 0, color: '#f97316', link: '/employer/applications?status=OnHold' },
       { name: 'Selected', value: pipeline.selected || 0, color: '#10b981', link: '/employer/selected?status=Selected' },
       { name: 'Offered', value: pipeline.offered || 0, color: '#ec4899', link: '/employer/selected?status=Offer+Sent' },
-      { name: 'Rejected', value: pipeline.rejected || 0, color: '#ef4444', link: '/employer/applications?status=Rejected' },
-      { name: 'Expired', value: pipeline.expired || 0, color: '#64748b', link: '/employer/jobs?status=Expired' }
+      { name: 'Rejected', value: pipeline.rejected || 0, color: '#ef4444', link: '/employer/applications?status=Rejected' }
     ];
   }, [dashboard.pipeline]);
 
@@ -394,21 +393,6 @@ export const EmployerDashboard = () => {
               </div>
             </div>
           </Link>
-
-          <ChevronRight className="hidden sm:block h-4 w-4 text-slate-300" />
-
-          {/* Expired */}
-          <Link to="/employer/jobs?status=Expired" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition w-full sm:w-auto min-w-[120px] justify-between">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
-                <Clock className="h-4 w-4" />
-              </div>
-              <div className="text-left">
-                <span className="block text-[11px] font-bold text-slate-450">Expired</span>
-                <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.expired || 0}</span>
-              </div>
-            </div>
-          </Link>
         </div>
 
         {/* Visual Graph Representation */}
@@ -439,14 +423,14 @@ export const EmployerDashboard = () => {
             <div className="space-y-6">
               {/* Vertical Bar Chart Container */}
               <div className="overflow-x-auto">
-                <div className="min-w-[600px] h-60 flex items-end gap-6 border-b border-slate-200 px-4 pb-2 pt-6">
+                <div className="min-w-[600px] h-64 flex items-end gap-6 border-b border-slate-200 px-4 pb-2 pt-16">
                   {pipelineData.map((stage, idx) => {
                     const pct = totalPipelineCandidates > 0 ? (stage.value / totalPipelineCandidates) * 100 : 0;
                     const heightPct = (stage.value / maxPipelineVal) * 100;
                     return (
                       <div key={stage.name} className="flex-1 flex flex-col items-center group h-full justify-end relative">
                         {/* Tooltip on hover */}
-                        <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
                           <div className="bg-[#1e293b] text-white text-[10px] sm:text-xs font-bold rounded-lg px-2.5 py-1.5 shadow-md flex flex-col items-center whitespace-nowrap">
                             <span className="text-[10px] font-medium opacity-85">{stage.name}</span>
                             <span className="text-xs font-black mt-0.5">{stage.value} ({pct.toFixed(1)}%)</span>
