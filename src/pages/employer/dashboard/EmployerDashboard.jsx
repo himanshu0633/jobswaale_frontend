@@ -17,7 +17,8 @@ import {
   SlidersHorizontal,
   Plus,
   Crown,
-  FileText
+  FileText,
+  Pause
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BASE_API_URL } from '../../../context/AuthContext';
@@ -257,33 +258,32 @@ export const EmployerDashboard = () => {
           </div>
           <Link to="/employer/jobs?status=Active" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
         </div>
-
-        {/* Card 3: Interview Scheduled */}
+        {/* Card 3: Inactive Jobs */}
         <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between h-36">
           <div className="flex items-start justify-between">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-amber-500 text-white">
-              <Clock className="h-5 w-5" />
+              <XCircle className="h-5 w-5" />
             </div>
             <div className="text-right">
-              <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.interviews || 0}</span>
-              <span className="text-xs font-semibold text-slate-400 mt-1 block">Interview Scheduled</span>
+              <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.jobs?.draft || 0}</span>
+              <span className="text-xs font-semibold text-slate-400 mt-1 block">Inactive Jobs</span>
             </div>
           </div>
-          <Link to="/employer/interviews" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
+          <Link to="/employer/jobs?status=Draft" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
         </div>
 
-        {/* Card 4: Total Candidates */}
+        {/* Card 4: Paused Jobs */}
         <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between h-36">
           <div className="flex items-start justify-between">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#8e44ad] text-white">
-              <Users className="h-5 w-5" />
+              <Pause className="h-5 w-5" />
             </div>
             <div className="text-right">
-              <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.applications || 0}</span>
-              <span className="text-xs font-semibold text-slate-400 mt-1 block">Total Candidates</span>
+              <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.jobs?.closed || 0}</span>
+              <span className="text-xs font-semibold text-slate-400 mt-1 block">Paused Jobs</span>
             </div>
           </div>
-          <Link to="/employer/applications" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
+          <Link to="/employer/jobs?status=Closed" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
         </div>
       </div>
 
