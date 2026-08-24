@@ -52,8 +52,8 @@ const getPublicRedirectPath = (userData, fallbackRole = 'jobseeker') => {
   const selectedRole = String(fallbackRole || '').trim().toLowerCase();
 
   if (accountType === 'employer' || userRole === 'employer') return '/employer';
-  if (accountType === 'jobseeker' || userRole === 'jobseeker') return '/jobseeker';
-  return selectedRole === 'employer' ? '/employer' : '/jobseeker';
+  if (accountType === 'jobseeker' || userRole === 'jobseeker') return '/';
+  return selectedRole === 'employer' ? '/employer' : '/';
 };
 
 const getSafeRedirectPath = (value) => {

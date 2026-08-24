@@ -9,7 +9,8 @@ import {
   MessageCircle,
   Send,
   XCircle,
-  Award
+  Award,
+  Clock
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { BASE_API_URL } from '../../../context/AuthContext';
@@ -21,6 +22,7 @@ const statConfig = [
   { key: 'reviewed', label: 'Reviewed', icon: Eye, tone: 'bg-cyan-50 text-cyan-600' },
   { key: 'shortlisted', label: 'Shortlisted', icon: CheckCircle, tone: 'bg-emerald-50 text-emerald-600' },
   { key: 'interview', label: 'Interview', icon: CalendarCheck, tone: 'bg-amber-50 text-amber-600' },
+  { key: 'onhold', label: 'Hold', icon: Clock, tone: 'bg-orange-50 text-orange-500' },
   { key: 'offered', label: 'Offered / Selected', icon: Award, tone: 'bg-emerald-100 text-emerald-800' },
   { key: 'rejected', label: 'Rejected', icon: XCircle, tone: 'bg-rose-50 text-rose-600' }
 ];
@@ -31,6 +33,7 @@ const filterTabs = [
   { key: 'reviewed', label: 'Reviewed' },
   { key: 'shortlisted', label: 'Shortlisted' },
   { key: 'interview', label: 'Interview' },
+  { key: 'onhold', label: 'Hold' },
   { key: 'offered', label: 'Offered / Selected' },
   { key: 'rejected', label: 'Rejected' }
 ];
@@ -41,6 +44,8 @@ const statusStyles = {
   reviewed: 'bg-cyan-50 text-cyan-600',
   shortlisted: 'bg-emerald-50 text-emerald-600',
   interview: 'bg-indigo-50 text-indigo-600',
+  onhold: 'bg-orange-50 text-orange-500',
+  'on hold': 'bg-orange-50 text-orange-500',
   offered: 'bg-emerald-100 text-emerald-800',
   selected: 'bg-emerald-50 text-emerald-600',
   'offer sent': 'bg-blue-50 text-blue-600',
@@ -56,6 +61,8 @@ const statusLabels = {
   reviewed: 'Reviewed',
   shortlisted: 'Shortlisted',
   interview: 'Interview',
+  onhold: 'On Hold for Interview',
+  'on hold': 'On Hold for Interview',
   offered: 'Offered / Selected',
   selected: 'Selected',
   'offer sent': 'Offer Sent',
@@ -65,7 +72,7 @@ const statusLabels = {
   rejected: 'Rejected'
 };
 
-const canJobseekerMessage = (status) => ['shortlisted', 'interview', 'offered'].includes(String(status || '').toLowerCase());
+const canJobseekerMessage = (status) => ['shortlisted', 'interview', 'offered', 'onhold', 'on hold'].includes(String(status || '').toLowerCase());
 
 export const JobseekerApplications = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -109,6 +116,7 @@ export const JobseekerApplications = () => {
     reviewed: { value: countByStatus('reviewed') },
     shortlisted: { value: countByStatus('shortlisted') },
     interview: { value: countByStatus('interview') },
+    onhold: { value: countByStatus('onhold') },
     offered: { value: countByStatus('offered') },
     rejected: { value: countByStatus('rejected') }
   };
@@ -139,6 +147,7 @@ export const JobseekerApplications = () => {
             reviewed: 'reviewed',
             shortlisted: 'shortlisted',
             interview: 'interview',
+            onhold: 'onhold',
             offered: 'offered',
             rejected: 'rejected'
           };

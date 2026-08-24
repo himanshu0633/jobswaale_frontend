@@ -196,9 +196,11 @@ export const JobseekerApplicationTracker = () => {
                 ? 'bg-rose-50 text-rose-600 border-rose-100'
                 : tracker.status === 'Offered'
                 ? 'bg-emerald-50 text-emerald-600 border-emerald-100 animate-pulse'
+                : tracker.interviewDetails?.onHold
+                ? 'bg-orange-50 text-orange-600 border-orange-100'
                 : 'bg-indigo-50 text-indigo-600 border-indigo-100'
             }`}>
-              {tracker.status}
+              {tracker.interviewDetails?.onHold ? 'On Hold for Interview' : tracker.status}
             </span>
             <span className="text-xs font-semibold text-slate-400">Applied on {tracker.appliedOn}</span>
           </div>
