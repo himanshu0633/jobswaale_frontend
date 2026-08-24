@@ -22,7 +22,7 @@ const statConfig = [
   { key: 'reviewed', label: 'Reviewed', icon: Eye, tone: 'bg-cyan-50 text-cyan-600' },
   { key: 'shortlisted', label: 'Shortlisted', icon: CheckCircle, tone: 'bg-emerald-50 text-emerald-600' },
   { key: 'interview', label: 'Interview', icon: CalendarCheck, tone: 'bg-amber-50 text-amber-600' },
-  { key: 'onhold', label: 'Hold', icon: Clock, tone: 'bg-orange-50 text-orange-500' },
+  { key: 'onhold', label: 'Hold for Interview', icon: Clock, tone: 'bg-orange-50 text-orange-500' },
   { key: 'offered', label: 'Offered / Selected', icon: Award, tone: 'bg-emerald-100 text-emerald-800' },
   { key: 'rejected', label: 'Rejected', icon: XCircle, tone: 'bg-rose-50 text-rose-600' }
 ];
@@ -33,7 +33,7 @@ const filterTabs = [
   { key: 'reviewed', label: 'Reviewed' },
   { key: 'shortlisted', label: 'Shortlisted' },
   { key: 'interview', label: 'Interview' },
-  { key: 'onhold', label: 'Hold' },
+  { key: 'onhold', label: 'Hold for Interview' },
   { key: 'offered', label: 'Offered / Selected' },
   { key: 'rejected', label: 'Rejected' }
 ];
