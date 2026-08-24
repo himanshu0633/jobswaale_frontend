@@ -119,6 +119,7 @@ export const Header = ({ toggleSidebar, isCollapsed, title = '' }) => {
 
           <button
             onClick={toggleSidebar}
+            title="Toggle sidebar"
             className={`p-1.5 sm:p-2 rounded-lg border transition-colors shrink-0 ${
               theme === 'dark'
                 ? 'text-slate-300 hover:text-white hover:bg-slate-800 border-slate-800 bg-slate-800/20'
@@ -146,6 +147,7 @@ export const Header = ({ toggleSidebar, isCollapsed, title = '' }) => {
           {/* Mobile Search Toggle */}
           <button
             onClick={() => setMobileSearchOpen(true)}
+            title="Open search"
             className={`md:hidden p-1.5 sm:p-2 rounded-lg transition-colors shrink-0 ${theme === 'dark' ? 'text-slate-300 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'}`}
             aria-label="Open search"
           >
@@ -159,6 +161,7 @@ export const Header = ({ toggleSidebar, isCollapsed, title = '' }) => {
           {/* Quick Tools */}
           <div className="hidden sm:flex items-center gap-1 lg:gap-2">
             <button 
+              title="Dashboard grid"
               className={`p-1.5 lg:p-2 rounded-lg transition-colors ${theme === 'dark' ? 'text-slate-300 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'}`}
               aria-label="Dashboard grid"
             >
@@ -174,12 +177,14 @@ export const Header = ({ toggleSidebar, isCollapsed, title = '' }) => {
             </button>
             <button 
               onClick={toggleFullscreen}
+              title="Toggle fullscreen"
               className={`hidden lg:flex p-2 rounded-lg transition-colors ${theme === 'dark' ? 'text-slate-300 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'}`}
               aria-label="Toggle fullscreen"
             >
               <Maximize className="w-5 h-5" />
             </button>
             <button 
+              title="Theme palette"
               className={`hidden xl:flex p-2 rounded-lg transition-colors ${theme === 'dark' ? 'text-slate-300 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'}`}
               aria-label="Theme palette"
             >
@@ -194,6 +199,7 @@ export const Header = ({ toggleSidebar, isCollapsed, title = '' }) => {
           <div className="relative">
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
+              title="User menu"
               className={`flex items-center gap-1.5 sm:gap-2.5 p-1 rounded-lg transition-colors ${theme === 'dark' ? 'hover:bg-slate-800' : 'hover:bg-slate-100'}`}
               aria-label="User menu"
             >
@@ -257,6 +263,7 @@ export const Header = ({ toggleSidebar, isCollapsed, title = '' }) => {
           <div className="flex items-center gap-3 p-3 sm:p-4 border-b border-slate-800">
             <button
               onClick={() => setMobileSearchOpen(false)}
+              title="Close search"
               className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
               aria-label="Close search"
             >

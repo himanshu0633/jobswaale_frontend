@@ -400,18 +400,18 @@ export const Jobs = () => {
                     <div className="text-[#9ba6b7]">{item.city}, {item.state}</div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={(e) => { e.stopPropagation(); navigate(`/admin/jobs/edit/${item._id}`); }} className="w-8 h-8 rounded-full bg-[#1abc9c] text-white flex items-center justify-center">
+                    <button onClick={(e) => { e.stopPropagation(); navigate(`/admin/jobs/edit/${item._id}`); }} title="Edit Job" aria-label="Edit Job" className="w-8 h-8 rounded-full bg-[#1abc9c] text-white flex items-center justify-center">
                       <Edit2 className="w-4 h-4" />
                     </button>
-                    <button onClick={(e) => { e.stopPropagation(); handleDelete(item._id); }} className="w-8 h-8 rounded-full bg-[#f1556c] text-white flex items-center justify-center">
+                    <button onClick={(e) => { e.stopPropagation(); handleDelete(item._id); }} title="Delete Job" aria-label="Delete Job" className="w-8 h-8 rounded-full bg-[#f1556c] text-white flex items-center justify-center">
                       <Trash2 className="w-4 h-4" />
                     </button>
                     {item.status !== 'active' ? (
-                      <button onClick={(e) => { e.stopPropagation(); toggleStatus(item, 'active'); }} className="w-8 h-8 rounded-full bg-[#1abc9c] text-white flex items-center justify-center">
+                      <button onClick={(e) => { e.stopPropagation(); toggleStatus(item, 'active'); }} title="Publish Job" aria-label="Publish Job" className="w-8 h-8 rounded-full bg-[#1abc9c] text-white flex items-center justify-center">
                         <Unlock className="w-4 h-4" />
                       </button>
                     ) : (
-                      <button onClick={(e) => { e.stopPropagation(); toggleStatus(item, 'inactive'); }} className="w-8 h-8 rounded-full bg-[#f7b84b] text-white flex items-center justify-center">
+                      <button onClick={(e) => { e.stopPropagation(); toggleStatus(item, 'inactive'); }} title="Unpublish Job" aria-label="Unpublish Job" className="w-8 h-8 rounded-full bg-[#f7b84b] text-white flex items-center justify-center">
                         <Lock className="w-4 h-4" />
                       </button>
                     )}
@@ -498,6 +498,7 @@ export const Jobs = () => {
                             <button
                               onClick={(e) => { e.stopPropagation(); toggleStatus(item, 'active'); }}
                               title="Publish Job"
+                              aria-label="Publish Job"
                               className="w-8 h-8 rounded-full flex items-center justify-center bg-[#1abc9c] hover:bg-[#16a085] text-white transition-colors"
                             >
                               <Unlock className="w-3.5 h-3.5" />
@@ -506,6 +507,7 @@ export const Jobs = () => {
                             <button
                               onClick={(e) => { e.stopPropagation(); toggleStatus(item, 'inactive'); }}
                               title="Unpublish Job"
+                              aria-label="Unpublish Job"
                               className="w-8 h-8 rounded-full flex items-center justify-center bg-[#f7b84b] hover:bg-[#d29c40] text-white transition-colors"
                             >
                               <Lock className="w-3.5 h-3.5" />
@@ -513,14 +515,16 @@ export const Jobs = () => {
                           )}
                           <button
                             onClick={(e) => { e.stopPropagation(); navigate(`/admin/jobs/edit/${item._id}`); }}
-                            title="Edit"
+                            title="Edit Job"
+                            aria-label="Edit Job"
                             className="w-8 h-8 rounded-full flex items-center justify-center bg-[#1abc9c] hover:bg-[#16a085] text-white transition-colors"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDelete(item._id); }}
-                            title="Delete"
+                            title="Delete Job"
+                            aria-label="Delete Job"
                             className="w-8 h-8 rounded-full flex items-center justify-center bg-[#f1556c] hover:bg-[#cd485c] text-white transition-colors"
                           >
                             <Trash2 className="w-3.5 h-3.5" />

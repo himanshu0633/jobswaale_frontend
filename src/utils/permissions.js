@@ -93,6 +93,9 @@ export const presets = {
 
 export const hasPermission = (user, permission) => {
   if (!user) return false;
+  if (user.roleRef || Array.isArray(user.permissions)) {
+    return Array.isArray(user.permissions) && user.permissions.includes(permission);
+  }
   if (user.role === 'Admin') return true;
   return Array.isArray(user.permissions) && user.permissions.includes(permission);
 };

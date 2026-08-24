@@ -126,8 +126,8 @@ const Roles = () => {
                     <td className="px-4 py-3"><span className={`px-2 py-1 rounded text-xs font-bold ${role.status === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{role.status === 'active' ? 'Active' : 'Inactive'}</span></td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
-                        <button onClick={() => navigate(`/admin/users-roles/roles/edit/${encodeURIComponent(role.name)}`)} className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center"><Edit2 className="w-4 h-4" /></button>
-                        <button onClick={() => deleteRole(role._id)} className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center"><Trash2 className="w-4 h-4" /></button>
+                        <button onClick={() => navigate(`/admin/users-roles/roles/edit/${role._id}`)} title="Edit Role" aria-label="Edit Role" className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center"><Edit2 className="w-4 h-4" /></button>
+                        <button onClick={() => deleteRole(role._id)} title="Delete Role" aria-label="Delete Role" className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </td>
                   </tr>

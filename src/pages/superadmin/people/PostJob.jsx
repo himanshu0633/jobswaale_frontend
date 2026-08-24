@@ -29,11 +29,30 @@ const emptyForm = {
   jobType: '',
   vacancies: '',
   workMode: 'Onsite',
+  jobLocations: '',
   description: '',
+  jobSummary: '',
+  detailedDescription: '',
+  responsibilities: '',
   qualification: '',
   experience: '',
+  requiredExperience: '',
   salary: '',
+  minSalary: '',
+  maxSalary: '',
+  salaryUnit: 'P.A.',
   salaryNegotiable: true,
+  noticePeriod: '',
+  joiningDate: '',
+  shiftTiming: '',
+  jobExpiry: '',
+  benefits: '',
+  aboutCompany: '',
+  skills: '',
+  languages: '',
+  candidateLocationPreference: 'Open to all locations',
+  screeningQuestions: '',
+  publishStatus: 'publish',
   country: '',
   state: '',
   district: '',
@@ -104,16 +123,29 @@ export const PostJob = () => {
     setCities(Array.isArray(resCt.data) ? resCt.data : resCt.data.docs || []);
     const planRows = Array.isArray(resP.data) ? resP.data : resP.data.docs || [];
     setPlans(planRows.filter((plan) => plan.status !== 'inactive'));
+    return {
+      categories: Array.isArray(resC.data) ? resC.data : resC.data.docs || [],
+      jobTypes: Array.isArray(resT.data) ? resT.data : resT.data.docs || [],
+      qualifications: Array.isArray(resQ.data) ? resQ.data : resQ.data.docs || [],
+      countries: Array.isArray(resCo.data) ? resCo.data : resCo.data.docs || [],
+      states: Array.isArray(resS.data) ? resS.data : resS.data.docs || [],
+      districts: Array.isArray(resD.data) ? resD.data : resD.data.docs || [],
+      cities: Array.isArray(resCt.data) ? resCt.data : resCt.data.docs || [],
+      plans: planRows.filter((plan) => plan.status !== 'inactive'),
+    };
   };
 
-  const fetchExisting = async () => {
+  const fetchExisting = async (masters = {}) => {
     if (!id) return;
-    const response = await axios.get(`${BASE_API_URL}/jobs`);
-    const job = response.data.find((item) => item._id === id);
+    const response = await axios.get(`${BASE_API_URL}/jobs/${id}?raw=1`);
+    const job = response.data?.job || response.data;
     if (!job) {
       showMessage('error', 'Job posting not found.');
       return;
     }
+    const countryRow = (masters.countries || []).find((item) => item.cid === job.country || item.countryName === job.country);
+    const stateRow = (masters.states || []).find((item) => item.sid === job.state || item.stateName === job.state);
+    const districtRow = (masters.districts || []).find((item) => item.did === job.district || item.districtName === job.district);
     setForm({
       postingDate: toDateInput(job.postingDate) || today(),
       jobTitle: job.jobTitle || '',
@@ -121,14 +153,33 @@ export const PostJob = () => {
       jobType: job.jobType?._id || job.jobType || '',
       vacancies: String(job.vacancies || ''),
       workMode: job.workMode || 'Onsite',
+      jobLocations: Array.isArray(job.jobLocations) ? job.jobLocations.join(', ') : job.jobLocations || '',
       description: job.description || '',
+      jobSummary: job.jobSummary || '',
+      detailedDescription: job.detailedDescription || job.description || '',
+      responsibilities: job.responsibilities || '',
       qualification: job.qualification?._id || job.qualification || '',
       experience: job.experience || '',
+      requiredExperience: job.requiredExperience || job.experience || '',
       salary: job.salary || '',
+      minSalary: job.minSalary ?? '',
+      maxSalary: job.maxSalary ?? '',
+      salaryUnit: job.salaryUnit || 'P.A.',
       salaryNegotiable: Boolean(job.salaryNegotiable),
-      country: job.country || '',
-      state: job.state || '',
-      district: job.district || '',
+      noticePeriod: job.noticePeriod || '',
+      joiningDate: toDateInput(job.joiningDate),
+      shiftTiming: job.shiftTiming || '',
+      jobExpiry: toDateInput(job.jobExpiry),
+      benefits: job.benefits || '',
+      aboutCompany: job.aboutCompany || '',
+      skills: Array.isArray(job.skills) ? job.skills.join(', ') : job.skills || '',
+      languages: Array.isArray(job.languages) ? job.languages.join(', ') : job.languages || '',
+      candidateLocationPreference: job.candidateLocationPreference || 'Open to all locations',
+      screeningQuestions: job.screeningQuestions || '',
+      publishStatus: job.publishStatus || 'publish',
+      country: countryRow?.cid || job.country || '',
+      state: stateRow?.sid || job.state || '',
+      district: districtRow?.did || job.district || '',
       city: job.city || '',
       companyName: job.companyName || '',
       contactPerson: job.contactPerson || '',
@@ -146,8 +197,8 @@ export const PostJob = () => {
     const initialize = async () => {
       setLoading(true);
       try {
-        await fetchMasters();
-        await fetchExisting();
+        const masters = await fetchMasters();
+        await fetchExisting(masters);
       } catch (err) {
         console.error(err);
         showMessage('error', 'Error loading job form data.');
@@ -182,6 +233,17 @@ export const PostJob = () => {
         currentPlan: form.currentPlan || null,
         planValidity: form.planValidity || null,
         qualification: form.qualification || null,
+        description: form.detailedDescription || form.description,
+        detailedDescription: form.detailedDescription || form.description,
+        experience: form.requiredExperience || form.experience,
+        requiredExperience: form.requiredExperience || form.experience,
+        minSalary: form.minSalary === '' ? null : Number(form.minSalary),
+        maxSalary: form.maxSalary === '' ? null : Number(form.maxSalary),
+        joiningDate: form.joiningDate || null,
+        jobExpiry: form.jobExpiry || null,
+        jobLocations: String(form.jobLocations || '').split(',').map((item) => item.trim()).filter(Boolean),
+        skills: String(form.skills || '').split(',').map((item) => item.trim()).filter(Boolean),
+        languages: String(form.languages || '').split(',').map((item) => item.trim()).filter(Boolean),
       };
       if (id) {
         await axios.put(`${BASE_API_URL}/jobs/${id}`, payload);
@@ -260,15 +322,24 @@ export const PostJob = () => {
                   <Field className="md:col-span-6" label="Work Mode">
                     <select value={form.workMode} onChange={(e) => setValue('workMode', e.target.value)} className={inputCls}>
                       <option value="Onsite">Onsite</option>
+                      <option value="Office">Office</option>
                       <option value="Remote">Remote</option>
+                      <option value="Work from Home">Work from Home</option>
+                      <option value="Hybrid">Hybrid</option>
                     </select>
                   </Field>
                 </div>
 
                 <SectionTitle icon={<Briefcase className="w-4 h-4" />} label="Job Detail" />
                 <div className="grid gap-4 md:grid-cols-12">
+                  <Field className="md:col-span-12" label="Short Summary">
+                    <textarea value={form.jobSummary} onChange={(e) => setValue('jobSummary', e.target.value)} rows={3} placeholder="Short summary for candidates" className={inputCls} />
+                  </Field>
                   <Field className="md:col-span-12" label="Job Description" required>
-                    <textarea value={form.description} onChange={(e) => setValue('description', e.target.value)} rows={5} placeholder="Write job description" className={inputCls} />
+                    <textarea value={form.detailedDescription || form.description} onChange={(e) => { setValue('detailedDescription', e.target.value); setValue('description', e.target.value); }} rows={7} placeholder="Write job description" className={inputCls} />
+                  </Field>
+                  <Field className="md:col-span-12" label="Responsibilities">
+                    <textarea value={form.responsibilities} onChange={(e) => setValue('responsibilities', e.target.value)} rows={5} placeholder="Responsibilities" className={inputCls} />
                   </Field>
                   <Field className="md:col-span-6" label="Qualification">
                     <select value={form.qualification} onChange={(e) => setValue('qualification', e.target.value)} className={inputCls}>
@@ -276,13 +347,11 @@ export const PostJob = () => {
                       {qualifications.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}
                     </select>
                   </Field>
-                  <Field className="md:col-span-6" label="Experience" required>
-                    <select value={form.experience} onChange={(e) => setValue('experience', e.target.value)} className={inputCls}>
+                  <Field className="md:col-span-6" label="Required Experience" required>
+                    <select value={form.requiredExperience || form.experience} onChange={(e) => { setValue('requiredExperience', e.target.value); setValue('experience', e.target.value); }} className={inputCls}>
                       <option value="">Choose</option>
                       <option>Fresher</option>
-                      <option>1-2 Years</option>
-                      <option>2-3 Years</option>
-                      <option>3+ Years</option>
+                      {Array.from({ length: 10 }, (_, index) => <option key={index + 1}>{index + 1}+ Years</option>)}
                     </select>
                   </Field>
                   <Field className="md:col-span-6" label="Salary (Rs.)">
@@ -298,6 +367,18 @@ export const PostJob = () => {
                       <label className="flex items-center gap-2 text-sm font-medium text-slate-600"><input type="radio" name="salaryNegotiable" checked={form.salaryNegotiable} onChange={() => setValue('salaryNegotiable', true)} /> Yes</label>
                       <label className="flex items-center gap-2 text-sm font-medium text-slate-600"><input type="radio" name="salaryNegotiable" checked={!form.salaryNegotiable} onChange={() => setValue('salaryNegotiable', false)} /> No</label>
                     </div>
+                  </Field>
+                  <Field className="md:col-span-4" label="Min Salary">
+                    <input type="number" value={form.minSalary} onChange={(e) => setValue('minSalary', e.target.value)} placeholder="Min Salary" className={inputCls} />
+                  </Field>
+                  <Field className="md:col-span-4" label="Max Salary">
+                    <input type="number" value={form.maxSalary} onChange={(e) => setValue('maxSalary', e.target.value)} placeholder="Max Salary" className={inputCls} />
+                  </Field>
+                  <Field className="md:col-span-4" label="Salary Unit">
+                    <select value={form.salaryUnit} onChange={(e) => setValue('salaryUnit', e.target.value)} className={inputCls}>
+                      <option>P.A.</option>
+                      <option>Monthly</option>
+                    </select>
                   </Field>
                 </div>
 
@@ -326,6 +407,58 @@ export const PostJob = () => {
                       <option value="">Choose</option>
                       {availableCities.map((item) => <option key={item.ctid} value={item.cityName}>{item.cityName}</option>)}
                     </select>
+                  </Field>
+                  <Field className="md:col-span-2" label="Job Locations">
+                    <input type="text" value={form.jobLocations} onChange={(e) => setValue('jobLocations', e.target.value)} placeholder="City 1, City 2" className={inputCls} />
+                  </Field>
+                </div>
+
+                <SectionTitle icon={<FileText className="w-4 h-4" />} label="Requirements & Timing" />
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Field label="Notice Period">
+                    <select value={form.noticePeriod} onChange={(e) => setValue('noticePeriod', e.target.value)} className={inputCls}>
+                      <option value="">Choose</option>
+                      <option>Immediate</option>
+                      <option>15 Days</option>
+                      <option>30 Days</option>
+                      <option>60 Days</option>
+                    </select>
+                  </Field>
+                  <Field label="Date of Joining">
+                    <input type="date" value={form.joiningDate} onChange={(e) => setValue('joiningDate', e.target.value)} className={inputCls} />
+                  </Field>
+                  <Field label="Shift Timings">
+                    <select value={form.shiftTiming} onChange={(e) => setValue('shiftTiming', e.target.value)} className={inputCls}>
+                      <option value="">Choose</option>
+                      <option>Day Shift</option>
+                      <option>Night Shift</option>
+                      <option>Rotational Shift</option>
+                    </select>
+                  </Field>
+                  <Field label="Job Expiry">
+                    <input type="date" value={form.jobExpiry} onChange={(e) => setValue('jobExpiry', e.target.value)} className={inputCls} />
+                  </Field>
+                  <Field className="md:col-span-2" label="Benefits & Perks">
+                    <input type="text" value={form.benefits} onChange={(e) => setValue('benefits', e.target.value)} placeholder="PF, Health Insurance, Bonus" className={inputCls} />
+                  </Field>
+                  <Field className="md:col-span-2" label="Key Skills">
+                    <input type="text" value={form.skills} onChange={(e) => setValue('skills', e.target.value)} placeholder="JavaScript, React.js, HTML" className={inputCls} />
+                  </Field>
+                  <Field label="Language Preference">
+                    <input type="text" value={form.languages} onChange={(e) => setValue('languages', e.target.value)} placeholder="English, Hindi" className={inputCls} />
+                  </Field>
+                  <Field label="Candidate Location Preference">
+                    <select value={form.candidateLocationPreference} onChange={(e) => setValue('candidateLocationPreference', e.target.value)} className={inputCls}>
+                      <option>Open to all locations</option>
+                      <option>Same city only</option>
+                      <option>Same state only</option>
+                    </select>
+                  </Field>
+                  <Field className="md:col-span-2" label="Screening Questions">
+                    <textarea value={form.screeningQuestions} onChange={(e) => setValue('screeningQuestions', e.target.value)} rows={4} className={inputCls} />
+                  </Field>
+                  <Field className="md:col-span-2" label="About Company">
+                    <textarea value={form.aboutCompany} onChange={(e) => setValue('aboutCompany', e.target.value)} rows={3} className={inputCls} />
                   </Field>
                 </div>
 
@@ -376,6 +509,13 @@ export const PostJob = () => {
                 <Field label="Status" required>
                   <select value={form.status} onChange={(e) => setValue('status', e.target.value)} className={inputCls}>
                     {statusOptions.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+                  </select>
+                </Field>
+                <Field label="Publish Status">
+                  <select value={form.publishStatus} onChange={(e) => setValue('publishStatus', e.target.value)} className={inputCls}>
+                    <option value="publish">Publish Immediately</option>
+                    <option value="draft">Save as Draft</option>
+                    <option value="scheduled">Scheduled</option>
                   </select>
                 </Field>
                 <Field label="Reson for Blacklist" required={form.status === 'blacklist'}>

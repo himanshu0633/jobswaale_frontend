@@ -9,14 +9,12 @@ import {
   ChevronRight,
   CreditCard,
   Factory,
-  FileText,
   Gauge,
   Gift,
   GraduationCap,
   Handshake,
   Layers,
   MapPin,
-  Rss,
   Settings,
   Table2,
   Users,
@@ -230,10 +228,6 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
           {!isCollapsed && <div className={`${sectionClass} ${palette.title}`}>Finance</div>}
           {can('finance.payments.view') && <NavLink to={adminPath('/payments')} icon={CreditCard} label="Payments" active={isPathActive('/payments')} />}
           {can('finance.transactions.view') && <NavLink to={adminPath('/payments/transactions')} icon={ArrowRightLeft} label="Transactions" active={isPathActive('/payments/transactions')} />}
-
-          {!isCollapsed && <div className={`${sectionClass} ${palette.title}`}>Content</div>}
-          {can('content.cms') && <NavLink to={adminPath('/cms-pages')} icon={FileText} label="CMS Pages" active={isActive('/cms-pages')} />}
-          {can('content.blog') && <NavLink to={adminPath('/blog')} icon={Rss} label="Blog" active={isPathActive('/blog') || isPathActive('/blog-categories')} />}
 
           {!isCollapsed && <div className={`${sectionClass} ${palette.title}`}>System</div>}
           {can('system.reports') && <NavLink to={adminPath('/reports')} icon={BarChart3} label="Reports" active={isPathActive('/reports')} />}

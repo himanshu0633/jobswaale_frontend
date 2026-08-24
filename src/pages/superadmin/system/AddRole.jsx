@@ -13,16 +13,13 @@ const AddRole = () => {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [form, setForm] = useState({ name: '', status: 'active', description: '', permissions: presets.admin });
-  const [existingRoleNames, setExistingRoleNames] = useState([]);
   const [existingRoles, setExistingRoles] = useState([]);
-  const [customRoleName, setCustomRoleName] = useState('');
 
   useEffect(() => {
     const loadRoleData = async () => {
       try {
         const rolesRes = await axios.get(`${BASE_API_URL}/admin/roles`);
         setExistingRoles(rolesRes.data || []);
-        setExistingRoleNames(rolesRes.data.map(role => role.name).filter(Boolean));
 
         if (id) {
           const res = await axios.get(`${BASE_API_URL}/admin/roles/${encodeURIComponent(id)}`);
@@ -42,11 +39,6 @@ const AddRole = () => {
     };
     loadRoleData();
   }, [id]);
-
-  const roleChoices = useMemo(() => {
-    const names = [...new Set(existingRoleNames)].filter(name => name && name !== 'Other');
-    return [...names, 'Other'];
-  }, [existingRoleNames]);
 
   const rolePresetButtons = useMemo(() => (
     existingRoles.filter(role => role._id !== id && role.permissions?.length)
@@ -79,9 +71,9 @@ const AddRole = () => {
 
   const submit = async (e) => {
     e.preventDefault();
-    const roleName = form.name === 'Other' ? customRoleName.trim() : form.name.trim();
+    const roleName = form.name.trim();
     if (!roleName) {
-      setMessage({ type: 'error', text: 'Please select a role name.' });
+      setMessage({ type: 'error', text: 'Please enter a role name.' });
       return;
     }
     const payload = { ...form, name: roleName };
@@ -145,10 +137,13 @@ const AddRole = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>Role Name <span className="text-rose-500">*</span></label>
-                  <select value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inputCls} required>
-                    <option value="">Select a role</option>
-                    {roleChoices.map(option => <option key={option} value={option}>{option}</option>)}
-                  </select>
+                  <input
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    className={inputCls}
+                    placeholder="Example: Support Manager"
+                    required
+                  />
                 </div>
                 <div>
                   <label className={labelCls}>Status <span className="text-rose-500">*</span></label>
@@ -158,18 +153,6 @@ const AddRole = () => {
                   </select>
                 </div>
               </div>
-              {form.name === 'Other' && (
-                <div>
-                  <label className={labelCls}>Other Role Name <span className="text-rose-500">*</span></label>
-                  <input
-                    value={customRoleName}
-                    onChange={(e) => setCustomRoleName(e.target.value)}
-                    className={inputCls}
-                    placeholder="Enter custom role name"
-                    required
-                  />
-                </div>
-              )}
               <div>
                 <label className={labelCls}>Description</label>
                 <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows="2" className={inputCls} placeholder="Brief description of this role's responsibilities" />

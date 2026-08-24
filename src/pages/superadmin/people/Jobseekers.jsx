@@ -438,34 +438,36 @@ export const Jobseekers = () => {
                           href={item.resume?.startsWith('http') ? item.resume : `http://${item.resume}`}
                           target="_blank"
                           rel="noreferrer"
+                          title={item.resume ? 'View Resume' : 'Resume not available'}
+                          aria-label={item.resume ? 'View Resume' : 'Resume not available'}
                           onClick={(e) => e.stopPropagation()}
                           className={`w-8 h-8 rounded-full flex items-center justify-center ${item.resume ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-400'}`}
                         >
                           <FileText className="w-4 h-4" />
                         </a>
                         {item.status !== 'active' && (
-                          <button onClick={(e) => { e.stopPropagation(); toggleStatus(item, 'active'); }} className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                          <button onClick={(e) => { e.stopPropagation(); toggleStatus(item, 'active'); }} title="Activate Jobseeker" aria-label="Activate Jobseeker" className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
                             <ShieldCheck className="w-4 h-4" />
                           </button>
                         )}
                         {item.status !== 'blacklist' && (
-                          <button onClick={(e) => { e.stopPropagation(); toggleStatus(item, 'blacklist'); }} className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
+                          <button onClick={(e) => { e.stopPropagation(); toggleStatus(item, 'blacklist'); }} title="Blacklist Jobseeker" aria-label="Blacklist Jobseeker" className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
                             <Ban className="w-4 h-4" />
                           </button>
                         )}
-                        <button onClick={(e) => { e.stopPropagation(); navigate(`/admin/jobseekers/edit/${item._id}`); }} className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                        <button onClick={(e) => { e.stopPropagation(); navigate(`/admin/jobseekers/edit/${item._id}`); }} title="Edit Jobseeker" aria-label="Edit Jobseeker" className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
                           <Edit2 className="w-4 h-4" />
                         </button>
-                        <button onClick={(e) => { e.stopPropagation(); openHistory(item); }} className="w-8 h-8 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center">
+                        <button onClick={(e) => { e.stopPropagation(); openHistory(item); }} title="Application History" aria-label="Application History" className="w-8 h-8 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center">
                           <History className="w-4 h-4" />
                         </button>
-                        <button onClick={(e) => { e.stopPropagation(); handleDelete(item._id); }} className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
+                        <button onClick={(e) => { e.stopPropagation(); handleDelete(item._id); }} title="Delete Jobseeker" aria-label="Delete Jobseeker" className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </>
                     )}
                     {item.profileIncomplete && (
-                      <button onClick={(e) => { e.stopPropagation(); openHistory(item); }} className="w-8 h-8 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center">
+                      <button onClick={(e) => { e.stopPropagation(); openHistory(item); }} title="Application History" aria-label="Application History" className="w-8 h-8 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center">
                         <History className="w-4 h-4" />
                       </button>
                     )}
@@ -572,6 +574,7 @@ export const Jobseekers = () => {
                               <button
                                 onClick={(e) => { e.stopPropagation(); openHistory(item); }}
                                 title="Application History"
+                                aria-label="Application History"
                                 className="w-7 h-7 rounded-full flex items-center justify-center bg-sky-50 hover:bg-sky-100 text-sky-600 transition-colors"
                               >
                                 <History className="w-3.5 h-3.5" />
@@ -585,6 +588,7 @@ export const Jobseekers = () => {
                                   target="_blank"
                                   rel="noreferrer"
                                   title="View Resume"
+                                  aria-label="View Resume"
                                   onClick={(e) => e.stopPropagation()}
                                   className="w-7 h-7 rounded-full flex items-center justify-center bg-indigo-50 hover:bg-indigo-100 text-indigo-500 transition-colors"
                                 >
@@ -595,6 +599,7 @@ export const Jobseekers = () => {
                                 <button
                                   onClick={(e) => { e.stopPropagation(); toggleStatus(item, 'active'); }}
                                   title="Activate"
+                                  aria-label="Activate Jobseeker"
                                   className="w-7 h-7 rounded-full flex items-center justify-center bg-emerald-50 hover:bg-emerald-100 text-emerald-600 transition-colors"
                                 >
                                   <ShieldCheck className="w-3.5 h-3.5" />
@@ -604,6 +609,7 @@ export const Jobseekers = () => {
                                 <button
                                   onClick={(e) => { e.stopPropagation(); toggleStatus(item, 'blacklist'); }}
                                   title="Blacklist"
+                                  aria-label="Blacklist Jobseeker"
                                   className="w-7 h-7 rounded-full flex items-center justify-center bg-rose-50 hover:bg-rose-100 text-rose-500 transition-colors"
                                 >
                                   <Ban className="w-3.5 h-3.5" />
@@ -612,6 +618,7 @@ export const Jobseekers = () => {
                               <button
                                 onClick={(e) => { e.stopPropagation(); navigate(`/admin/jobseekers/edit/${item._id}`); }}
                                 title="Edit"
+                                aria-label="Edit Jobseeker"
                                 className="w-7 h-7 rounded-full flex items-center justify-center bg-emerald-50 hover:bg-emerald-100 text-emerald-600 transition-colors"
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
@@ -619,6 +626,7 @@ export const Jobseekers = () => {
                               <button
                                 onClick={(e) => { e.stopPropagation(); openHistory(item); }}
                                 title="Application History"
+                                aria-label="Application History"
                                 className="w-7 h-7 rounded-full flex items-center justify-center bg-sky-50 hover:bg-sky-100 text-sky-600 transition-colors"
                               >
                                 <History className="w-3.5 h-3.5" />
@@ -626,6 +634,7 @@ export const Jobseekers = () => {
                               <button
                                 onClick={(e) => { e.stopPropagation(); handleDelete(item._id); }}
                                 title="Delete"
+                                aria-label="Delete Jobseeker"
                                 className="w-7 h-7 rounded-full flex items-center justify-center bg-rose-50 hover:bg-rose-100 text-rose-500 transition-colors"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />

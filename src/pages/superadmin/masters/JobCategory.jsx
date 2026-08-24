@@ -282,10 +282,10 @@ export const JobCategory = () => {
                 <div className="flex items-center justify-between">
                   <div className="text-xs text-slate-500">Sort: {item.sortingNo}</div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => handleEdit(item)} className="w-8 h-8 bg-teal-500 hover:bg-teal-600 text-white rounded-full flex items-center justify-center">
+                    <button onClick={() => handleEdit(item)} title="Edit" aria-label="Edit" className="w-8 h-8 bg-teal-500 hover:bg-teal-600 text-white rounded-full flex items-center justify-center">
                       <Edit2 className="w-4 h-4" />
                     </button>
-                    <button onClick={() => handleDelete(item._id)} className="w-8 h-8 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center">
+                    <button onClick={() => handleDelete(item._id)} title="Delete" aria-label="Delete" className="w-8 h-8 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -345,6 +345,7 @@ export const JobCategory = () => {
                             onClick={() => handleEdit(item)}
                             className="w-7 h-7 bg-teal-500 hover:bg-teal-600 text-white rounded-full flex items-center justify-center transition-colors"
                             title="Edit"
+                            aria-label="Edit"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
@@ -352,6 +353,7 @@ export const JobCategory = () => {
                             onClick={() => handleDelete(item._id)}
                             className="w-7 h-7 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center transition-colors"
                             title="Delete"
+                            aria-label="Delete"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>

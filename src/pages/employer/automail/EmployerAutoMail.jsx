@@ -20,15 +20,8 @@ const emptySettings = {
   includeCurrentLocation: true,
   includePreferredLocation: true,
   includeAppliedLocation: false,
-  locations: [],
-  minExperience: '',
-  maxExperience: ''
+  locations: []
 };
-
-const experienceCountOptions = Array.from({ length: 11 }, (_, value) => ({
-  value: String(value),
-  label: value === 0 ? 'Fresher' : `${value}+ Years`
-}));
 
 const normalizeText = (value) => String(value || '').trim().toLowerCase();
 const getCityValue = (city) => city?.cityName || city?.ctid || '';
@@ -37,8 +30,6 @@ const getCityLabel = (city) => city?.cityName || city?.ctid || '';
 const normalizeSettings = (settings = {}) => ({
   ...emptySettings,
   ...settings,
-  minExperience: settings.minExperience ?? '',
-  maxExperience: settings.maxExperience ?? '',
   locations: Array.isArray(settings.locations) ? settings.locations : []
 });
 
@@ -148,9 +139,7 @@ export const EmployerAutoMail = () => {
       const payload = {
         ...settings,
         locations: settings.locations,
-        perJobLimit: Number(settings.perJobLimit) || 0,
-        minExperience: settings.minExperience === '' ? null : Number(settings.minExperience),
-        maxExperience: settings.maxExperience === '' ? null : Number(settings.maxExperience)
+        perJobLimit: Number(settings.perJobLimit) || 0
       };
       const response = await axios.put(`${BASE_API_URL}/employer/auto-mail-settings`, payload, { headers: getTokenHeaders() });
       const nextSettings = normalizeSettings(response.data?.settings);
@@ -240,26 +229,16 @@ export const EmployerAutoMail = () => {
           </div>
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-3">
+        <div className="grid gap-5 lg:grid-cols-[1fr_2fr]">
           <label className="block">
             <span className="mb-1.5 block text-sm font-bold text-slate-600">Mail Per Job</span>
             <input type="number" min="0" max={settings.remaining} value={settings.perJobLimit} onChange={(e) => setValue('perJobLimit', e.target.value)} className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm focus:border-[#6658dd] focus:outline-none" />
           </label>
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-bold text-slate-600">Min Experience</span>
-            <select value={settings.minExperience} onChange={(e) => setValue('minExperience', e.target.value)} className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm focus:border-[#6658dd] focus:outline-none">
-              <option value="">Any</option>
-              {experienceCountOptions.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-            </select>
-          </label>
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-bold text-slate-600">Max Experience</span>
-            <select value={settings.maxExperience} onChange={(e) => setValue('maxExperience', e.target.value)} className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm focus:border-[#6658dd] focus:outline-none">
-              <option value="">Any</option>
-              {experienceCountOptions.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-            </select>
-          </label>
-          <div className="lg:col-span-3">
+          <div className="rounded-md border border-blue-100 bg-blue-50 px-4 py-3">
+            <p className="text-sm font-extrabold text-blue-700">Experience is matched from each job post</p>
+            <p className="mt-1 text-xs font-semibold leading-5 text-blue-600">When a job is published, auto-mail uses that job's Required Experience and sends mail only to matching candidates.</p>
+          </div>
+          <div className="lg:col-span-2">
             <SearchableMultiCitySelect
               label="Locations"
               values={settings.locations}

@@ -156,8 +156,8 @@ const Users = () => {
                       <td className="px-4 py-3"><span className={`px-2 py-1 rounded text-xs font-bold ${user.status === 'active' ? 'bg-emerald-50 text-emerald-700' : user.status === 'suspended' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-700'}`}>{statusLabel(user.status)}</span></td>
                       <td className="px-4 py-3">
                         <div className="flex gap-2">
-                          <button onClick={() => navigate(`/admin/users-roles/users/edit/${user._id}`)} className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center"><Edit2 className="w-4 h-4" /></button>
-                          <button onClick={() => deleteUser(user._id)} className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center"><Trash2 className="w-4 h-4" /></button>
+                          <button onClick={() => navigate(`/admin/users-roles/users/edit/${user._id}`)} title="Edit User" aria-label="Edit User" className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center"><Edit2 className="w-4 h-4" /></button>
+                          <button onClick={() => deleteUser(user._id)} title="Delete User" aria-label="Delete User" className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center"><Trash2 className="w-4 h-4" /></button>
                         </div>
                       </td>
                     </tr>

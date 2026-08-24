@@ -25,7 +25,6 @@ import {
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
-import ClearFilterButton from '../../../components/ClearFilterButton';
 
 const colors = ['#3b82f6', '#ef4444', '#f59e0b', '#8b5cf6', '#10b981', '#9ca3af'];
 
@@ -54,13 +53,75 @@ const getTokenHeaders = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
+const toInputDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const getInitialRange = () => {
   const to = new Date();
   const from = new Date(to.getFullYear(), to.getMonth() - 5, 1);
   return {
-    from: from.toISOString().slice(0, 10),
-    to: to.toISOString().slice(0, 10)
+    from: toInputDate(from),
+    to: toInputDate(to)
   };
+};
+
+const quickRanges = [
+  {
+    key: 'today',
+    label: 'Today',
+    getRange: () => {
+      const today = toInputDate(new Date());
+      return { from: today, to: today };
+    }
+  },
+  {
+    key: 'week',
+    label: 'This Week',
+    getRange: () => {
+      const today = new Date();
+      const start = new Date(today);
+      start.setDate(today.getDate() - today.getDay());
+      return { from: toInputDate(start), to: toInputDate(today) };
+    }
+  },
+  {
+    key: 'month',
+    label: 'This Month',
+    getRange: () => {
+      const today = new Date();
+      return { from: toInputDate(new Date(today.getFullYear(), today.getMonth(), 1)), to: toInputDate(today) };
+    }
+  },
+  {
+    key: 'lastMonth',
+    label: 'Last Month',
+    getRange: () => {
+      const today = new Date();
+      return {
+        from: toInputDate(new Date(today.getFullYear(), today.getMonth() - 1, 1)),
+        to: toInputDate(new Date(today.getFullYear(), today.getMonth(), 0))
+      };
+    }
+  },
+  {
+    key: 'quarter',
+    label: 'Last 3 Months',
+    getRange: () => {
+      const today = new Date();
+      return { from: toInputDate(new Date(today.getFullYear(), today.getMonth() - 2, 1)), to: toInputDate(today) };
+    }
+  }
+];
+
+const formatComparison = (comparison, suffix = '') => {
+  if (!comparison) return 'No previous data';
+  const value = Number(comparison.change || 0);
+  const sign = value > 0 ? '+' : '';
+  return `${sign}${value.toLocaleString('en-IN')}${suffix} vs previous`;
 };
 
 const escapeCsv = (value) => {
@@ -90,6 +151,17 @@ const Card = ({ children, className = '', delay = 0 }) => (
     {children}
   </section>
 );
+
+const statusTone = {
+  applied: 'bg-blue-50 text-blue-600',
+  reviewed: 'bg-violet-50 text-violet-600',
+  shortlisted: 'bg-emerald-50 text-emerald-600',
+  interview: 'bg-indigo-50 text-indigo-600',
+  onHold: 'bg-orange-50 text-orange-600',
+  selected: 'bg-cyan-50 text-cyan-600',
+  offered: 'bg-pink-50 text-pink-600',
+  rejected: 'bg-rose-50 text-rose-600'
+};
 
 const DonutChart = ({ sources = [], total = 0 }) => {
   const radius = 70;
@@ -133,17 +205,20 @@ const DonutChart = ({ sources = [], total = 0 }) => {
 export const EmployerReports = () => {
   const defaultRange = useMemo(getInitialRange, []);
   const [range, setRange] = useState(defaultRange);
-  const [data, setData] = useState({ stats: {}, monthlyOverview: [], sources: [], funnel: [], recentActivity: [], topJobs: [], range: {} });
+  const [filters, setFilters] = useState({ jobId: 'all', status: 'all' });
+  const [data, setData] = useState({ stats: {}, monthlyOverview: [], sources: [], funnel: [], recentActivity: [], topJobs: [], range: {}, filters: { jobs: [], statuses: [] }, history: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const hasActiveFilters = range.from !== defaultRange.from || range.to !== defaultRange.to;
+  const hasActiveFilters = range.from !== defaultRange.from || range.to !== defaultRange.to || filters.jobId !== 'all' || filters.status !== 'all';
 
   const queryString = useMemo(() => {
     const params = new URLSearchParams();
     if (range.from) params.set('from', range.from);
     if (range.to) params.set('to', range.to);
+    if (filters.jobId !== 'all') params.set('jobId', filters.jobId);
+    if (filters.status !== 'all') params.set('status', filters.status);
     return params.toString();
-  }, [range]);
+  }, [range, filters]);
 
   useEffect(() => {
     let alive = true;
@@ -152,7 +227,7 @@ export const EmployerReports = () => {
 
     axios.get(`${BASE_API_URL}/employer/reports?${queryString}`, { headers: getTokenHeaders() })
       .then((response) => {
-        if (alive) setData({ stats: {}, monthlyOverview: [], sources: [], funnel: [], recentActivity: [], topJobs: [], range: {}, ...response.data });
+        if (alive) setData({ stats: {}, monthlyOverview: [], sources: [], funnel: [], recentActivity: [], topJobs: [], range: {}, filters: { jobs: [], statuses: [] }, history: [], ...response.data });
       })
       .catch((err) => {
         if (alive) setError(err.response?.data?.message || 'Reports could not be loaded.');
@@ -210,14 +285,24 @@ export const EmployerReports = () => {
       item.hired || 0,
       `${item.conversionRate || 0}%`
     ]);
+    const historyRows = (data.history || []).map((item) => [
+      'History',
+      item.candidateName,
+      item.jobTitle,
+      item.status,
+      item.appliedDate,
+      item.updatedDate
+    ]);
 
-    return { statsRows, monthlyRows, sourceRows, funnelRows, jobRows };
+    return { statsRows, monthlyRows, sourceRows, funnelRows, jobRows, historyRows };
   }, [data]);
 
   const handleExcelExport = () => {
     const sections = [
       ['JobsWaale Employer Reports'],
       ['Range', data.range?.label || 'Selected range'],
+      ['Job', data.filters?.jobs?.find((job) => String(job.id) === filters.jobId)?.title || 'All Jobs'],
+      ['Status', data.filters?.statuses?.find((status) => status.key === filters.status)?.label || 'All Statuses'],
       [],
       ['Section', 'Metric', 'Value A', 'Value B', 'Value C', 'Value D', 'Value E', 'Value F'],
       ...exportRows.statsRows,
@@ -232,7 +317,10 @@ export const EmployerReports = () => {
       ...exportRows.funnelRows,
       [],
       ['Section', 'Job Title', 'Applications', 'Shortlisted', 'Interview Rate', 'Hired', 'Conversion'],
-      ...exportRows.jobRows
+      ...exportRows.jobRows,
+      [],
+      ['Section', 'Candidate', 'Job Title', 'Status', 'Applied Date', 'Updated Date'],
+      ...exportRows.historyRows
     ];
     const csv = sections.map((row) => row.map(escapeCsv).join(',')).join('\n');
     downloadBlob(csv, `jobswaale-employer-report-${formatFileDate()}.csv`, 'text/csv;charset=utf-8;');
@@ -276,6 +364,8 @@ export const EmployerReports = () => {
           <table><thead><tr><th>Stage</th><th>Candidates</th><th>Percent</th></tr></thead><tbody>${rows('Funnel', exportRows.funnelRows.map((row) => row.slice(1, 4)))}</tbody></table>
           <h2>Top Job Postings</h2>
           <table><thead><tr><th>Job</th><th>Applications</th><th>Shortlisted</th><th>Interview Rate</th><th>Hired</th><th>Conversion</th></tr></thead><tbody>${rows('Jobs', exportRows.jobRows.map((row) => row.slice(1)))}</tbody></table>
+          <h2>Application History</h2>
+          <table><thead><tr><th>Candidate</th><th>Job</th><th>Status</th><th>Applied</th><th>Updated</th></tr></thead><tbody>${rows('History', exportRows.historyRows.map((row) => row.slice(1)))}</tbody></table>
           <script>window.onload = function(){ setTimeout(function(){ window.print(); }, 250); };</script>
         </body>
       </html>
@@ -314,15 +404,59 @@ export const EmployerReports = () => {
       {error && <div className="rounded-md border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{error}</div>}
 
       <Card>
-        <div className="border-b border-dashed border-slate-200 px-4 py-4 sm:px-5"><h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Filter</h2></div>
-        <div className="grid gap-3 p-4 sm:p-5 md:grid-cols-[1fr_1fr_auto_auto]">
-          <div className="grid grid-cols-2 gap-3">
-            <input type="date" value={range.from} onChange={(event) => setRange((current) => ({ ...current, from: event.target.value }))} className="h-10 w-full rounded-md border border-slate-200 px-2 text-xs font-bold text-slate-600 outline-none focus:border-[#6658dd] sm:px-3 sm:text-sm" />
-            <input type="date" value={range.to} onChange={(event) => setRange((current) => ({ ...current, to: event.target.value }))} className="h-10 w-full rounded-md border border-slate-200 px-2 text-xs font-bold text-slate-600 outline-none focus:border-[#6658dd] sm:px-3 sm:text-sm" />
+        <div className="border-b border-dashed border-slate-200 px-4 py-4 sm:px-5">
+          <h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Filters</h2>
+          <p className="mt-1 text-xs font-semibold text-slate-400">Select date range, job, and status to see matching report data.</p>
+        </div>
+        <div className="space-y-4 p-4 sm:p-5">
+          <div className="flex flex-wrap gap-2">
+            {quickRanges.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => setRange(item.getRange())}
+                className="h-9 rounded-md border border-slate-200 bg-white px-3 text-xs font-extrabold text-slate-600 transition hover:border-[#6658dd] hover:text-[#6658dd]"
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
-          <div className="flex h-10 items-center gap-2 rounded-md bg-slate-100 px-4 text-xs font-bold text-slate-500 sm:text-sm"><Filter className="h-4 w-4 shrink-0" /><span className="truncate">{data.range?.label || 'Selected range'}</span></div>
-          <ClearFilterButton active={hasActiveFilters} onClick={() => setRange(defaultRange)} />
-          <button type="button" onClick={handleExcelExport} className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#6658dd] px-5 text-sm font-extrabold text-white transition hover:bg-[#5848d8]"><Download className="h-4 w-4" />Export</button>
+
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1.3fr_1fr_auto_auto]">
+            <div>
+              <label className="mb-1.5 block text-xs font-black uppercase text-slate-400">Start Date</label>
+              <input type="date" value={range.from} max={range.to || undefined} onChange={(event) => setRange((current) => ({ ...current, from: event.target.value }))} className="h-10 w-full rounded-md border border-slate-200 px-2 text-xs font-bold text-slate-600 outline-none focus:border-[#6658dd] sm:px-3 sm:text-sm" />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-black uppercase text-slate-400">End Date</label>
+              <input type="date" value={range.to} min={range.from || undefined} onChange={(event) => setRange((current) => ({ ...current, to: event.target.value }))} className="h-10 w-full rounded-md border border-slate-200 px-2 text-xs font-bold text-slate-600 outline-none focus:border-[#6658dd] sm:px-3 sm:text-sm" />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-black uppercase text-slate-400">Job</label>
+              <select value={filters.jobId} onChange={(event) => setFilters((current) => ({ ...current, jobId: event.target.value }))} className="h-10 w-full rounded-md border border-slate-200 bg-white px-2 text-xs font-bold text-slate-600 outline-none focus:border-[#6658dd] sm:px-3 sm:text-sm">
+                <option value="all">All Jobs</option>
+                {(data.filters?.jobs || []).map((job) => <option key={job.id} value={job.id}>{job.title}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-black uppercase text-slate-400">Status</label>
+              <select value={filters.status} onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value }))} className="h-10 w-full rounded-md border border-slate-200 bg-white px-2 text-xs font-bold text-slate-600 outline-none focus:border-[#6658dd] sm:px-3 sm:text-sm">
+                <option value="all">All Statuses</option>
+                {(data.filters?.statuses || []).map((status) => <option key={status.key} value={status.key}>{status.label}</option>)}
+              </select>
+            </div>
+            <div className="flex items-end">
+              <button type="button" onClick={() => { setRange(defaultRange); setFilters({ jobId: 'all', status: 'all' }); }} disabled={!hasActiveFilters} className={`inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border px-4 text-sm font-extrabold transition ${hasActiveFilters ? 'border-slate-200 bg-slate-100 text-slate-600 hover:bg-slate-200' : 'border-slate-100 bg-slate-50 text-slate-300'}`}><RefreshCcw className="h-4 w-4" />Clear</button>
+            </div>
+            <div className="flex items-end">
+              <button type="button" onClick={handleExcelExport} className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#6658dd] px-5 text-sm font-extrabold text-white transition hover:bg-[#5848d8]"><Download className="h-4 w-4" />Export</button>
+            </div>
+          </div>
+
+          <div className="grid gap-2 border-t border-dashed border-slate-100 pt-3 text-xs font-bold text-slate-500 md:grid-cols-2">
+            <div className="flex min-w-0 items-center gap-2 rounded-md bg-slate-50 px-3 py-2"><Filter className="h-4 w-4 shrink-0 text-slate-400" /><span className="truncate">Showing: {data.range?.label || 'Selected range'}</span></div>
+            <div className="rounded-md bg-slate-50 px-3 py-2">Comparing with: <span className="text-slate-700">{data.range?.previousLabel || 'previous matching period'}</span></div>
+          </div>
         </div>
       </Card>
 
@@ -331,11 +465,32 @@ export const EmployerReports = () => {
           <Card key={card.key} delay={index * 65}>
             <div className="flex items-center gap-2 p-3 sm:gap-5 sm:p-5">
               <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${card.tone}`}><card.icon className="h-4 w-4 sm:h-5 sm:w-5" /></span>
-              <div className="min-w-0"><p className="truncate text-xs font-semibold text-slate-400 sm:text-sm">{card.title}</p><p className="mt-1 text-base font-black text-[#3f4254] sm:text-xl">{Number(data.stats?.[card.key] || 0).toLocaleString('en-IN')}{card.suffix || ''}</p><p className={`mt-1 text-[11px] font-black sm:text-xs ${card.down ? 'text-rose-500' : 'text-emerald-500'}`}>{card.trend}</p></div>
+              <div className="min-w-0"><p className="truncate text-xs font-semibold text-slate-400 sm:text-sm">{card.title}</p><p className="mt-1 text-base font-black text-[#3f4254] sm:text-xl">{Number(data.stats?.[card.key] || 0).toLocaleString('en-IN')}{card.suffix || ''}</p><p className={`mt-1 text-[11px] font-black sm:text-xs ${Number(data.comparison?.[card.key]?.change || 0) < 0 ? 'text-rose-500' : 'text-emerald-500'}`}>{formatComparison(data.comparison?.[card.key], card.suffix || '')}</p></div>
             </div>
           </Card>
         ))}
       </div>
+
+      <Card delay={95}>
+        <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4 lg:p-5">
+          <div>
+            <p className="text-xs font-black uppercase text-slate-400">Dashboard All-time</p>
+            <p className="mt-1 text-sm font-bold text-slate-600">Use this row to match dashboard totals.</p>
+          </div>
+          <div className="rounded-md bg-slate-50 p-3">
+            <p className="text-[11px] font-bold text-slate-400">Applications</p>
+            <p className="mt-1 text-lg font-black text-slate-800">{Number(data.dashboardSnapshot?.stats?.totalApplications || 0).toLocaleString('en-IN')}</p>
+          </div>
+          <div className="rounded-md bg-slate-50 p-3">
+            <p className="text-[11px] font-bold text-slate-400">Interview / On Hold</p>
+            <p className="mt-1 text-lg font-black text-slate-800">{Number(data.dashboardSnapshot?.pipeline?.interview || 0).toLocaleString('en-IN')} / {Number(data.dashboardSnapshot?.pipeline?.onHold || 0).toLocaleString('en-IN')}</p>
+          </div>
+          <div className="rounded-md bg-slate-50 p-3">
+            <p className="text-[11px] font-bold text-slate-400">Selected / Offered / Rejected</p>
+            <p className="mt-1 text-lg font-black text-slate-800">{Number(data.dashboardSnapshot?.pipeline?.selected || 0).toLocaleString('en-IN')} / {Number(data.dashboardSnapshot?.pipeline?.offered || 0).toLocaleString('en-IN')} / {Number(data.dashboardSnapshot?.pipeline?.rejected || 0).toLocaleString('en-IN')}</p>
+          </div>
+        </div>
+      </Card>
 
       <div className="grid gap-5 xl:grid-cols-[2fr_1fr]">
         <Card delay={120}>
@@ -597,6 +752,64 @@ export const EmployerReports = () => {
             <tbody className="divide-y divide-slate-100">
               {(data.topJobs || []).map((job, index) => <tr key={job.id} className="transition hover:bg-slate-50"><td className="px-5 py-4"><span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-violet-50 text-[#6658dd]"><Briefcase className="h-4 w-4" /></span><span className="ml-3 text-sm font-extrabold text-[#3f4254]">{job.title}</span></td><td className="px-5 py-4 text-sm font-bold text-slate-600">{job.applications}</td><td className="px-5 py-4 text-sm font-bold text-slate-600">{job.shortlisted}</td><td className="px-5 py-4"><span className="mr-3 inline-block h-1.5 w-14 overflow-hidden rounded bg-slate-100 align-middle"><span className="block h-full rounded bg-[#6658dd]" style={{ width: `${job.interviewRate}%`, transition: 'width 700ms ease', transitionDelay: `${index * 80}ms` }} /></span><span className="text-sm font-bold text-slate-600">{job.interviewRate}%</span></td><td className="px-5 py-4 text-sm font-bold text-slate-600">{job.hired}</td><td className="px-5 py-4"><span className="rounded bg-emerald-50 px-2 py-1 text-xs font-black text-emerald-500">{job.conversionRate}%</span></td></tr>)}
               {!data.topJobs?.length && <tr><td colSpan="6" className="px-5 py-10 text-center text-sm font-bold text-slate-400">No job performance data found.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      <Card delay={320}>
+        <div className="flex flex-col justify-between gap-2 border-b border-dashed border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:px-5">
+          <div>
+            <h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Application History</h2>
+            <p className="text-xs font-semibold text-slate-400 sm:text-sm">Candidates matching the selected filters</p>
+          </div>
+          <span className="rounded-md bg-slate-100 px-3 py-2 text-xs font-black text-slate-500">{Number(data.history?.length || 0).toLocaleString('en-IN')} records</span>
+        </div>
+
+        <div className="divide-y divide-slate-100 p-4 sm:hidden">
+          {(data.history || []).map((item) => (
+            <div key={item.id} className="py-3 first:pt-0 last:pb-0">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-extrabold text-[#3f4254]">{item.candidateName}</p>
+                  <p className="mt-0.5 truncate text-xs font-bold text-slate-400">{item.jobTitle}</p>
+                </div>
+                <span className={`shrink-0 rounded px-2 py-1 text-[11px] font-black ${statusTone[item.statusKey] || 'bg-slate-100 text-slate-600'}`}>{item.status}</span>
+              </div>
+              <div className="mt-2 grid grid-cols-2 gap-2 text-xs font-semibold text-slate-500">
+                <p><span className="text-slate-400">Applied:</span> {item.appliedDate || '-'}</p>
+                <p><span className="text-slate-400">Updated:</span> {item.updatedDate || '-'}</p>
+              </div>
+            </div>
+          ))}
+          {!data.history?.length && <p className="py-8 text-center text-sm font-bold text-slate-400">No history found for selected filters.</p>}
+        </div>
+
+        <div className="hidden overflow-x-auto p-5 sm:block">
+          <table className="w-full min-w-[780px] text-left">
+            <thead className="bg-[#dbe6f6] text-[11px] uppercase text-slate-600">
+              <tr>
+                <th className="px-5 py-3">Candidate</th>
+                <th className="px-5 py-3">Job</th>
+                <th className="px-5 py-3">Status</th>
+                <th className="px-5 py-3">Applied Date</th>
+                <th className="px-5 py-3">Updated Date</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {(data.history || []).map((item) => (
+                <tr key={item.id} className="transition hover:bg-slate-50">
+                  <td className="px-5 py-4">
+                    <p className="text-sm font-extrabold text-[#3f4254]">{item.candidateName}</p>
+                    <p className="mt-0.5 text-xs font-semibold text-slate-400">{item.email || '-'}</p>
+                  </td>
+                  <td className="px-5 py-4 text-sm font-bold text-slate-600">{item.jobTitle}</td>
+                  <td className="px-5 py-4"><span className={`rounded px-2 py-1 text-xs font-black ${statusTone[item.statusKey] || 'bg-slate-100 text-slate-600'}`}>{item.status}</span></td>
+                  <td className="px-5 py-4 text-sm font-bold text-slate-600">{item.appliedDate || '-'}</td>
+                  <td className="px-5 py-4 text-sm font-bold text-slate-600">{item.updatedDate || '-'}</td>
+                </tr>
+              ))}
+              {!data.history?.length && <tr><td colSpan="5" className="px-5 py-10 text-center text-sm font-bold text-slate-400">No history found for selected filters.</td></tr>}
             </tbody>
           </table>
         </div>

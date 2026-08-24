@@ -4,6 +4,7 @@ import { AuthProvider, isSuperAdminUser, useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import PageSkeleton from './components/SkeletonLoader';
+import { hasPermission } from './utils/permissions';
 
 /* ==========================================
    1. PAGE COMPONENT IMPORTS
@@ -255,6 +256,68 @@ const ProtectedRoute = () => {
   return <Outlet />;
 };
 
+const routePermissions = [
+  { permission: 'dashboard.view', path: '/admin/dashboard' },
+  { permission: 'people.jobs.view', path: '/admin/jobs' },
+  { permission: 'people.jobseekers.view', path: '/admin/jobseekers' },
+  { permission: 'people.employers.view', path: '/admin/employers' },
+  { permission: 'masters.plans', path: '/admin/jobseeker-plans' },
+  { permission: 'masters.industry', path: '/admin/industry-types' },
+  { permission: 'masters.categories', path: '/admin/job-categories' },
+  { permission: 'masters.jobtypes', path: '/admin/job-types' },
+  { permission: 'masters.qualifications', path: '/admin/qualifications' },
+  { permission: 'masters.locations', path: '/admin/countries' },
+  { permission: 'finance.payments.view', path: '/admin/payments' },
+  { permission: 'finance.transactions.view', path: '/admin/payments/transactions' },
+  { permission: 'system.reports', path: '/admin/reports' },
+  { permission: 'system.settings', path: '/admin/settings' },
+  { permission: 'system.users', path: '/admin/users-roles/users' },
+  { permission: 'system.roles', path: '/admin/users-roles/roles' },
+];
+
+const firstAllowedAdminPath = (user) => {
+  const route = routePermissions.find(item => hasPermission(user, item.permission));
+  return route?.path || null;
+};
+
+const PermissionRoute = ({ permission, children }) => {
+  const { user } = useAuth();
+  const permissions = Array.isArray(permission) ? permission : [permission];
+
+  if (permission && !permissions.some(item => hasPermission(user, item))) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+        <h1 className="mb-2 text-2xl font-extrabold text-slate-900">Access Denied</h1>
+        <p className="max-w-md text-sm font-medium text-slate-500">
+          Your role does not have permission to open this page.
+        </p>
+      </div>
+    );
+  }
+
+  return children;
+};
+
+const withPermission = (permission, element) => (
+  <PermissionRoute permission={permission}>{element}</PermissionRoute>
+);
+
+const AuthorizedLanding = () => {
+  const { user } = useAuth();
+  const path = firstAllowedAdminPath(user);
+
+  if (path) return <Navigate to={path} replace />;
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+      <h1 className="mb-2 text-2xl font-extrabold text-slate-900">No Access Assigned</h1>
+      <p className="max-w-md text-sm font-medium text-slate-500">
+        No pages are assigned to this role yet. Please ask the super admin to update role permissions.
+      </p>
+    </div>
+  );
+};
+
 
 
 
@@ -268,70 +331,70 @@ const AdminSubRoutes = () => {
     <Suspense fallback={<PageSkeleton />}>
       <Routes>
         {/* Core Dashboard */}
-        <Route index element={<Dashboard />} />
-        <Route path="dashboard" element={<Dashboard />} />
+        <Route index element={<AuthorizedLanding />} />
+        <Route path="dashboard" element={withPermission('dashboard.view', <Dashboard />)} />
 
         {/* Masters Data */}
-        <Route path="countries" element={<Country />} />
-        <Route path="states" element={<State />} />
-        <Route path="districts" element={<District />} />
-        <Route path="cities" element={<City />} />
-        <Route path="industry-types" element={<IndustryType />} />
-        <Route path="job-types" element={<JobType />} />
-        <Route path="job-categories" element={<JobCategory />} />
-        <Route path="qualifications" element={<Qualification />} />
+        <Route path="countries" element={withPermission('masters.locations', <Country />)} />
+        <Route path="states" element={withPermission('masters.locations', <State />)} />
+        <Route path="districts" element={withPermission('masters.locations', <District />)} />
+        <Route path="cities" element={withPermission('masters.locations', <City />)} />
+        <Route path="industry-types" element={withPermission('masters.industry', <IndustryType />)} />
+        <Route path="job-types" element={withPermission('masters.jobtypes', <JobType />)} />
+        <Route path="job-categories" element={withPermission('masters.categories', <JobCategory />)} />
+        <Route path="qualifications" element={withPermission('masters.qualifications', <Qualification />)} />
 
         {/* Plan Configurations */}
-        <Route path="jobseeker-features" element={<FeatureMaster />} />
-        <Route path="jobseeker-plans" element={<PlanMaster />} />
-        <Route path="jobseeker-plan-mappings" element={<PlanMapping />} />
+        <Route path="jobseeker-features" element={withPermission('masters.plans', <FeatureMaster />)} />
+        <Route path="jobseeker-plans" element={withPermission('masters.plans', <PlanMaster />)} />
+        <Route path="jobseeker-plan-mappings" element={withPermission('masters.plans', <PlanMapping />)} />
         <Route path="features" element={<Navigate to="/admin/jobseeker-features" replace />} />
         <Route path="jobseeker-packages" element={<Navigate to="/admin/jobseeker-plans" replace />} />
         <Route path="plans" element={<Navigate to="/admin/jobseeker-plans" replace />} />
         <Route path="plan-mappings" element={<Navigate to="/admin/jobseeker-plan-mappings" replace />} />
-        <Route path="employer-plans" element={<EmployerPlanListings />} />
-        <Route path="employer-plans/add" element={<EmployerPlanForm />} />
-        <Route path="employer-plans/edit/:id" element={<EmployerPlanForm />} />
+        <Route path="employer-plans" element={withPermission('masters.plans', <EmployerPlanListings />)} />
+        <Route path="employer-plans/add" element={withPermission('masters.plans', <EmployerPlanForm />)} />
+        <Route path="employer-plans/edit/:id" element={withPermission('masters.plans', <EmployerPlanForm />)} />
 
         {/* People / Directory Management */}
-        <Route path="employers" element={<Employers />} />
-        <Route path="employers/add" element={<AddEmployer />} />
-        <Route path="employers/edit/:id" element={<AddEmployer />} />
-        <Route path="jobseekers" element={<Jobseekers />} />
-        <Route path="jobseekers/add" element={<AddJobseeker />} />
-        <Route path="jobseekers/edit/:id" element={<AddJobseeker />} />
-        <Route path="jobs" element={<Jobs />} />
-        <Route path="jobs/add" element={<PostJob />} />
-        <Route path="jobs/edit/:id" element={<PostJob />} />
+        <Route path="employers" element={withPermission('people.employers.view', <Employers />)} />
+        <Route path="employers/add" element={withPermission('people.employers.manage', <AddEmployer />)} />
+        <Route path="employers/edit/:id" element={withPermission('people.employers.manage', <AddEmployer />)} />
+        <Route path="jobseekers" element={withPermission('people.jobseekers.view', <Jobseekers />)} />
+        <Route path="jobseekers/add" element={withPermission('people.jobseekers.manage', <AddJobseeker />)} />
+        <Route path="jobseekers/edit/:id" element={withPermission('people.jobseekers.manage', <AddJobseeker />)} />
+        <Route path="jobs" element={withPermission('people.jobs.view', <Jobs />)} />
+        <Route path="jobs/add" element={withPermission('people.jobs.create', <PostJob />)} />
+        <Route path="jobs/edit/:id" element={withPermission('people.jobs.edit', <PostJob />)} />
 
         {/* Finance Management */}
-        <Route path="payments" element={<Payments />} />
-        <Route path="payments/add" element={<AddPayment />} />
-        <Route path="payments/edit/:id" element={<AddPayment />} />
-        <Route path="payments/transactions" element={<Transactions />} />
+        <Route path="payments" element={withPermission('finance.payments.view', <Payments />)} />
+        <Route path="payments/add" element={withPermission('finance.payments.manage', <AddPayment />)} />
+        <Route path="payments/edit/:id" element={withPermission('finance.payments.manage', <AddPayment />)} />
+        <Route path="payments/transactions" element={withPermission('finance.transactions.view', <Transactions />)} />
 
         {/* Content Management (CMS & Blogs) */}
-        <Route path="cms-pages" element={<CMSPages />} />
-        <Route path="blog" element={<Blog />} />
-        <Route path="blog-categories" element={<BlogCategory />} />
+        <Route path="cms-pages" element={withPermission('content.cms', <CMSPages />)} />
+        <Route path="blog" element={withPermission('content.blog', <Blog />)} />
+        <Route path="blog-categories" element={withPermission('content.blog', <BlogCategory />)} />
 
         {/* Administrative System Roles & Users */}
-        <Route path="users-roles" element={<UsersRoles />} />
-        <Route path="users-roles/roles" element={<Roles />} />
-        <Route path="users-roles/roles/add" element={<AddRole />} />
-        <Route path="users-roles/roles/edit/:id" element={<AddRole />} />
-        <Route path="users-roles/users" element={<Users />} />
-        <Route path="users-roles/users/add" element={<AddUser />} />
-        <Route path="users-roles/users/edit/:id" element={<AddUser />} />
-        <Route path="settings" element={<Settings />} />
+        <Route path="users-roles" element={withPermission(['system.users', 'system.roles'], <UsersRoles />)} />
+        <Route path="users-roles/roles" element={withPermission('system.roles', <Roles />)} />
+        <Route path="users-roles/roles/add" element={withPermission('system.roles', <AddRole />)} />
+        <Route path="users-roles/roles/edit/:id" element={withPermission('system.roles', <AddRole />)} />
+        <Route path="users-roles/users" element={withPermission('system.users', <Users />)} />
+        <Route path="users-roles/users/add" element={withPermission('system.users', <AddUser />)} />
+        <Route path="users-roles/users/edit/:id" element={withPermission('system.users', <AddUser />)} />
+        <Route path="settings" element={withPermission('system.settings', <Settings />)} />
 
         {/* System Reports */}
-        <Route path="reports" element={<Reports />} />
-        <Route path="reports/jobs" element={<JobReports />} />
-        <Route path="reports/applications" element={<ApplicationReports />} />
-        <Route path="reports/candidates" element={<CandidateReports />} />
-        <Route path="reports/employers" element={<EmployerReports />} />
-        <Route path="reports/finance" element={<FinanceReports />} />
+        <Route path="reports" element={withPermission('system.reports', <Reports />)} />
+        <Route path="reports/jobs" element={withPermission('system.reports', <JobReports />)} />
+        <Route path="reports/applications" element={withPermission('system.reports', <ApplicationReports />)} />
+        <Route path="reports/candidates" element={withPermission('system.reports', <CandidateReports />)} />
+        <Route path="reports/employers" element={withPermission('system.reports', <EmployerReports />)} />
+        <Route path="reports/finance" element={withPermission('finance.reports', <FinanceReports />)} />
 
         {/* Wildcard admin fallback */}
         <Route path="*" element={<Navigate to="/admin" replace />} />

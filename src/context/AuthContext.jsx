@@ -12,7 +12,8 @@ const PUBLIC_LOGIN_PATH = '/login';
 export const isSuperAdminUser = (user) => {
   const role = String(user?.role || '').trim().toLowerCase();
   const roleName = String(user?.roleName || '').trim().toLowerCase();
-  return SUPER_ADMIN_ROLES.includes(role) || SUPER_ADMIN_ROLES.includes(roleName);
+  const accountType = String(user?.accountType || '').trim().toLowerCase();
+  return accountType === 'admin' || SUPER_ADMIN_ROLES.includes(role) || SUPER_ADMIN_ROLES.includes(roleName);
 };
 
 const getTokenPayload = (jwtToken) => {

@@ -104,6 +104,7 @@ export const NotificationDropdown = ({ theme }) => {
       <button
         type="button"
         onClick={() => setOpen(!open)}
+        title="Notifications"
         aria-label="Notifications"
         className={`relative flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${
           theme === 'dark'
@@ -133,6 +134,7 @@ export const NotificationDropdown = ({ theme }) => {
               <button
                 type="button"
                 onClick={markAllAsRead}
+                title="Mark all as read"
                 className="flex items-center gap-1 text-[11px] font-bold text-[#6658dd] hover:underline"
               >
                 <Check className="h-3 w-3" />

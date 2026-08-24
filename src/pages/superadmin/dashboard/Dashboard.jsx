@@ -69,12 +69,12 @@ const Pagination = ({ label }) => (
   <div className="flex flex-col gap-3 border-t border-dashed border-[#cbd2d9] px-6 py-4 text-sm text-[#9ba6b7] sm:flex-row sm:items-center sm:justify-between">
     <span>{label}</span>
     <div className="flex items-center gap-1">
-      <button className="flex h-9 w-9 items-center justify-center rounded-[5px] border border-[#e7e9eb] text-[#9ba6b7]">
+      <button title="Previous Page" aria-label="Previous Page" className="flex h-9 w-9 items-center justify-center rounded-[5px] border border-[#e7e9eb] text-[#9ba6b7]">
         <ChevronLeft className="h-4 w-4" />
       </button>
       <button className="flex h-9 w-9 items-center justify-center rounded-[5px] bg-[#6658dd] text-white">1</button>
       <button className="flex h-9 w-9 items-center justify-center rounded-[5px] border border-[#e7e9eb] text-[#4c4c5c]">2</button>
-      <button className="flex h-9 w-9 items-center justify-center rounded-[5px] border border-[#e7e9eb] text-[#4c4c5c]">
+      <button title="Next Page" aria-label="Next Page" className="flex h-9 w-9 items-center justify-center rounded-[5px] border border-[#e7e9eb] text-[#4c4c5c]">
         <ChevronRight className="h-4 w-4" />
       </button>
     </div>

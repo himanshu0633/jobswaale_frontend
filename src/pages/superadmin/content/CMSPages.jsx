@@ -387,10 +387,10 @@ export const CMSPages = () => {
                       <td className="border-r border-slate-100 px-4 py-4">{page.sortingOrder || 10}</td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
-                          <button onClick={() => handleEdit(page)} className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500 text-white hover:bg-emerald-600">
+                          <button onClick={() => handleEdit(page)} title="Edit Page" aria-label="Edit Page" className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500 text-white hover:bg-emerald-600">
                             <Edit2 className="h-4 w-4" />
                           </button>
-                          <button onClick={() => handleDelete(page)} className="flex h-9 w-9 items-center justify-center rounded-full bg-rose-500 text-white hover:bg-rose-600">
+                          <button onClick={() => handleDelete(page)} title="Delete Page" aria-label="Delete Page" className="flex h-9 w-9 items-center justify-center rounded-full bg-rose-500 text-white hover:bg-rose-600">
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
@@ -404,11 +404,11 @@ export const CMSPages = () => {
             <div className="mt-5 flex flex-col gap-3 text-sm font-semibold text-slate-600 sm:flex-row sm:items-center sm:justify-between">
               <span>Showing {filteredPages.length ? ((currentPage - 1) * entriesPerPage) + 1 : 0} to {Math.min(currentPage * entriesPerPage, filteredPages.length)} of {filteredPages.length} entries</span>
               <div className="flex items-center gap-2">
-                <button disabled={currentPage === 1} onClick={() => setCurrentPage(1)} className="rounded border border-slate-200 px-3 py-2 disabled:text-slate-300"><ChevronsLeft className="h-4 w-4" /></button>
-                <button disabled={currentPage === 1} onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} className="rounded border border-slate-200 px-3 py-2 disabled:text-slate-300">‹</button>
+                <button disabled={currentPage === 1} onClick={() => setCurrentPage(1)} title="First Page" aria-label="First Page" className="rounded border border-slate-200 px-3 py-2 disabled:text-slate-300"><ChevronsLeft className="h-4 w-4" /></button>
+                <button disabled={currentPage === 1} onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} title="Previous Page" aria-label="Previous Page" className="rounded border border-slate-200 px-3 py-2 disabled:text-slate-300">‹</button>
                 <span className="rounded bg-indigo-600 px-4 py-2 text-white">{currentPage}</span>
-                <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} className="rounded border border-slate-200 px-3 py-2 disabled:text-slate-300">›</button>
-                <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(totalPages)} className="rounded border border-slate-200 px-3 py-2 disabled:text-slate-300"><ChevronsRight className="h-4 w-4" /></button>
+                <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} title="Next Page" aria-label="Next Page" className="rounded border border-slate-200 px-3 py-2 disabled:text-slate-300">›</button>
+                <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(totalPages)} title="Last Page" aria-label="Last Page" className="rounded border border-slate-200 px-3 py-2 disabled:text-slate-300"><ChevronsRight className="h-4 w-4" /></button>
               </div>
             </div>
           </div>
@@ -430,7 +430,7 @@ export const CMSPages = () => {
                   {alert.type === 'success' ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
                   {alert.text}
                 </span>
-                <button type="button" onClick={() => setAlert({ type: '', text: '' })}><X className="h-4 w-4" /></button>
+                <button type="button" onClick={() => setAlert({ type: '', text: '' })} title="Close Alert" aria-label="Close Alert"><X className="h-4 w-4" /></button>
               </div>
             )}
 

@@ -325,29 +325,29 @@ export const Employers = () => {
                     ) : (
                       <>
                         {!isEmployerVerified(item) && (
-                          <button onClick={() => verifyEmployer(item)} className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center" title="Verify">
+                          <button onClick={() => verifyEmployer(item)} className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center" title="Verify Employer" aria-label="Verify Employer">
                             <CheckCircle className="w-4 h-4" />
                           </button>
                         )}
                         {isEmployerVerified(item) && (
-                          <button onClick={() => unverifyEmployer(item)} className="w-8 h-8 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center" title="Unverify">
+                          <button onClick={() => unverifyEmployer(item)} className="w-8 h-8 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center" title="Unverify Employer" aria-label="Unverify Employer">
                             <AlertCircle className="w-4 h-4" />
                           </button>
                         )}
                         {item.status !== 'active' && (
-                          <button onClick={() => toggleStatus(item, 'active')} className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                          <button onClick={() => toggleStatus(item, 'active')} title="Activate Employer" aria-label="Activate Employer" className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
                             <ShieldCheck className="w-4 h-4" />
                           </button>
                         )}
                         {item.status !== 'blacklist' && (
-                          <button onClick={() => toggleStatus(item, 'blacklist')} className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
+                          <button onClick={() => toggleStatus(item, 'blacklist')} title="Blacklist Employer" aria-label="Blacklist Employer" className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
                             <Ban className="w-4 h-4" />
                           </button>
                         )}
-                        <button onClick={() => navigate(`/admin/employers/edit/${item._id}`)} className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                        <button onClick={() => navigate(`/admin/employers/edit/${item._id}`)} title="Edit Employer" aria-label="Edit Employer" className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
                           <Edit2 className="w-4 h-4" />
                         </button>
-                        <button onClick={() => handleDelete(item._id)} className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
+                        <button onClick={() => handleDelete(item._id)} title="Delete Employer" aria-label="Delete Employer" className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </>
@@ -468,7 +468,8 @@ export const Employers = () => {
                               {!isEmployerVerified(item) && (
                                 <button
                                   onClick={() => verifyEmployer(item)}
-                                  title="Verify"
+                                  title="Verify Employer"
+                                  aria-label="Verify Employer"
                                   className="w-7 h-7 rounded-full flex items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-600 transition-colors"
                                 >
                                   <CheckCircle className="w-3.5 h-3.5" />
@@ -477,7 +478,8 @@ export const Employers = () => {
                               {isEmployerVerified(item) && (
                                 <button
                                   onClick={() => unverifyEmployer(item)}
-                                  title="Unverify"
+                                  title="Unverify Employer"
+                                  aria-label="Unverify Employer"
                                   className="w-7 h-7 rounded-full flex items-center justify-center bg-amber-50 hover:bg-amber-100 text-amber-600 transition-colors"
                                 >
                                   <AlertCircle className="w-3.5 h-3.5" />
@@ -486,7 +488,8 @@ export const Employers = () => {
                               {item.status !== 'active' && (
                                 <button
                                   onClick={() => toggleStatus(item, 'active')}
-                                  title="Activate"
+                                  title="Activate Employer"
+                                  aria-label="Activate Employer"
                                   className="w-7 h-7 rounded-full flex items-center justify-center bg-emerald-50 hover:bg-emerald-100 text-emerald-600 transition-colors"
                                 >
                                   <ShieldCheck className="w-3.5 h-3.5" />
@@ -495,7 +498,8 @@ export const Employers = () => {
                               {item.status !== 'blacklist' && (
                                 <button
                                   onClick={() => toggleStatus(item, 'blacklist')}
-                                  title="Blacklist"
+                                  title="Blacklist Employer"
+                                  aria-label="Blacklist Employer"
                                   className="w-7 h-7 rounded-full flex items-center justify-center bg-rose-50 hover:bg-rose-100 text-rose-500 transition-colors"
                                 >
                                   <Ban className="w-3.5 h-3.5" />
@@ -503,14 +507,16 @@ export const Employers = () => {
                               )}
                               <button
                                 onClick={() => navigate(`/admin/employers/edit/${item._id}`)}
-                                title="Edit"
+                                title="Edit Employer"
+                                aria-label="Edit Employer"
                                 className="w-7 h-7 rounded-full flex items-center justify-center bg-emerald-50 hover:bg-emerald-100 text-emerald-600 transition-colors"
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
                               </button>
                               <button
                                 onClick={() => handleDelete(item._id)}
-                                title="Delete"
+                                title="Delete Employer"
+                                aria-label="Delete Employer"
                                 className="w-7 h-7 rounded-full flex items-center justify-center bg-rose-50 hover:bg-rose-100 text-rose-500 transition-colors"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />

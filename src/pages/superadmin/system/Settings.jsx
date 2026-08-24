@@ -106,10 +106,14 @@ export const Settings = () => {
   const handleTestEmail = async () => {
     setTestingEmail(true);
     try {
-      const response = await axios.post(`${BASE_API_URL}/settings/test-email`);
+      const response = await axios.post(`${BASE_API_URL}/settings/test-email`, form);
       showMessage('success', response.data.message || 'Test email sent successfully.');
     } catch (err) {
-      showMessage('error', err.response?.data?.message || 'Failed to send test email.');
+      const rawMessage = err.response?.data?.message || 'Failed to send test email.';
+      const friendlyMessage = rawMessage.includes('getaddrinfo EBUSY')
+        ? 'SMTP DNS lookup is busy. Please try again in a few seconds.'
+        : rawMessage;
+      showMessage('error', friendlyMessage);
     } finally {
       setTestingEmail(false);
     }
