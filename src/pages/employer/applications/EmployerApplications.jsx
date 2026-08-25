@@ -828,7 +828,7 @@ export const EmployerApplications = () => {
                       <p className="mb-2 text-xs font-bold text-slate-550">Or Select on Map (Optional)</p>
                       <InterviewLocationPicker
                         value={interviewForm.locationOrLink}
-                        onChange={(locationOrLink) => setInterviewForm({ ...interviewForm, locationOrLink })}
+                        onChange={(locationOrLink) => setInterviewForm(prev => ({ ...prev, locationOrLink }))}
                       />
                     </div>
                   </div>

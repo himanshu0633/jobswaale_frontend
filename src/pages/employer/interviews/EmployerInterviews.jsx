@@ -521,7 +521,7 @@ export const EmployerInterviews = () => {
                 {showEditMapPicker ? (
                   <InterviewLocationPicker
                     value={editForm.locationOrLink}
-                    onChange={(locationOrLink) => setEditForm({ ...editForm, locationOrLink })}
+                    onChange={(locationOrLink) => setEditForm(prev => ({ ...prev, locationOrLink }))}
                   />
                 ) : editLocationField && (
                   <div>
