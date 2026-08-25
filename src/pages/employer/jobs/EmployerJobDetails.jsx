@@ -617,7 +617,7 @@ export const EmployerJobDetails = () => {
                     <span className={`rounded px-2 py-1 text-xs font-black ${applicantTone[candidate.status === 'Interview' && candidate.interviewDetails?.onHold ? 'OnHold' : candidate.status] || applicantTone.Applied}`}>
                       {candidate.status === 'Interview' && candidate.interviewDetails?.onHold ? 'On Hold for Interview' : candidate.status}
                     </span>
-                    {candidate.status === 'Interview' && candidate.interviewDetails && (
+                    {candidate.status === 'Interview' && candidate.interviewDetails && !candidate.interviewDetails.onHold && (
                       <div className="mt-2 space-y-0.5 text-[10px] font-semibold text-slate-500 leading-normal">
                         <p><span className="text-slate-400">Date:</span> <span className="font-extrabold text-slate-700">{formatDate(candidate.interviewDetails.date)}</span></p>
                         <p><span className="text-slate-400">Time:</span> <span className="font-extrabold text-slate-700">{normalizeTime(candidate.interviewDetails.time)}</span></p>
