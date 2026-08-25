@@ -46,6 +46,16 @@ const formatDate = (value, fallback = '-') => {
   return new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(value));
 };
 
+const normalizeTime = (time) => {
+  if (!time) return '-';
+  if (/am|pm/i.test(time)) return time.toUpperCase();
+  const [hoursValue, minutesValue = '00'] = String(time).split(':');
+  const hours = Number(hoursValue);
+  const suffix = hours >= 12 ? 'PM' : 'AM';
+  const displayHours = hours % 12 || 12;
+  return `${String(displayHours).padStart(2, '0')}:${minutesValue.padStart(2, '0')} ${suffix}`;
+};
+
 const statusTone = {
   Active: 'border-emerald-100 bg-emerald-50 text-emerald-700',
   Draft: 'border-amber-100 bg-amber-50 text-amber-700',
@@ -603,7 +613,18 @@ export const EmployerJobDetails = () => {
                   </td>
                   <td className="px-4 py-4 text-sm font-semibold text-slate-500">{formatDate(candidate.appliedAt)}</td>
                   <td className="px-4 py-4"><span className="rounded bg-emerald-50 px-2 py-1 text-xs font-black text-emerald-600">{candidate.matchScore}%</span></td>
-                  <td className="px-4 py-4"><span className={`rounded px-2 py-1 text-xs font-black ${applicantTone[candidate.status === 'Interview' && candidate.interviewDetails?.onHold ? 'OnHold' : candidate.status] || applicantTone.Applied}`}>{candidate.status === 'Interview' && candidate.interviewDetails?.onHold ? 'On Hold for Interview' : candidate.status}</span></td>
+                  <td className="px-4 py-4">
+                    <span className={`rounded px-2 py-1 text-xs font-black ${applicantTone[candidate.status === 'Interview' && candidate.interviewDetails?.onHold ? 'OnHold' : candidate.status] || applicantTone.Applied}`}>
+                      {candidate.status === 'Interview' && candidate.interviewDetails?.onHold ? 'On Hold for Interview' : candidate.status}
+                    </span>
+                    {candidate.status === 'Interview' && candidate.interviewDetails && (
+                      <div className="mt-2 space-y-0.5 text-[10px] font-semibold text-slate-500 leading-normal">
+                        <p><span className="text-slate-400">Date:</span> <span className="font-extrabold text-slate-700">{formatDate(candidate.interviewDetails.date)}</span></p>
+                        <p><span className="text-slate-400">Time:</span> <span className="font-extrabold text-slate-700">{normalizeTime(candidate.interviewDetails.time)}</span></p>
+                        <p><span className="text-slate-400">Mode:</span> <span className="font-extrabold text-slate-700">{candidate.interviewDetails.type || '-'}</span></p>
+                      </div>
+                    )}
+                  </td>
                   <td className="px-4 py-4 text-right">
                     <div className="flex flex-wrap items-center gap-1.5 justify-end max-w-[280px] ml-auto">
                       <Link to={`/employer/applications/${candidate.id}`} title="View Application Details" className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-slate-500 transition hover:bg-slate-50">
