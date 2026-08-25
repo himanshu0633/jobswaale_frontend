@@ -23,6 +23,7 @@ const InterviewLocationPicker = ({ value, onChange }) => {
   const mapRef = useRef(null);
   const markerRef = useRef(null);
   const [geoError, setGeoError] = useState('');
+  const [showGeoHelp, setShowGeoHelp] = useState(false);
   const [activeMode, setActiveMode] = useState('map');
 
   const selectedPoint = parseMapsUrl(value);
@@ -63,6 +64,9 @@ const InterviewLocationPicker = ({ value, onChange }) => {
     }).addTo(map);
 
     map.on('click', (event) => {
+      if (event.originalEvent) {
+        event.originalEvent.stopPropagation();
+      }
       setPoint(event.latlng.lat, event.latlng.lng);
     });
 
@@ -235,7 +239,42 @@ const InterviewLocationPicker = ({ value, onChange }) => {
       )}
 
       {/* Footer Info / Link */}
-      {geoError && <p className="text-xs font-bold text-rose-600">{geoError}</p>}
+      {geoError && (
+        <div className="rounded-md border border-rose-100 bg-rose-50 p-3 text-xs font-semibold text-rose-700 space-y-1">
+          <p>{geoError}</p>
+          <button
+            type="button"
+            onClick={() => setShowGeoHelp(true)}
+            className="text-[#6658dd] font-black hover:underline cursor-pointer flex items-center gap-1"
+          >
+            How to enable location permission?
+          </button>
+        </div>
+      )}
+
+      {showGeoHelp && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+          <div className="relative w-full max-w-sm rounded-lg border border-slate-100 bg-white p-5 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <h4 className="text-sm font-black text-slate-800 mb-2">Enable Location Permission</h4>
+            <div className="text-xs text-slate-500 leading-relaxed space-y-2">
+              <p>To use your current location, please grant permission in your browser:</p>
+              <ol className="list-decimal pl-4 space-y-1.5 font-semibold text-slate-600">
+                <li>Click the <strong>site settings icon</strong> (lock, tune, or info icon) on the left side of your browser's address bar.</li>
+                <li>Find <strong>"Location"</strong> in the dropdown menu.</li>
+                <li>Change the permission to <strong>"Allow"</strong>.</li>
+                <li><strong>Reload</strong> the page and click <strong>"Use Current Location"</strong> again.</li>
+              </ol>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowGeoHelp(false)}
+              className="mt-5 w-full h-10 rounded-md bg-slate-900 text-white font-extrabold text-xs transition hover:bg-slate-800 cursor-pointer shadow-sm"
+            >
+              Got it, close
+            </button>
+          </div>
+        </div>
+      )}
       {value && (
         <div className="rounded-md bg-indigo-50/70 px-3 py-2 text-xs font-semibold text-slate-600">
           <span className="font-bold text-slate-700 block mb-0.5">Selected Interview Location:</span>

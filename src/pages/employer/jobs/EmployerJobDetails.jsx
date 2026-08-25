@@ -111,6 +111,13 @@ const getInterviewLocationField = (type) => {
 export const EmployerJobDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const todayDateString = useMemo(() => {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }, []);
   const [details, setDetails] = useState(emptyDetails);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -159,8 +166,7 @@ export const EmployerJobDetails = () => {
     setMessage('');
     try {
       const payload = {
-        ...interviewForm,
-        locationOrLink: interviewForm.manualAddress || interviewForm.locationOrLink || ''
+        ...interviewForm
       };
       await axios.post(
         `${BASE_API_URL}/employer/applications/${activeCandidate.id}/schedule-interview`,
@@ -741,6 +747,7 @@ export const EmployerJobDetails = () => {
                     <input
                       type="date"
                       required
+                      min={todayDateString}
                       value={interviewForm.date}
                       onChange={(event) => setInterviewForm({ ...interviewForm, date: event.target.value })}
                       className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"

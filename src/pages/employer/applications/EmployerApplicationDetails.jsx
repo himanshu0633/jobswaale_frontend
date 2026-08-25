@@ -166,6 +166,13 @@ const ResumeDownloadLink = ({ candidate, className }) => {
 
 const EmployerApplicationDetails = () => {
   const { id } = useParams();
+  const todayDateString = useMemo(() => {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }, []);
   const [application, setApplication] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState('');
@@ -292,8 +299,7 @@ const EmployerApplicationDetails = () => {
     setMessage('');
     try {
       const payload = {
-        ...interviewForm,
-        locationOrLink: interviewForm.manualAddress || interviewForm.locationOrLink || ''
+        ...interviewForm
       };
       await axios.post(
         `${BASE_API_URL}/employer/applications/${id}/schedule-interview`,
@@ -787,6 +793,7 @@ const EmployerApplicationDetails = () => {
                     <input
                       type="date"
                       required
+                      min={todayDateString}
                       value={interviewForm.date}
                       onChange={(event) => setInterviewForm({ ...interviewForm, date: event.target.value })}
                       className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
