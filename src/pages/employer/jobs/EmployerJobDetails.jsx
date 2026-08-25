@@ -612,7 +612,7 @@ export const EmployerJobDetails = () => {
                       </Link>
                       
                       {/* Download Resume */}
-                      {candidate.hasResume && (
+                      {candidate.hasResume && candidate.status !== 'Applied' && (
                         <button
                           type="button"
                           onClick={() => downloadResume(candidate.candidateId, candidate.name)}
@@ -625,7 +625,7 @@ export const EmployerJobDetails = () => {
                       )}
 
                       {/* Shortlist */}
-                      {['Applied', 'Reviewed'].includes(candidate.status) && (
+                      {candidate.status === 'Reviewed' && (
                         <button
                           type="button"
                           onClick={() => updateCandidateStatus(candidate.id, 'Shortlisted')}
