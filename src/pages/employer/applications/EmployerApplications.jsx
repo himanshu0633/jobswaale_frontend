@@ -133,6 +133,8 @@ export const EmployerApplications = () => {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [upgradePopup, setUpgradePopup] = useState({ open: false, message: '' });
+  const [refreshKey, setRefreshKey] = useState(0);
+  const loadData = () => setRefreshKey((prev) => prev + 1);
 
   const [activeApplication, setActiveApplication] = useState(null);
   const [showInterviewModal, setShowInterviewModal] = useState(false);
@@ -255,7 +257,7 @@ export const EmployerApplications = () => {
         if (alive) setLoading(false);
       });
     return () => { alive = false; };
-  }, [queryParams, pageSize]);
+  }, [queryParams, pageSize, refreshKey]);
 
   const pagination = data.pagination || { page: currentPage, limit: pageSize, total: 0, totalPages: 1 };
   const startIndex = pagination.total ? (pagination.page - 1) * pagination.limit : 0;
