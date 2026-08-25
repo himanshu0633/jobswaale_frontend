@@ -482,10 +482,26 @@ const EmployerApplicationDetails = () => {
       if (!selection.offerStatus || selection.offerStatus === 'Selected') {
         list.push({
           key: 'OfferSent',
-          label: 'Send Offer',
-          tone: 'bg-blue-600 text-white hover:bg-blue-700',
+          label: 'Offer Sent',
+          tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
           icon: Send,
           onClick: () => updateOfferStatus('Offer Sent')
+        });
+      } else if (selection.offerStatus === 'Offer Sent') {
+        list.push({
+          key: 'OfferAccept',
+          label: 'Accept',
+          tone: 'bg-cyan-500 text-white hover:bg-cyan-600',
+          icon: Check,
+          onClick: () => updateOfferStatus('Offer Accepted')
+        });
+      } else if (selection.offerStatus === 'Offer Accepted') {
+        list.push({
+          key: 'Hire',
+          label: 'Hire',
+          tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
+          icon: Briefcase,
+          onClick: () => updateOfferStatus('Hired')
         });
       }
     }
@@ -506,10 +522,26 @@ const EmployerApplicationDetails = () => {
       if (!selection.offerStatus || selection.offerStatus === 'Selected') {
         list.push({
           key: 'OfferSent',
-          label: 'Send Offer',
-          tone: 'bg-blue-600 text-white hover:bg-blue-700',
+          label: 'Offer Sent',
+          tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
           icon: Send,
           onClick: () => updateOfferStatus('Offer Sent')
+        });
+      } else if (selection.offerStatus === 'Offer Sent') {
+        list.push({
+          key: 'OfferAccept',
+          label: 'Accept',
+          tone: 'bg-cyan-500 text-white hover:bg-cyan-600',
+          icon: Check,
+          onClick: () => updateOfferStatus('Offer Accepted')
+        });
+      } else if (selection.offerStatus === 'Offer Accepted') {
+        list.push({
+          key: 'Hire',
+          label: 'Hire',
+          tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
+          icon: Briefcase,
+          onClick: () => updateOfferStatus('Hired')
         });
       }
       return list;

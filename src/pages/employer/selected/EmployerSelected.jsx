@@ -106,17 +106,6 @@ const OfferActions = ({ candidate, isUpdating, onUpdate }) => (
       <Briefcase className="h-3.5 w-3.5" />
       <span>Hire</span>
     </button>
-
-    <button
-      type="button"
-      disabled={isUpdating}
-      onClick={() => onUpdate(candidate, 'Offer Declined')}
-      title="Mark Declined"
-      className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50 disabled:opacity-60"
-    >
-      <UserX className="h-3.5 w-3.5" />
-      <span>Decline</span>
-    </button>
   </div>
 );
 
