@@ -40,7 +40,17 @@ const statusTone = {
   'On Hold': 'bg-amber-50 text-amber-600',
   Completed: 'bg-emerald-50 text-emerald-500',
   Rescheduled: 'bg-amber-50 text-amber-500',
-  Cancelled: 'bg-rose-50 text-rose-500'
+  Cancelled: 'bg-rose-50 text-rose-500',
+  'Pending Interview': 'bg-slate-100 text-slate-600'
+};
+
+const statusLabel = {
+  Scheduled: 'Scheduled',
+  'On Hold': 'On Hold for Interview',
+  Completed: 'Completed',
+  Rescheduled: 'Rescheduled',
+  Cancelled: 'Cancelled',
+  'Pending Interview': 'Pending Interview'
 };
 
 const getInterviewLocationField = (type) => {
@@ -324,7 +334,7 @@ export const EmployerInterviews = () => {
                       <p className="mt-0.5 truncate text-xs font-semibold text-slate-400">{interview.email}</p>
                       <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><Phone className="h-3 w-3 shrink-0" />{interview.phone}</p>
                     </div>
-                    <span className={`shrink-0 rounded px-2 py-1 text-[11px] font-black ${statusTone[interview.status] || 'bg-slate-100 text-slate-600'}`}>{interview.status}</span>
+                    <span className={`shrink-0 rounded px-2 py-1 text-[11px] font-black ${statusTone[interview.status] || 'bg-slate-100 text-slate-600'}`}>{statusLabel[interview.status] || interview.status}</span>
                   </div>
 
                   <div className="mt-3 grid grid-cols-2 gap-2 text-xs font-semibold text-slate-500">
@@ -400,7 +410,7 @@ export const EmployerInterviews = () => {
                       <td className="px-5 py-4"><span className={`inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-black ${typeTone[interview.type]?.className || 'bg-slate-100 text-slate-600'}`}><TypeIcon className="h-3.5 w-3.5" />{interview.type}</span></td>
                       <td className="px-5 py-4 text-sm font-semibold leading-6 text-slate-600">{interview.displayDate || formatDate(interview.interviewDate)}<br />{normalizeTime(interview.time)}</td>
                       <td className="px-5 py-4"><div className="flex items-center gap-3"><span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${interview.interviewerTone} text-[11px] font-black text-slate-700 ring-2 ring-white`}>{interview.interviewer.split(' ').map((part) => part[0]).join('').slice(0, 2)}</span><span className="text-sm font-semibold text-slate-600">{interview.interviewer}</span></div></td>
-                      <td className="px-5 py-4"><span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${statusTone[interview.status] || 'bg-slate-100 text-slate-600'}`}>{interview.status}</span></td>
+                      <td className="px-5 py-4"><span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${statusTone[interview.status] || 'bg-slate-100 text-slate-600'}`}>{statusLabel[interview.status] || interview.status}</span></td>
                       <td className="px-5 py-4 text-center">
                         <div className="mx-auto grid w-[260px] grid-cols-2 gap-2">
                           <Link
