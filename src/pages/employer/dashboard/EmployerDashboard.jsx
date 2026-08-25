@@ -154,8 +154,9 @@ export const EmployerDashboard = () => {
               <Crown className="h-6 w-6" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                <div className="min-w-0">
+              <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                {/* Plan Info */}
+                <div className="min-w-0 shrink-0">
                   <div className="flex flex-wrap items-center gap-3">
                     <h2 className="text-base font-extrabold text-[#111827]">{subscription.planName || 'Premium Plan'}</h2>
                     <span className="inline-flex items-center rounded bg-emerald-500 px-2 py-0.5 text-[10px] font-black text-white">{subscription.status || 'Active'}</span>
@@ -164,62 +165,68 @@ export const EmployerDashboard = () => {
                     Valid until: <span className="font-extrabold text-slate-700">{formatDate(subscription.validUntil, 'Not assigned')}</span>
                   </p>
                 </div>
-                <Link to="/employer/subscription" className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#6658dd] px-5 text-[13px] font-extrabold text-white shadow-md shadow-indigo-605/10 transition hover:bg-[#5848d8] sm:w-auto">
-                  <Crown className="h-4 w-4" />
-                  Upgrade Plan
-                </Link>
-              </div>
-              <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2 sm:max-w-[780px]">
-                <div className="rounded-xl border border-slate-100 bg-[#f8fafc] p-4">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-500">Job Posts</h4>
-                  <div className="mt-3 grid grid-cols-2 gap-2">
-                    <div>
-                      <p className="text-[11px] font-bold text-slate-400">Used / Limit</p>
-                      <p className="text-sm font-extrabold text-slate-750">{subscription.jobsUsed || 0} <span className="text-slate-400">/ {subscription.jobLimit || 0}</span></p>
+
+                {/* Status boxes */}
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 flex-1 max-w-[620px]">
+                  {/* Job Posts */}
+                  <div className="rounded-xl border border-slate-100 bg-[#f8fafc] p-4">
+                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-500">Job Posts</h4>
+                    <div className="mt-2.5 grid grid-cols-2 gap-2">
+                      <div>
+                        <p className="text-[11px] font-bold text-slate-400">Used / Limit</p>
+                        <p className="text-sm font-extrabold text-slate-750">{subscription.jobsUsed || 0} <span className="text-slate-400">/ {subscription.jobLimit || 0}</span></p>
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-bold text-slate-400">Remaining</p>
+                        <p className="text-sm font-extrabold text-emerald-600">{subscription.remainingCredits || 0}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-[11px] font-bold text-slate-400">Remaining</p>
-                      <p className="text-sm font-extrabold text-emerald-600">{subscription.remainingCredits || 0}</p>
+                    <div className="mt-3.5">
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+                        <div className="h-full bg-indigo-500 transition-all duration-350" style={{ width: `${subscription.utilization || 0}%` }} />
+                      </div>
+                      <p className="mt-1.5 text-[10px] font-bold text-slate-400">{subscription.utilization || 0}% utilized</p>
                     </div>
                   </div>
-                  <div className="mt-4">
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
-                      <div className="h-full bg-indigo-500 transition-all duration-350" style={{ width: `${subscription.utilization || 0}%` }} />
+
+                  {/* Resume Unlocks */}
+                  <div className="rounded-xl border border-slate-100 bg-[#f8fafc] p-4">
+                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-500">Resume Unlocks</h4>
+                    <div className="mt-2.5 grid grid-cols-2 gap-2">
+                      <div>
+                        <p className="text-[11px] font-bold text-slate-400">Unlocked / Limit</p>
+                        <p className="text-sm font-extrabold text-slate-750">{subscription.unlocksUsed || 0} <span className="text-slate-400">/ {subscription.unlockLimit || 0}</span></p>
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-bold text-slate-400">Remaining</p>
+                        <p className="text-sm font-extrabold text-emerald-600">{subscription.remainingUnlocks ?? 0}</p>
+                      </div>
                     </div>
-                    <p className="mt-1.5 text-[10px] font-bold text-slate-400">{subscription.utilization || 0}% utilized</p>
+                    <div className="mt-3.5">
+                      {(() => {
+                        const total = Number(subscription.unlockLimit);
+                        const used = Number(subscription.unlocksUsed || 0);
+                        const percent = total > 0 && total !== Number.MAX_SAFE_INTEGER
+                          ? Math.min(Math.round((used / total) * 100), 100)
+                          : 0;
+                        return (
+                          <>
+                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+                              <div className="h-full bg-emerald-500 transition-all duration-350" style={{ width: `${percent}%` }} />
+                            </div>
+                            <p className="mt-1.5 text-[10px] font-bold text-slate-400">{percent}% utilized</p>
+                          </>
+                        );
+                      })()}
+                    </div>
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-slate-100 bg-[#f8fafc] p-4">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-500">Resume Unlocks</h4>
-                  <div className="mt-3 grid grid-cols-2 gap-2">
-                    <div>
-                      <p className="text-[11px] font-bold text-slate-400">Unlocked / Limit</p>
-                      <p className="text-sm font-extrabold text-slate-750">{subscription.unlocksUsed || 0} <span className="text-slate-400">/ {subscription.unlockLimit || 0}</span></p>
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-bold text-slate-400">Remaining</p>
-                      <p className="text-sm font-extrabold text-emerald-600">{subscription.remainingUnlocks ?? 0}</p>
-                    </div>
-                  </div>
-                  <div className="mt-4">
-                    {(() => {
-                      const total = Number(subscription.unlockLimit);
-                      const used = Number(subscription.unlocksUsed || 0);
-                      const percent = total > 0 && total !== Number.MAX_SAFE_INTEGER
-                        ? Math.min(Math.round((used / total) * 100), 100)
-                        : 0;
-                      return (
-                        <>
-                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
-                            <div className="h-full bg-emerald-500 transition-all duration-350" style={{ width: `${percent}%` }} />
-                          </div>
-                          <p className="mt-1.5 text-[10px] font-bold text-slate-400">{percent}% utilized</p>
-                        </>
-                      );
-                    })()}
-                  </div>
-                </div>
+                {/* Upgrade Button */}
+                <Link to="/employer/subscription" className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#6658dd] px-5 text-[13px] font-extrabold text-white shadow-md shadow-indigo-605/10 transition hover:bg-[#5848d8] sm:w-auto shrink-0">
+                  <Crown className="h-4 w-4" />
+                  Upgrade Plan
+                </Link>
               </div>
             </div>
           </div>
