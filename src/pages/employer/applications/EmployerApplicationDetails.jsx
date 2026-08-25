@@ -478,32 +478,27 @@ const EmployerApplicationDetails = () => {
         }
       }
     } else if (status === 'Offered') {
-      const selection = application.selectionDetails || {};
-      if (!selection.offerStatus || selection.offerStatus === 'Selected') {
-        list.push({
-          key: 'OfferSent',
-          label: 'Offer Sent',
-          tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
-          icon: Send,
-          onClick: () => updateOfferStatus('Offer Sent')
-        });
-      } else if (selection.offerStatus === 'Offer Sent') {
-        list.push({
-          key: 'OfferAccept',
-          label: 'Accept',
-          tone: 'bg-cyan-500 text-white hover:bg-cyan-600',
-          icon: Check,
-          onClick: () => updateOfferStatus('Offer Accepted')
-        });
-      } else if (selection.offerStatus === 'Offer Accepted') {
-        list.push({
-          key: 'Hire',
-          label: 'Hire',
-          tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
-          icon: Briefcase,
-          onClick: () => updateOfferStatus('Hired')
-        });
-      }
+      list.push({
+        key: 'OfferSent',
+        label: 'Offer Sent',
+        tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
+        icon: Send,
+        onClick: () => updateOfferStatus('Offer Sent')
+      });
+      list.push({
+        key: 'OfferAccept',
+        label: 'Accept',
+        tone: 'bg-cyan-500 text-white hover:bg-cyan-600',
+        icon: Check,
+        onClick: () => updateOfferStatus('Offer Accepted')
+      });
+      list.push({
+        key: 'Hire',
+        label: 'Hire',
+        tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
+        icon: Briefcase,
+        onClick: () => updateOfferStatus('Hired')
+      });
     }
 
     return list;
@@ -518,37 +513,6 @@ const EmployerApplicationDetails = () => {
     const onHold = details.onHold;
     const selection = application.selectionDetails || {};
 
-    if (status === 'Offered') {
-      if (!selection.offerStatus || selection.offerStatus === 'Selected') {
-        list.push({
-          key: 'OfferSent',
-          label: 'Offer Sent',
-          tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
-          icon: Send,
-          onClick: () => updateOfferStatus('Offer Sent')
-        });
-      } else if (selection.offerStatus === 'Offer Sent') {
-        list.push({
-          key: 'OfferAccept',
-          label: 'Accept',
-          tone: 'bg-cyan-500 text-white hover:bg-cyan-600',
-          icon: Check,
-          onClick: () => updateOfferStatus('Offer Accepted')
-        });
-      } else if (selection.offerStatus === 'Offer Accepted') {
-        list.push({
-          key: 'Hire',
-          label: 'Hire',
-          tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
-          icon: Briefcase,
-          onClick: () => updateOfferStatus('Hired')
-        });
-      }
-      return list;
-    }
-
-    if (status === 'Hired') return list;
-
     // 0. Mark as Applied button: shown if status is not Applied
     if (status !== 'Applied') {
       list.push({
@@ -560,8 +524,8 @@ const EmployerApplicationDetails = () => {
       });
     }
 
-    // 1. Shortlist button: shown if status is Applied, Reviewed, or Rejected
-    if (['Applied', 'Reviewed', 'Rejected'].includes(status)) {
+    // 1. Shortlist button: shown if status is Applied, Reviewed, Rejected, or Offered
+    if (['Applied', 'Reviewed', 'Rejected', 'Offered'].includes(status)) {
       list.push({
         key: 'Shortlisted',
         label: 'Shortlist',
@@ -572,8 +536,8 @@ const EmployerApplicationDetails = () => {
     }
 
     // 2. Schedule Interview or Reschedule Interview button:
-    // shown if status is Applied, Reviewed, Shortlisted, Interview, or Rejected
-    if (['Applied', 'Reviewed', 'Shortlisted', 'Interview', 'Rejected'].includes(status)) {
+    // shown if status is Applied, Reviewed, Shortlisted, Interview, Rejected, or Offered
+    if (['Applied', 'Reviewed', 'Shortlisted', 'Interview', 'Rejected', 'Offered'].includes(status)) {
       const isInterview = status === 'Interview';
       list.push({
         key: 'InterviewSchedule',
@@ -585,8 +549,8 @@ const EmployerApplicationDetails = () => {
     }
 
     // 3. On Hold for Interview button:
-    // shown if status is Applied, Reviewed, Shortlisted, Interview, or Rejected (and not already on hold)
-    if (['Applied', 'Reviewed', 'Shortlisted', 'Interview', 'Rejected'].includes(status)) {
+    // shown if status is Applied, Reviewed, Shortlisted, Interview, Rejected, or Offered (and not already on hold)
+    if (['Applied', 'Reviewed', 'Shortlisted', 'Interview', 'Rejected', 'Offered'].includes(status)) {
       if (!(status === 'Interview' && onHold)) {
         list.push({
           key: 'InterviewOnHold',
@@ -610,9 +574,35 @@ const EmployerApplicationDetails = () => {
       });
     }
 
-    // 5. Reject button:
-    // shown if status is Applied, Reviewed, Shortlisted, Interview, or Rejected
-    if (['Applied', 'Reviewed', 'Shortlisted', 'Interview', 'Rejected'].includes(status)) {
+    // 5. Offer actions: Offer Sent, Accept, Hire
+    // shown if status is Shortlisted, Interview, or Offered
+    if (['Shortlisted', 'Interview', 'Offered'].includes(status)) {
+      list.push({
+        key: 'OfferSent',
+        label: 'Offer Sent',
+        tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
+        icon: Send,
+        onClick: () => updateOfferStatus('Offer Sent')
+      });
+      list.push({
+        key: 'OfferAccept',
+        label: 'Accept',
+        tone: 'bg-cyan-500 text-white hover:bg-cyan-600',
+        icon: Check,
+        onClick: () => updateOfferStatus('Offer Accepted')
+      });
+      list.push({
+        key: 'Hire',
+        label: 'Hire',
+        tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
+        icon: Briefcase,
+        onClick: () => updateOfferStatus('Hired')
+      });
+    }
+
+    // 6. Reject button:
+    // shown if status is Applied, Reviewed, Shortlisted, Interview, Rejected, or Offered
+    if (['Applied', 'Reviewed', 'Shortlisted', 'Interview', 'Rejected', 'Offered'].includes(status)) {
       list.push({
         key: 'Rejected',
         label: 'Reject',
