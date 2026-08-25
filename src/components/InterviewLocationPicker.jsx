@@ -253,7 +253,7 @@ const InterviewLocationPicker = ({ value, onChange }) => {
       )}
 
       {showGeoHelp && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
           <div className="relative w-full max-w-sm rounded-lg border border-slate-100 bg-white p-5 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
             <h4 className="text-sm font-black text-slate-800 mb-2">Enable Location Permission</h4>
             <div className="text-xs text-slate-500 leading-relaxed space-y-2">
