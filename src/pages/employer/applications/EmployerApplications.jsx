@@ -547,7 +547,9 @@ export const EmployerApplications = () => {
                   <span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${scoreTone(application.matchScore)}`}>{application.matchScore}% match</span>
                   <div className="flex flex-wrap items-center gap-1.5">
                     <Link to={`/employer/applications/${application.id}`} className="inline-flex h-8 items-center justify-center gap-1 rounded border border-[#6658dd] px-2 text-[10px] font-extrabold text-[#6658dd] transition hover:bg-violet-50">View</Link>
-                    <Link to={`/employer/messages?application=${application.id}`} className="inline-flex h-8 items-center justify-center gap-1 rounded border border-sky-200 px-2 text-[10px] font-extrabold text-sky-600 transition hover:bg-sky-50">Message</Link>
+                    {application.status !== 'Applied' && (
+                      <Link to={`/employer/messages?application=${application.id}`} className="inline-flex h-8 items-center justify-center gap-1 rounded border border-sky-200 px-2 text-[10px] font-extrabold text-sky-600 transition hover:bg-sky-50">Message</Link>
+                    )}
                   </div>
                 </div>
               </div>
@@ -606,10 +608,12 @@ export const EmployerApplications = () => {
                           <span>View</span>
                         </Link>
 
-                        <Link to={`/employer/messages?application=${application.id}`} title="Message Candidate" className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-sky-200 px-2 text-xs font-extrabold text-sky-600 transition hover:bg-sky-50"><MessageCircle className="h-3.5 w-3.5" /><span>Message</span></Link>
+                        {application.status !== 'Applied' && (
+                          <Link to={`/employer/messages?application=${application.id}`} title="Message Candidate" className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-sky-200 px-2 text-xs font-extrabold text-sky-600 transition hover:bg-sky-50"><MessageCircle className="h-3.5 w-3.5" /><span>Message</span></Link>
+                        )}
 
                         {/* Download Resume */}
-                        {application.hasResume && (
+                        {application.hasResume && application.status !== 'Applied' && (
                           <button
                             type="button"
                             onClick={() => downloadResume(application.candidateId, application.name, application.id)}
@@ -622,7 +626,7 @@ export const EmployerApplications = () => {
                         )}
 
                         {/* Shortlist */}
-                        {['Applied', 'Reviewed'].includes(application.status) && (
+                        {application.status === 'Reviewed' && (
                           <button
                             type="button"
                             onClick={() => handleStatusUpdate(application.id, 'Shortlisted')}
