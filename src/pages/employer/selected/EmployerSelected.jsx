@@ -63,7 +63,7 @@ const SelectField = ({ label, value, onChange, children }) => (
   </div>
 );
 
-const OfferActions = ({ candidate, isUpdating, onUpdate }) => (
+const OfferActions = ({ candidate, isUpdating, onUpdate, onReject }) => (
   <div className="mx-auto grid w-[280px] grid-cols-2 gap-2">
     <Link
       to={`/employer/applications/${candidate.applicationId}`}
@@ -105,6 +105,17 @@ const OfferActions = ({ candidate, isUpdating, onUpdate }) => (
     >
       <Briefcase className="h-3.5 w-3.5" />
       <span>Hire</span>
+    </button>
+
+    <button
+      type="button"
+      disabled={isUpdating}
+      onClick={() => onReject(candidate)}
+      title="Reject Candidate"
+      className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50 disabled:opacity-60 col-span-2"
+    >
+      <UserX className="h-3.5 w-3.5" />
+      <span>Reject</span>
     </button>
   </div>
 );
@@ -215,6 +226,24 @@ export const EmployerSelected = () => {
     }
   };
 
+  const handleReject = async (candidate) => {
+    setUpdatingId(candidate.id);
+    setError('');
+    setOpenDropdownId('');
+    try {
+      await axios.patch(
+        `${BASE_API_URL}/employer/applications/${candidate.applicationId || candidate.id}/status`,
+        { status: 'Rejected' },
+        { headers: getTokenHeaders() }
+      );
+      setRefreshKey((current) => current + 1);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Candidate could not be rejected.');
+    } finally {
+      setUpdatingId('');
+    }
+  };
+
   const pagination = data.pagination || { page: currentPage, limit: pageSize, total: 0, totalPages: 1 };
   const totalPages = pagination.totalPages || 1;
   const safePage = pagination.page || 1;
@@ -306,6 +335,7 @@ export const EmployerSelected = () => {
                     candidate={candidate}
                     isUpdating={updatingId === candidate.id}
                     onUpdate={updateOfferStatus}
+                    onReject={handleReject}
                   />
                 </div>
               </div>
@@ -332,6 +362,7 @@ export const EmployerSelected = () => {
                         candidate={candidate}
                         isUpdating={updatingId === candidate.id}
                         onUpdate={updateOfferStatus}
+                        onReject={handleReject}
                       />
                     </td>
                   </tr>
