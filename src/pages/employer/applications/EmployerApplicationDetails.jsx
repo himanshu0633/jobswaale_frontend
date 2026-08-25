@@ -20,6 +20,7 @@ import {
   UserCheck,
   UserPlus,
   UserX,
+  Send,
   X
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
@@ -274,6 +275,25 @@ const EmployerApplicationDetails = () => {
     }
   };
 
+  const updateOfferStatus = async (offerStatus) => {
+    setSaving('OfferStatus');
+    setError('');
+    setMessage('');
+    try {
+      await axios.patch(
+        `${BASE_API_URL}/employer/selected/${id}/offer`,
+        { offerStatus },
+        { headers: getTokenHeaders() }
+      );
+      setMessage(`Offer status updated to ${offerStatus} successfully.`);
+      await loadDetails();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update offer status.');
+    } finally {
+      setSaving('');
+    }
+  };
+
   const openInterviewModal = () => {
     setError('');
     setMessage('');
@@ -457,6 +477,17 @@ const EmployerApplicationDetails = () => {
           });
         }
       }
+    } else if (status === 'Offered') {
+      const selection = application.selectionDetails || {};
+      if (!selection.offerStatus || selection.offerStatus === 'Selected') {
+        list.push({
+          key: 'OfferSent',
+          label: 'Send Offer',
+          tone: 'bg-blue-600 text-white hover:bg-blue-700',
+          icon: Send,
+          onClick: () => updateOfferStatus('Offer Sent')
+        });
+      }
     }
 
     return list;
@@ -469,8 +500,22 @@ const EmployerApplicationDetails = () => {
     const status = application.status;
     const details = application.interviewDetails || {};
     const onHold = details.onHold;
+    const selection = application.selectionDetails || {};
 
-    if (['Offered', 'Hired'].includes(status)) return list;
+    if (status === 'Offered') {
+      if (!selection.offerStatus || selection.offerStatus === 'Selected') {
+        list.push({
+          key: 'OfferSent',
+          label: 'Send Offer',
+          tone: 'bg-blue-600 text-white hover:bg-blue-700',
+          icon: Send,
+          onClick: () => updateOfferStatus('Offer Sent')
+        });
+      }
+      return list;
+    }
+
+    if (status === 'Hired') return list;
 
     // 0. Mark as Applied button: shown if status is not Applied
     if (status !== 'Applied') {

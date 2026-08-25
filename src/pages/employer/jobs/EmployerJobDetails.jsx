@@ -20,6 +20,7 @@ import {
   UserCheck,
   UserPlus,
   UserX,
+  Send,
   Users,
   Inbox,
   X
@@ -299,6 +300,22 @@ export const EmployerJobDetails = () => {
       await loadDetails({ silent: true });
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update candidate status.');
+    }
+  };
+
+  const updateCandidateOfferStatus = async (candidateId, offerStatus) => {
+    setMessage('');
+    setError('');
+    try {
+      await axios.patch(
+        `${BASE_API_URL}/employer/selected/${candidateId}/offer`,
+        { offerStatus },
+        { headers: getTokenHeaders() }
+      );
+      setMessage(`Offer status updated to ${offerStatus} successfully.`);
+      await loadDetails({ silent: true });
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update offer status.');
     }
   };
 
@@ -657,6 +674,19 @@ export const EmployerJobDetails = () => {
                         >
                           <UserPlus className="h-4 w-4" />
                           <span>Select</span>
+                        </button>
+                      )}
+
+                      {/* Send Offer */}
+                      {candidate.status === 'Offered' && (!candidate.selectionDetails || candidate.selectionDetails.offerStatus === 'Selected') && (
+                        <button
+                          type="button"
+                          onClick={() => updateCandidateOfferStatus(candidate.id, 'Offer Sent')}
+                          title="Send Offer"
+                          className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-blue-600 transition hover:bg-blue-50"
+                        >
+                          <Send className="h-4 w-4" />
+                          <span>Send Offer</span>
                         </button>
                       )}
 

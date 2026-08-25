@@ -353,6 +353,34 @@ export const EmployerApplications = () => {
     }
   };
 
+  const handleOfferStatusUpdate = async (appId, offerStatus) => {
+    const actionKey = getActionKey(appId, 'OfferSent');
+    if (actionLoading) return;
+    setActionLoading(actionKey);
+    setError('');
+    setMessage('');
+    try {
+      await axios.patch(
+        `${BASE_API_URL}/employer/selected/${appId}/offer`,
+        { offerStatus },
+        { headers: getTokenHeaders() }
+      );
+      // Refresh the application list
+      const response = await axios.get(`${BASE_API_URL}/employer/applications?${queryParams}`, { headers: getTokenHeaders() });
+      const applications = response.data?.applications || [];
+      setData(prev => ({
+        ...prev,
+        ...response.data,
+        applications,
+        pagination: response.data?.pagination || prev.pagination || { page: 1, limit: pageSize, total: applications.length, totalPages: 1 }
+      }));
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update offer status.');
+    } finally {
+      setActionLoading('');
+    }
+  };
+
   const downloadResume = async (candidateId, candidateName, appId) => {
     const actionKey = getActionKey(appId || candidateId, 'resume');
     if (actionLoading) return;
@@ -644,6 +672,19 @@ export const EmployerApplications = () => {
                             className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-70"
                           >
                             <ActionButtonContent loading={isActionLoading(application.id, 'Offered')} icon={UserPlus} label="Select" />
+                          </button>
+                        )}
+
+                        {/* Send Offer */}
+                        {application.status === 'Offered' && (!application.selectionDetails || application.selectionDetails.offerStatus === 'Selected') && (
+                          <button
+                            type="button"
+                            onClick={() => handleOfferStatusUpdate(application.id, 'Offer Sent')}
+                            disabled={Boolean(actionLoading)}
+                            title="Send Offer"
+                            className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-blue-600 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-70"
+                          >
+                            <ActionButtonContent loading={isActionLoading(application.id, 'OfferSent')} icon={Send} label="Send Offer" />
                           </button>
                         )}
 
