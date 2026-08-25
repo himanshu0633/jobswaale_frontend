@@ -157,13 +157,14 @@ export const EmployerDashboard = () => {
               <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                 {/* Plan Info */}
                 <div className="min-w-0 shrink-0">
-                  <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <h2 className="text-base font-extrabold text-[#111827]">{subscription.planName || 'Premium Plan'}</h2>
                     <span className="inline-flex items-center rounded bg-emerald-500 px-2 py-0.5 text-[10px] font-black text-white">{subscription.status || 'Active'}</span>
+                    <span className="text-slate-300 hidden sm:inline">|</span>
+                    <p className="text-xs font-semibold text-slate-400">
+                      Valid until: <span className="font-extrabold text-slate-700">{formatDate(subscription.validUntil, 'Not assigned')}</span>
+                    </p>
                   </div>
-                  <p className="mt-1 text-xs font-semibold text-slate-400">
-                    Valid until: <span className="font-extrabold text-slate-700">{formatDate(subscription.validUntil, 'Not assigned')}</span>
-                  </p>
                 </div>
 
                 {/* Status boxes */}
