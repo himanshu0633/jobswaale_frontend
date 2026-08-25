@@ -603,6 +603,9 @@ const EmployerApplicationDetails = () => {
             {action.label}
           </ActionButton>
         ))}
+        <Link to={`/employer/messages?application=${application.id}`} className="inline-flex items-center justify-center gap-2 rounded-md border border-sky-200 bg-white px-3 py-2 text-xs font-extrabold text-sky-600 hover:bg-sky-50 w-full">
+          <MessageCircle className="h-4 w-4" /> Send Message
+        </Link>
         <ResumeDownloadLink candidate={candidate} className="w-full" />
       </div>
 
@@ -672,6 +675,17 @@ const EmployerApplicationDetails = () => {
         </div>
 
         <aside className="space-y-5">
+          <Card title="Quick Actions">
+            <div className="grid gap-2">
+              {quickActions.map((action) => (
+                <ActionButton key={action.key} tone={action.tone} icon={action.icon} onClick={action.onClick} disabled={Boolean(saving)}>
+                  {action.label}
+                </ActionButton>
+              ))}
+              <ResumeDownloadLink candidate={candidate} />
+            </div>
+          </Card>
+
           <Card title="Candidate Quick Profile">
             <div className="text-center">
               <span className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-violet-100 text-2xl font-black text-[#6658dd]">{candidate.initials}</span>
@@ -692,7 +706,6 @@ const EmployerApplicationDetails = () => {
             </div>
             <div className="mt-4 grid gap-2">
               <Link to={`/employer/candidateProfile/${candidate.id}`} className="inline-flex items-center justify-center gap-2 rounded-md bg-[#6658dd] px-3 py-2 text-xs font-extrabold text-white"><User className="h-4 w-4" /> View Full Profile</Link>
-              <Link to={`/employer/messages?application=${application.id}`} className="inline-flex items-center justify-center gap-2 rounded-md border border-sky-200 px-3 py-2 text-xs font-extrabold text-sky-600 hover:bg-sky-50"><MessageCircle className="h-4 w-4" /> Send Message</Link>
             </div>
           </Card>
 
@@ -738,16 +751,6 @@ const EmployerApplicationDetails = () => {
             </div>
           </Card>
 
-          <Card title="Quick Actions">
-            <div className="grid gap-2">
-              {quickActions.map((action) => (
-                <ActionButton key={action.key} tone={action.tone} icon={action.icon} onClick={action.onClick} disabled={Boolean(saving)}>
-                  {action.label}
-                </ActionButton>
-              ))}
-              <ResumeDownloadLink candidate={candidate} />
-            </div>
-          </Card>
         </aside>
       </div>
 

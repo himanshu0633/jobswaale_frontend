@@ -64,11 +64,11 @@ const SelectField = ({ label, value, onChange, children }) => (
 );
 
 const OfferActions = ({ candidate, isUpdating, onUpdate }) => (
-  <div className="flex flex-wrap items-center gap-1.5 justify-center max-w-[340px] mx-auto">
+  <div className="mx-auto grid w-[280px] grid-cols-2 gap-2">
     <Link
       to={`/employer/applications/${candidate.applicationId}`}
       title="View Application Details"
-      className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-slate-500 transition hover:bg-slate-50"
+      className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-slate-500 transition hover:bg-slate-50"
     >
       <Eye className="h-3.5 w-3.5" />
       <span>View</span>
@@ -79,7 +79,7 @@ const OfferActions = ({ candidate, isUpdating, onUpdate }) => (
       disabled={isUpdating}
       onClick={() => onUpdate(candidate, 'Offer Sent')}
       title="Mark Offer Sent"
-      className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50 disabled:opacity-60"
+      className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50 disabled:opacity-60"
     >
       <Send className="h-3.5 w-3.5" />
       <span>Offer Sent</span>
@@ -90,7 +90,7 @@ const OfferActions = ({ candidate, isUpdating, onUpdate }) => (
       disabled={isUpdating}
       onClick={() => onUpdate(candidate, 'Offer Accepted')}
       title="Mark Accepted"
-      className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-cyan-500 transition hover:bg-cyan-50 disabled:opacity-60"
+      className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-cyan-500 transition hover:bg-cyan-50 disabled:opacity-60"
     >
       <CheckCircle2 className="h-3.5 w-3.5" />
       <span>Accept</span>
@@ -101,7 +101,7 @@ const OfferActions = ({ candidate, isUpdating, onUpdate }) => (
       disabled={isUpdating}
       onClick={() => onUpdate(candidate, 'Hired')}
       title="Mark Hired"
-      className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50 disabled:opacity-60"
+      className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50 disabled:opacity-60"
     >
       <Briefcase className="h-3.5 w-3.5" />
       <span>Hire</span>
@@ -112,7 +112,7 @@ const OfferActions = ({ candidate, isUpdating, onUpdate }) => (
       disabled={isUpdating}
       onClick={() => onUpdate(candidate, 'Offer Declined')}
       title="Mark Declined"
-      className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50 disabled:opacity-60"
+      className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50 disabled:opacity-60"
     >
       <UserX className="h-3.5 w-3.5" />
       <span>Decline</span>

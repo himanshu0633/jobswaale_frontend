@@ -39,15 +39,15 @@ const getInterviewLocationField = (type) => {
   return null;
 };
 
-const initialFilters = { search: '', jobTitle: '', status: '', experience: '', appliedAfter: '' };
+const initialFilters = { search: '', jobTitle: '', status: '', experience: '', appliedAfter: '', applicationActivity: 'active' };
 
 const statCards = [
-  { key: 'total', title: 'Total', status: '', icon: Inbox, tone: 'bg-slate-50 text-slate-600' },
+  { key: 'total', title: 'Total Applications', titleLines: ['Total', 'Applications'], status: '', icon: Inbox, tone: 'bg-slate-50 text-slate-600' },
   { key: 'applied', title: 'Applied', status: 'Applied', icon: FileText, tone: 'bg-violet-50 text-[#6658dd]' },
   { key: 'reviewed', title: 'Reviewed', status: 'Reviewed', icon: Eye, tone: 'bg-emerald-50 text-emerald-500' },
   { key: 'shortlisted', title: 'Shortlisted', status: 'Shortlisted', icon: UserCheck, tone: 'bg-amber-50 text-amber-500' },
   { key: 'interview', title: 'Interview', status: 'Interview', icon: Calendar, tone: 'bg-sky-50 text-sky-500' },
-  { key: 'onHold', title: 'Hold', status: 'OnHold', icon: Clock, tone: 'bg-orange-50 text-orange-500' },
+  { key: 'onHold', title: 'On Hold', titleLines: ['On', 'Hold'], status: 'OnHold', icon: Clock, tone: 'bg-orange-50 text-orange-500' },
   { key: 'offered', title: 'Selected', status: 'Offered', icon: MailCheck, tone: 'bg-blue-50 text-blue-500' },
   { key: 'rejected', title: 'Rejected', status: 'Rejected', icon: UserX, tone: 'bg-rose-50 text-rose-500' }
 ];
@@ -98,6 +98,13 @@ const SelectField = ({ label, value, onChange, children }) => (
   </div>
 );
 
+const ActionButtonContent = ({ loading, icon: Icon, label, loadingLabel = 'Processing' }) => (
+  <>
+    {loading ? <Loader className="h-3.5 w-3.5 animate-spin" /> : <Icon className="h-3.5 w-3.5" />}
+    <span>{loading ? loadingLabel : label}</span>
+  </>
+);
+
 export const EmployerApplications = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -107,7 +114,8 @@ export const EmployerApplications = () => {
     jobTitle: searchParams.get('jobTitle') || '',
     status: searchParams.get('status') || '',
     experience: searchParams.get('experience') || '',
-    appliedAfter: searchParams.get('appliedAfter') || ''
+    appliedAfter: searchParams.get('appliedAfter') || '',
+    applicationActivity: searchParams.get('applicationActivity') || 'active'
   });
   const [filters, setFilters] = useState(getUrlFilters);
   const [tableSearch, setTableSearch] = useState('');
@@ -123,6 +131,7 @@ export const EmployerApplications = () => {
   const [showInterviewModal, setShowInterviewModal] = useState(false);
   const [showHoldModal, setShowHoldModal] = useState(false);
   const [savingInterview, setSavingInterview] = useState(false);
+  const [actionLoading, setActionLoading] = useState('');
   const [interviewForm, setInterviewForm] = useState({
     date: '',
     time: '',
@@ -209,6 +218,7 @@ export const EmployerApplications = () => {
     }
     if (filters.experience) params.set('experience', filters.experience);
     if (filters.appliedAfter) params.set('appliedAfter', filters.appliedAfter);
+    params.set('applicationActivity', filters.applicationActivity || 'active');
     params.set('page', String(currentPage));
     params.set('limit', String(pageSize));
     return params.toString();
@@ -245,7 +255,9 @@ export const EmployerApplications = () => {
   const startIndex = pagination.total ? (pagination.page - 1) * pagination.limit : 0;
   const optionFilters = data.filters || {};
   const goToPage = (page) => setCurrentPage(Math.min(Math.max(page, 1), pagination.totalPages || 1));
-  const hasActiveFilters = Object.values(filters).some(Boolean) || Boolean(tableSearch);
+  const hasActiveFilters = Object.entries(filters).some(([key, value]) => key !== 'applicationActivity' && Boolean(value)) || Boolean(tableSearch) || filters.applicationActivity !== 'active';
+  const getActionKey = (appId, action) => `${appId}:${action}`;
+  const isActionLoading = (appId, action) => actionLoading === getActionKey(appId, action);
 
   const [currentTime, setCurrentTime] = useState(() => Date.now());
 
@@ -276,6 +288,11 @@ export const EmployerApplications = () => {
   };
 
   const handleInterviewOnHold = async (appId) => {
+    const actionKey = getActionKey(appId, 'hold');
+    if (actionLoading) return;
+    setActionLoading(actionKey);
+    setError('');
+    setMessage('');
     try {
       await axios.post(
         `${BASE_API_URL}/employer/applications/${appId}/schedule-interview`,
@@ -297,10 +314,17 @@ export const EmployerApplications = () => {
       }));
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to move application to interview on hold.');
+    } finally {
+      setActionLoading('');
     }
   };
 
   const handleStatusUpdate = async (appId, nextStatus) => {
+    const actionKey = getActionKey(appId, nextStatus);
+    if (actionLoading) return;
+    setActionLoading(actionKey);
+    setError('');
+    setMessage('');
     try {
       await axios.patch(
         `${BASE_API_URL}/employer/applications/${appId}/status`,
@@ -318,10 +342,15 @@ export const EmployerApplications = () => {
       }));
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update application status.');
+    } finally {
+      setActionLoading('');
     }
   };
 
-  const downloadResume = async (candidateId, candidateName) => {
+  const downloadResume = async (candidateId, candidateName, appId) => {
+    const actionKey = getActionKey(appId || candidateId, 'resume');
+    if (actionLoading) return;
+    setActionLoading(actionKey);
     setError('');
     setMessage('');
     try {
@@ -358,6 +387,8 @@ export const EmployerApplications = () => {
       } else {
         setError(err.response?.data?.message || 'Resume could not be downloaded.');
       }
+    } finally {
+      setActionLoading('');
     }
   };
 
@@ -378,20 +409,24 @@ export const EmployerApplications = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-7">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {statCards.map((card) => (
           <button
             key={card.key}
             type="button"
             onClick={() => handleStatCardClick(card)}
-            className={`rounded-md border bg-white p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-4 ${
+            className={`min-h-24 rounded-md border bg-white p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:min-h-28 sm:p-4 ${
               filters.status === card.status ? 'border-[#6658dd] ring-2 ring-indigo-100' : 'border-slate-100'
             }`}
           >
-            <div className="flex items-center gap-2 sm:gap-3">
-              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${card.tone}`}><card.icon className="h-4 w-4 sm:h-5 sm:w-5" /></span>
-              <div className="min-w-0">
-                <p className="truncate text-xs font-semibold text-slate-400 sm:text-sm">{card.title}</p>
+            <div className="flex h-full items-center gap-2 sm:gap-3">
+              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${card.tone}`}><card.icon className="h-4 w-4 sm:h-5 sm:w-5" /></span>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-extrabold leading-4 text-slate-400 sm:text-[13px]">
+                  {(card.titleLines || [card.title]).map((line) => (
+                    <span key={line} className="block whitespace-nowrap">{line}</span>
+                  ))}
+                </p>
                 <p className="mt-1 text-base font-black text-[#3f4254] sm:text-xl">
                   {Number((card.key === 'total' ? data.stats?.total : data.pipeline?.[card.key] ?? data.stats?.[card.key]) || 0).toLocaleString('en-IN')}
                 </p>
@@ -408,54 +443,16 @@ export const EmployerApplications = () => {
         </div>
 
         <div className="p-4 sm:p-5">
-          {/* Quick Status Filter Tabs */}
-          <div className="flex flex-wrap gap-1.5 border-b border-dashed border-slate-100 pb-4 mb-5">
-              {[
-              { key: '', label: 'All Applications' },
-              { key: 'Applied', label: 'Waiting for Review' },
-              { key: 'Reviewed', label: 'Reviewed' }
-            ].map((tab) => (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setFilter('status', tab.key)}
-                className={`rounded-full px-4 py-1.5 text-xs font-bold transition border ${
-                  filters.status === tab.key
-                    ? 'bg-[#6658dd] text-white border-[#6658dd] shadow-sm'
-                    : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="mb-5 flex flex-wrap gap-1.5 border-b border-dashed border-slate-100 pb-4">
-            {[
-              { key: '', label: 'All Jobs' },
-              ...(optionFilters.jobTitles || []).map((title) => ({ key: title, label: title }))
-            ].map((job) => (
-              <button
-                key={job.key || 'all-jobs'}
-                type="button"
-                onClick={() => setFilter('jobTitle', job.key)}
-                className={`max-w-full rounded-full border px-4 py-1.5 text-xs font-bold transition ${
-                  filters.jobTitle === job.key
-                    ? 'border-[#6658dd] bg-[#6658dd] text-white shadow-sm'
-                    : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
-                }`}
-                title={job.label}
-              >
-                <span className="block max-w-56 truncate">{job.label}</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.5fr_1fr_1fr_auto]">
+          <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.5fr_1fr_1fr_1fr_auto]">
             <div>
               <label className="mb-2 block text-xs font-extrabold text-slate-500">Search Candidate / Job</label>
               <div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input className="h-10 w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100" value={filters.search} onChange={(event) => setFilter('search', event.target.value)} placeholder="Name, email, job, location" /></div>
             </div>
+            <SelectField label="Applications" value={filters.applicationActivity} onChange={(value) => setFilter('applicationActivity', value)}>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="both">Both</option>
+            </SelectField>
             <SelectField label="Experience" value={filters.experience} onChange={(value) => setFilter('experience', value)}><option value="">All Experience</option>{(optionFilters.experiences || ['Fresher', '1 - 2 Years', '2 - 5 Years', '5+ Years']).map((item) => <option key={item}>{item}</option>)}</SelectField>
             <div><label className="mb-2 block text-xs font-extrabold text-slate-500">Applied After</label><input type="date" value={filters.appliedAfter} onChange={(event) => setFilter('appliedAfter', event.target.value)} className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100" /></div>
             <div className="flex items-end"><ClearFilterButton active={hasActiveFilters} onClick={resetFilters} /></div>
@@ -473,15 +470,35 @@ export const EmployerApplications = () => {
             ) : data.applications.length ? data.applications.map((application) => (
               <div key={application.id} className="p-4">
                 <div className="flex items-start gap-3">
-                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${application.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>{application.initials}</span>
                   <div className="min-w-0 flex-1">
                     <Link to={`/employer/applications/${application.id}`} className="truncate text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{application.name}</Link>
                     <p className="mt-0.5 truncate text-xs font-semibold text-slate-400">{application.email || application.phone}</p>
                     <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><MapPin className="h-3 w-3 shrink-0" /><span className="truncate">{application.location}</span></p>
                   </div>
-                  <span className={`shrink-0 rounded px-2 py-1 text-[11px] font-black ${statusTone[application.status === 'Offered' ? (application.selectionDetails?.offerStatus || 'Selected') : application.status] || statusTone.Applied}`}>
-                    {application.status === 'Offered' ? (application.selectionDetails?.offerStatus || 'Selected') : application.status}
-                  </span>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <span className={`rounded px-2 py-1 text-[11px] font-black ${statusTone[application.status === 'Offered' ? (application.selectionDetails?.offerStatus || 'Selected') : (application.status === 'Interview' && application.interviewDetails?.onHold ? 'OnHold' : application.status)] || statusTone.Applied}`}>
+                      {application.status === 'Offered' ? (application.selectionDetails?.offerStatus || 'Selected') : (application.status === 'Interview' && application.interviewDetails?.onHold ? 'On Hold for Interview' : application.status)}
+                    </span>
+                    {application.status === 'Interview' && !application.interviewDetails?.onHold && application.interviewDetails && (
+                      <div className="mt-1 text-right text-[10px] font-semibold text-slate-500 space-y-0.5">
+                        {application.interviewDetails.date && (
+                          <p>
+                            Date: <span className="font-extrabold text-slate-700">{new Date(application.interviewDetails.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                          </p>
+                        )}
+                        {application.interviewDetails.time && (
+                          <p>
+                            Time: <span className="font-extrabold text-slate-700">{application.interviewDetails.time}</span>
+                          </p>
+                        )}
+                        {application.interviewDetails.type && (
+                          <p>
+                            Mode: <span className="font-extrabold text-slate-700">{application.interviewDetails.type}</span>
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs font-semibold text-slate-500">
                   <p className="truncate"><span className="text-slate-400">Job:</span> {application.jobTitle}</p>
@@ -511,7 +528,7 @@ export const EmployerApplications = () => {
               <tbody className="divide-y divide-slate-100">
                 {loading ? <tr><td colSpan="7" className="px-5 py-12 text-center"><Loader className="mx-auto h-7 w-7 animate-spin text-[#6658dd]" /></td></tr> : data.applications.length ? data.applications.map((application) => (
                   <tr key={application.id} className="transition hover:bg-slate-50">
-                    <td className="px-5 py-4"><div className="flex items-center gap-3"><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${application.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>{application.initials}</span><div><Link to={`/employer/applications/${application.id}`} className="text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{application.name}</Link><p className="mt-0.5 text-xs font-semibold text-slate-400">{application.email || application.phone}</p><p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><MapPin className="h-3 w-3" />{application.location}</p></div></div></td>
+                    <td className="px-5 py-4"><div><Link to={`/employer/applications/${application.id}`} className="text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{application.name}</Link><p className="mt-0.5 text-xs font-semibold text-slate-400">{application.email || application.phone}</p><p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><MapPin className="h-3 w-3" />{application.location}</p></div></td>
                     <td className="px-5 py-4">
                       <p className="text-sm font-extrabold text-[#3f4254]">{application.jobTitle}</p>
                       <p className="mt-0.5 text-xs font-semibold text-slate-400">{application.jobType}</p>
@@ -522,24 +539,51 @@ export const EmployerApplications = () => {
                     <td className="px-5 py-4 text-sm font-semibold text-slate-600">{application.experience}</td>
                     <td className="px-5 py-4 text-sm font-semibold text-slate-600">{application.displayDate}</td>
                     <td className="px-5 py-4"><span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${scoreTone(application.matchScore)}`}>{application.matchScore}%</span></td>
-                    <td className="px-5 py-4"><span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${statusTone[application.status === 'Offered' ? (application.selectionDetails?.offerStatus || 'Selected') : (application.status === 'Interview' && application.interviewDetails?.onHold ? 'OnHold' : application.status)] || statusTone.Applied}`}>{application.status === 'Offered' ? (application.selectionDetails?.offerStatus || 'Selected') : (application.status === 'Interview' && application.interviewDetails?.onHold ? 'On Hold for Interview' : application.status)}</span></td>
-                    <td className="px-5 py-4 text-center">
-                      <div className="flex flex-wrap items-center gap-1.5 justify-center max-w-[280px] mx-auto">
-                        <Link to={`/employer/applications/${application.id}`} title="View Application Details" className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-slate-500 transition hover:bg-slate-50">
+                    <td className="px-5 py-4">
+                      <div className="flex flex-col items-start gap-1">
+                        <span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${statusTone[application.status === 'Offered' ? (application.selectionDetails?.offerStatus || 'Selected') : (application.status === 'Interview' && application.interviewDetails?.onHold ? 'OnHold' : application.status)] || statusTone.Applied}`}>
+                          {application.status === 'Offered' ? (application.selectionDetails?.offerStatus || 'Selected') : (application.status === 'Interview' && application.interviewDetails?.onHold ? 'On Hold for Interview' : application.status)}
+                        </span>
+                        {application.status === 'Interview' && !application.interviewDetails?.onHold && application.interviewDetails && (
+                          <div className="mt-1 text-[11px] font-semibold text-slate-500 space-y-0.5">
+                            {application.interviewDetails.date && (
+                              <p>
+                                Date: <span className="font-extrabold text-slate-700">{new Date(application.interviewDetails.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                              </p>
+                            )}
+                            {application.interviewDetails.time && (
+                              <p>
+                                Time: <span className="font-extrabold text-slate-700">{application.interviewDetails.time}</span>
+                              </p>
+                            )}
+                            {application.interviewDetails.type && (
+                              <p>
+                                Mode: <span className="font-extrabold text-slate-700">{application.interviewDetails.type}</span>
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-5 py-4 text-center align-middle">
+                      <div className="mx-auto grid w-[260px] grid-cols-2 gap-2">
+                        <Link to={`/employer/applications/${application.id}`} title="View Application Details" className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-slate-500 transition hover:bg-slate-50">
                           <Eye className="h-3.5 w-3.5" />
                           <span>View</span>
                         </Link>
+
+                        <Link to={`/employer/messages?application=${application.id}`} title="Message Candidate" className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-sky-200 px-2 text-xs font-extrabold text-sky-600 transition hover:bg-sky-50"><MessageCircle className="h-3.5 w-3.5" /><span>Message</span></Link>
 
                         {/* Download Resume */}
                         {application.hasResume && (
                           <button
                             type="button"
-                            onClick={() => downloadResume(application.candidateId, application.name)}
+                            onClick={() => downloadResume(application.candidateId, application.name, application.id)}
+                            disabled={Boolean(actionLoading)}
                             title="Download Resume"
-                            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50"
+                            className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-70"
                           >
-                            <FileText className="h-3.5 w-3.5" />
-                            <span>Resume</span>
+                            <ActionButtonContent loading={isActionLoading(application.id, 'resume')} icon={FileText} label="Resume" />
                           </button>
                         )}
 
@@ -548,11 +592,11 @@ export const EmployerApplications = () => {
                           <button
                             type="button"
                             onClick={() => handleStatusUpdate(application.id, 'Shortlisted')}
+                            disabled={Boolean(actionLoading)}
                             title="Shortlist"
-                            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-amber-500 transition hover:bg-amber-50"
+                            className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-amber-500 transition hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-70"
                           >
-                            <UserCheck className="h-3.5 w-3.5" />
-                            <span>Shortlist</span>
+                            <ActionButtonContent loading={isActionLoading(application.id, 'Shortlisted')} icon={UserCheck} label="Shortlist" />
                           </button>
                         )}
 
@@ -561,8 +605,9 @@ export const EmployerApplications = () => {
                           <button
                             type="button"
                             onClick={() => openInterviewModal(application)}
+                            disabled={Boolean(actionLoading)}
                             title={application.status === 'Interview' ? "Reschedule Interview" : "Schedule Interview"}
-                            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50"
+                            className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-70"
                           >
                             <Calendar className="h-3.5 w-3.5" />
                             <span>{application.status === 'Interview' ? "Reschedule" : "Interview"}</span>
@@ -575,11 +620,11 @@ export const EmployerApplications = () => {
                           <button
                             type="button"
                             onClick={() => handleInterviewOnHold(application.id)}
+                            disabled={Boolean(actionLoading)}
                             title="On Hold for Interview"
-                            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-amber-700 transition hover:bg-amber-50"
+                            className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-amber-700 transition hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-70"
                           >
-                            <Clock className="h-3.5 w-3.5" />
-                            <span>Hold</span>
+                            <ActionButtonContent loading={isActionLoading(application.id, 'hold')} icon={Clock} label="Hold" />
                           </button>
                         )}
 
@@ -588,11 +633,11 @@ export const EmployerApplications = () => {
                           <button
                             type="button"
                             onClick={() => handleStatusUpdate(application.id, 'Offered')}
+                            disabled={Boolean(actionLoading)}
                             title="Select / Hire"
-                            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50"
+                            className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-70"
                           >
-                            <UserPlus className="h-3.5 w-3.5" />
-                            <span>Select</span>
+                            <ActionButtonContent loading={isActionLoading(application.id, 'Offered')} icon={UserPlus} label="Select" />
                           </button>
                         )}
 
@@ -601,15 +646,13 @@ export const EmployerApplications = () => {
                           <button
                             type="button"
                             onClick={() => handleStatusUpdate(application.id, 'Rejected')}
+                            disabled={Boolean(actionLoading)}
                             title="Reject"
-                            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50"
+                            className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-70"
                           >
-                            <UserX className="h-3.5 w-3.5" />
-                            <span>Reject</span>
+                            <ActionButtonContent loading={isActionLoading(application.id, 'Rejected')} icon={UserX} label="Reject" />
                           </button>
                         )}
-
-                        <Link to={`/employer/messages?application=${application.id}`} title="Message Candidate" className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-sky-200 px-2 text-xs font-extrabold text-sky-600 transition hover:bg-sky-50"><MessageCircle className="h-3.5 w-3.5" /><span>Message</span></Link>
                       </div>
                     </td>
                   </tr>

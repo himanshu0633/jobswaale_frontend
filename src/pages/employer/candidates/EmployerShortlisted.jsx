@@ -314,12 +314,12 @@ export const EmployerShortlisted = () => {
   };
 
   const renderRowMenu = (app) => (
-    <div className="flex flex-wrap items-center gap-1.5 justify-center max-w-[280px] mx-auto">
+    <div className="mx-auto grid w-[260px] grid-cols-2 gap-2">
       <button
         type="button"
         onClick={() => openModal(app, 'viewProfile')}
         title="View Profile"
-        className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-slate-500 transition hover:bg-slate-50"
+        className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-slate-500 transition hover:bg-slate-50"
       >
         <Eye className="h-3.5 w-3.5" />
         <span>View</span>
@@ -329,7 +329,7 @@ export const EmployerShortlisted = () => {
         type="button"
         onClick={() => openModal(app, 'interview')}
         title={app.status === 'Interview' ? "Reschedule Interview" : "Schedule Interview"}
-        className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50"
+        className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50"
       >
         <Calendar className="h-3.5 w-3.5" />
         <span>{app.status === 'Interview' ? "Reschedule" : "Interview"}</span>
@@ -341,7 +341,7 @@ export const EmployerShortlisted = () => {
           disabled={modalLoading}
           onClick={() => openModal(app, 'interviewHold')}
           title="On Hold for Interview"
-          className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-amber-700 transition hover:bg-amber-50"
+          className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-amber-700 transition hover:bg-amber-50"
         >
           <Clock className="h-3.5 w-3.5" />
           <span>Hold</span>
@@ -353,7 +353,7 @@ export const EmployerShortlisted = () => {
           type="button"
           onClick={() => openModal(app, 'select')}
           title="Select Candidate"
-          className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50"
+          className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50"
         >
           <UserPlus className="h-3.5 w-3.5" />
           <span>Select</span>
@@ -365,7 +365,7 @@ export const EmployerShortlisted = () => {
           type="button"
           onClick={() => openModal(app, 'reject')}
           title="Reject Candidate"
-          className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50"
+          className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50"
         >
           <UserX className="h-3.5 w-3.5" />
           <span>Reject</span>
@@ -480,9 +480,6 @@ export const EmployerShortlisted = () => {
             ) : data.applications.length ? data.applications.map((app) => (
               <div key={app.id} className="p-4">
                 <div className="flex items-start gap-3">
-                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${app.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>
-                    {app.initials}
-                  </span>
                   <div className="min-w-0 flex-1">
                     <button type="button" onClick={() => openModal(app, 'viewProfile')} className="truncate text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd] text-left block w-full">
                       {app.name}
@@ -536,20 +533,15 @@ export const EmployerShortlisted = () => {
                   data.applications.map((app) => (
                     <tr key={app.id} className="transition hover:bg-slate-50">
                       <td className="px-5 py-4">
-                        <div className="flex items-center gap-3">
-                          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${app.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>
-                            {app.initials}
-                          </span>
-                          <div>
-                            <button type="button" onClick={() => openModal(app, 'viewProfile')} className="text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd] text-left">
-                              {app.name}
-                            </button>
-                            <p className="mt-0.5 text-xs font-semibold text-slate-400">{app.email}</p>
-                            <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400">
-                              <MapPin className="h-3 w-3" />
-                              {app.location}
-                            </p>
-                          </div>
+                        <div>
+                          <button type="button" onClick={() => openModal(app, 'viewProfile')} className="text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd] text-left">
+                            {app.name}
+                          </button>
+                          <p className="mt-0.5 text-xs font-semibold text-slate-400">{app.email}</p>
+                          <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400">
+                            <MapPin className="h-3 w-3" />
+                            {app.location}
+                          </p>
                         </div>
                       </td>
                       <td className="px-5 py-4">

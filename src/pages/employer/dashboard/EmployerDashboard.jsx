@@ -38,8 +38,11 @@ const emptyDashboard = {
   },
   pipeline: {
     active: 0,
+    applied: 0,
+    reviewed: 0,
     shortlisted: 0,
     interview: 0,
+    onHold: 0,
     selected: 0,
     offered: 0,
     rejected: 0,
@@ -55,6 +58,18 @@ const formatDate = (value, fallback = '-') => {
   if (Number.isNaN(date.getTime())) return fallback;
   return `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
 };
+
+const JobStatLabel = ({ children, tooltip }) => (
+  <span className="group relative mt-1 inline-flex cursor-help justify-end text-xs font-semibold text-slate-400">
+    {children}
+    <span
+      role="tooltip"
+      className="pointer-events-none absolute left-1/2 top-full z-30 mt-2 w-56 -translate-x-1/2 rounded-md bg-slate-900 px-3 py-2 text-left text-[11px] font-semibold leading-4 text-white opacity-0 shadow-lg transition group-hover:opacity-100 group-focus-within:opacity-100"
+    >
+      {tooltip}
+    </span>
+  </span>
+);
 
 export const EmployerDashboard = () => {
   const navigate = useNavigate();
@@ -99,38 +114,6 @@ export const EmployerDashboard = () => {
     };
   }, []);
 
-  const pipelineData = useMemo(() => {
-    const pipeline = dashboard.pipeline || {};
-    return [
-      { name: 'Applied', value: pipeline.applied || 0, color: '#10b981', link: '/employer/applications?status=Applied' },
-      { name: 'Shortlisted', value: pipeline.shortlisted || 0, color: '#f59e0b', link: '/employer/shortlisted' },
-      { name: 'Interview', value: pipeline.interview || 0, color: '#6658dd', link: '/employer/interviews' },
-      { name: 'On Hold', value: pipeline.onHold || 0, color: '#f97316', link: '/employer/applications?status=OnHold' },
-      { name: 'Selected', value: pipeline.selected || 0, color: '#10b981', link: '/employer/selected?status=Selected' },
-      { name: 'Offered', value: pipeline.offered || 0, color: '#ec4899', link: '/employer/selected?status=Offer+Sent' },
-      { name: 'Rejected', value: pipeline.rejected || 0, color: '#ef4444', link: '/employer/applications?status=Rejected' }
-    ];
-  }, [dashboard.pipeline]);
-
-  const maxPipelineVal = useMemo(() => {
-    const vals = pipelineData.map(d => d.value);
-    return Math.max(...vals, 1);
-  }, [pipelineData]);
-
-  const totalPipelineCandidates = useMemo(() => {
-    return pipelineData.reduce((sum, d) => sum + d.value, 0);
-  }, [pipelineData]);
-
-  const jobSources = useMemo(() => {
-    const jobs = dashboard.stats?.jobs || {};
-    return [
-      { name: 'Active', value: jobs.active || 0, color: '#10b981' },
-      { name: 'Inactive', value: jobs.draft || 0, color: '#f59e0b' },
-      { name: 'Paused', value: jobs.closed || 0, color: '#8e44ad' },
-      { name: 'Expired', value: jobs.expired || 0, color: '#ef4444' }
-    ];
-  }, [dashboard.stats?.jobs]);
-
   const filteredJobs = useMemo(() => {
     return (dashboard.activeJobs || []).filter(job => {
       const matchesSearch = String(job.title || '').toLowerCase().includes(searchTerm.toLowerCase());
@@ -165,19 +148,27 @@ export const EmployerDashboard = () => {
 
       {/* Subscription card */}
       <section className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-5">
           <div className="flex gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-500">
               <Crown className="h-6 w-6" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-3">
-                <h2 className="text-base font-extrabold text-[#111827]">{subscription.planName || 'Premium Plan'}</h2>
-                <span className="inline-flex items-center rounded bg-emerald-500 px-2 py-0.5 text-[10px] font-black text-white">{subscription.status || 'Active'}</span>
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h2 className="text-base font-extrabold text-[#111827]">{subscription.planName || 'Premium Plan'}</h2>
+                    <span className="inline-flex items-center rounded bg-emerald-500 px-2 py-0.5 text-[10px] font-black text-white">{subscription.status || 'Active'}</span>
+                  </div>
+                  <p className="mt-1 text-xs font-semibold text-slate-400">
+                    Valid until: <span className="font-extrabold text-slate-700">{formatDate(subscription.validUntil, 'Not assigned')}</span>
+                  </p>
+                </div>
+                <Link to="/employer/subscription" className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#6658dd] px-5 text-[13px] font-extrabold text-white shadow-md shadow-indigo-605/10 transition hover:bg-[#5848d8] sm:w-auto">
+                  <Crown className="h-4 w-4" />
+                  Upgrade Plan
+                </Link>
               </div>
-              <p className="mt-1 text-xs font-semibold text-slate-400">
-                Valid until: <span className="font-extrabold text-slate-700">{formatDate(subscription.validUntil, 'Not assigned')}</span>
-              </p>
               <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2 sm:max-w-[780px]">
                 <div className="rounded-xl border border-slate-100 bg-[#f8fafc] p-4">
                   <h4 className="text-xs font-black uppercase tracking-wider text-slate-500">Job Posts</h4>
@@ -232,18 +223,12 @@ export const EmployerDashboard = () => {
               </div>
             </div>
           </div>
-          <Link to="/employer/subscription" className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#6658dd] px-5 text-[13px] font-extrabold text-white shadow-md shadow-indigo-605/10 transition hover:bg-[#5848d8] lg:w-auto">
-            <Crown className="h-4 w-4" />
-            Upgrade Plan
-          </Link>
         </div>
       </section>
 
-      {/* 4 Stats Cards + Donut Chart Layout */}
+      {/* Jobs Stats Cards */}
       <section className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-          {/* Stats Cards (Left Column) */}
-          <div className="lg:col-span-8 grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {/* Card 1: Total Jobs */}
             <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between h-36">
               <div className="flex items-start justify-between">
@@ -252,7 +237,7 @@ export const EmployerDashboard = () => {
                 </div>
                 <div className="text-right">
                   <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.jobs?.total || 0}</span>
-                  <span className="text-xs font-semibold text-slate-400 mt-1 block">Total Jobs</span>
+                  <JobStatLabel tooltip="All jobs created by you, including active, draft, paused, closed, and expired jobs.">Total Jobs</JobStatLabel>
                 </div>
               </div>
               <Link to="/employer/jobs" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
@@ -266,7 +251,7 @@ export const EmployerDashboard = () => {
                 </div>
                 <div className="text-right">
                   <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.jobs?.active || 0}</span>
-                  <span className="text-xs font-semibold text-slate-400 mt-1 block">Active Jobs</span>
+                  <JobStatLabel tooltip="Published jobs that are currently visible to candidates and open for applications.">Active Jobs</JobStatLabel>
                 </div>
               </div>
               <Link to="/employer/jobs?status=Active" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
@@ -280,7 +265,7 @@ export const EmployerDashboard = () => {
                 </div>
                 <div className="text-right">
                   <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.jobs?.draft || 0}</span>
-                  <span className="text-xs font-semibold text-slate-400 mt-1 block">Inactive Jobs</span>
+                  <JobStatLabel tooltip="Draft jobs saved by you but not published yet. Candidates cannot see or apply to them until you publish.">Inactive Jobs</JobStatLabel>
                 </div>
               </div>
               <Link to="/employer/jobs?status=Draft" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
@@ -294,68 +279,25 @@ export const EmployerDashboard = () => {
                 </div>
                 <div className="text-right">
                   <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.jobs?.closed || 0}</span>
-                  <span className="text-xs font-semibold text-slate-400 mt-1 block">Paused Jobs</span>
+                  <JobStatLabel tooltip="Jobs paused or closed by you before expiry. They stay hidden until you reopen or renew them.">Paused Jobs</JobStatLabel>
                 </div>
               </div>
               <Link to="/employer/jobs?status=Closed" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
             </div>
-          </div>
 
-          {/* Donut Chart (Right Column) */}
-          <div className="lg:col-span-4 flex flex-col items-center justify-center border-t border-slate-100 lg:border-t-0 lg:border-l lg:border-slate-100 pt-6 lg:pt-0 lg:pl-6">
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-4">Jobs Distribution</h3>
-            <div className="relative h-32 w-32">
-              <svg viewBox="0 0 190 190" className="-rotate-90">
-                <circle cx="95" cy="95" r="70" fill="none" stroke="#f1f5f9" strokeWidth="24" />
-                {(() => {
-                  const radius = 70;
-                  const circumference = 2 * Math.PI * radius;
-                  let offset = 0;
-                  const total = dashboard.stats?.jobs?.total || 0;
-
-                  return jobSources.map((source) => {
-                    const dash = total ? (source.value / total) * circumference : 0;
-                    const strokeOffset = -offset;
-                    offset += dash;
-
-                    if (dash === 0) return null;
-
-                    return (
-                      <circle
-                        key={source.name}
-                        cx="95"
-                        cy="95"
-                        r={radius}
-                        fill="none"
-                        stroke={source.color}
-                        strokeWidth="24"
-                        strokeDasharray={`${dash} ${circumference - dash}`}
-                        strokeDashoffset={strokeOffset}
-                        className="transition-all duration-550 ease-in-out"
-                      />
-                    );
-                  });
-                })()}
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-2xl font-black text-slate-800">{dashboard.stats?.jobs?.total || 0}</span>
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Jobs</span>
+            {/* Card 5: Expired Jobs */}
+            <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between h-36">
+              <div className="flex items-start justify-between">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-rose-500 text-white">
+                  <Clock className="h-5 w-5" />
+                </div>
+                <div className="text-right">
+                  <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.jobs?.expired || 0}</span>
+                  <JobStatLabel tooltip="Jobs whose expiry date has passed automatically. Renew them to make them active again.">Expired Jobs</JobStatLabel>
+                </div>
               </div>
+              <Link to="/employer/jobs?status=Expired" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
             </div>
-
-            {/* Legend */}
-            <div className="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-1.5 max-w-[240px]">
-              {jobSources.map((source) => {
-                const pct = (dashboard.stats?.jobs?.total > 0) ? (source.value / dashboard.stats?.jobs?.total) * 100 : 0;
-                return (
-                  <div key={source.name} className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500">
-                    <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: source.color }} />
-                    <span>{source.name} ({pct.toFixed(0)}%)</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
         </div>
       </section>
 
@@ -363,9 +305,7 @@ export const EmployerDashboard = () => {
       <section className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
         <h2 className="text-sm font-extrabold text-[#111827] mb-4">Hiring Pipeline <span className="text-slate-400 font-medium">(All Jobs)</span></h2>
         
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-          {/* Pipeline Cards (Left Column) */}
-          <div className="lg:col-span-8 grid gap-3 grid-cols-2 sm:grid-cols-3">
+        <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
             {/* Applied */}
             <Link to="/employer/applications?status=Applied" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between">
               <div className="flex items-center gap-2">
@@ -375,6 +315,19 @@ export const EmployerDashboard = () => {
                 <div className="text-left">
                   <span className="block text-[11px] font-bold text-slate-450">Applied</span>
                   <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.applied || 0}</span>
+                </div>
+              </div>
+            </Link>
+
+            {/* Reviewed */}
+            <Link to="/employer/applications?status=Reviewed" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-50 text-cyan-600">
+                  <Eye className="h-4 w-4" />
+                </div>
+                <div className="text-left">
+                  <span className="block text-[11px] font-bold text-slate-450">Reviewed</span>
+                  <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.reviewed || dashboard.stats?.reviewed || 0}</span>
                 </div>
               </div>
             </Link>
@@ -445,7 +398,7 @@ export const EmployerDashboard = () => {
             </Link>
 
             {/* Rejected */}
-            <Link to="/employer/applications?status=Rejected" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between col-span-2 sm:col-span-1">
+            <Link to="/employer/applications?status=Rejected" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between">
               <div className="flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
                   <XCircle className="h-4 w-4" />
@@ -456,71 +409,6 @@ export const EmployerDashboard = () => {
                 </div>
               </div>
             </Link>
-          </div>
-
-          {/* Donut Chart (Right Column) */}
-          <div className="lg:col-span-4 flex flex-col items-center justify-center border-t border-slate-100 lg:border-t-0 lg:border-l lg:border-slate-100 pt-6 lg:pt-0 lg:pl-6">
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-4">Pipeline Distribution</h3>
-            {totalPipelineCandidates === 0 ? (
-              <div className="flex flex-col items-center justify-center h-40">
-                <span className="text-xs font-bold text-slate-400">No candidates in pipeline</span>
-              </div>
-            ) : (
-              <>
-                <div className="relative h-32 w-32">
-                  <svg viewBox="0 0 190 190" className="-rotate-90">
-                    <circle cx="95" cy="95" r="70" fill="none" stroke="#f1f5f9" strokeWidth="24" />
-                    {(() => {
-                      const radius = 70;
-                      const circumference = 2 * Math.PI * radius;
-                      let offset = 0;
-
-                      return pipelineData.map((stage) => {
-                        const dash = totalPipelineCandidates ? (stage.value / totalPipelineCandidates) * circumference : 0;
-                        const strokeOffset = -offset;
-                        offset += dash;
-
-                        if (dash === 0) return null;
-
-                        return (
-                          <circle
-                            key={stage.name}
-                            cx="95"
-                            cy="95"
-                            r={radius}
-                            fill="none"
-                            stroke={stage.color}
-                            strokeWidth="24"
-                            strokeDasharray={`${dash} ${circumference - dash}`}
-                            strokeDashoffset={strokeOffset}
-                            className="transition-all duration-550 ease-in-out"
-                          />
-                        );
-                      });
-                    })()}
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-black text-slate-800">{totalPipelineCandidates}</span>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Candidates</span>
-                  </div>
-                </div>
-
-                {/* Legend */}
-                <div className="mt-4 flex flex-wrap justify-center gap-x-3 gap-y-1 max-w-[260px]">
-                  {pipelineData.map((stage) => {
-                    const pct = totalPipelineCandidates > 0 ? (stage.value / totalPipelineCandidates) * 100 : 0;
-                    if (stage.value === 0) return null;
-                    return (
-                      <div key={stage.name} className="flex items-center gap-1.5 text-[9px] font-bold text-slate-500">
-                        <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: stage.color }} />
-                        <span>{stage.name} ({pct.toFixed(0)}%)</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-          </div>
         </div>
       </section>
 
@@ -598,28 +486,31 @@ export const EmployerDashboard = () => {
 
         {/* Table view */}
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[780px] text-left border-collapse">
+          <table className="w-full min-w-[1380px] text-left border-separate border-spacing-0">
             <thead>
-              <tr className="border-b border-slate-100 text-xs font-black uppercase tracking-wider text-slate-400">
-                <th className="pb-3 text-left w-[220px]">Job Title</th>
-                <th className="pb-3 text-left w-[100px]">Status</th>
-                <th className="pb-3 text-center">Applicants</th>
-                <th className="pb-3 text-center">Shortlisted</th>
-                <th className="pb-3 text-center">Interview</th>
-                <th className="pb-3 text-center">On Hold</th>
-                <th className="pb-3 text-center">Selected</th>
-                <th className="pb-3 text-center">Offered</th>
-                <th className="pb-3 text-right pr-2">Action</th>
+              <tr className="border-b border-slate-100 text-[11px] font-black uppercase tracking-wider text-slate-400">
+                <th className="w-[220px] border-b border-slate-100 pb-3 pr-5 text-left">Job Title</th>
+                <th className="w-[110px] border-b border-slate-100 px-4 pb-3 text-left">Status</th>
+                <th className="w-[130px] border-b border-slate-100 px-4 pb-3 text-left">Action</th>
+                <th className="w-[120px] border-b border-slate-100 border-l border-slate-100 bg-slate-50/60 px-4 pb-3 text-center leading-4">Total<br />Applicants</th>
+                <th className="w-[95px] border-b border-slate-100 border-l border-slate-100 px-4 pb-3 text-center">Applied</th>
+                <th className="w-[105px] border-b border-slate-100 border-l border-slate-100 bg-slate-50/60 px-4 pb-3 text-center">Reviewed</th>
+                <th className="w-[115px] border-b border-slate-100 border-l border-slate-100 px-4 pb-3 text-center">Shortlisted</th>
+                <th className="w-[105px] border-b border-slate-100 border-l border-slate-100 bg-slate-50/60 px-4 pb-3 text-center">Interview</th>
+                <th className="w-[95px] border-b border-slate-100 border-l border-slate-100 px-4 pb-3 text-center leading-4">On<br />Hold</th>
+                <th className="w-[100px] border-b border-slate-100 border-l border-slate-100 bg-slate-50/60 px-4 pb-3 text-center">Selected</th>
+                <th className="w-[95px] border-b border-slate-100 border-l border-slate-100 px-4 pb-3 text-center">Offered</th>
+                <th className="w-[100px] border-b border-slate-100 border-l border-slate-100 bg-slate-50/60 px-4 pb-3 text-center">Rejected</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredJobs.map((job) => (
-                <tr key={job.id} className="text-sm hover:bg-slate-50/40">
-                  <td className="py-4">
+              {filteredJobs.map((job, index) => (
+                <tr key={job.id} className={`text-sm transition hover:bg-indigo-50/40 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
+                  <td className="py-4 pr-5">
                     <Link to={`/employer/jobs/${job.id}`} className="font-bold text-slate-800 hover:text-[#0047C7] transition block truncate max-w-[210px]">{job.title}</Link>
                     <span className="text-[11px] font-semibold text-slate-400">{job.location || '-'}</span>
                   </td>
-                  <td className="py-4">
+                  <td className="px-4 py-4">
                     <span className={`inline-flex items-center rounded px-2 py-0.5 text-[10px] font-extrabold uppercase border ${
                       job.status === 'Active'
                         ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
@@ -628,26 +519,8 @@ export const EmployerDashboard = () => {
                       {job.status}
                     </span>
                   </td>
-                  <td className="py-4 text-center font-bold text-slate-700">
-                    <Link to={`/employer/applications?jobTitle=${encodeURIComponent(job.title)}`} className="hover:text-[#0047C7]">{job.applications || 0}</Link>
-                  </td>
-                  <td className="py-4 text-center font-bold text-slate-700">
-                    <Link to={`/employer/shortlisted?jobTitle=${encodeURIComponent(job.title)}`} className="hover:text-[#0047C7]">{job.shortlisted || 0}</Link>
-                  </td>
-                  <td className="py-4 text-center font-bold text-slate-700">
-                    <Link to={`/employer/interviews?jobTitle=${encodeURIComponent(job.title)}`} className="hover:text-[#0047C7]">{job.interviews || 0}</Link>
-                  </td>
-                  <td className="py-4 text-center font-bold text-slate-700">
-                    <Link to={`/employer/applications?jobTitle=${encodeURIComponent(job.title)}&status=OnHold`} className="hover:text-[#0047C7]">{job.onHold || 0}</Link>
-                  </td>
-                  <td className="py-4 text-center font-bold text-slate-700">
-                    <Link to={`/employer/selected?jobTitle=${encodeURIComponent(job.title)}&status=Selected`} className="hover:text-[#0047C7]">{job.selected || 0}</Link>
-                  </td>
-                  <td className="py-4 text-center font-bold text-slate-700">
-                    <Link to={`/employer/selected?jobTitle=${encodeURIComponent(job.title)}&status=Offer+Sent`} className="hover:text-[#0047C7]">{job.offered || 0}</Link>
-                  </td>
-                  <td className="py-4 text-right pr-2">
-                    <div className="flex items-center justify-end gap-2 relative">
+                  <td className="px-4 py-4 text-left">
+                    <div className="flex items-center justify-start gap-2 relative">
                       {/* View Job detail link */}
                       <Link
                         to={`/employer/jobs/${job.id}`}
@@ -678,9 +551,9 @@ export const EmployerDashboard = () => {
                       {activeMenuJobId === job.id && (
                         <>
                           <div className="fixed inset-0 z-10" onClick={() => setActiveMenuJobId(null)} />
-                          <div className="absolute right-0 top-9 z-20 w-40 rounded-lg border border-slate-100 bg-white py-1 shadow-lg text-left">
+                          <div className="absolute left-0 top-9 z-20 w-40 rounded-lg border border-slate-100 bg-white py-1 shadow-lg text-left">
                             <Link
-                              to={`/employer/jobs/${job.id}`}
+                              to={`/employer/jobs/${job.id}/edit`}
                               className="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                               onClick={() => setActiveMenuJobId(null)}
                             >
@@ -709,11 +582,38 @@ export const EmployerDashboard = () => {
                       )}
                     </div>
                   </td>
+                  <td className="border-l border-slate-100 bg-slate-50/40 px-4 py-4 text-center font-bold text-slate-700">
+                    <Link to={`/employer/applications?jobTitle=${encodeURIComponent(job.title)}`} className="hover:text-[#0047C7]">{job.applications || 0}</Link>
+                  </td>
+                  <td className="border-l border-slate-100 px-4 py-4 text-center font-bold text-slate-700">
+                    <Link to={`/employer/applications?jobTitle=${encodeURIComponent(job.title)}&status=Applied`} className="hover:text-[#0047C7]">{job.applied || 0}</Link>
+                  </td>
+                  <td className="border-l border-slate-100 bg-slate-50/40 px-4 py-4 text-center font-bold text-slate-700">
+                    <Link to={`/employer/applications?jobTitle=${encodeURIComponent(job.title)}&status=Reviewed`} className="hover:text-[#0047C7]">{job.reviewed || 0}</Link>
+                  </td>
+                  <td className="border-l border-slate-100 px-4 py-4 text-center font-bold text-slate-700">
+                    <Link to={`/employer/shortlisted?jobTitle=${encodeURIComponent(job.title)}`} className="hover:text-[#0047C7]">{job.shortlisted || 0}</Link>
+                  </td>
+                  <td className="border-l border-slate-100 bg-slate-50/40 px-4 py-4 text-center font-bold text-slate-700">
+                    <Link to={`/employer/interviews?jobTitle=${encodeURIComponent(job.title)}`} className="hover:text-[#0047C7]">{job.interviews || 0}</Link>
+                  </td>
+                  <td className="border-l border-slate-100 px-4 py-4 text-center font-bold text-slate-700">
+                    <Link to={`/employer/applications?jobTitle=${encodeURIComponent(job.title)}&status=OnHold`} className="hover:text-[#0047C7]">{job.onHold || 0}</Link>
+                  </td>
+                  <td className="border-l border-slate-100 bg-slate-50/40 px-4 py-4 text-center font-bold text-slate-700">
+                    <Link to={`/employer/selected?jobTitle=${encodeURIComponent(job.title)}&status=Selected`} className="hover:text-[#0047C7]">{job.selected || 0}</Link>
+                  </td>
+                  <td className="border-l border-slate-100 px-4 py-4 text-center font-bold text-slate-700">
+                    <Link to={`/employer/selected?jobTitle=${encodeURIComponent(job.title)}&status=Offer+Sent`} className="hover:text-[#0047C7]">{job.offered || 0}</Link>
+                  </td>
+                  <td className="border-l border-slate-100 bg-slate-50/40 px-4 py-4 text-center font-bold text-slate-700">
+                    <Link to={`/employer/applications?jobTitle=${encodeURIComponent(job.title)}&status=Rejected`} className="hover:text-[#0047C7]">{job.rejected || 0}</Link>
+                  </td>
                 </tr>
               ))}
               {filteredJobs.length === 0 && (
                 <tr>
-                  <td colSpan="8" className="py-8 text-center text-sm font-bold text-slate-400">No jobs found matching the search/filters.</td>
+                  <td colSpan="12" className="py-8 text-center text-sm font-bold text-slate-400">No jobs found matching the search/filters.</td>
                 </tr>
               )}
             </tbody>

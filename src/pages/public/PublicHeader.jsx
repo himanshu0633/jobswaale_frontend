@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import {
   Bookmark,
   Building,
@@ -46,6 +47,13 @@ export const PublicHeader = () => {
   const [pricingDesktopOpen, setPricingDesktopOpen] = useState(false); // Added state for pricing dropdown
   const [dashboardDesktopOpen, setDashboardDesktopOpen] = useState(false);
   const [dashboardMobileOpen, setDashboardMobileOpen] = useState(false);
+  const [jobseekerProfile, setJobseekerProfile] = useState({
+    name: '',
+    role: 'Job Seeker',
+    jobSearchStatus: 'looking',
+    profileCompletionScore: 0
+  });
+  const [savingJobStatus, setSavingJobStatus] = useState(false);
   const [authUser, setAuthUser] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('publicUser') || 'null');
@@ -63,11 +71,6 @@ export const PublicHeader = () => {
   const accountType = String(authUser?.accountType || authUser?.role || authUser?.roleName || '').trim().toLowerCase();
   const isEmployerUser = accountType === 'employer';
   const isJobseekerUser = accountType === 'jobseeker';
-  const dashboardPath = isEmployerUser
-    ? '/employer'
-    : isJobseekerUser
-      ? '/jobseeker'
-      : '/';
   const pricingPath = (() => {
     if (!isLoggedIn) return null;
     if (isEmployerUser) return '/employer-plan';
@@ -94,16 +97,16 @@ export const PublicHeader = () => {
   ];
   const jobseekerDashboardLinks = [
     { to: '/jobseeker/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/jobseeker/profile', icon: User, label: 'My Profile' },
     { to: '/jobseeker/jobs-applied', icon: Briefcase, label: 'Jobs Applied' },
     { to: '/jobseeker/saved-jobs', icon: Bookmark, label: 'Saved Jobs' },
     { to: '/jobseeker/saved-employers', icon: Building, label: 'Saved Employers' },
-    { to: '/jobseeker/subscription', icon: Star, label: 'My Plan' },
-    { to: '/jobseeker/messages', icon: MessageSquare, label: 'Messages' },
-    { to: '/jobseeker/profile', icon: Settings, label: 'My Account' }
+    { to: '/jobseeker/messages', icon: MessageSquare, label: 'Messages' }
   ];
   const dashboardMenuLinks = isEmployerUser ? employerDashboardLinks : isJobseekerUser ? jobseekerDashboardLinks : [];
-  const profileName = authUser?.firstName || authUser?.name || authUser?.companyName || authUser?.email || 'User';
+  const jobseekerName = jobseekerProfile.name || [authUser?.firstName, authUser?.lastName].filter(Boolean).join(' ').trim();
+  const profileName = isJobseekerUser
+    ? jobseekerName || authUser?.name || authUser?.email || 'Job Seeker'
+    : authUser?.companyName || authUser?.firstName || authUser?.name || authUser?.email || 'User';
   const profileInitials = String(profileName)
     .split(' ')
     .map((part) => part[0])
@@ -118,6 +121,32 @@ export const PublicHeader = () => {
     setAuthUser(null);
     setProfileDropdownOpen(false);
     navigate('/', { replace: true });
+  };
+
+  const profileScore = Math.min(Math.max(Number(jobseekerProfile.profileCompletionScore || 0), 0), 100);
+  const isLookingForJob = jobseekerProfile.jobSearchStatus !== 'not-looking';
+
+  const handleJobSearchStatusToggle = async () => {
+    if (!isJobseekerUser || savingJobStatus) return;
+    const nextStatus = isLookingForJob ? 'not-looking' : 'looking';
+    const previousStatus = jobseekerProfile.jobSearchStatus || 'looking';
+    const token = localStorage.getItem('publicToken');
+
+    setSavingJobStatus(true);
+    setJobseekerProfile((current) => ({ ...current, jobSearchStatus: nextStatus }));
+
+    try {
+      await axios.put(
+        `${BASE_API_URL}/jobseeker/profile`,
+        { jobSearchStatus: nextStatus },
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+      );
+    } catch {
+      setJobseekerProfile((current) => ({ ...current, jobSearchStatus: previousStatus }));
+      window.alert('Failed to update job search status. Please try again.');
+    } finally {
+      setSavingJobStatus(false);
+    }
   };
 
   // Close mobile drawer on route transition
@@ -174,6 +203,34 @@ export const PublicHeader = () => {
       window.removeEventListener('focus', syncAuthUser);
     };
   }, []);
+
+  useEffect(() => {
+    if (!isJobseekerUser) return;
+    let isMounted = true;
+    const token = localStorage.getItem('publicToken');
+
+    axios
+      .get(`${BASE_API_URL}/jobseeker/profile`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      })
+      .then((response) => {
+        if (isMounted) {
+          setJobseekerProfile((current) => ({ ...current, ...response.data }));
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setJobseekerProfile((current) => ({
+            ...current,
+            name: jobseekerName || current.name || 'Job Seeker'
+          }));
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isJobseekerUser, authUser?.firstName, authUser?.lastName]);
 
   // Load public settings to check if registration is enabled
   useEffect(() => {
@@ -302,13 +359,54 @@ export const PublicHeader = () => {
                 </span>
               </button>
               {profileDropdownOpen && (
-                <div className="absolute top-full right-0 mt-1.5 block w-52 rounded-xl border border-slate-200 bg-white py-2 shadow-xl z-50">
+                <div className="absolute top-full right-0 mt-1.5 block w-64 overflow-hidden rounded-xl border border-slate-200 bg-white py-2 shadow-xl z-50">
+                    {isJobseekerUser && (
+                      <div className="mx-2 mb-2 rounded-lg bg-[#002856] p-3 text-white">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FF6B00] text-sm font-black text-white">
+                            {profileInitials}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-extrabold leading-tight">{profileName}</p>
+                            <p className="mt-0.5 text-xs font-semibold text-white/55">Job Seeker</p>
+                            <div className="mt-2">
+                              <div className="mb-1 flex items-center justify-between text-[11px] font-black text-white/55">
+                                <span>Profile score</span>
+                                <span>{profileScore}%</span>
+                              </div>
+                              <div className="h-1.5 overflow-hidden rounded-full bg-white/15">
+                                <div className="h-full rounded-full bg-[#FF6B00]" style={{ width: `${profileScore}%` }} />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleJobSearchStatusToggle}
+                          disabled={savingJobStatus}
+                          className="mt-3 flex w-full items-center justify-between gap-3 rounded-lg bg-white/[0.07] px-3 py-2.5 text-left transition hover:bg-white/[0.12] disabled:opacity-70"
+                        >
+                          <span>
+                            <span className="block text-xs font-extrabold text-white">Job Search Status</span>
+                            <span className={`mt-0.5 block text-xs font-bold ${isLookingForJob ? 'text-emerald-300' : 'text-white/50'}`}>
+                              {isLookingForJob ? 'Looking for job' : 'Not looking'}
+                            </span>
+                          </span>
+                          <span className={`relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors ${isLookingForJob ? 'bg-emerald-500' : 'bg-white/20'}`}>
+                            <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${isLookingForJob ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                          </span>
+                        </button>
+                      </div>
+                    )}
                     <div className="border-b border-slate-200 px-4 py-2">
                       <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Signed in as</p>
                       <p className="mt-0.5 truncate text-xs font-semibold text-slate-700">{authUser?.email || 'user@jobswaale.com'}</p>
                     </div>
-                    <Link to={dashboardPath} onClick={() => setProfileDropdownOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">
-                      <LayoutDashboard className="h-4 w-4 text-slate-400" /> Go to Dashboard
+                    <Link to={isJobseekerUser ? '/jobseeker/profile' : '/employer/company'} onClick={() => setProfileDropdownOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">
+                      <User className="h-4 w-4 text-slate-400" /> My Profile
+                    </Link>
+                    <Link to={isJobseekerUser ? '/jobseeker/subscription' : '/employer/subscription'} onClick={() => setProfileDropdownOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">
+                      <Star className="h-4 w-4 text-slate-400" /> My Plan
                     </Link>
                     <div onClick={handleLogout} className="flex w-full cursor-pointer items-center gap-2.5 px-4 py-2.5 text-left text-xs font-semibold text-rose-500 transition hover:bg-slate-50">
                       <LogOut className="h-4 w-4" /> Sign Out
@@ -394,18 +492,60 @@ export const PublicHeader = () => {
           <nav className="flex flex-col gap-3.5">
             {isLoggedIn ? (
               <div className="mb-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white">
-                    {profileInitials}
+                {isJobseekerUser ? (
+                  <div className="rounded-xl bg-[#002856] p-3 text-white">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#FF6B00] text-base font-black text-white">
+                        {profileInitials}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-base font-extrabold leading-tight">{profileName}</p>
+                        <p className="mt-0.5 text-xs font-semibold text-white/55">Job Seeker</p>
+                        <div className="mt-2">
+                          <div className="mb-1 flex items-center justify-between text-[11px] font-black text-white/55">
+                            <span>Profile score</span>
+                            <span>{profileScore}%</span>
+                          </div>
+                          <div className="h-1.5 overflow-hidden rounded-full bg-white/15">
+                            <div className="h-full rounded-full bg-[#FF6B00]" style={{ width: `${profileScore}%` }} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleJobSearchStatusToggle}
+                      disabled={savingJobStatus}
+                      className="mt-3 flex w-full items-center justify-between gap-3 rounded-lg bg-white/[0.07] px-3 py-2.5 text-left transition hover:bg-white/[0.12] disabled:opacity-70"
+                    >
+                      <span>
+                        <span className="block text-xs font-extrabold text-white">Job Search Status</span>
+                        <span className={`mt-0.5 block text-xs font-bold ${isLookingForJob ? 'text-emerald-300' : 'text-white/50'}`}>
+                          {isLookingForJob ? 'Looking for job' : 'Not looking'}
+                        </span>
+                      </span>
+                      <span className={`relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors ${isLookingForJob ? 'bg-emerald-500' : 'bg-white/20'}`}>
+                        <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${isLookingForJob ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                      </span>
+                    </button>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">{profileName}</p>
-                    <p className="text-xs text-slate-500">Signed in</p>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white">
+                      {profileInitials}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">{profileName}</p>
+                      <p className="text-xs text-slate-500">Signed in</p>
+                    </div>
                   </div>
-                </div>
+                )}
                 <div className="mt-3 grid grid-cols-1 gap-1 border-t border-slate-200 pt-3">
-                  <Link to={dashboardPath} className="flex items-center gap-2 rounded-md px-2 py-2 text-sm font-semibold text-slate-700 hover:bg-white">
-                    <LayoutDashboard className="h-4 w-4 text-slate-400" /> Go to Dashboard
+                  <Link to={isJobseekerUser ? '/jobseeker/profile' : '/employer/company'} className="flex items-center gap-2 rounded-md px-2 py-2 text-sm font-semibold text-slate-700 hover:bg-white">
+                    <User className="h-4 w-4 text-slate-400" /> My Profile
+                  </Link>
+                  <Link to={isJobseekerUser ? '/jobseeker/subscription' : '/employer/subscription'} className="flex items-center gap-2 rounded-md px-2 py-2 text-sm font-semibold text-slate-700 hover:bg-white">
+                    <Star className="h-4 w-4 text-slate-400" /> My Plan
                   </Link>
                   <div onClick={handleLogout} className="flex items-center gap-2 rounded-md px-2 py-2 text-left text-sm font-semibold text-rose-500 hover:bg-white">
                     <LogOut className="h-4 w-4" /> Log out

@@ -1,12 +1,11 @@
 /* eslint-disable react-refresh/only-export-components */
-import { Suspense, useMemo, useState } from 'react';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import JobseekerFooter from './components/JobseekerFooter';
-import JobseekerHeader from './components/JobseekerHeader';
-import JobseekerSidebar from './components/JobseekerSidebar';
+import { Suspense } from 'react';
+import { Navigate, Outlet } from 'react-router-dom';
 import { MessageSocketProvider } from '../../context/MessageSocketContext';
+import FloatingChatButton from '../../components/FloatingChatButton';
 import ProfileCompletionPopup from '../../components/ProfileCompletionPopup';
 import PageSkeleton from '../../components/SkeletonLoader';
+import { PublicFooter, PublicHeader } from '../public/PublicPage';
 
 const getPublicUser = () => {
   try {
@@ -41,66 +40,20 @@ export const JobseekerProtectedRoute = () => {
 };
 
 export const JobseekerLayout = () => {
-  const [sidebarOpenMobile, setSidebarOpenMobile] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
-  const location = useLocation();
-
-  const pageTitle = useMemo(() => {
-    const path = location.pathname.replace(/^\/jobseeker\/?/, '').replace(/\/$/, '');
-    if (!path || path === 'dashboard') return 'Dashboard';
-    if (path === 'profile') return 'My Profile';
-    if (path === 'subscription') return 'My Plan';
-    if (path === 'jobs-applied') return 'Jobs Applied';
-    if (path === 'saved-jobs') return 'Saved Jobs';
-    if (path === 'saved-employers') return 'Saved Employers';
-    if (path === 'messages') return 'Messages';
-    if (path === 'applications') return 'Applications';
-    if (path === 'interviews') return 'Interviews';
-    if (path === 'selected') return 'Selected';
-    if (path === 'reports') return 'Reports';
-    return 'Jobseeker';
-  }, [location.pathname]);
-
-  const handleToggleSidebar = () => {
-    if (window.innerWidth >= 1024) {
-      setSidebarCollapsed((current) => !current);
-    } else {
-      setSidebarOpenMobile((current) => !current);
-    }
-  };
-
   return (
     <MessageSocketProvider role="jobseeker">
-      <div className="portal-shell flex min-h-screen flex-col bg-slate-50">
-        <JobseekerHeader
-          toggleSidebar={handleToggleSidebar}
-          title={pageTitle}
-          isCollapsed={sidebarCollapsed}
-        />
-
-        <div className="relative flex min-w-0 flex-1 ">
+      <div className="flex min-h-screen flex-col bg-white text-slate-900">
+        <PublicHeader />
+        <main className="min-w-0 flex-grow bg-[#f5f6f8] pt-20 sm:pt-24">
+          <div className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
           <ProfileCompletionPopup portal="jobseeker" />
-          <JobseekerSidebar
-            isOpen={sidebarOpenMobile}
-            isCollapsed={sidebarCollapsed}
-            toggleSidebar={() => setSidebarOpenMobile(false)}
-          />
-
-          <div
-            className={`flex min-w-0 flex-grow flex-col bg-[#f5f6f8] transition-all duration-300 ${
-              sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'
-            } portal-content`}
-          >
-            <main className="min-w-0 flex-grow overflow-x-hidden p-4 md:p-5 lg:p-6">
-              <Suspense fallback={<PageSkeleton />}>
-                <Outlet />
-              </Suspense>
-            </main>
-
-            <JobseekerFooter />
+            <Suspense fallback={<PageSkeleton />}>
+              <Outlet />
+            </Suspense>
           </div>
-        </div>
+        </main>
+        <PublicFooter />
+        <FloatingChatButton />
       </div>
     </MessageSocketProvider>
   );
