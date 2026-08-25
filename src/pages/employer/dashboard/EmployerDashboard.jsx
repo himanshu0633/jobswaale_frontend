@@ -169,40 +169,40 @@ export const EmployerDashboard = () => {
                 {/* Status boxes */}
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 flex-1 max-w-[620px]">
                   {/* Job Posts */}
-                  <div className="rounded-xl border border-slate-100 bg-[#f8fafc] p-4">
-                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-500">Job Posts</h4>
-                    <div className="mt-2.5 grid grid-cols-2 gap-2">
+                  <div className="rounded-xl border border-slate-100 bg-[#f8fafc] p-2.5 px-3.5">
+                    <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-500">Job Posts</h4>
+                    <div className="mt-1.5 grid grid-cols-2 gap-2">
                       <div>
-                        <p className="text-[11px] font-bold text-slate-400">Used / Limit</p>
-                        <p className="text-sm font-extrabold text-slate-750">{subscription.jobsUsed || 0} <span className="text-slate-400">/ {subscription.jobLimit || 0}</span></p>
+                        <p className="text-[10px] font-bold text-slate-400">Used / Limit</p>
+                        <p className="text-xs font-extrabold text-slate-750">{subscription.jobsUsed || 0} <span className="text-slate-400">/ {subscription.jobLimit || 0}</span></p>
                       </div>
                       <div>
-                        <p className="text-[11px] font-bold text-slate-400">Remaining</p>
-                        <p className="text-sm font-extrabold text-emerald-600">{subscription.remainingCredits || 0}</p>
+                        <p className="text-[10px] font-bold text-slate-400">Remaining</p>
+                        <p className="text-xs font-extrabold text-emerald-600">{subscription.remainingCredits || 0}</p>
                       </div>
                     </div>
-                    <div className="mt-3.5">
-                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+                    <div className="mt-2">
+                      <div className="h-1 w-full overflow-hidden rounded-full bg-slate-200">
                         <div className="h-full bg-indigo-500 transition-all duration-350" style={{ width: `${subscription.utilization || 0}%` }} />
                       </div>
-                      <p className="mt-1.5 text-[10px] font-bold text-slate-400">{subscription.utilization || 0}% utilized</p>
+                      <p className="mt-0.5 text-[9px] font-bold text-slate-400">{subscription.utilization || 0}% utilized</p>
                     </div>
                   </div>
 
                   {/* Resume Unlocks */}
-                  <div className="rounded-xl border border-slate-100 bg-[#f8fafc] p-4">
-                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-500">Resume Unlocks</h4>
-                    <div className="mt-2.5 grid grid-cols-2 gap-2">
+                  <div className="rounded-xl border border-slate-100 bg-[#f8fafc] p-2.5 px-3.5">
+                    <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-500">Resume Unlocks</h4>
+                    <div className="mt-1.5 grid grid-cols-2 gap-2">
                       <div>
-                        <p className="text-[11px] font-bold text-slate-400">Unlocked / Limit</p>
-                        <p className="text-sm font-extrabold text-slate-750">{subscription.unlocksUsed || 0} <span className="text-slate-400">/ {subscription.unlockLimit || 0}</span></p>
+                        <p className="text-[10px] font-bold text-slate-400">Unlocked / Limit</p>
+                        <p className="text-xs font-extrabold text-slate-750">{subscription.unlocksUsed || 0} <span className="text-slate-400">/ {subscription.unlockLimit || 0}</span></p>
                       </div>
                       <div>
-                        <p className="text-[11px] font-bold text-slate-400">Remaining</p>
-                        <p className="text-sm font-extrabold text-emerald-600">{subscription.remainingUnlocks ?? 0}</p>
+                        <p className="text-[10px] font-bold text-slate-400">Remaining</p>
+                        <p className="text-xs font-extrabold text-emerald-600">{subscription.remainingUnlocks ?? 0}</p>
                       </div>
                     </div>
-                    <div className="mt-3.5">
+                    <div className="mt-2">
                       {(() => {
                         const total = Number(subscription.unlockLimit);
                         const used = Number(subscription.unlocksUsed || 0);
@@ -211,10 +211,10 @@ export const EmployerDashboard = () => {
                           : 0;
                         return (
                           <>
-                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+                            <div className="h-1 w-full overflow-hidden rounded-full bg-slate-200">
                               <div className="h-full bg-emerald-500 transition-all duration-350" style={{ width: `${percent}%` }} />
                             </div>
-                            <p className="mt-1.5 text-[10px] font-bold text-slate-400">{percent}% utilized</p>
+                            <p className="mt-0.5 text-[9px] font-bold text-slate-400">{percent}% utilized</p>
                           </>
                         );
                       })()}
