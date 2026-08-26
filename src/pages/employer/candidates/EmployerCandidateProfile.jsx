@@ -967,6 +967,8 @@ const EmployerCandidateProfile = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
       <SendOfferModal
         isOpen={offerModal.isOpen}
         onClose={() => setOfferModal(prev => ({ ...prev, isOpen: false }))}

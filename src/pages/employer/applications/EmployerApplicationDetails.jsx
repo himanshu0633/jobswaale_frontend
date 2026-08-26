@@ -1090,6 +1090,7 @@ const EmployerApplicationDetails = () => {
             </div>
           </div>
         </div>
+      )}
       <SendOfferModal
         isOpen={offerModal.isOpen}
         onClose={() => setOfferModal(prev => ({ ...prev, isOpen: false }))}
