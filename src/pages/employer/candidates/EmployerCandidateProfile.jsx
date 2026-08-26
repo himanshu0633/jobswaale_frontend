@@ -395,12 +395,7 @@ const EmployerCandidateProfile = () => {
       label: 'Select',
       tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
       icon: UserPlus,
-      onClick: () => setOfferModal({
-        isOpen: true,
-        applicationId: candidate?.application?.id,
-        candidateEmail: candidate?.userId?.email || '',
-        candidateName: candidate?.name || ''
-      })
+      onClick: () => updateStatus('Offered')
     });
 
     // 5. Offer Sent
@@ -409,7 +404,12 @@ const EmployerCandidateProfile = () => {
       label: 'Offer Sent',
       tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
       icon: Send,
-      onClick: () => updateOfferStatus('Offer Sent')
+      onClick: () => setOfferModal({
+        isOpen: true,
+        applicationId: candidate?.application?.id,
+        candidateEmail: candidate?.userId?.email || '',
+        candidateName: candidate?.name || ''
+      })
     });
 
     // 6. Accept
@@ -481,12 +481,7 @@ const EmployerCandidateProfile = () => {
         label: 'Select',
         tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
         icon: UserPlus,
-        onClick: () => setOfferModal({
-          isOpen: true,
-          applicationId: candidate?.application?.id,
-          candidateEmail: candidate?.userId?.email || '',
-          candidateName: candidate?.name || ''
-        })
+        onClick: () => updateStatus('Offered')
       }
     ];
   }

@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import ClearFilterButton from '../../../components/ClearFilterButton';
+import { SendOfferModal } from '../../../components/SendOfferModal';
 
 const initialFilters = { search: '', jobTitle: '', status: '', selectionDate: '', minSalary: '' };
 
@@ -63,7 +64,7 @@ const SelectField = ({ label, value, onChange, children }) => (
   </div>
 );
 
-const OfferActions = ({ candidate, isUpdating, onUpdate, onReject }) => (
+const OfferActions = ({ candidate, isUpdating, onUpdate, onReject, onSendOffer }) => (
   <div className="mx-auto grid w-[280px] grid-cols-2 gap-2">
     <Link
       to={`/employer/applications/${candidate.applicationId}`}
@@ -77,7 +78,7 @@ const OfferActions = ({ candidate, isUpdating, onUpdate, onReject }) => (
     <button
       type="button"
       disabled={isUpdating}
-      onClick={() => onUpdate(candidate, 'Offer Sent')}
+      onClick={() => onSendOffer(candidate)}
       title="Mark Offer Sent"
       className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50 disabled:opacity-60"
     >
@@ -151,6 +152,12 @@ export const EmployerSelected = () => {
   const [error, setError] = useState('');
   const [updatingId, setUpdatingId] = useState('');
   const [openDropdownId, setOpenDropdownId] = useState('');
+  const [offerModal, setOfferModal] = useState({
+    isOpen: false,
+    applicationId: '',
+    candidateEmail: '',
+    candidateName: ''
+  });
   const [refreshKey, setRefreshKey] = useState(0);
 
   const setFilter = (key, value) => {
@@ -336,6 +343,12 @@ export const EmployerSelected = () => {
                     isUpdating={updatingId === candidate.id}
                     onUpdate={updateOfferStatus}
                     onReject={handleReject}
+                    onSendOffer={(cand) => setOfferModal({
+                      isOpen: true,
+                      applicationId: cand.applicationId,
+                      candidateEmail: cand.email,
+                      candidateName: cand.name
+                    })}
                   />
                 </div>
               </div>
@@ -363,6 +376,12 @@ export const EmployerSelected = () => {
                         isUpdating={updatingId === candidate.id}
                         onUpdate={updateOfferStatus}
                         onReject={handleReject}
+                        onSendOffer={(cand) => setOfferModal({
+                          isOpen: true,
+                          applicationId: cand.applicationId,
+                          candidateEmail: cand.email,
+                          candidateName: cand.name
+                        })}
                       />
                     </td>
                   </tr>
@@ -377,6 +396,16 @@ export const EmployerSelected = () => {
           </div>
         </div>
       </section>
+      <SendOfferModal
+        isOpen={offerModal.isOpen}
+        onClose={() => setOfferModal(prev => ({ ...prev, isOpen: false }))}
+        applicationId={offerModal.applicationId}
+        candidateEmail={offerModal.candidateEmail}
+        candidateName={offerModal.candidateName}
+        onSuccess={() => {
+          setRefreshKey(prev => prev + 1);
+        }}
+      />
     </div>
   );
 };

@@ -310,15 +310,6 @@ export const EmployerShortlisted = () => {
   // Open modals helper
   const openModal = (candidate, type) => {
     setOpenDropdownId(null);
-    if (type === 'select') {
-      setOfferModal({
-        isOpen: true,
-        applicationId: candidate.applicationId || candidate.id || candidate._id,
-        candidateEmail: candidate.email,
-        candidateName: candidate.name
-      });
-      return;
-    }
     setActiveCandidate(candidate);
     setModalType(type);
     setModalError('');

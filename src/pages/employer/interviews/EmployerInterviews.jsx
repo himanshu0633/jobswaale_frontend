@@ -393,12 +393,7 @@ export const EmployerInterviews = () => {
                     <button
                       type="button"
                       disabled={loading}
-                      onClick={() => setOfferModal({
-                        isOpen: true,
-                        applicationId: interview.applicationId,
-                        candidateEmail: interview.email,
-                        candidateName: interview.name
-                      })}
+                      onClick={() => handleStatusUpdate(interview.applicationId, 'Offered')}
                       title="Select Candidate"
                       className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
@@ -462,12 +457,7 @@ export const EmployerInterviews = () => {
                           <button
                             type="button"
                             disabled={loading}
-                            onClick={() => setOfferModal({
-                              isOpen: true,
-                              applicationId: interview.applicationId,
-                              candidateEmail: interview.email,
-                              candidateName: interview.name
-                            })}
+                            onClick={() => handleStatusUpdate(interview.applicationId, 'Offered')}
                             title="Select Candidate"
                             className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed"
                           >

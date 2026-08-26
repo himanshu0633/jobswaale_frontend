@@ -492,12 +492,7 @@ const EmployerApplicationDetails = () => {
             label: 'Select',
             tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
             icon: UserPlus,
-            onClick: () => setOfferModal({
-              isOpen: true,
-              applicationId: id,
-              candidateEmail: application?.candidate?.userId?.email || '',
-              candidateName: application?.candidate?.name || ''
-            })
+            onClick: () => updateStatus('Offered')
           });
           list.push({
             key: 'Rejected',
@@ -538,7 +533,12 @@ const EmployerApplicationDetails = () => {
         label: 'Offer Sent',
         tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
         icon: Send,
-        onClick: () => updateOfferStatus('Offer Sent')
+        onClick: () => setOfferModal({
+          isOpen: true,
+          applicationId: id,
+          candidateEmail: application?.candidate?.userId?.email || '',
+          candidateName: application?.candidate?.name || ''
+        })
       });
       list.push({
         key: 'OfferAccept',
@@ -601,12 +601,7 @@ const EmployerApplicationDetails = () => {
       label: 'Select',
       tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
       icon: UserPlus,
-      onClick: () => setOfferModal({
-        isOpen: true,
-        applicationId: id,
-        candidateEmail: application?.candidate?.userId?.email || '',
-        candidateName: application?.candidate?.name || ''
-      })
+      onClick: () => updateStatus('Offered')
     });
 
     // 5. Offer Sent
@@ -615,7 +610,12 @@ const EmployerApplicationDetails = () => {
       label: 'Offer Sent',
       tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
       icon: Send,
-      onClick: () => updateOfferStatus('Offer Sent')
+      onClick: () => setOfferModal({
+        isOpen: true,
+        applicationId: id,
+        candidateEmail: application?.candidate?.userId?.email || '',
+        candidateName: application?.candidate?.name || ''
+      })
     });
 
     // 6. Accept
