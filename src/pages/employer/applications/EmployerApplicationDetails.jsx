@@ -535,106 +535,79 @@ const EmployerApplicationDetails = () => {
     const status = application.status;
     const details = application.interviewDetails || {};
     const onHold = details.onHold;
-    const selection = application.selectionDetails || {};
 
-    // 0. Mark as Applied button: shown if status is not Applied
-    if (status !== 'Applied') {
-      list.push({
-        key: 'Applied',
-        label: 'Mark as Applied',
-        tone: 'border border-emerald-200 bg-white text-emerald-600 hover:bg-emerald-50',
-        icon: FileText,
-        onClick: () => updateStatus('Applied')
-      });
-    }
+    // 1. Mark as Applied
+    list.push({
+      key: 'Applied',
+      label: 'Mark as Applied',
+      tone: 'border border-emerald-200 bg-white text-emerald-600 hover:bg-emerald-50',
+      icon: FileText,
+      onClick: () => updateStatus('Applied')
+    });
 
-    // 1. Shortlist button: shown if status is Applied, Reviewed, Rejected, or Offered
-    if (['Applied', 'Reviewed', 'Rejected', 'Offered'].includes(status)) {
-      list.push({
-        key: 'Shortlisted',
-        label: 'Shortlist',
-        tone: 'bg-amber-500 text-white hover:bg-amber-600',
-        icon: UserCheck,
-        onClick: () => updateStatus('Shortlisted')
-      });
-    }
+    // 2. Schedule / Reschedule Interview
+    const isInterview = status === 'Interview';
+    list.push({
+      key: 'InterviewSchedule',
+      label: (isInterview && !onHold) ? 'Reschedule Interview' : 'Schedule Interview',
+      tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
+      icon: CalendarPlus,
+      onClick: openInterviewModal
+    });
 
-    // 2. Schedule Interview or Reschedule Interview button:
-    // shown if status is Applied, Reviewed, Shortlisted, Interview, Rejected, or Offered
-    if (['Applied', 'Reviewed', 'Shortlisted', 'Interview', 'Rejected', 'Offered'].includes(status)) {
-      const isInterview = status === 'Interview';
-      list.push({
-        key: 'InterviewSchedule',
-        label: (isInterview && !onHold) ? 'Reschedule Interview' : 'Schedule Interview',
-        tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
-        icon: CalendarPlus,
-        onClick: openInterviewModal
-      });
-    }
+    // 3. On Hold for Interview
+    list.push({
+      key: 'InterviewOnHold',
+      label: 'On Hold for Interview',
+      tone: 'border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100',
+      icon: Clock,
+      onClick: scheduleInterviewOnHold
+    });
 
-    // 3. On Hold for Interview button:
-    // shown if status is Applied, Reviewed, Shortlisted, Interview, Rejected, or Offered (and not already on hold)
-    if (['Applied', 'Reviewed', 'Shortlisted', 'Interview', 'Rejected', 'Offered'].includes(status)) {
-      if (!(status === 'Interview' && onHold)) {
-        list.push({
-          key: 'InterviewOnHold',
-          label: 'On Hold for Interview',
-          tone: 'border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100',
-          icon: Clock,
-          onClick: scheduleInterviewOnHold
-        });
-      }
-    }
+    // 4. Select
+    list.push({
+      key: 'Offered',
+      label: 'Select',
+      tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
+      icon: UserPlus,
+      onClick: () => updateStatus('Offered')
+    });
 
-    // 4. Select button:
-    // shown if status is Applied, Reviewed, Shortlisted, Interview, or Rejected
-    if (['Applied', 'Reviewed', 'Shortlisted', 'Interview', 'Rejected'].includes(status)) {
-      list.push({
-        key: 'Offered',
-        label: 'Select',
-        tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
-        icon: UserPlus,
-        onClick: () => updateStatus('Offered')
-      });
-    }
+    // 5. Offer Sent
+    list.push({
+      key: 'OfferSent',
+      label: 'Offer Sent',
+      tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
+      icon: Send,
+      onClick: () => updateOfferStatus('Offer Sent')
+    });
 
-    // 5. Offer actions: Offer Sent, Accept, Hire
-    // shown if status is Shortlisted, Interview, or Offered
-    if (['Shortlisted', 'Interview', 'Offered'].includes(status)) {
-      list.push({
-        key: 'OfferSent',
-        label: 'Offer Sent',
-        tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
-        icon: Send,
-        onClick: () => updateOfferStatus('Offer Sent')
-      });
-      list.push({
-        key: 'OfferAccept',
-        label: 'Accept',
-        tone: 'bg-cyan-500 text-white hover:bg-cyan-600',
-        icon: Check,
-        onClick: () => updateOfferStatus('Offer Accepted')
-      });
-      list.push({
-        key: 'Hire',
-        label: 'Hire',
-        tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
-        icon: Briefcase,
-        onClick: () => updateOfferStatus('Hired')
-      });
-    }
+    // 6. Accept
+    list.push({
+      key: 'OfferAccept',
+      label: 'Accept',
+      tone: 'bg-cyan-500 text-white hover:bg-cyan-600',
+      icon: Check,
+      onClick: () => updateOfferStatus('Offer Accepted')
+    });
 
-    // 6. Reject button:
-    // shown if status is Applied, Reviewed, Shortlisted, Interview, Rejected, or Offered
-    if (['Applied', 'Reviewed', 'Shortlisted', 'Interview', 'Rejected', 'Offered'].includes(status)) {
-      list.push({
-        key: 'Rejected',
-        label: 'Reject',
-        tone: 'border border-rose-200 bg-white text-rose-600 hover:bg-rose-50',
-        icon: UserX,
-        onClick: () => updateStatus('Rejected')
-      });
-    }
+    // 7. Hire
+    list.push({
+      key: 'Hire',
+      label: 'Hire',
+      tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
+      icon: Briefcase,
+      onClick: () => updateOfferStatus('Hired')
+    });
+
+    // 8. Reject
+    list.push({
+      key: 'Rejected',
+      label: 'Reject',
+      tone: 'border border-rose-200 bg-white text-rose-600 hover:bg-rose-50',
+      icon: UserX,
+      onClick: () => updateStatus('Rejected')
+    });
 
     return list;
   }, [application]);
