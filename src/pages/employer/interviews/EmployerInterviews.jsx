@@ -89,6 +89,16 @@ const normalizeTime = (time) => {
   return `${String(displayHours).padStart(2, '0')}:${minutesValue.padStart(2, '0')} ${suffix}`;
 };
 
+const isInterviewExpired = (interviewDate, status) => {
+  if (!interviewDate) return false;
+  if (['Completed', 'Cancelled', 'Rejected'].includes(status)) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dateToCompare = new Date(interviewDate);
+  dateToCompare.setHours(0, 0, 0, 0);
+  return dateToCompare.getTime() < today.getTime();
+};
+
 const SelectField = ({ label, value, onChange, children }) => (
   <div>
     <label className="mb-2 block text-xs font-extrabold text-slate-500">{label}</label>
@@ -325,6 +335,7 @@ export const EmployerInterviews = () => {
               <div className="py-12 text-center"><Loader className="mx-auto h-7 w-7 animate-spin text-[#6658dd]" /></div>
             ) : visibleRows.length ? visibleRows.map((interview) => {
               const TypeIcon = typeTone[interview.type]?.icon || Calendar;
+              const expired = isInterviewExpired(interview.interviewDate, interview.status);
               return (
                 <div key={interview.id} className="p-4">
                   <div className="flex items-start gap-3">
@@ -340,8 +351,8 @@ export const EmployerInterviews = () => {
                   <div className="mt-3 grid grid-cols-2 gap-2 text-xs font-semibold text-slate-500">
                     <p className="truncate"><span className="text-slate-400">Job:</span> {interview.jobTitle}</p>
                     <p className="truncate"><span className="text-slate-400">Type:</span> {interview.jobType}</p>
-                    <p><span className="text-slate-400">Date:</span> {interview.displayDate || formatDate(interview.interviewDate)}</p>
-                    <p><span className="text-slate-400">Time:</span> {normalizeTime(interview.time)}</p>
+                    <p className={expired ? 'text-rose-600 font-extrabold' : ''}><span className="text-slate-400">Date:</span> {interview.displayDate || formatDate(interview.interviewDate)}</p>
+                    <p className={expired ? 'text-rose-600 font-extrabold' : ''}><span className="text-slate-400">Time:</span> {normalizeTime(interview.time)}</p>
                   </div>
 
                   <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
@@ -403,12 +414,13 @@ export const EmployerInterviews = () => {
               <tbody className="divide-y divide-slate-100">
                 {loading ? <tr><td colSpan="7" className="px-5 py-12 text-center"><Loader className="mx-auto h-7 w-7 animate-spin text-[#6658dd]" /></td></tr> : visibleRows.length ? visibleRows.map((interview) => {
                   const TypeIcon = typeTone[interview.type]?.icon || Calendar;
+                  const expired = isInterviewExpired(interview.interviewDate, interview.status);
                   return (
                     <tr key={interview.id} className="transition hover:bg-slate-50">
                       <td className="px-5 py-4"><div className="flex items-center gap-3"><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${interview.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>{interview.initials}</span><div><Link to={`/employer/candidateProfile/${interview.candidateId}`} className="text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{interview.name}</Link><p className="mt-0.5 text-xs font-semibold text-slate-400">{interview.email}</p><p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><Phone className="h-3 w-3" />{interview.phone}</p></div></div></td>
                       <td className="px-5 py-4"><p className="text-sm font-extrabold text-[#3f4254]">{interview.jobTitle}</p><p className="mt-0.5 text-xs font-semibold text-slate-400">{interview.jobType}</p></td>
                       <td className="px-5 py-4"><span className={`inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-black ${typeTone[interview.type]?.className || 'bg-slate-100 text-slate-600'}`}><TypeIcon className="h-3.5 w-3.5" />{interview.type}</span></td>
-                      <td className="px-5 py-4 text-sm font-semibold leading-6 text-slate-600">{interview.displayDate || formatDate(interview.interviewDate)}<br />{normalizeTime(interview.time)}</td>
+                      <td className={`px-5 py-4 text-sm font-semibold leading-6 ${expired ? 'text-rose-600 font-extrabold' : 'text-slate-600'}`}>{interview.displayDate || formatDate(interview.interviewDate)}<br />{normalizeTime(interview.time)}</td>
                       <td className="px-5 py-4"><div className="flex items-center gap-3"><span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${interview.interviewerTone} text-[11px] font-black text-slate-700 ring-2 ring-white`}>{interview.interviewer.split(' ').map((part) => part[0]).join('').slice(0, 2)}</span><span className="text-sm font-semibold text-slate-600">{interview.interviewer}</span></div></td>
                       <td className="px-5 py-4"><span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${statusTone[interview.status] || 'bg-slate-100 text-slate-600'}`}>{statusLabel[interview.status] || interview.status}</span></td>
                       <td className="px-5 py-4 text-center">

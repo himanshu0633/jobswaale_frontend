@@ -49,6 +49,7 @@ const emptyDashboard = {
     expired: 0
   },
   activeJobs: [],
+  upcomingInterviews: [],
   subscription: {}
 };
 
@@ -57,6 +58,22 @@ const formatDate = (value, fallback = '-') => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return fallback;
   return `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
+};
+
+const normalizeTime = (value) => {
+  if (!value) return '-';
+  const raw = String(value).trim();
+  if (!raw) return '-';
+  if (/[ap]m/i.test(raw)) return raw.toUpperCase();
+
+  const [hourPart, minutePart = '0'] = raw.split(':');
+  const hour = Number(hourPart);
+  const minute = Number(minutePart);
+  if (Number.isNaN(hour) || Number.isNaN(minute)) return raw;
+
+  const date = new Date();
+  date.setHours(hour, minute, 0, 0);
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 };
 
 const JobStatLabel = ({ children, tooltip }) => (
@@ -127,6 +144,7 @@ export const EmployerDashboard = () => {
   }
 
   const subscription = dashboard.subscription || {};
+  const upcomingInterviews = dashboard.upcomingInterviews || [];
 
   return (
     <div className="space-y-6 px-3 sm:px-0" style={{ fontFamily: "'Inter', sans-serif" }}>
@@ -418,6 +436,59 @@ export const EmployerDashboard = () => {
               </div>
             </Link>
         </div>
+      </section>
+
+      {/* Upcoming Interviews Block */}
+      <section className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-sm font-extrabold text-[#111827]">Upcoming Interviews</h2>
+            <p className="mt-1 text-xs font-semibold text-slate-400">Today se upcoming scheduled interviews.</p>
+          </div>
+          <Link to="/employer/interviews" className="inline-flex items-center gap-1 text-xs font-extrabold text-[#0047C7] hover:underline">
+            View all <ChevronRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+
+        {upcomingInterviews.length > 0 ? (
+          <div className="grid gap-3 lg:grid-cols-2">
+            {upcomingInterviews.map((interview) => (
+              <Link
+                key={interview.id}
+                to={`/employer/applications/${interview.id}`}
+                className="flex flex-col gap-3 rounded-lg border border-slate-100 p-4 transition hover:border-indigo-100 hover:bg-indigo-50/30 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-[#6658dd]">
+                    <Calendar className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-extrabold text-slate-800">{interview.candidateName || 'N/A'}</p>
+                    <p className="truncate text-xs font-semibold text-slate-400">{interview.position || 'Open Position'}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-left sm:min-w-[260px]">
+                  <div>
+                    <span className="block text-[10px] font-black uppercase tracking-wide text-slate-400">Date</span>
+                    <span className="block text-xs font-extrabold text-slate-700">{interview.scheduledAt || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-black uppercase tracking-wide text-slate-400">Time</span>
+                    <span className="block text-xs font-extrabold text-slate-700">{normalizeTime(interview.scheduledTime)}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-black uppercase tracking-wide text-slate-400">Mode</span>
+                    <span className="block truncate text-xs font-extrabold text-slate-700">{interview.type || '-'}</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm font-bold text-slate-400">
+            No upcoming interviews scheduled.
+          </div>
+        )}
       </section>
 
       {/* Your Jobs Table Block */}
