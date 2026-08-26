@@ -319,16 +319,6 @@ const EmployerCandidateProfile = () => {
     return () => { alive = false; };
   }, [id]);
 
-  if (loading) {
-    return <PageSkeleton variant="detail" />;
-  }
-
-  if (!candidate) {
-    return <div className="rounded-md border border-rose-100 bg-rose-50 p-6 text-sm font-bold text-rose-700">{error || 'Candidate not found.'}</div>;
-  }
-
-  const matchScore = candidate.application?.matchScore || 0;
-
   const quickActions = useMemo(() => {
     const list = [];
     if (!candidate || !candidate.application) return list;
@@ -434,6 +424,16 @@ const EmployerCandidateProfile = () => {
 
     return list;
   }, [candidate]);
+
+  if (loading) {
+    return <PageSkeleton variant="detail" />;
+  }
+
+  if (!candidate) {
+    return <div className="rounded-md border border-rose-100 bg-rose-50 p-6 text-sm font-bold text-rose-700">{error || 'Candidate not found.'}</div>;
+  }
+
+  const matchScore = candidate.application?.matchScore || 0;
 
   let availableActions = [];
   const appStatus = candidate.application?.status;
