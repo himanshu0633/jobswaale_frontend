@@ -167,7 +167,8 @@ export const JobseekerChat = ({ portal = 'jobseeker' }) => {
   };
 
   useEffect(() => {
-    loadThreads('');
+    const urlApplicationId = searchParams.get('application') || '';
+    loadThreads(urlApplicationId);
   }, [portal]);
 
   useEffect(() => {
@@ -176,6 +177,15 @@ export const JobseekerChat = ({ portal = 'jobseeker' }) => {
     setSelectedFile(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   }, [activeId]);
+
+  useEffect(() => {
+    const urlApplicationId = searchParams.get('application') || '';
+    if (urlApplicationId && String(urlApplicationId) !== String(activeId)) {
+      if (threads.some(thread => String(thread.id) === String(urlApplicationId))) {
+        setActiveId(urlApplicationId);
+      }
+    }
+  }, [searchParams, threads]);
 
   useEffect(() => {
     if (!socket || !activeId) return undefined;
