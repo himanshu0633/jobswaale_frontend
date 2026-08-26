@@ -37,7 +37,14 @@ const portalConfig = {
 };
 
 const sortThreadsByRecentMessage = (threads = []) => (
-  [...threads].sort((a, b) => new Date(b.lastMessageAt || 0) - new Date(a.lastMessageAt || 0))
+  [...threads].sort((a, b) => {
+    const aHasMessages = Boolean(a.hasMessages) || a.lastMessage !== 'No messages yet.';
+    const bHasMessages = Boolean(b.hasMessages) || b.lastMessage !== 'No messages yet.';
+    if (aHasMessages !== bHasMessages) {
+      return aHasMessages ? -1 : 1;
+    }
+    return new Date(b.lastMessageAt || 0) - new Date(a.lastMessageAt || 0);
+  })
 );
 
 const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024;

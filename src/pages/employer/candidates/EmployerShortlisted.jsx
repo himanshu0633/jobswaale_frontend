@@ -26,6 +26,7 @@ import {
 import { BASE_API_URL } from '../../../context/AuthContext';
 import ClearFilterButton from '../../../components/ClearFilterButton';
 import InterviewLocationPicker from '../../../components/InterviewLocationPicker';
+import { SendOfferModal } from '../../../components/SendOfferModal';
 
 const initialFilters = { search: '', jobTitle: '', status: '', minMatchScore: '', shortlistedAfter: '' };
 
@@ -119,6 +120,12 @@ export const EmployerShortlisted = () => {
   // Modals state
   const [activeCandidate, setActiveCandidate] = useState(null);
   const [modalType, setModalType] = useState(null); // 'interview', 'select', 'reject', 'viewProfile'
+  const [offerModal, setOfferModal] = useState({
+    isOpen: false,
+    applicationId: '',
+    candidateEmail: '',
+    candidateName: ''
+  });
   
   // Modal Form Inputs
   const [interviewForm, setInterviewForm] = useState({
@@ -303,6 +310,15 @@ export const EmployerShortlisted = () => {
   // Open modals helper
   const openModal = (candidate, type) => {
     setOpenDropdownId(null);
+    if (type === 'select') {
+      setOfferModal({
+        isOpen: true,
+        applicationId: candidate.applicationId || candidate.id || candidate._id,
+        candidateEmail: candidate.email,
+        candidateName: candidate.name
+      });
+      return;
+    }
     setActiveCandidate(candidate);
     setModalType(type);
     setModalError('');
@@ -982,6 +998,17 @@ export const EmployerShortlisted = () => {
           </div>
         </div>
       )}
+
+      <SendOfferModal
+        isOpen={offerModal.isOpen}
+        onClose={() => setOfferModal(prev => ({ ...prev, isOpen: false }))}
+        applicationId={offerModal.applicationId}
+        candidateEmail={offerModal.candidateEmail}
+        candidateName={offerModal.candidateName}
+        onSuccess={() => {
+          loadData();
+        }}
+      />
     </div>
   );
 };

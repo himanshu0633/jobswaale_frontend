@@ -26,6 +26,7 @@ import {
 import { BASE_API_URL } from '../../../context/AuthContext';
 import ClearFilterButton from '../../../components/ClearFilterButton';
 import InterviewLocationPicker from '../../../components/InterviewLocationPicker';
+import { SendOfferModal } from '../../../components/SendOfferModal';
 
 const initialFilters = { search: '', jobTitle: '', status: '', type: '', fromDate: '' };
 
@@ -132,6 +133,12 @@ export const EmployerInterviews = () => {
   const [editingInterview, setEditingInterview] = useState(null);
   const [editForm, setEditForm] = useState({ date: '', time: '', type: 'Video Call', locationOrLink: '', notes: '' });
   const [editLoading, setEditLoading] = useState(false);
+  const [offerModal, setOfferModal] = useState({
+    isOpen: false,
+    applicationId: '',
+    candidateEmail: '',
+    candidateName: ''
+  });
   const [editError, setEditError] = useState('');
 
   const queryParams = useMemo(() => {
@@ -386,7 +393,12 @@ export const EmployerInterviews = () => {
                     <button
                       type="button"
                       disabled={loading}
-                      onClick={() => handleStatusUpdate(interview.applicationId, 'Offered')}
+                      onClick={() => setOfferModal({
+                        isOpen: true,
+                        applicationId: interview.applicationId,
+                        candidateEmail: interview.email,
+                        candidateName: interview.name
+                      })}
                       title="Select Candidate"
                       className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
@@ -450,7 +462,12 @@ export const EmployerInterviews = () => {
                           <button
                             type="button"
                             disabled={loading}
-                            onClick={() => handleStatusUpdate(interview.applicationId, 'Offered')}
+                            onClick={() => setOfferModal({
+                              isOpen: true,
+                              applicationId: interview.applicationId,
+                              candidateEmail: interview.email,
+                              candidateName: interview.name
+                            })}
                             title="Select Candidate"
                             className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
@@ -598,6 +615,24 @@ export const EmployerInterviews = () => {
           </div>
         </div>
       )}
+
+      <SendOfferModal
+        isOpen={offerModal.isOpen}
+        onClose={() => setOfferModal(prev => ({ ...prev, isOpen: false }))}
+        applicationId={offerModal.applicationId}
+        candidateEmail={offerModal.candidateEmail}
+        candidateName={offerModal.candidateName}
+        onSuccess={async () => {
+          const response = await axios.get(`${BASE_API_URL}/employer/interviews?${queryParams}`, { headers: getTokenHeaders() });
+          setData({
+            stats: { total: 0, scheduled: 0, onHold: 0 },
+            filters: { jobTitles: [], types: [] },
+            interviews: [],
+            pagination: { page: 1, limit: pageSize, total: 0, totalPages: 1 },
+            ...response.data
+          });
+        }}
+      />
     </div>
   );
 };

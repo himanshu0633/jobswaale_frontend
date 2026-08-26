@@ -41,6 +41,7 @@ const mainMenu = [
   { to: '/employer/shortlisted', icon: UserCheck, label: 'Shortlisted' },
   { to: '/employer/interviews', icon: CalendarCheck, label: 'Interviews' },
   { to: '/employer/selected', icon: UserPlus, label: 'Selected' },
+  { to: '/employer/offers', icon: FileText, label: 'Offers & Templates' },
   { to: '/employer/candidates', icon: Search, label: 'Search Candidates' },
   { to: '/employer/auto-mail', icon: MailCheck, label: 'Auto Mail' },
   { to: '/employer/reports', icon: Grid2X2, label: 'Reports' },

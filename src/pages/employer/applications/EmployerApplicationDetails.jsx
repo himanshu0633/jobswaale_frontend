@@ -26,6 +26,7 @@ import {
 import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
 import InterviewLocationPicker from '../../../components/InterviewLocationPicker';
+import { SendOfferModal } from '../../../components/SendOfferModal';
 
 const getTokenHeaders = () => {
   const token = localStorage.getItem('publicToken');
@@ -218,6 +219,12 @@ const EmployerApplicationDetails = () => {
     show: false,
     title: '',
     message: ''
+  });
+  const [offerModal, setOfferModal] = useState({
+    isOpen: false,
+    applicationId: '',
+    candidateEmail: '',
+    candidateName: ''
   });
 
   useEffect(() => {
@@ -485,7 +492,12 @@ const EmployerApplicationDetails = () => {
             label: 'Select',
             tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
             icon: UserPlus,
-            onClick: () => updateStatus('Offered')
+            onClick: () => setOfferModal({
+              isOpen: true,
+              applicationId: id,
+              candidateEmail: application?.candidate?.userId?.email || '',
+              candidateName: application?.candidate?.name || ''
+            })
           });
           list.push({
             key: 'Rejected',
@@ -589,7 +601,12 @@ const EmployerApplicationDetails = () => {
       label: 'Select',
       tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
       icon: UserPlus,
-      onClick: () => updateStatus('Offered')
+      onClick: () => setOfferModal({
+        isOpen: true,
+        applicationId: id,
+        candidateEmail: application?.candidate?.userId?.email || '',
+        candidateName: application?.candidate?.name || ''
+      })
     });
 
     // 5. Offer Sent
@@ -1073,7 +1090,16 @@ const EmployerApplicationDetails = () => {
             </div>
           </div>
         </div>
-      )}
+      <SendOfferModal
+        isOpen={offerModal.isOpen}
+        onClose={() => setOfferModal(prev => ({ ...prev, isOpen: false }))}
+        applicationId={offerModal.applicationId}
+        candidateEmail={offerModal.candidateEmail}
+        candidateName={offerModal.candidateName}
+        onSuccess={() => {
+          loadDetails();
+        }}
+      />
     </div>
   );
 };

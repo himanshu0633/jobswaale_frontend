@@ -26,6 +26,7 @@ import {
 import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
 import InterviewLocationPicker from '../../../components/InterviewLocationPicker';
+import { SendOfferModal } from '../../../components/SendOfferModal';
 
 const getTokenHeaders = () => {
   const token = localStorage.getItem('publicToken');
@@ -163,6 +164,12 @@ const EmployerCandidateProfile = () => {
   const [unlockSuccessModal, setUnlockSuccessModal] = useState({
     show: false,
     remainingUnlocks: ''
+  });
+  const [offerModal, setOfferModal] = useState({
+    isOpen: false,
+    applicationId: '',
+    candidateEmail: '',
+    candidateName: ''
   });
 
   useEffect(() => {
@@ -388,7 +395,12 @@ const EmployerCandidateProfile = () => {
       label: 'Select',
       tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
       icon: UserPlus,
-      onClick: () => updateStatus('Offered')
+      onClick: () => setOfferModal({
+        isOpen: true,
+        applicationId: candidate?.application?.id,
+        candidateEmail: candidate?.userId?.email || '',
+        candidateName: candidate?.name || ''
+      })
     });
 
     // 5. Offer Sent
@@ -469,7 +481,12 @@ const EmployerCandidateProfile = () => {
         label: 'Select',
         tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
         icon: UserPlus,
-        onClick: () => updateStatus('Offered')
+        onClick: () => setOfferModal({
+          isOpen: true,
+          applicationId: candidate?.application?.id,
+          candidateEmail: candidate?.userId?.email || '',
+          candidateName: candidate?.name || ''
+        })
       }
     ];
   }
@@ -950,8 +967,17 @@ const EmployerCandidateProfile = () => {
               </button>
             </div>
           </div>
-        </div>
-      )}
+      <SendOfferModal
+        isOpen={offerModal.isOpen}
+        onClose={() => setOfferModal(prev => ({ ...prev, isOpen: false }))}
+        applicationId={offerModal.applicationId}
+        candidateEmail={offerModal.candidateEmail}
+        candidateName={offerModal.candidateName}
+        onSuccess={async () => {
+          const response = await axios.get(`${BASE_API_URL}/employer/candidateProfile/${id}`, { headers: getTokenHeaders() });
+          setCandidate(response.data);
+        }}
+      />
     </div>
   );
 };

@@ -48,6 +48,7 @@ const EmployerPortalReports = lazy(() => import('./pages/employer/reports/Employ
 const EmployerSelected = lazy(() => import('./pages/employer/selected/EmployerSelected'));
 const EmployerMessages = lazy(() => import('./pages/employer/messages/EmployerMessages'));
 const EmployerAutoMail = lazy(() => import('./pages/employer/automail/EmployerAutoMail'));
+const EmployerOffers = lazy(() => import('./pages/employer/offers/EmployerOffers'));
 
 // Jobseeker Portal
 const JobseekerLayout = lazy(() => import('./pages/jobseeker/JobseekerLayout'));
@@ -501,6 +502,7 @@ function App() {
               <Route path="shortlisted" element={<EmployerShortlisted />} />
               <Route path="interviews" element={<EmployerInterviews />} />
               <Route path="selected" element={<EmployerSelected />} />
+              <Route path="offers" element={<EmployerOffers />} />
               <Route path="candidates" element={<EmployerSearchCandidates />} />
               <Route path="candidateProfile/:id" element={<EmployerCandidateProfile />} />
               <Route path="company" element={<EmployerCompanyProfile />} />
