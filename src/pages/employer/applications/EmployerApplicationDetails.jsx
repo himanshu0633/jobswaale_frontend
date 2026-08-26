@@ -214,6 +214,11 @@ const EmployerApplicationDetails = () => {
     show: false,
     remainingUnlocks: ''
   });
+  const [accessModal, setAccessModal] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
 
   useEffect(() => {
     const handleUnlockSuccess = (e) => {
@@ -272,8 +277,22 @@ const EmployerApplicationDetails = () => {
       } else {
         setApplication(response.data);
       }
+      if (response.data?.autoUnlocked === true) {
+        setUnlockSuccessModal({
+          show: true,
+          remainingUnlocks: response.data.remainingUnlocks ?? ''
+        });
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Application details could not be loaded.');
+      const errorMessage = err.response?.data?.message || 'Application details could not be loaded.';
+      setError(errorMessage);
+      if (err.response?.status === 403) {
+        setAccessModal({
+          show: true,
+          title: errorMessage.toLowerCase().includes('exhausted') ? 'Unlock Limit Exhausted' : 'Upgrade Plan Required',
+          message: errorMessage
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -626,9 +645,31 @@ const EmployerApplicationDetails = () => {
 
   if (!application) {
     return (
-      <div className="rounded-md border border-rose-100 bg-rose-50 p-6 text-sm font-bold text-rose-700">
-        {error || 'Application not found.'}
-      </div>
+      <>
+        <div className="rounded-md border border-rose-100 bg-rose-50 p-6 text-sm font-bold text-rose-700">
+          {error || 'Application not found.'}
+        </div>
+        {accessModal.show && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-3 backdrop-blur-sm sm:p-4">
+            <div className="relative w-full max-w-md rounded-lg border border-slate-100 bg-white p-6 text-center shadow-xl">
+              <h3 className="text-lg font-extrabold text-slate-800">{accessModal.title}</h3>
+              <p className="mt-3 text-sm font-semibold leading-relaxed text-slate-500">{accessModal.message}</p>
+              <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
+                <Link to="/employer/subscription" className="inline-flex h-10 items-center justify-center rounded-md bg-[#6658dd] px-6 text-sm font-extrabold text-white transition hover:bg-[#5848d8]">
+                  Upgrade Plan
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setAccessModal({ show: false, title: '', message: '' })}
+                  className="h-10 rounded-md bg-slate-100 px-6 text-sm font-extrabold text-slate-600 transition hover:bg-slate-200"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
     );
   }
 
@@ -985,16 +1026,37 @@ const EmployerApplicationDetails = () => {
         </div>
       )}
 
-      {/* Resume Unlock Success Modal */}
+      {accessModal.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-3 backdrop-blur-sm sm:p-4">
+          <div className="relative w-full max-w-md rounded-lg border border-slate-100 bg-white p-6 text-center shadow-xl">
+            <h3 className="text-lg font-extrabold text-slate-800">{accessModal.title}</h3>
+            <p className="mt-3 text-sm font-semibold leading-relaxed text-slate-500">{accessModal.message}</p>
+            <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
+              <Link to="/employer/subscription" className="inline-flex h-10 items-center justify-center rounded-md bg-[#6658dd] px-6 text-sm font-extrabold text-white transition hover:bg-[#5848d8]">
+                Upgrade Plan
+              </Link>
+              <button
+                type="button"
+                onClick={() => setAccessModal({ show: false, title: '', message: '' })}
+                className="h-10 rounded-md bg-slate-100 px-6 text-sm font-extrabold text-slate-600 transition hover:bg-slate-200"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Candidate Unlock Success Modal */}
       {unlockSuccessModal.show && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-xs">
           <div className="relative w-full max-w-md rounded-2xl border border-emerald-100 bg-white p-6 shadow-2xl text-center">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-500">
               <Check className="h-8 w-8" />
             </div>
-            <h3 className="text-lg font-black text-slate-800">Resume Unlocked!</h3>
+            <h3 className="text-lg font-black text-slate-800">Candidate Profile Unlocked!</h3>
             <p className="mt-2 text-sm text-slate-500 font-semibold leading-relaxed">
-              Candidate's resume has been successfully unlocked and downloaded.
+              Candidate contact details and resume access are now available.
             </p>
             <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
               <span>Remaining Unlocks:</span>
