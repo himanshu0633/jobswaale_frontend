@@ -157,7 +157,22 @@ export const JobseekerChat = ({ portal = 'jobseeker' }) => {
     }
     try {
       const response = await axios.get(`${config.endpoint}/${applicationId}`, { headers: getTokenHeaders() });
-      setMessages(response.data?.messages || []);
+      const fetchedMessages = response.data?.messages || [];
+      
+      if (silent) {
+        setMessages(current => {
+          const next = [...current];
+          fetchedMessages.forEach(msg => {
+            if (!next.some(m => String(m._id || m.id) === String(msg._id || msg.id))) {
+              next.push(msg);
+            }
+          });
+          return next.sort((a, b) => new Date(a.createDate || a.createdAt) - new Date(b.createDate || b.createdAt));
+        });
+      } else {
+        setMessages(fetchedMessages);
+      }
+
       setThreads(current => sortThreadsByRecentMessage(current.map(thread => (
         String(thread.id) === String(applicationId)
           ? { ...thread, ...(response.data?.thread || {}), unread: 0 }
@@ -218,7 +233,7 @@ export const JobseekerChat = ({ portal = 'jobseeker' }) => {
 
       if (payload?.message) {
         setMessages(current => (
-          current.some(message => String(message.id) === String(payload.message.id))
+          current.some(message => String(message._id || message.id) === String(payload.message._id || payload.message.id))
             ? current
             : [...current, payload.message]
         ));
@@ -300,7 +315,12 @@ export const JobseekerChat = ({ portal = 'jobseeker' }) => {
         payload,
         { headers: getTokenHeaders() }
       );
-      setMessages(current => [...current, response.data.message]);
+      setMessages(current => {
+        if (current.some(m => String(m._id || m.id) === String(response.data.message._id || response.data.message.id))) {
+          return current;
+        }
+        return [...current, response.data.message];
+      });
       setThreads(current => sortThreadsByRecentMessage(current.map(thread => (
         String(thread.id) === String(activeConversation.id)
           ? { ...thread, ...(response.data.thread || {}) }
