@@ -571,7 +571,7 @@ export const JobseekerChat = ({ portal = 'jobseeker' }) => {
                         }`}
                       >
                         {renderReplyPreview(message.replyTo, message.sender === 'sent')}
-                        {message.text && <div className="break-words">{message.text}</div>}
+                        {message.text && <div className="break-words whitespace-pre-line">{message.text}</div>}
                         {renderAttachment(message.attachment, message.sender === 'sent')}
                       </div>
                       <span className={`chat-message-time mt-1 px-1 text-[0.65rem] ${message.sender === 'sent' ? 'text-black/40' : 'text-[#94a3b8]'}`}>
