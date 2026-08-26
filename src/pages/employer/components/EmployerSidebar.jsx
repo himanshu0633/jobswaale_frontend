@@ -37,7 +37,6 @@ const mainMenu = [
     ]
   },
   { to: '/employer/applications', icon: FileText, label: 'Applications' },
-  { to: '/employer/applicant-history', icon: UserRoundCheck, label: 'Applicants History' },
   { to: '/employer/shortlisted', icon: UserCheck, label: 'Shortlisted' },
   { to: '/employer/interviews', icon: CalendarCheck, label: 'Interviews' },
   { to: '/employer/selected', icon: UserPlus, label: 'Selected' },
