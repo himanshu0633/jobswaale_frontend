@@ -29,6 +29,19 @@ const formatDate = (value) => {
   return new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(value));
 };
 
+const statusTone = {
+  'Offer Sent': 'bg-violet-50 text-[#6658dd]',
+  'Offer Accepted': 'bg-cyan-50 text-cyan-500',
+  Hired: 'bg-emerald-50 text-emerald-500',
+  'Offer Declined': 'bg-rose-50 text-rose-500',
+  Rejected: 'bg-rose-50 text-rose-500'
+};
+
+const getOfferStatus = (offer) => {
+  if (offer.application?.status === 'Rejected') return 'Rejected';
+  return offer.application?.selectionDetails?.offerStatus || 'Offer Sent';
+};
+
 export const EmployerOffers = () => {
   const [activeTab, setActiveTab] = useState('offers'); // 'offers' or 'templates'
   const [offers, setOffers] = useState([]);
@@ -159,6 +172,47 @@ export const EmployerOffers = () => {
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to delete template.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateOfferStatus = async (applicationId, newStatus) => {
+    setLoading(true);
+    setError('');
+    try {
+      await axios.patch(
+        `${BASE_API_URL}/employer/selected/${applicationId}/offer`,
+        {
+          offerStatus: newStatus
+        },
+        { headers: getTokenHeaders() }
+      );
+      setSuccess(`Offer status updated to ${newStatus}!`);
+      fetchData();
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update offer status.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReject = async (applicationId) => {
+    if (!window.confirm('Are you sure you want to reject this candidate?')) return;
+    setLoading(true);
+    setError('');
+    try {
+      await axios.patch(
+        `${BASE_API_URL}/employer/applications/${applicationId}/status`,
+        { status: 'Rejected' },
+        { headers: getTokenHeaders() }
+      );
+      setSuccess('Candidate rejected successfully!');
+      fetchData();
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to reject candidate.');
     } finally {
       setLoading(false);
     }
@@ -368,7 +422,9 @@ export const EmployerOffers = () => {
                       <th className="px-5 py-3">Position</th>
                       <th className="px-5 py-3">Subject</th>
                       <th className="px-5 py-3">Sent Date</th>
+                      <th className="px-5 py-3 text-center">Status</th>
                       <th className="px-5 py-3 text-center">Attachment</th>
+                      <th className="px-5 py-3 text-center">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -399,6 +455,11 @@ export const EmployerOffers = () => {
                           {formatDate(offer.createDate)}
                         </td>
                         <td className="px-5 py-4 text-center">
+                          <span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${statusTone[getOfferStatus(offer)] || 'bg-slate-100 text-slate-600'}`}>
+                            {getOfferStatus(offer)}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 text-center">
                           {offer.attachmentUrl ? (
                             <a
                               href={`${BASE_API_URL}${offer.attachmentUrl}`}
@@ -413,6 +474,50 @@ export const EmployerOffers = () => {
                           ) : (
                             <span className="text-xs font-semibold text-slate-400">-</span>
                           )}
+                        </td>
+                        <td className="px-5 py-4 text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            {getOfferStatus(offer) === 'Offer Sent' && (
+                              <>
+                                <button
+                                  type="button"
+                                  disabled={loading}
+                                  onClick={() => updateOfferStatus(offer.application?._id, 'Offer Accepted')}
+                                  className="rounded bg-cyan-500 px-2.5 py-1 text-xs font-extrabold text-white hover:bg-cyan-600 transition"
+                                >
+                                  Accept
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={loading}
+                                  onClick={() => handleReject(offer.application?._id)}
+                                  className="rounded bg-rose-500 px-2.5 py-1 text-xs font-extrabold text-white hover:bg-rose-600 transition"
+                                >
+                                  Reject
+                                </button>
+                              </>
+                            )}
+                            {getOfferStatus(offer) === 'Offer Accepted' && (
+                              <>
+                                <button
+                                  type="button"
+                                  disabled={loading}
+                                  onClick={() => updateOfferStatus(offer.application?._id, 'Hired')}
+                                  className="rounded bg-emerald-500 px-2.5 py-1 text-xs font-extrabold text-white hover:bg-emerald-600 transition"
+                                >
+                                  Hire
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={loading}
+                                  onClick={() => handleReject(offer.application?._id)}
+                                  className="rounded bg-rose-500 px-2.5 py-1 text-xs font-extrabold text-white hover:bg-rose-600 transition"
+                                >
+                                  Reject
+                                </button>
+                              </>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}

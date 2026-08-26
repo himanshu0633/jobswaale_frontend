@@ -25,15 +25,7 @@ import { BASE_API_URL } from '../../../context/AuthContext';
 import ClearFilterButton from '../../../components/ClearFilterButton';
 import { SendOfferModal } from '../../../components/SendOfferModal';
 
-const initialFilters = { search: '', jobTitle: '', status: '', selectionDate: '', minSalary: '' };
-
-const statCards = [
-  { key: 'total', title: 'Total Selected', status: '', icon: UserPlus, tone: 'bg-emerald-50 text-emerald-500' },
-  { key: 'offerSent', title: 'Total Offer Sent', status: 'Offer Sent', icon: MailCheck, tone: 'bg-violet-50 text-[#6658dd]' },
-  { key: 'offerAccepted', title: 'Offer Accepted', status: 'Offer Accepted', icon: BadgeCheck, tone: 'bg-cyan-50 text-cyan-500' },
-  { key: 'hired', title: 'Total Hired', status: 'Hired', icon: Briefcase, tone: 'bg-blue-50 text-blue-500' },
-  { key: 'offerDeclined', title: 'Offer Declined', status: 'Offer Declined', icon: UserX, tone: 'bg-rose-50 text-rose-500' }
-];
+const initialFilters = { search: '', jobTitle: '', selectionDate: '', minSalary: '' };
 
 const statusTone = {
   Selected: 'bg-emerald-50 text-emerald-500',
@@ -64,12 +56,12 @@ const SelectField = ({ label, value, onChange, children }) => (
   </div>
 );
 
-const OfferActions = ({ candidate, isUpdating, onUpdate, onReject, onSendOffer }) => (
-  <div className="mx-auto grid w-[280px] grid-cols-2 gap-2">
+const OfferActions = ({ candidate, isUpdating, onReject, onSendOffer }) => (
+  <div className="mx-auto flex w-[280px] gap-2">
     <Link
       to={`/employer/applications/${candidate.applicationId}`}
       title="View Application Details"
-      className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-slate-500 transition hover:bg-slate-50"
+      className="inline-flex h-8 flex-1 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-slate-500 transition hover:bg-slate-50"
     >
       <Eye className="h-3.5 w-3.5" />
       <span>View</span>
@@ -80,7 +72,7 @@ const OfferActions = ({ candidate, isUpdating, onUpdate, onReject, onSendOffer }
       disabled={isUpdating}
       onClick={() => onSendOffer(candidate)}
       title="Mark Offer Sent"
-      className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50 disabled:opacity-60"
+      className="inline-flex h-8 flex-1 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50 disabled:opacity-60"
     >
       <Send className="h-3.5 w-3.5" />
       <span>Offer Sent</span>
@@ -89,31 +81,9 @@ const OfferActions = ({ candidate, isUpdating, onUpdate, onReject, onSendOffer }
     <button
       type="button"
       disabled={isUpdating}
-      onClick={() => onUpdate(candidate, 'Offer Accepted')}
-      title="Mark Accepted"
-      className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-cyan-500 transition hover:bg-cyan-50 disabled:opacity-60"
-    >
-      <CheckCircle2 className="h-3.5 w-3.5" />
-      <span>Accept</span>
-    </button>
-
-    <button
-      type="button"
-      disabled={isUpdating}
-      onClick={() => onUpdate(candidate, 'Hired')}
-      title="Mark Hired"
-      className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50 disabled:opacity-60"
-    >
-      <Briefcase className="h-3.5 w-3.5" />
-      <span>Hire</span>
-    </button>
-
-    <button
-      type="button"
-      disabled={isUpdating}
       onClick={() => onReject(candidate)}
       title="Reject Candidate"
-      className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50 disabled:opacity-60 col-span-2"
+      className="inline-flex h-8 flex-1 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50 disabled:opacity-60"
     >
       <UserX className="h-3.5 w-3.5" />
       <span>Reject</span>
@@ -127,7 +97,6 @@ export const EmployerSelected = () => {
   const getUrlFilters = () => ({
     search: searchParams.get('search') || '',
     jobTitle: searchParams.get('jobTitle') || '',
-    status: searchParams.get('status') || '',
     selectionDate: searchParams.get('selectionDate') || '',
     minSalary: searchParams.get('minSalary') || ''
   });
@@ -176,7 +145,6 @@ export const EmployerSelected = () => {
     const search = [filters.search, tableSearch].filter(Boolean).join(' ').trim();
     if (search) params.set('search', search);
     if (filters.jobTitle) params.set('jobTitle', filters.jobTitle);
-    if (filters.status) params.set('status', filters.status);
     if (filters.selectionDate) params.set('selectionDate', filters.selectionDate);
     if (filters.minSalary) params.set('minSalary', filters.minSalary);
     params.set('page', String(currentPage));
@@ -210,28 +178,7 @@ export const EmployerSelected = () => {
     return () => { alive = false; };
   }, [pageSize, queryParams, refreshKey]);
 
-  const updateOfferStatus = async (candidate, offerStatus) => {
-    setUpdatingId(candidate.id);
-    setError('');
-    setOpenDropdownId('');
-    try {
-      await axios.patch(
-        `${BASE_API_URL}/employer/selected/${candidate.id}/offer`,
-        {
-          offerStatus,
-          salaryOffered: candidate.salaryOffered !== null ? Number(candidate.salaryOffered) * 100000 : undefined,
-          interviewScore: candidate.interviewScore,
-          employmentType: candidate.jobType
-        },
-        { headers: getTokenHeaders() }
-      );
-      setRefreshKey((current) => current + 1);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Offer status could not be updated.');
-    } finally {
-      setUpdatingId('');
-    }
-  };
+
 
   const handleReject = async (candidate) => {
     setUpdatingId(candidate.id);
@@ -270,21 +217,7 @@ export const EmployerSelected = () => {
 
       {error && <div className="rounded-md border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{error}</div>}
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-5">
-        {statCards.map((card) => (
-          <button
-            key={card.key}
-            type="button"
-            onClick={() => setFilter('status', card.status)}
-            className={`rounded-md border bg-white p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-5 ${filters.status === card.status ? 'border-[#6658dd] ring-2 ring-indigo-100' : 'border-slate-100'}`}
-          >
-            <div className="flex items-center gap-2 sm:gap-4">
-              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${card.tone}`}><card.icon className="h-4 w-4 sm:h-5 sm:w-5" /></span>
-              <div className="min-w-0"><p className="truncate text-xs font-semibold text-slate-400 sm:text-sm">{card.title}</p><p className="mt-1 text-base font-black text-[#3f4254] sm:text-xl">{Number(stats[card.key] || 0).toLocaleString('en-IN')}</p></div>
-            </div>
-          </button>
-        ))}
-      </div>
+
 
       <section className="rounded-md border border-slate-100 bg-white shadow-sm">
         <div className="flex flex-col justify-between gap-4 border-b border-dashed border-slate-200 px-4 py-4 sm:px-5 lg:flex-row lg:items-center">
@@ -296,13 +229,12 @@ export const EmployerSelected = () => {
         </div>
 
         <div className="p-4 sm:p-5">
-          <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto]">
+          <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.5fr_1fr_1fr_1fr_auto]">
             <div>
               <label className="mb-2 block text-xs font-extrabold text-slate-500">Search Candidate / Job</label>
               <div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input className="h-10 w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100" value={filters.search} onChange={(event) => setFilter('search', event.target.value)} placeholder="Name, email, job, location" /></div>
             </div>
             <SelectField label="Job Title" value={filters.jobTitle} onChange={(value) => setFilter('jobTitle', value)}><option value="">All Jobs</option>{(optionFilters.jobTitles || []).map((item) => <option key={item}>{item}</option>)}</SelectField>
-            <SelectField label="Status" value={filters.status} onChange={(value) => setFilter('status', value)}><option value="">All Status</option>{['Selected', 'Offer Sent', 'Offer Accepted', 'Offer Declined', 'Hired'].map((item) => <option key={item}>{item}</option>)}</SelectField>
             <div><label className="mb-2 block text-xs font-extrabold text-slate-500">Selection Date</label><input type="date" value={filters.selectionDate} onChange={(event) => setFilter('selectionDate', event.target.value)} className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100" /></div>
             <SelectField label="Min Salary (LPA)" value={filters.minSalary} onChange={(value) => setFilter('minSalary', value)}><option value="">All Salaries</option>{[5, 10, 15, 20].map((item) => <option key={item} value={item}>{item}</option>)}</SelectField>
             <div className="flex items-end"><ClearFilterButton active={hasActiveFilters} onClick={resetFilters} /></div>
@@ -341,7 +273,6 @@ export const EmployerSelected = () => {
                   <OfferActions
                     candidate={candidate}
                     isUpdating={updatingId === candidate.id}
-                    onUpdate={updateOfferStatus}
                     onReject={handleReject}
                     onSendOffer={(cand) => setOfferModal({
                       isOpen: true,
@@ -374,7 +305,6 @@ export const EmployerSelected = () => {
                       <OfferActions
                         candidate={candidate}
                         isUpdating={updatingId === candidate.id}
-                        onUpdate={updateOfferStatus}
                         onReject={handleReject}
                         onSendOffer={(cand) => setOfferModal({
                           isOpen: true,
