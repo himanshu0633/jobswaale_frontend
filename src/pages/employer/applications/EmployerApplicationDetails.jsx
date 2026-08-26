@@ -536,7 +536,7 @@ const EmployerApplicationDetails = () => {
         onClick: () => setOfferModal({
           isOpen: true,
           applicationId: id,
-          candidateEmail: application?.candidate?.userId?.email || '',
+          candidateEmail: application?.candidate?.email || '',
           candidateName: application?.candidate?.name || ''
         })
       });
@@ -613,7 +613,7 @@ const EmployerApplicationDetails = () => {
       onClick: () => setOfferModal({
         isOpen: true,
         applicationId: id,
-        candidateEmail: application?.candidate?.userId?.email || '',
+        candidateEmail: application?.candidate?.email || '',
         candidateName: application?.candidate?.name || ''
       })
     });

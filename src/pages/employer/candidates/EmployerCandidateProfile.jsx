@@ -407,7 +407,7 @@ const EmployerCandidateProfile = () => {
       onClick: () => setOfferModal({
         isOpen: true,
         applicationId: candidate?.application?.id,
-        candidateEmail: candidate?.userId?.email || '',
+        candidateEmail: candidate?.email || '',
         candidateName: candidate?.name || ''
       })
     });
