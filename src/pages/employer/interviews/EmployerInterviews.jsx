@@ -99,10 +99,10 @@ const isInterviewExpired = (interviewDate, status) => {
   return dateToCompare.getTime() < today.getTime();
 };
 
-const SelectField = ({ label, value, onChange, children }) => (
+const SelectField = ({ label, value, onChange, disabled, children }) => (
   <div>
     <label className="mb-2 block text-xs font-extrabold text-slate-500">{label}</label>
-    <select value={value} onChange={(event) => onChange(event.target.value)} className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 outline-none focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100">
+    <select disabled={disabled} value={value} onChange={(event) => onChange(event.target.value)} className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 outline-none focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100 disabled:opacity-75 disabled:cursor-not-allowed">
       {children}
     </select>
   </div>
@@ -292,8 +292,9 @@ export const EmployerInterviews = () => {
           <button
             key={card.key}
             type="button"
+            disabled={loading}
             onClick={() => setFilter('status', card.status)}
-            className={`rounded-md border bg-white p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-5 ${filters.status === card.status ? 'border-[#6658dd] ring-2 ring-indigo-100' : 'border-slate-100'}`}
+            className={`rounded-md border bg-white p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-5 disabled:opacity-75 disabled:cursor-not-allowed ${filters.status === card.status ? 'border-[#6658dd] ring-2 ring-indigo-100' : 'border-slate-100'}`}
           >
             <div className="flex items-center gap-2 sm:gap-4">
               <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${card.tone}`}><card.icon className="h-4 w-4 sm:h-5 sm:w-5" /></span>
@@ -315,18 +316,18 @@ export const EmployerInterviews = () => {
           <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto]">
             <div>
               <label className="mb-2 block text-xs font-extrabold text-slate-500">Search Candidate / Job</label>
-              <div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input className="h-10 w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100" value={filters.search} onChange={(event) => setFilter('search', event.target.value)} placeholder="Name, email, job, interviewer" /></div>
+              <div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input disabled={loading} className="h-10 w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100 disabled:opacity-75 disabled:cursor-not-allowed" value={filters.search} onChange={(event) => setFilter('search', event.target.value)} placeholder="Name, email, job, interviewer" /></div>
             </div>
-            <SelectField label="Job Title" value={filters.jobTitle} onChange={(value) => setFilter('jobTitle', value)}><option value="">All Jobs</option>{optionFilters.jobTitles.map((item) => <option key={item}>{item}</option>)}</SelectField>
-            <SelectField label="Status" value={filters.status} onChange={(value) => setFilter('status', value)}><option value="">All Status</option>{['Pending Interview', 'Scheduled', 'Rescheduled', 'On Hold'].map((item) => <option key={item}>{item}</option>)}</SelectField>
-            <SelectField label="Interview Type" value={filters.type} onChange={(value) => setFilter('type', value)}><option value="">All Types</option>{optionFilters.types.map((item) => <option key={item}>{item}</option>)}</SelectField>
-            <div><label className="mb-2 block text-xs font-extrabold text-slate-500">From Date</label><input type="date" value={filters.fromDate} onChange={(event) => setFilter('fromDate', event.target.value)} className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100" /></div>
-            <div className="flex items-end"><ClearFilterButton active={hasActiveFilters} onClick={resetFilters} /></div>
+            <SelectField disabled={loading} label="Job Title" value={filters.jobTitle} onChange={(value) => setFilter('jobTitle', value)}><option value="">All Jobs</option>{optionFilters.jobTitles.map((item) => <option key={item}>{item}</option>)}</SelectField>
+            <SelectField disabled={loading} label="Status" value={filters.status} onChange={(value) => setFilter('status', value)}><option value="">All Status</option>{['Pending Interview', 'Scheduled', 'Rescheduled', 'On Hold'].map((item) => <option key={item}>{item}</option>)}</SelectField>
+            <SelectField disabled={loading} label="Interview Type" value={filters.type} onChange={(value) => setFilter('type', value)}><option value="">All Types</option>{optionFilters.types.map((item) => <option key={item}>{item}</option>)}</SelectField>
+            <div><label className="mb-2 block text-xs font-extrabold text-slate-500">From Date</label><input disabled={loading} type="date" value={filters.fromDate} onChange={(event) => setFilter('fromDate', event.target.value)} className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100 disabled:opacity-75 disabled:cursor-not-allowed" /></div>
+            <div className="flex items-end"><ClearFilterButton active={hasActiveFilters && !loading} onClick={resetFilters} /></div>
           </div>
 
           <div className="mb-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-            <div className="flex items-center gap-2 text-sm font-semibold text-slate-600"><select value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setCurrentPage(1); }} className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold"><option value={10}>10</option><option value={25}>25</option><option value={50}>50</option></select>entries per page</div>
-            <label className="flex items-center gap-2 text-sm font-semibold text-slate-600">Search:<input value={tableSearch} onChange={(event) => { setTableSearch(event.target.value); setCurrentPage(1); }} className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold outline-none focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100 sm:w-48" /></label>
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-600"><select disabled={loading} value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setCurrentPage(1); }} className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold disabled:opacity-75 disabled:cursor-not-allowed"><option value={10}>10</option><option value={25}>25</option><option value={50}>50</option></select>entries per page</div>
+            <label className="flex items-center gap-2 text-sm font-semibold text-slate-600">Search:<input disabled={loading} value={tableSearch} onChange={(event) => { setTableSearch(event.target.value); setCurrentPage(1); }} className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold outline-none focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100 disabled:opacity-75 disabled:cursor-not-allowed sm:w-48" /></label>
           </div>
 
           {/* Card list — mobile only */}
@@ -374,27 +375,30 @@ export const EmployerInterviews = () => {
                     </Link>
                     <button
                       type="button"
+                      disabled={loading}
                       onClick={() => openEditModal(interview)}
                       title="Reschedule Interview"
-                      className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50"
+                      className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Calendar className="h-3.5 w-3.5" />
                       <span>Reschedule</span>
                     </button>
                     <button
                       type="button"
+                      disabled={loading}
                       onClick={() => handleStatusUpdate(interview.applicationId, 'Offered')}
                       title="Select Candidate"
-                      className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50"
+                      className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <UserPlus className="h-3.5 w-3.5" />
                       <span>Select</span>
                     </button>
                     <button
                       type="button"
+                      disabled={loading}
                       onClick={() => handleStatusUpdate(interview.applicationId, 'Rejected')}
                       title="Reject Candidate"
-                      className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50"
+                      className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <UserX className="h-3.5 w-3.5" />
                       <span>Reject</span>
@@ -435,27 +439,30 @@ export const EmployerInterviews = () => {
                           </Link>
                           <button
                             type="button"
+                            disabled={loading}
                             onClick={() => openEditModal(interview)}
                             title="Reschedule Interview"
-                            className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50"
+                            className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <Calendar className="h-3.5 w-3.5" />
                             <span>Reschedule</span>
                           </button>
                           <button
                             type="button"
+                            disabled={loading}
                             onClick={() => handleStatusUpdate(interview.applicationId, 'Offered')}
                             title="Select Candidate"
-                            className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50"
+                            className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <UserPlus className="h-3.5 w-3.5" />
                             <span>Select</span>
                           </button>
                           <button
                             type="button"
+                            disabled={loading}
                             onClick={() => handleStatusUpdate(interview.applicationId, 'Rejected')}
                             title="Reject Candidate"
-                            className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50"
+                            className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <UserX className="h-3.5 w-3.5" />
                             <span>Reject</span>
@@ -471,7 +478,7 @@ export const EmployerInterviews = () => {
 
           <div className="mt-5 flex flex-col justify-between gap-3 text-xs font-semibold text-slate-600 sm:flex-row sm:items-center sm:text-sm">
             <span>Showing {pagination.total ? startIndex + 1 : 0} to {Math.min(startIndex + pagination.limit, pagination.total)} of {pagination.total} entries</span>
-            <div className="flex items-center justify-center gap-2"><button type="button" onClick={() => goToPage(1)} disabled={safePage === 1} className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-400 disabled:opacity-50"><ChevronsLeft className="h-4 w-4" /></button><button type="button" onClick={() => goToPage(safePage - 1)} disabled={safePage === 1} className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-400 disabled:opacity-50"><ChevronLeft className="h-4 w-4" /></button><button type="button" className="flex h-9 min-w-9 items-center justify-center rounded-md bg-[#6658dd] px-3 text-sm font-black text-white">{safePage}</button><button type="button" onClick={() => goToPage(safePage + 1)} disabled={safePage === totalPages} className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-400 disabled:opacity-50"><ChevronRight className="h-4 w-4" /></button><button type="button" onClick={() => goToPage(totalPages)} disabled={safePage === totalPages} className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-400 disabled:opacity-50"><ChevronsRight className="h-4 w-4" /></button></div>
+            <div className="flex items-center justify-center gap-2"><button type="button" onClick={() => goToPage(1)} disabled={safePage === 1 || loading} className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-400 disabled:opacity-50"><ChevronsLeft className="h-4 w-4" /></button><button type="button" onClick={() => goToPage(safePage - 1)} disabled={safePage === 1 || loading} className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-400 disabled:opacity-50"><ChevronLeft className="h-4 w-4" /></button><button type="button" className="flex h-9 min-w-9 items-center justify-center rounded-md bg-[#6658dd] px-3 text-sm font-black text-white">{safePage}</button><button type="button" onClick={() => goToPage(safePage + 1)} disabled={safePage === totalPages || loading} className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-400 disabled:opacity-50"><ChevronRight className="h-4 w-4" /></button><button type="button" onClick={() => goToPage(totalPages)} disabled={safePage === totalPages || loading} className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-400 disabled:opacity-50"><ChevronsRight className="h-4 w-4" /></button></div>
           </div>
         </div>
       </section>
