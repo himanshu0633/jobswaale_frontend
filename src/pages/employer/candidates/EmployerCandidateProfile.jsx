@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
 import {
@@ -17,7 +17,11 @@ import {
   UserX,
   Loader,
   X,
-  Check
+  Check,
+  FileText,
+  Clock,
+  Send,
+  MessageSquare
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
@@ -119,6 +123,20 @@ const ActionButton = ({ tone, icon: Icon, children, onClick, disabled }) => (
     {children}
   </button>
 );
+
+const ResumeDownloadLink = ({ candidate, onDownload, className }) => {
+  if (!candidate.hasResume) return null;
+
+  return (
+    <button
+      type="button"
+      onClick={onDownload}
+      className={`inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-600 transition hover:bg-slate-50 ${className || ''}`}
+    >
+      <Download className="h-4 w-4" /> Download Resume
+    </button>
+  );
+};
 
 const SkillBadge = ({ children, tone = 'bg-blue-50 text-blue-600' }) => (
   <span className={`mb-1 mr-1 inline-flex rounded px-2 py-1 text-xs font-black ${tone}`}>{children}</span>
@@ -230,6 +248,27 @@ const EmployerCandidateProfile = () => {
     }
   };
 
+  const updateOfferStatus = async (offerStatus) => {
+    if (!candidate.application?.id) return;
+    setSaving('OfferStatus');
+    setError('');
+    setMessage('');
+    try {
+      await axios.patch(
+        `${BASE_API_URL}/employer/applications/${candidate.application.id}/offer-status`,
+        { offerStatus },
+        { headers: getTokenHeaders() }
+      );
+      setMessage(`Offer status updated to ${offerStatus}.`);
+      const response = await axios.get(`${BASE_API_URL}/employer/candidateProfile/${id}`, { headers: getTokenHeaders() });
+      setCandidate(response.data);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update offer status.');
+    } finally {
+      setSaving('');
+    }
+  };
+
   const handleSaveToTalentPool = async () => {
     setSaving('TalentPool');
     setError('');
@@ -289,6 +328,112 @@ const EmployerCandidateProfile = () => {
   }
 
   const matchScore = candidate.application?.matchScore || 0;
+
+  const quickActions = useMemo(() => {
+    const list = [];
+    if (!candidate || !candidate.application) return list;
+
+    const status = candidate.application.status;
+    const details = candidate.application.interviewDetails || {};
+    const onHold = details.onHold;
+
+    // 1. Mark as Applied
+    list.push({
+      key: 'Applied',
+      label: 'Mark as Applied',
+      tone: 'border border-emerald-200 bg-white text-emerald-600 hover:bg-emerald-50',
+      icon: FileText,
+      onClick: () => updateStatus('Applied')
+    });
+
+    // 2. Schedule / Reschedule Interview
+    const isInterview = status === 'Interview';
+    list.push({
+      key: 'InterviewSchedule',
+      label: (isInterview && !onHold) ? 'Reschedule Interview' : 'Schedule Interview',
+      tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
+      icon: CalendarPlus,
+      onClick: openInterviewModal
+    });
+
+    // 3. On Hold for Interview
+    list.push({
+      key: 'InterviewOnHold',
+      label: 'On Hold for Interview',
+      tone: 'border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100',
+      icon: Clock,
+      onClick: async () => {
+        setSaving('InterviewOnHold');
+        setError('');
+        setMessage('');
+        try {
+          await axios.post(
+            `${BASE_API_URL}/employer/applications/${candidate.application.id}/schedule-interview`,
+            {
+              onHold: true,
+              type: candidate.application.interviewDetails?.type || 'Video Call',
+              notes: candidate.application.interviewDetails?.notes || 'Interview kept on hold.'
+            },
+            { headers: getTokenHeaders() }
+          );
+          setMessage('Application moved to interview on hold.');
+          const response = await axios.get(`${BASE_API_URL}/employer/candidateProfile/${id}`, { headers: getTokenHeaders() });
+          setCandidate(response.data);
+        } catch (err) {
+          setError(err.response?.data?.message || 'Failed to move application to interview on hold.');
+        } finally {
+          setSaving('');
+        }
+      }
+    });
+
+    // 4. Select
+    list.push({
+      key: 'Offered',
+      label: 'Select',
+      tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
+      icon: UserPlus,
+      onClick: () => updateStatus('Offered')
+    });
+
+    // 5. Offer Sent
+    list.push({
+      key: 'OfferSent',
+      label: 'Offer Sent',
+      tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
+      icon: Send,
+      onClick: () => updateOfferStatus('Offer Sent')
+    });
+
+    // 6. Accept
+    list.push({
+      key: 'OfferAccept',
+      label: 'Accept',
+      tone: 'bg-cyan-500 text-white hover:bg-cyan-600',
+      icon: Check,
+      onClick: () => updateOfferStatus('Offer Accepted')
+    });
+
+    // 7. Hire
+    list.push({
+      key: 'Hire',
+      label: 'Hire',
+      tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
+      icon: Briefcase,
+      onClick: () => updateOfferStatus('Hired')
+    });
+
+    // 8. Reject
+    list.push({
+      key: 'Rejected',
+      label: 'Reject',
+      tone: 'border border-rose-200 bg-white text-rose-600 hover:bg-rose-50',
+      icon: UserX,
+      onClick: () => updateStatus('Rejected')
+    });
+
+    return list;
+  }, [candidate]);
 
   let availableActions = [];
   const appStatus = candidate.application?.status;
@@ -362,11 +507,65 @@ const EmployerCandidateProfile = () => {
       {message && <div className="rounded-md border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">{message}</div>}
 
       <div className="flex flex-wrap items-center gap-2">
-        {availableActions.map((action) => (
-          <ActionButton key={action.status} tone={action.tone} icon={action.icon} onClick={action.onClick} disabled={Boolean(saving)}>
-            {action.label}
-          </ActionButton>
-        ))}
+        {candidate.application ? (
+          <>
+            <ActionButton
+              tone="bg-[#6658dd] text-white hover:bg-[#5848d8]"
+              icon={CalendarPlus}
+              onClick={openInterviewModal}
+              disabled={Boolean(saving)}
+            >
+              {(candidate.application.status === 'Interview' && !candidate.application.interviewDetails?.onHold) ? 'Reschedule Interview' : 'Schedule Interview'}
+            </ActionButton>
+
+            <ActionButton
+              tone="border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+              icon={Clock}
+              onClick={async () => {
+                setSaving('InterviewOnHold');
+                setError('');
+                setMessage('');
+                try {
+                  await axios.post(
+                    `${BASE_API_URL}/employer/applications/${candidate.application.id}/schedule-interview`,
+                    {
+                      onHold: true,
+                      type: candidate.application.interviewDetails?.type || 'Video Call',
+                      notes: candidate.application.interviewDetails?.notes || 'Interview kept on hold.'
+                    },
+                    { headers: getTokenHeaders() }
+                  );
+                  setMessage('Application moved to interview on hold.');
+                  const response = await axios.get(`${BASE_API_URL}/employer/candidateProfile/${id}`, { headers: getTokenHeaders() });
+                  setCandidate(response.data);
+                } catch (err) {
+                  setError(err.response?.data?.message || 'Failed to move application to interview on hold.');
+                } finally {
+                  setSaving('');
+                }
+              }}
+              disabled={Boolean(saving)}
+            >
+              On Hold for Interview
+            </ActionButton>
+
+            <ActionButton
+              tone="border border-rose-200 bg-white text-rose-600 hover:bg-rose-50"
+              icon={UserX}
+              onClick={() => updateStatus('Rejected')}
+              disabled={Boolean(saving)}
+            >
+              Reject
+            </ActionButton>
+          </>
+        ) : (
+          availableActions.map((action) => (
+            <ActionButton key={action.status} tone={action.tone} icon={action.icon} onClick={action.onClick} disabled={Boolean(saving)}>
+              {action.label}
+            </ActionButton>
+          ))
+        )}
+
         <ActionButton
           tone={candidate.talentPool ? 'bg-slate-600 text-white hover:bg-slate-700' : 'bg-slate-500 text-white hover:bg-slate-600'}
           icon={Bookmark}
@@ -375,18 +574,27 @@ const EmployerCandidateProfile = () => {
         >
           {candidate.talentPool ? 'Saved to Talent Pool' : 'Save to Talent Pool'}
         </ActionButton>
-        {canReject && (
-          <ActionButton tone="border border-rose-200 bg-white text-rose-600 hover:bg-rose-50" icon={UserX} onClick={() => updateStatus('Rejected')} disabled={Boolean(saving)}>Reject</ActionButton>
+
+        {!candidate.application && (
+          <button
+            type="button"
+            onClick={handleResumeDownload}
+            disabled={Boolean(saving)}
+            className={`inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-600 transition hover:bg-slate-50 ${!candidate.hasResume ? 'pointer-events-none opacity-60' : ''}`}
+          >
+            <Download className="h-4 w-4" /> Download Resume
+          </button>
         )}
-        <button
-          type="button"
-          onClick={handleResumeDownload}
-          disabled={Boolean(saving)}
-          className={`inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-600 transition hover:bg-slate-50 ${!candidate.hasResume ? 'pointer-events-none opacity-60' : ''}`}
-        >
-          <Download className="h-4 w-4" /> Download Resume
-        </button>
       </div>
+
+      {candidate.application && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3">
+          <Link to={`/employer/messages?application=${candidate.application.id}`} className="inline-flex items-center justify-center gap-2 rounded-md border border-sky-200 bg-white px-3 py-2 text-xs font-extrabold text-sky-600 hover:bg-sky-50 w-full">
+            <MessageSquare className="h-4 w-4" /> Send Message
+          </Link>
+          <ResumeDownloadLink candidate={candidate} onDownload={handleResumeDownload} className="w-full" />
+        </div>
+      )}
 
       <section className="rounded-md border border-slate-100 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-5 md:flex-row md:items-center">
@@ -462,6 +670,19 @@ const EmployerCandidateProfile = () => {
         </div>
 
         <aside className="space-y-5">
+          {candidate.application && (
+            <Card title="Quick Actions">
+              <div className="grid gap-2">
+                {quickActions.map((action) => (
+                  <ActionButton key={action.key} tone={action.tone} icon={action.icon} onClick={action.onClick} disabled={Boolean(saving)}>
+                    {action.label}
+                  </ActionButton>
+                ))}
+                <ResumeDownloadLink candidate={candidate} onDownload={handleResumeDownload} />
+              </div>
+            </Card>
+          )}
+
           <Card title="Skills">
             <div className="mb-4">
               <label className="mb-2 block text-[11px] font-black uppercase text-slate-400">Frontend</label>
