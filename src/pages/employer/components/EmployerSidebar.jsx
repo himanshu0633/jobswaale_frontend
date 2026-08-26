@@ -19,7 +19,8 @@ import {
   Star,
   UserCheck,
   UserPlus,
-  UserRoundCheck
+  UserRoundCheck,
+  UserX
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import { useMessageSocket } from '../../../context/MessageSocketContext';
@@ -40,6 +41,7 @@ const mainMenu = [
   { to: '/employer/shortlisted', icon: UserCheck, label: 'Shortlisted' },
   { to: '/employer/interviews', icon: CalendarCheck, label: 'Interviews' },
   { to: '/employer/selected', icon: UserPlus, label: 'Selected' },
+  { to: '/employer/rejected', icon: UserX, label: 'Rejected' },
   { to: '/employer/offers', icon: FileText, label: 'Offers & Templates' },
   { to: '/employer/candidates', icon: Search, label: 'Search Candidates' },
   { to: '/employer/auto-mail', icon: MailCheck, label: 'Auto Mail' },

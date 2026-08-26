@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Mail,
   FileText,
@@ -43,6 +43,7 @@ const getOfferStatus = (offer) => {
 };
 
 export const EmployerOffers = () => {
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('offers'); // 'offers' or 'templates'
   const [offers, setOffers] = useState([]);
   const [templates, setTemplates] = useState([]);
@@ -54,7 +55,7 @@ export const EmployerOffers = () => {
   const [offersSearch, setOffersSearch] = useState('');
   const [templatesSearch, setTemplatesSearch] = useState('');
   
-  const [filterJob, setFilterJob] = useState('');
+  const [filterJob, setFilterJob] = useState(searchParams.get('jobTitle') || '');
   const [filterAttachment, setFilterAttachment] = useState('');
   const [filterDate, setFilterDate] = useState('');
 

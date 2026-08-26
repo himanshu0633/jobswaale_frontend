@@ -680,13 +680,13 @@ export const EmployerDashboard = () => {
                     <Link to={`/employer/applications?jobTitle=${encodeURIComponent(job.title)}&status=OnHold`} className="hover:text-[#0047C7]">{job.onHold || 0}</Link>
                   </td>
                   <td className="border-l border-slate-100 bg-slate-50/40 px-4 py-4 text-center font-bold text-slate-700">
-                    <Link to={`/employer/selected?jobTitle=${encodeURIComponent(job.title)}&status=Selected`} className="hover:text-[#0047C7]">{job.selected || 0}</Link>
+                    <Link to={`/employer/selected?jobTitle=${encodeURIComponent(job.title)}`} className="hover:text-[#0047C7]">{job.selected || 0}</Link>
                   </td>
                   <td className="border-l border-slate-100 px-4 py-4 text-center font-bold text-slate-700">
-                    <Link to={`/employer/selected?jobTitle=${encodeURIComponent(job.title)}&status=Offer+Sent`} className="hover:text-[#0047C7]">{job.offered || 0}</Link>
+                    <Link to={`/employer/offers?jobTitle=${encodeURIComponent(job.title)}`} className="hover:text-[#0047C7]">{job.offered || 0}</Link>
                   </td>
                   <td className="border-l border-slate-100 bg-slate-50/40 px-4 py-4 text-center font-bold text-slate-700">
-                    <Link to={`/employer/applications?jobTitle=${encodeURIComponent(job.title)}&status=Rejected`} className="hover:text-[#0047C7]">{job.rejected || 0}</Link>
+                    <Link to={`/employer/rejected?jobTitle=${encodeURIComponent(job.title)}`} className="hover:text-[#0047C7]">{job.rejected || 0}</Link>
                   </td>
                 </tr>
               ))}
