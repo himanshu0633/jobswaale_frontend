@@ -13,7 +13,8 @@ import {
   Check,
   ChevronRight,
   X,
-  Search
+  Search,
+  Send
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import ClearFilterButton from '../../../components/ClearFilterButton';
@@ -39,6 +40,10 @@ export const EmployerOffers = () => {
   // Search/Filters states
   const [offersSearch, setOffersSearch] = useState('');
   const [templatesSearch, setTemplatesSearch] = useState('');
+  
+  const [filterJob, setFilterJob] = useState('');
+  const [filterAttachment, setFilterAttachment] = useState('');
+  const [filterDate, setFilterDate] = useState('');
 
   // Modal / Form state for template create/edit
   const [templateModal, setTemplateModal] = useState({
@@ -54,23 +59,18 @@ export const EmployerOffers = () => {
 
   useEffect(() => {
     fetchData();
-  }, [activeTab]);
+  }, []);
 
   const fetchData = async () => {
     setLoading(true);
     setError('');
     try {
-      if (activeTab === 'offers') {
-        const response = await axios.get(`${BASE_API_URL}/employer/sent-offers`, {
-          headers: getTokenHeaders()
-        });
-        setOffers(response.data || []);
-      } else {
-        const response = await axios.get(`${BASE_API_URL}/employer/email-templates`, {
-          headers: getTokenHeaders()
-        });
-        setTemplates(response.data || []);
-      }
+      const [offersRes, templatesRes] = await Promise.all([
+        axios.get(`${BASE_API_URL}/employer/sent-offers`, { headers: getTokenHeaders() }),
+        axios.get(`${BASE_API_URL}/employer/email-templates`, { headers: getTokenHeaders() })
+      ]);
+      setOffers(offersRes.data || []);
+      setTemplates(templatesRes.data || []);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load details.');
     } finally {
@@ -164,14 +164,27 @@ export const EmployerOffers = () => {
     }
   };
 
+  const uniquePositions = useMemo(() => {
+    const jobs = offers.map(o => o.application?.job?.jobTitle).filter(Boolean);
+    return [...new Set(jobs)];
+  }, [offers]);
+
   // Filtered lists
   const filteredOffers = offers.filter((o) => {
     const q = offersSearch.toLowerCase();
     const candName = o.candidate?.name?.toLowerCase() || '';
     const candEmail = o.candidateEmail?.toLowerCase() || '';
-    const jobTitle = o.application?.job?.jobTitle?.toLowerCase() || '';
+    const jobTitle = o.application?.job?.jobTitle || '';
     const subj = o.subject?.toLowerCase() || '';
-    return candName.includes(q) || candEmail.includes(q) || jobTitle.includes(q) || subj.includes(q);
+    
+    const matchesSearch = candName.includes(q) || candEmail.includes(q) || jobTitle.toLowerCase().includes(q) || subj.includes(q);
+    const matchesJob = !filterJob || jobTitle === filterJob;
+    const matchesAttachment = !filterAttachment || 
+      (filterAttachment === 'pdf' && o.attachmentUrl) ||
+      (filterAttachment === 'none' && !o.attachmentUrl);
+    const matchesDate = !filterDate || new Date(o.createDate) >= new Date(filterDate);
+
+    return matchesSearch && matchesJob && matchesAttachment && matchesDate;
   });
 
   const filteredTemplates = templates.filter((t) => {
@@ -188,6 +201,39 @@ export const EmployerOffers = () => {
           <span className="text-[#3f4254]">JobsWaale</span>
           <ChevronRight className="h-4 w-4" />
           <span>Offers</span>
+        </div>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+        <div className="flex items-center gap-4 rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-[#6658dd]">
+            <Send className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Total Offers Sent</p>
+            <h3 className="text-xl font-black text-slate-800 mt-0.5">{offers.length}</h3>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+            <FileText className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Offers with PDF</p>
+            <h3 className="text-xl font-black text-slate-800 mt-0.5">{offers.filter(o => o.attachmentUrl).length}</h3>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-500">
+            <Mail className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Saved Templates</p>
+            <h3 className="text-xl font-black text-slate-800 mt-0.5">{templates.length}</h3>
+          </div>
         </div>
       </div>
 
@@ -228,23 +274,83 @@ export const EmployerOffers = () => {
       {/* Sent Offers Tab */}
       {activeTab === 'offers' && (
         <section className="rounded-md border border-slate-100 bg-white shadow-sm">
-          <div className="flex flex-col justify-between gap-4 border-b border-dashed border-slate-200 px-4 py-4 sm:px-5 lg:flex-row lg:items-center">
+          <div className="border-b border-dashed border-slate-200 px-4 py-4 sm:px-5">
+            <h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Sent Offers Log</h2>
+            <p className="mt-1 text-xs font-semibold text-slate-400 sm:text-sm">
+              View history of all job offers sent to candidates with their attachments.
+            </p>
+          </div>
+
+          {/* Filters Row */}
+          <div className="grid gap-4 border-b border-dashed border-slate-200 px-4 py-4 sm:px-5 grid-cols-1 sm:grid-cols-2 md:grid-cols-4 items-end bg-slate-50/50">
             <div>
-              <h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Sent Offers Log</h2>
-              <p className="mt-1 text-xs font-semibold text-slate-400 sm:text-sm">
-                View history of all job offers sent to candidates with their attachments.
-              </p>
+              <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Search</label>
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  disabled={loading}
+                  type="text"
+                  placeholder="Search candidate or subject..."
+                  value={offersSearch}
+                  onChange={(e) => setOffersSearch(e.target.value)}
+                  className="h-10 w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-xs font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
+                />
+              </div>
             </div>
-            <div className="relative w-full max-w-xs">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
+
+            <div>
+              <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Filter by Position</label>
+              <select
                 disabled={loading}
-                type="text"
-                placeholder="Search offers..."
-                value={offersSearch}
-                onChange={(e) => setOffersSearch(e.target.value)}
-                className="h-10 w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6658dd]"
-              />
+                value={filterJob}
+                onChange={(e) => setFilterJob(e.target.value)}
+                className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 outline-none focus:border-[#6658dd]"
+              >
+                <option value="">All Positions</option>
+                {uniquePositions.map((pos) => (
+                  <option key={pos} value={pos}>
+                    {pos}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Filter by Attachment</label>
+              <select
+                disabled={loading}
+                value={filterAttachment}
+                onChange={(e) => setFilterAttachment(e.target.value)}
+                className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 outline-none focus:border-[#6658dd]"
+              >
+                <option value="">All Attachments</option>
+                <option value="pdf">With PDF Attachment</option>
+                <option value="none">No Attachment</option>
+              </select>
+            </div>
+
+            <div className="flex gap-2 items-center">
+              <div className="flex-grow">
+                <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Sent After Date</label>
+                <input
+                  disabled={loading}
+                  type="date"
+                  value={filterDate}
+                  onChange={(e) => setFilterDate(e.target.value)}
+                  className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 outline-none focus:border-[#6658dd]"
+                />
+              </div>
+              {(offersSearch || filterJob || filterAttachment || filterDate) && (
+                <ClearFilterButton
+                  onClick={() => {
+                    setOffersSearch('');
+                    setFilterJob('');
+                    setFilterAttachment('');
+                    setFilterDate('');
+                  }}
+                  className="h-10 mt-6 shrink-0"
+                />
+              )}
             </div>
           </div>
 
