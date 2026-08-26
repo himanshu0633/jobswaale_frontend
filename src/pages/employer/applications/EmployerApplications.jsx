@@ -24,7 +24,9 @@ import {
   X,
   Clock,
   AlertCircle,
-  Send
+  Send,
+  BadgeCheck,
+  Briefcase
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import ClearFilterButton from '../../../components/ClearFilterButton';
@@ -49,7 +51,10 @@ const statCards = [
   { key: 'shortlisted', title: 'Shortlisted', status: 'Shortlisted', icon: UserCheck, tone: 'bg-amber-50 text-amber-500' },
   { key: 'interview', title: 'Interview', status: 'Interview', icon: Calendar, tone: 'bg-sky-50 text-sky-500' },
   { key: 'onHold', title: 'On Hold', titleLines: ['On', 'Hold'], status: 'OnHold', icon: Clock, tone: 'bg-orange-50 text-orange-500' },
-  { key: 'offered', title: 'Selected', status: 'Offered', icon: MailCheck, tone: 'bg-blue-50 text-blue-500' },
+  { key: 'selected', title: 'Selected', status: 'Selected', icon: UserPlus, tone: 'bg-teal-50 text-teal-500' },
+  { key: 'offerSent', title: 'Offer Sent', titleLines: ['Offer', 'Sent'], status: 'Offer Sent', icon: MailCheck, tone: 'bg-indigo-50 text-[#6658dd]' },
+  { key: 'offerAccepted', title: 'Offer Accepted', titleLines: ['Offer', 'Accepted'], status: 'Offer Accepted', icon: BadgeCheck, tone: 'bg-cyan-50 text-cyan-500' },
+  { key: 'hired', title: 'Hired', status: 'Hired', icon: Briefcase, tone: 'bg-emerald-50 text-emerald-500' },
   { key: 'rejected', title: 'Rejected', status: 'Rejected', icon: UserX, tone: 'bg-rose-50 text-rose-500' }
 ];
 
@@ -446,7 +451,7 @@ export const EmployerApplications = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
         {statCards.map((card) => (
           <button
             key={card.key}
