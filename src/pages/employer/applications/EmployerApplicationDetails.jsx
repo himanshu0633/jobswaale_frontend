@@ -87,6 +87,29 @@ const statusTone = {
   Rejected: 'bg-rose-50 text-rose-600'
 };
 
+const formatInterviewDate = (value) => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
+const normalizeInterviewTime = (value) => {
+  if (!value) return '';
+  const raw = String(value).trim();
+  if (!raw) return '';
+  if (/[ap]m/i.test(raw)) return raw.toUpperCase();
+
+  const [hourPart, minutePart = '0'] = raw.split(':');
+  const hour = Number(hourPart);
+  const minute = Number(minutePart);
+  if (Number.isNaN(hour) || Number.isNaN(minute)) return raw;
+
+  const date = new Date();
+  date.setHours(hour, minute, 0, 0);
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+};
+
 const timelineSteps = ['Applied', 'Reviewed', 'Shortlisted', 'Interview', 'Offered'];
 const actionStepIndex = {
   Shortlisted: 2,
@@ -297,13 +320,14 @@ const EmployerApplicationDetails = () => {
   const openInterviewModal = () => {
     setError('');
     setMessage('');
+    const details = application?.interviewDetails || {};
     setInterviewForm({
-      date: '',
-      time: '',
-      type: 'Video Call',
-      locationOrLink: '',
-      notes: '',
-      manualAddress: ''
+      date: details.date ? new Date(details.date).toISOString().slice(0, 10) : '',
+      time: details.time || '',
+      type: details.type || 'Video Call',
+      locationOrLink: details.locationOrLink || '',
+      notes: details.notes || '',
+      manualAddress: details.manualAddress || ''
     });
     setShowInterviewModal(true);
   };
@@ -637,6 +661,10 @@ const EmployerApplicationDetails = () => {
 
   const candidate = application.candidate || {};
   const job = application.job || {};
+  const interviewDetails = application.interviewDetails || {};
+  const hasScheduledInterview = application.status === 'Interview' && !interviewDetails.onHold && (interviewDetails.date || interviewDetails.time || interviewDetails.type);
+  const interviewDisplayDate = formatInterviewDate(interviewDetails.date);
+  const interviewDisplayTime = normalizeInterviewTime(interviewDetails.time);
   const interviewLocationField = getInterviewLocationField(interviewForm.type);
   const showMapPicker = isInPersonInterview(interviewForm.type);
 
@@ -655,19 +683,37 @@ const EmployerApplicationDetails = () => {
       {error && <div className="rounded-md border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{error}</div>}
       {message && <div className="rounded-md border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">{message}</div>}
 
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-slate-100 bg-slate-50 px-4 py-3">
-        <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-[#3f4254]">
-          <span className={`rounded px-2.5 py-1 text-xs font-black ${statusTone[application.status === 'Offered' ? (application.selectionDetails?.offerStatus || 'Selected') : application.status] || statusTone.Applied}`}>
-            {application.status === 'Offered' ? (application.selectionDetails?.offerStatus || 'Selected') : application.status}
-          </span>
-          <span className="inline-flex items-center gap-1"><User className="h-4 w-4" /><strong>{candidate.name}</strong></span>
-          <span className="inline-flex items-center gap-1"><Briefcase className="h-4 w-4" />{job.title}</span>
-          <span className="inline-flex items-center gap-1"><Calendar className="h-4 w-4" />Applied: {application.appliedDisplayDate}</span>
-          {application.status === 'Rejected' && (
-            <span className="inline-flex items-center gap-1 text-rose-600"><UserX className="h-4 w-4" />Rejected after: {application.rejectedFromStatus || 'Not available'}</span>
-          )}
+      <div className="rounded-md border border-slate-100 bg-slate-50 px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-[#3f4254]">
+            <span className={`rounded px-2.5 py-1 text-xs font-black ${statusTone[application.status === 'Offered' ? (application.selectionDetails?.offerStatus || 'Selected') : application.status] || statusTone.Applied}`}>
+              {application.status === 'Offered' ? (application.selectionDetails?.offerStatus || 'Selected') : application.status}
+            </span>
+            <span className="inline-flex items-center gap-1"><User className="h-4 w-4" /><strong>{candidate.name}</strong></span>
+            <span className="inline-flex items-center gap-1"><Briefcase className="h-4 w-4" />{job.title}</span>
+            <span className="inline-flex items-center gap-1"><Calendar className="h-4 w-4" />Applied: {application.appliedDisplayDate}</span>
+            {application.status === 'Rejected' && (
+              <span className="inline-flex items-center gap-1 text-rose-600"><UserX className="h-4 w-4" />Rejected after: {application.rejectedFromStatus || 'Not available'}</span>
+            )}
+          </div>
+          <span className="rounded bg-emerald-50 px-2.5 py-1 text-xs font-black text-emerald-600"><Star className="mr-1 inline h-3.5 w-3.5" />{application.matchScore}% Match</span>
         </div>
-        <span className="rounded bg-emerald-50 px-2.5 py-1 text-xs font-black text-emerald-600"><Star className="mr-1 inline h-3.5 w-3.5" />{application.matchScore}% Match</span>
+
+        {hasScheduledInterview && (
+          <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-slate-200/60 pt-2.5 text-xs font-semibold text-slate-500">
+            <span className="inline-flex items-center gap-1 text-violet-600 font-extrabold"><CalendarPlus className="h-4 w-4 shrink-0" />Scheduled Interview:</span>
+            {interviewDisplayDate && <p className="mb-0"><span className="text-slate-400">Date:</span> <span className="font-extrabold text-slate-700">{interviewDisplayDate}</span></p>}
+            {interviewDisplayTime && <p className="mb-0"><span className="text-slate-400">Time:</span> <span className="font-extrabold text-slate-700">{interviewDisplayTime}</span></p>}
+            {interviewDetails.type && <p className="mb-0"><span className="text-slate-400">Mode:</span> <span className="font-extrabold text-slate-700">{interviewDetails.type}</span></p>}
+          </div>
+        )}
+
+        {application.status === 'Interview' && interviewDetails.onHold && (
+          <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-slate-200/60 pt-2.5 text-xs font-semibold text-slate-500">
+            <span className="inline-flex items-center gap-1 text-amber-600 font-extrabold"><Clock className="h-4 w-4 shrink-0" />Interview Status:</span>
+            <p className="mb-0"><span className="font-extrabold text-amber-600">On Hold for Interview</span></p>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3">
@@ -699,6 +745,13 @@ const EmployerApplicationDetails = () => {
                   <>
                     <Field label="Rejected After">{application.rejectedFromStatus || 'Not available'}</Field>
                     <Field label="Rejected Date">{application.rejectedDisplayDate || 'Not specified'}</Field>
+                  </>
+                )}
+                {hasScheduledInterview && (
+                  <>
+                    <Field label="Interview Date">{interviewDisplayDate || 'Not specified'}</Field>
+                    <Field label="Interview Time">{interviewDisplayTime || 'Not specified'}</Field>
+                    <Field label="Interview Mode">{interviewDetails.type || 'Not specified'}</Field>
                   </>
                 )}
                 <Field label="Experience">{candidate.experience}</Field>
@@ -802,7 +855,7 @@ const EmployerApplicationDetails = () => {
                   } else {
                     BulletIcon = Calendar;
                     bulletBg = 'bg-violet-500';
-                    statusText = 'Scheduled';
+                    statusText = [interviewDisplayDate, interviewDisplayTime, interviewDetails.type].filter(Boolean).join(' • ') || 'Scheduled';
                     statusColor = 'text-violet-600 font-extrabold';
                   }
                 }
