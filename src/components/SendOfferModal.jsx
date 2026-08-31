@@ -300,7 +300,7 @@ export const SendOfferModal = ({ isOpen, onClose, applicationId, candidateEmail,
                     <span>Sending Offer...</span>
                   </>
                 ) : (
-                  <span>Send Offer & Select</span>
+                  <span>Send Offer</span>
                 )}
               </button>
             </div>

@@ -45,6 +45,7 @@ const emptyDashboard = {
     onHold: 0,
     selected: 0,
     offered: 0,
+    hired: 0,
     rejected: 0,
     expired: 0
   },
@@ -87,6 +88,82 @@ const JobStatLabel = ({ children, tooltip }) => (
     </span>
   </span>
 );
+
+const pipelineStatCards = [
+  {
+    key: 'applied',
+    label: 'Applied',
+    change: 'Newly submitted',
+    icon: Send,
+    tone: 'bg-sky-50 text-sky-600',
+    to: '/employer/applications?status=Applied'
+  },
+  {
+    key: 'reviewed',
+    label: 'Reviewed',
+    change: 'Under review',
+    icon: Eye,
+    tone: 'bg-cyan-50 text-cyan-600',
+    to: '/employer/applications?status=Reviewed',
+    fallbackKey: 'reviewed'
+  },
+  {
+    key: 'shortlisted',
+    label: 'Shortlisted',
+    change: 'Moving forward',
+    icon: UserCheck,
+    tone: 'bg-emerald-50 text-emerald-600',
+    to: '/employer/shortlisted'
+  },
+  {
+    key: 'interview',
+    label: 'Interviews',
+    change: 'Scheduled sessions',
+    icon: Calendar,
+    tone: 'bg-amber-50 text-amber-600',
+    to: '/employer/interviews'
+  },
+  {
+    key: 'onHold',
+    label: 'On Hold',
+    change: 'Interview paused',
+    icon: Clock,
+    tone: 'bg-orange-50 text-orange-600',
+    to: '/employer/interviews'
+  },
+  {
+    key: 'selected',
+    label: 'Selected',
+    change: 'Selected by employer',
+    icon: UserCheck,
+    tone: 'bg-emerald-100 text-emerald-800',
+    to: '/employer/selected?status=Selected'
+  },
+  {
+    key: 'offered',
+    label: 'Offered',
+    change: 'Offer sent',
+    icon: Mail,
+    tone: 'bg-blue-50 text-blue-600',
+    to: '/employer/offers'
+  },
+  {
+    key: 'hired',
+    label: 'Hired',
+    change: 'Hiring completed',
+    icon: Briefcase,
+    tone: 'bg-teal-50 text-teal-600',
+    to: '/employer/hired'
+  },
+  {
+    key: 'rejected',
+    label: 'Rejected',
+    change: 'Not selected',
+    icon: XCircle,
+    tone: 'bg-rose-50 text-rose-600',
+    to: '/employer/rejected'
+  }
+];
 
 export const EmployerDashboard = () => {
   const navigate = useNavigate();
@@ -145,6 +222,7 @@ export const EmployerDashboard = () => {
 
   const subscription = dashboard.subscription || {};
   const upcomingInterviews = dashboard.upcomingInterviews || [];
+  const pipeline = dashboard.pipeline || {};
 
   return (
     <div className="space-y-6 px-3 sm:px-0" style={{ fontFamily: "'Inter', sans-serif" }}>
@@ -291,7 +369,7 @@ export const EmployerDashboard = () => {
                 </div>
                 <div className="text-right">
                   <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.jobs?.draft || 0}</span>
-                  <JobStatLabel tooltip="Draft jobs saved by you but not published yet. Candidates cannot see or apply to them until you publish.">Inactive Jobs</JobStatLabel>
+                  <JobStatLabel tooltip="Draft jobs saved by you but not published yet. Candidates cannot see or apply to them until you publish.">Draft Jobs</JobStatLabel>
                 </div>
               </div>
               <Link to="/employer/jobs?status=Draft" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
@@ -328,113 +406,37 @@ export const EmployerDashboard = () => {
       </section>
 
       {/* Hiring Pipeline Block */}
-      <section className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
-        <h2 className="text-sm font-extrabold text-[#111827] mb-4">Hiring Pipeline <span className="text-slate-400 font-medium">(All Jobs)</span></h2>
-        
-        <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
-            {/* Applied */}
-            <Link to="/employer/applications?status=Applied" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                  <FileText className="h-4 w-4" />
-                </div>
-                <div className="text-left">
-                  <span className="block text-[11px] font-bold text-slate-450">Applied</span>
-                  <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.applied || 0}</span>
-                </div>
-              </div>
-            </Link>
+      <section className="space-y-4">
+        <h2 className="text-sm font-extrabold text-[#111827]">
+          Hiring Pipeline <span className="text-slate-400 font-medium">(All Jobs)</span>
+        </h2>
 
-            {/* Reviewed */}
-            <Link to="/employer/applications?status=Reviewed" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-50 text-cyan-600">
-                  <Eye className="h-4 w-4" />
-                </div>
-                <div className="text-left">
-                  <span className="block text-[11px] font-bold text-slate-450">Reviewed</span>
-                  <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.reviewed || dashboard.stats?.reviewed || 0}</span>
-                </div>
-              </div>
-            </Link>
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          {pipelineStatCards.map((item) => {
+            const Icon = item.icon;
+            const value = pipeline[item.key] ?? dashboard.stats?.[item.fallbackKey] ?? 0;
 
-            {/* Shortlisted */}
-            <Link to="/employer/shortlisted" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
-                  <Star className="h-4 w-4" />
+            return (
+              <Link
+                key={item.key}
+                to={item.to}
+                className="block rounded-md border border-slate-100 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <div className="flex min-h-[76px] items-center gap-4">
+                  <div className={`flex h-13 w-13 shrink-0 items-center justify-center rounded-xl ${item.tone}`}>
+                    <Icon className="h-6 w-6" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-slate-400">{item.label}</p>
+                    <p className="text-2xl font-bold leading-tight text-[#0f172a]">
+                      {Number(value || 0).toLocaleString('en-IN')}
+                    </p>
+                    <p className="text-xs font-semibold text-rose-500">{item.change}</p>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <span className="block text-[11px] font-bold text-slate-450">Shortlisted</span>
-                  <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.shortlisted || 0}</span>
-                </div>
-              </div>
-            </Link>
-
-            {/* Interview */}
-            <Link to="/employer/interviews" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50 text-[#6658dd]">
-                  <Calendar className="h-4 w-4" />
-                </div>
-                <div className="text-left">
-                  <span className="block text-[11px] font-bold text-slate-450">Interview</span>
-                  <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.interview || 0}</span>
-                </div>
-              </div>
-            </Link>
-
-            {/* On Hold */}
-            <Link to="/employer/applications?status=OnHold" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 text-orange-600">
-                  <Clock className="h-4 w-4" />
-                </div>
-                <div className="text-left">
-                  <span className="block text-[11px] font-bold text-slate-450">On Hold</span>
-                  <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.onHold || 0}</span>
-                </div>
-              </div>
-            </Link>
-
-            {/* Selected */}
-            <Link to="/employer/selected?status=Selected" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                  <UserCheck className="h-4 w-4" />
-                </div>
-                <div className="text-left">
-                  <span className="block text-[11px] font-bold text-slate-450">Selected</span>
-                  <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.selected || 0}</span>
-                </div>
-              </div>
-            </Link>
-
-            {/* Offered */}
-            <Link to="/employer/selected?status=Offer+Sent" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-pink-50 text-pink-600">
-                  <Mail className="h-4 w-4" />
-                </div>
-                <div className="text-left">
-                  <span className="block text-[11px] font-bold text-slate-450">Offered</span>
-                  <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.offered || 0}</span>
-                </div>
-              </div>
-            </Link>
-
-            {/* Rejected */}
-            <Link to="/employer/applications?status=Rejected" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
-                  <XCircle className="h-4 w-4" />
-                </div>
-                <div className="text-left">
-                  <span className="block text-[11px] font-bold text-slate-450">Rejected</span>
-                  <span className="block text-sm font-extrabold text-slate-800">{dashboard.pipeline?.rejected || 0}</span>
-                </div>
-              </div>
-            </Link>
+              </Link>
+            );
+          })}
         </div>
       </section>
 
@@ -565,7 +567,7 @@ export const EmployerDashboard = () => {
 
         {/* Table view */}
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1380px] text-left border-separate border-spacing-0">
+          <table className="w-full min-w-[1480px] text-left border-separate border-spacing-0">
             <thead>
               <tr className="border-b border-slate-100 text-[11px] font-black uppercase tracking-wider text-slate-400">
                 <th className="w-[220px] border-b border-slate-100 pb-3 pr-5 text-left">Job Title</th>
@@ -579,7 +581,8 @@ export const EmployerDashboard = () => {
                 <th className="w-[95px] border-b border-slate-100 border-l border-slate-100 px-4 pb-3 text-center leading-4">On<br />Hold</th>
                 <th className="w-[100px] border-b border-slate-100 border-l border-slate-100 bg-slate-50/60 px-4 pb-3 text-center">Selected</th>
                 <th className="w-[95px] border-b border-slate-100 border-l border-slate-100 px-4 pb-3 text-center">Offered</th>
-                <th className="w-[100px] border-b border-slate-100 border-l border-slate-100 bg-slate-50/60 px-4 pb-3 text-center">Rejected</th>
+                <th className="w-[95px] border-b border-slate-100 border-l border-slate-100 bg-slate-50/60 px-4 pb-3 text-center">Hired</th>
+                <th className="w-[100px] border-b border-slate-100 border-l border-slate-100 px-4 pb-3 text-center">Rejected</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -677,7 +680,7 @@ export const EmployerDashboard = () => {
                     <Link to={`/employer/interviews?jobTitle=${encodeURIComponent(job.title)}`} className="hover:text-[#0047C7]">{job.interviews || 0}</Link>
                   </td>
                   <td className="border-l border-slate-100 px-4 py-4 text-center font-bold text-slate-700">
-                    <Link to={`/employer/applications?jobTitle=${encodeURIComponent(job.title)}&status=OnHold`} className="hover:text-[#0047C7]">{job.onHold || 0}</Link>
+                    <Link to={`/employer/interviews?jobTitle=${encodeURIComponent(job.title)}`} className="hover:text-[#0047C7]">{job.onHold || 0}</Link>
                   </td>
                   <td className="border-l border-slate-100 bg-slate-50/40 px-4 py-4 text-center font-bold text-slate-700">
                     <Link to={`/employer/selected?jobTitle=${encodeURIComponent(job.title)}`} className="hover:text-[#0047C7]">{job.selected || 0}</Link>
@@ -686,13 +689,16 @@ export const EmployerDashboard = () => {
                     <Link to={`/employer/offers?jobTitle=${encodeURIComponent(job.title)}`} className="hover:text-[#0047C7]">{job.offered || 0}</Link>
                   </td>
                   <td className="border-l border-slate-100 bg-slate-50/40 px-4 py-4 text-center font-bold text-slate-700">
+                    <Link to={`/employer/hired?jobTitle=${encodeURIComponent(job.title)}`} className="hover:text-[#0047C7]">{job.hired || 0}</Link>
+                  </td>
+                  <td className="border-l border-slate-100 px-4 py-4 text-center font-bold text-slate-700">
                     <Link to={`/employer/rejected?jobTitle=${encodeURIComponent(job.title)}`} className="hover:text-[#0047C7]">{job.rejected || 0}</Link>
                   </td>
                 </tr>
               ))}
               {filteredJobs.length === 0 && (
                 <tr>
-                  <td colSpan="12" className="py-8 text-center text-sm font-bold text-slate-400">No jobs found matching the search/filters.</td>
+                  <td colSpan="13" className="py-8 text-center text-sm font-bold text-slate-400">No jobs found matching the search/filters.</td>
                 </tr>
               )}
             </tbody>

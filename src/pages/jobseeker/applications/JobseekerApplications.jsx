@@ -10,7 +10,11 @@ import {
   Send,
   XCircle,
   Award,
-  Clock
+  Clock,
+  UserCheck,
+  ExternalLink,
+  Loader,
+  X
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { BASE_API_URL } from '../../../context/AuthContext';
@@ -23,7 +27,9 @@ const statConfig = [
   { key: 'shortlisted', label: 'Shortlisted', icon: CheckCircle, tone: 'bg-emerald-50 text-emerald-600' },
   { key: 'interview', label: 'Interview', icon: CalendarCheck, tone: 'bg-amber-50 text-amber-600' },
   { key: 'onhold', label: 'Hold for Interview', icon: Clock, tone: 'bg-orange-50 text-orange-500' },
-  { key: 'offered', label: 'Offered / Selected', icon: Award, tone: 'bg-emerald-100 text-emerald-800' },
+  { key: 'selected', label: 'Selected', icon: Award, tone: 'bg-emerald-100 text-emerald-800' },
+  { key: 'offered', label: 'Offered', icon: Award, tone: 'bg-blue-50 text-blue-600' },
+  { key: 'hired', label: 'Hired', icon: UserCheck, tone: 'bg-teal-50 text-teal-600' },
   { key: 'rejected', label: 'Rejected', icon: XCircle, tone: 'bg-rose-50 text-rose-600' }
 ];
 
@@ -34,7 +40,9 @@ const filterTabs = [
   { key: 'shortlisted', label: 'Shortlisted' },
   { key: 'interview', label: 'Interview' },
   { key: 'onhold', label: 'Hold for Interview' },
-  { key: 'offered', label: 'Offered / Selected' },
+  { key: 'selected', label: 'Selected' },
+  { key: 'offered', label: 'Offered' },
+  { key: 'hired', label: 'Hired' },
   { key: 'rejected', label: 'Rejected' }
 ];
 
@@ -63,9 +71,9 @@ const statusLabels = {
   interview: 'Interview',
   onhold: 'On Hold for Interview',
   'on hold': 'On Hold for Interview',
-  offered: 'Offered / Selected',
+  offered: 'Offered',
   selected: 'Selected',
-  'offer sent': 'Offer Sent',
+  'offer sent': 'Offer Received',
   'offer accepted': 'Offer Accepted',
   hired: 'Hired',
   'offer declined': 'Offer Declined',
@@ -73,6 +81,36 @@ const statusLabels = {
 };
 
 const canJobseekerMessage = (status) => ['shortlisted', 'interview', 'offered', 'onhold', 'on hold'].includes(String(status || '').toLowerCase());
+
+const getApplicationFilterStatus = (job) => {
+  const status = String(job.status || '').toLowerCase();
+  if (status !== 'offered') return status;
+
+  const offerStatus = String(job.selectionDetails?.offerStatus || 'Selected').toLowerCase();
+  if (offerStatus === 'selected') return 'selected';
+  if (offerStatus === 'hired') return 'hired';
+  if (offerStatus === 'offer declined') return 'offer-declined';
+  return 'offered';
+};
+
+const getApplicationDisplayStatus = (job) => (
+  job.status === 'offered'
+    ? (job.selectionDetails?.offerStatus || 'Selected')
+    : job.status
+);
+
+const isActionableOffer = (job) => (
+  job.status === 'offered' && job.selectionDetails?.offerStatus === 'Offer Sent'
+);
+
+const getOfferMessageText = (message = '') => {
+  if (typeof document === 'undefined') {
+    return String(message).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+  const element = document.createElement('div');
+  element.innerHTML = message;
+  return element.textContent || element.innerText || message;
+};
 
 export const JobseekerApplications = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -82,6 +120,8 @@ export const JobseekerApplications = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeFilter, setActiveFilter] = useState(filterParam);
+  const [activeOfferJob, setActiveOfferJob] = useState(null);
+  const [offerAction, setOfferAction] = useState('');
 
   useEffect(() => {
     setActiveFilter(filterParam);
@@ -107,7 +147,7 @@ export const JobseekerApplications = () => {
 
   const countByStatus = (status) => {
     if (status === 'all') return appliedJobs.length;
-    return appliedJobs.filter(job => String(job.status).toLowerCase() === status).length;
+    return appliedJobs.filter(job => getApplicationFilterStatus(job) === status).length;
   };
 
   const stats = {
@@ -117,13 +157,48 @@ export const JobseekerApplications = () => {
     shortlisted: { value: countByStatus('shortlisted') },
     interview: { value: countByStatus('interview') },
     onhold: { value: countByStatus('onhold') },
+    selected: { value: countByStatus('selected') },
     offered: { value: countByStatus('offered') },
+    hired: { value: countByStatus('hired') },
     rejected: { value: countByStatus('rejected') }
   };
 
   const visibleJobs = activeFilter === 'all'
     ? appliedJobs
-    : appliedJobs.filter(job => String(job.status).toLowerCase() === activeFilter);
+    : appliedJobs.filter(job => getApplicationFilterStatus(job) === activeFilter);
+
+  const handleOfferResponse = async (job, response) => {
+    setOfferAction(response);
+    setError('');
+    try {
+      const token = localStorage.getItem('publicToken');
+      const res = await axios.patch(
+        `${BASE_API_URL}/jobseeker/applications/${job.id}/offer`,
+        { response },
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+      );
+      const nextOfferStatus = response === 'accept' ? 'Offer Accepted' : 'Offer Declined';
+      const nextSelectionDetails = {
+        ...(job.selectionDetails || {}),
+        ...(res.data?.application?.selectionDetails || {}),
+        offerStatus: res.data?.application?.selectionDetails?.offerStatus || nextOfferStatus
+      };
+      setAppliedJobs((current) => current.map((item) => (
+        item.id === job.id
+          ? { ...item, selectionDetails: nextSelectionDetails }
+          : item
+      )));
+      setActiveOfferJob((current) => (
+        current?.id === job.id
+          ? { ...current, selectionDetails: nextSelectionDetails }
+          : current
+      ));
+    } catch (err) {
+      setError(err.response?.data?.message || 'Offer response could not be saved. Please try again.');
+    } finally {
+      setOfferAction('');
+    }
+  };
 
   if (loading) {
     return <PageSkeleton variant="table" />;
@@ -148,7 +223,9 @@ export const JobseekerApplications = () => {
             shortlisted: 'shortlisted',
             interview: 'interview',
             onhold: 'onhold',
+            selected: 'selected',
             offered: 'offered',
+            hired: 'hired',
             rejected: 'rejected'
           };
           return (
@@ -241,13 +318,22 @@ export const JobseekerApplications = () => {
 
             <span
               className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${
-                statusStyles[String(job.status === 'offered' ? (job.selectionDetails?.offerStatus || 'selected') : job.status).toLowerCase()] || 'bg-slate-50 text-slate-500'
+                statusStyles[String(getApplicationDisplayStatus(job)).toLowerCase()] || 'bg-slate-50 text-slate-500'
               }`}
             >
-              {statusLabels[String(job.status === 'offered' ? (job.selectionDetails?.offerStatus || 'selected') : job.status).toLowerCase()] || (job.status === 'offered' ? (job.selectionDetails?.offerStatus || 'Selected') : job.status)}
+              {statusLabels[String(getApplicationDisplayStatus(job)).toLowerCase()] || getApplicationDisplayStatus(job)}
             </span>
 
             <div className="flex shrink-0 flex-wrap gap-2">
+              {job.offerLetter && (
+                <button
+                  type="button"
+                  onClick={() => setActiveOfferJob(job)}
+                  className="rounded-md border border-emerald-200 px-4 py-2 text-center text-sm font-bold text-emerald-600 transition hover:bg-emerald-50"
+                >
+                  View Offer
+                </button>
+              )}
               <Link
                 to={`/jobseeker/applications/${job.id}`}
                 className="rounded-md border border-[#0047C7] text-[#0047C7] hover:bg-blue-50 px-4 py-2 text-center text-sm font-bold transition"
@@ -267,6 +353,90 @@ export const JobseekerApplications = () => {
           </div>
         ))}
       </div>
+
+      {activeOfferJob && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4 py-6">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white shadow-xl">
+            <div className="flex items-start justify-between border-b border-slate-100 px-5 py-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Offer Letter</p>
+                <h3 className="mt-1 text-lg font-extrabold text-slate-800">{activeOfferJob.title}</h3>
+                <p className="text-sm font-semibold text-slate-500">{activeOfferJob.company}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveOfferJob(null)}
+                className="rounded-md p-2 text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
+                aria-label="Close offer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 px-5 py-5">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Subject</p>
+                <p className="mt-1 text-sm font-bold text-slate-800">
+                  {activeOfferJob.offerLetter?.subject || 'Job Offer'}
+                </p>
+              </div>
+
+              <div className="rounded-md border border-slate-100 bg-slate-50 p-4">
+                <p className="whitespace-pre-wrap text-sm font-medium leading-6 text-slate-600">
+                  {getOfferMessageText(activeOfferJob.offerLetter?.message || 'Offer details are not available.')}
+                </p>
+              </div>
+
+              {activeOfferJob.offerLetter?.attachmentUrl && (
+                <a
+                  href={activeOfferJob.offerLetter.attachmentUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 rounded-md border border-blue-200 px-4 py-2 text-sm font-bold text-blue-600 transition hover:bg-blue-50"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Open Mail Attachment
+                </a>
+              )}
+
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                <span className={`rounded-full px-3 py-1 text-xs font-bold ${statusStyles[String(getApplicationDisplayStatus(activeOfferJob)).toLowerCase()] || 'bg-slate-50 text-slate-500'}`}>
+                  {statusLabels[String(getApplicationDisplayStatus(activeOfferJob)).toLowerCase()] || getApplicationDisplayStatus(activeOfferJob)}
+                </span>
+                {isActionableOffer(activeOfferJob) && (
+                  <div className="flex flex-wrap gap-2">
+                    <Link
+                      to={`/jobseeker/messages?application=${activeOfferJob.id}`}
+                      className="inline-flex items-center justify-center gap-2 rounded-md border border-sky-200 px-4 py-2 text-sm font-bold text-sky-600 transition hover:bg-sky-50"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      Discuss with Recruiter
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => handleOfferResponse(activeOfferJob, 'decline')}
+                      disabled={Boolean(offerAction)}
+                      className="inline-flex items-center justify-center gap-2 rounded-md border border-rose-200 px-4 py-2 text-sm font-bold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {offerAction === 'decline' && <Loader className="h-4 w-4 animate-spin" />}
+                      Reject Offer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleOfferResponse(activeOfferJob, 'accept')}
+                      disabled={Boolean(offerAction)}
+                      className="inline-flex items-center justify-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {offerAction === 'accept' && <Loader className="h-4 w-4 animate-spin" />}
+                      Accept Offer
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

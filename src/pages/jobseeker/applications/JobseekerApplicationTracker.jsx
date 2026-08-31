@@ -29,6 +29,20 @@ const formatDate = (value) => {
 
 const normalizeStatus = (status) => String(status || 'Applied').trim().toLowerCase();
 
+const getJobseekerOfferStatusLabel = (status) => (
+  status === 'Offer Sent' ? 'Offer Received' : status
+);
+
+const getTrackerDisplayStatus = (tracker) => (
+  tracker?.status === 'Offered'
+    ? getJobseekerOfferStatusLabel(tracker.selectionDetails?.offerStatus || 'Selected')
+    : tracker?.status
+);
+
+const canRespondToOffer = (tracker) => (
+  tracker?.status === 'Offered' && tracker.selectionDetails?.offerStatus === 'Offer Sent'
+);
+
 const getTokenHeaders = () => {
   const token = localStorage.getItem('publicToken');
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -39,6 +53,7 @@ export const JobseekerApplicationTracker = () => {
   const [tracker, setTracker] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [offerAction, setOfferAction] = useState('');
 
   useEffect(() => {
     const fetchTracker = async () => {
@@ -58,6 +73,33 @@ export const JobseekerApplicationTracker = () => {
     };
     fetchTracker();
   }, [id]);
+
+  const handleOfferResponse = async (response) => {
+    if (!tracker || offerAction) return;
+
+    setOfferAction(response);
+    setError('');
+    try {
+      const res = await axios.patch(
+        `${BASE_API_URL}/jobseeker/applications/${tracker.id}/offer`,
+        { response },
+        { headers: getTokenHeaders() }
+      );
+      const nextSelectionDetails = {
+        ...(tracker.selectionDetails || {}),
+        ...(res.data?.application?.selectionDetails || {}),
+        offerStatus: res.data?.application?.selectionDetails?.offerStatus || (response === 'accept' ? 'Offer Accepted' : 'Offer Declined')
+      };
+      setTracker((current) => ({
+        ...current,
+        selectionDetails: nextSelectionDetails
+      }));
+    } catch (err) {
+      setError(err.response?.data?.message || 'Offer response could not be saved. Please try again.');
+    } finally {
+      setOfferAction('');
+    }
+  };
 
   const timeline = useMemo(() => {
     if (!tracker) return [];
@@ -146,7 +188,7 @@ export const JobseekerApplicationTracker = () => {
     return <PageSkeleton variant="detail" />;
   }
 
-  if (error || !tracker) {
+  if (!tracker) {
     return (
       <div className="space-y-4">
         <Link to="/jobseeker/applications" className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600">
@@ -167,6 +209,12 @@ export const JobseekerApplicationTracker = () => {
         </Link>
         <h1 className="text-xl font-extrabold text-[#3f4254]">Track Application</h1>
       </div>
+
+      {error && (
+        <div className="rounded-md border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
+          {error}
+        </div>
+      )}
 
       {/* Header Summary Card */}
       <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
@@ -200,7 +248,7 @@ export const JobseekerApplicationTracker = () => {
                 ? 'bg-orange-50 text-orange-600 border-orange-100'
                 : 'bg-indigo-50 text-indigo-600 border-indigo-100'
             }`}>
-              {tracker.interviewDetails?.onHold ? 'On Hold for Interview' : tracker.status}
+              {tracker.interviewDetails?.onHold ? 'On Hold for Interview' : getTrackerDisplayStatus(tracker)}
             </span>
             <span className="text-xs font-semibold text-slate-400">Applied on {tracker.appliedOn}</span>
           </div>
@@ -287,17 +335,39 @@ export const JobseekerApplicationTracker = () => {
                   {step.key === 'offered' && step.offerDetails && step.offerDetails.salaryOffered && (
                     <div className="mt-4 p-3 bg-emerald-50/50 rounded-lg border border-emerald-100 space-y-2 text-xs text-slate-600 font-semibold">
                       <p><span className="text-emerald-700 font-bold">Offer Package:</span> ₹ {step.offerDetails.salaryOffered} LPA</p>
-                      <p><span className="text-slate-400">Status:</span> {step.offerDetails.offerStatus}</p>
+                      <p><span className="text-slate-400">Status:</span> {getJobseekerOfferStatusLabel(step.offerDetails.offerStatus)}</p>
                       {step.offerDetails.notes && (
                         <p><span className="text-slate-400">Recruiter Notes:</span> {step.offerDetails.notes}</p>
                       )}
-                      <div className="pt-2">
+                      <div className="flex flex-wrap gap-2 pt-2">
                         <Link 
                           to={`/jobseeker/messages?application=${tracker.id}`}
                           className="inline-flex items-center gap-1.5 rounded-md bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition"
                         >
                           <MessageCircle className="h-3.5 w-3.5" /> Discuss with Recruiter
                         </Link>
+                        {canRespondToOffer(tracker) && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleOfferResponse('decline')}
+                              disabled={Boolean(offerAction)}
+                              className="inline-flex items-center gap-1.5 rounded-md border border-rose-200 bg-white px-3.5 py-2 text-xs font-bold text-rose-600 shadow-sm transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {offerAction === 'decline' ? <Loader className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
+                              Reject Offer
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleOfferResponse('accept')}
+                              disabled={Boolean(offerAction)}
+                              className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {offerAction === 'accept' ? <Loader className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                              Accept Offer
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   )}

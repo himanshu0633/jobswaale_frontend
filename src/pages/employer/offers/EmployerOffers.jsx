@@ -42,9 +42,9 @@ const getOfferStatus = (offer) => {
   return offer.application?.selectionDetails?.offerStatus || 'Offer Sent';
 };
 
-export const EmployerOffers = () => {
+export const EmployerOffers = ({ view = 'offers' }) => {
   const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState('offers'); // 'offers' or 'templates'
+  const activeTab = view === 'email-templates' ? 'templates' : 'offers';
   const [offers, setOffers] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -224,6 +224,29 @@ export const EmployerOffers = () => {
     return [...new Set(jobs)];
   }, [offers]);
 
+  const pageCopy = {
+    offers: {
+      title: 'Offers',
+      crumb: 'Offers',
+      metricLabel: 'Total Offers Sent',
+      sectionTitle: 'Sent Offers Log',
+      sectionDescription: 'View history of all active job offers sent to candidates with their attachments.',
+      emptyText: offersSearch ? 'No offers match your search.' : 'No sent offers yet.'
+    },
+    hired: {
+      title: 'Hired',
+      crumb: 'Hired',
+      metricLabel: 'Hired Candidates',
+      sectionTitle: 'Hired Candidates',
+      sectionDescription: 'View candidates who accepted offers and were marked as hired.',
+      emptyText: offersSearch ? 'No hired candidates match your search.' : 'No hired candidates yet.'
+    },
+    'email-templates': {
+      title: 'Email Templates',
+      crumb: 'Email Templates'
+    }
+  }[view] || {};
+
   // Filtered lists
   const filteredOffers = offers.filter((o) => {
     const q = offersSearch.toLowerCase();
@@ -239,7 +262,15 @@ export const EmployerOffers = () => {
       (filterAttachment === 'none' && !o.attachmentUrl);
     const matchesDate = !filterDate || new Date(o.createDate) >= new Date(filterDate);
 
-    return matchesSearch && matchesJob && matchesAttachment && matchesDate;
+    const status = getOfferStatus(o);
+    const matchesPage = view === 'hired' ? status === 'Hired' : status !== 'Hired';
+
+    return matchesSearch && matchesJob && matchesAttachment && matchesDate && matchesPage;
+  });
+
+  const pageOffers = offers.filter((offer) => {
+    const status = getOfferStatus(offer);
+    return view === 'hired' ? status === 'Hired' : status !== 'Hired';
   });
 
   const filteredTemplates = templates.filter((t) => {
@@ -251,23 +282,24 @@ export const EmployerOffers = () => {
     <div className="space-y-4 px-3 sm:space-y-5 sm:px-0">
       {/* Page Title & Breadcrumbs */}
       <div className="flex flex-col justify-between gap-2 md:flex-row md:items-center md:gap-3">
-        <h1 className="text-lg font-extrabold text-[#3f4254] sm:text-xl">Offers & Templates</h1>
+        <h1 className="text-lg font-extrabold text-[#3f4254] sm:text-xl">{pageCopy.title}</h1>
         <div className="flex items-center gap-2 text-xs font-bold text-slate-400 sm:text-sm">
           <span className="text-[#3f4254]">JobsWaale</span>
           <ChevronRight className="h-4 w-4" />
-          <span>Offers</span>
+          <span>{pageCopy.crumb}</span>
         </div>
       </div>
 
       {/* Stats Grid */}
+      {view !== 'email-templates' && (
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
         <div className="flex items-center gap-4 rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-[#6658dd]">
             <Send className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Total Offers Sent</p>
-            <h3 className="text-xl font-black text-slate-800 mt-0.5">{offers.length}</h3>
+            <p className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">{pageCopy.metricLabel}</p>
+            <h3 className="text-xl font-black text-slate-800 mt-0.5">{pageOffers.length}</h3>
           </div>
         </div>
 
@@ -277,7 +309,7 @@ export const EmployerOffers = () => {
           </div>
           <div>
             <p className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Offers with PDF</p>
-            <h3 className="text-xl font-black text-slate-800 mt-0.5">{offers.filter(o => o.attachmentUrl).length}</h3>
+            <h3 className="text-xl font-black text-slate-800 mt-0.5">{pageOffers.filter(o => o.attachmentUrl).length}</h3>
           </div>
         </div>
 
@@ -291,6 +323,7 @@ export const EmployerOffers = () => {
           </div>
         </div>
       </div>
+      )}
 
       {error && (
         <div className="rounded-md border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700 flex items-center gap-2">
@@ -306,33 +339,13 @@ export const EmployerOffers = () => {
         </div>
       )}
 
-      {/* Tabs Menu */}
-      <div className="flex border-b border-slate-200 bg-white rounded-md p-1 shadow-sm max-w-md">
-        <button
-          type="button"
-          disabled={loading}
-          onClick={() => setActiveTab('offers')}
-          className={`flex-1 py-2 text-center text-sm font-extrabold rounded-md transition ${activeTab === 'offers' ? 'bg-[#6658dd] text-white shadow-sm' : 'text-slate-500 hover:text-[#6658dd]'}`}
-        >
-          Sent Offers
-        </button>
-        <button
-          type="button"
-          disabled={loading}
-          onClick={() => setActiveTab('templates')}
-          className={`flex-1 py-2 text-center text-sm font-extrabold rounded-md transition ${activeTab === 'templates' ? 'bg-[#6658dd] text-white shadow-sm' : 'text-slate-500 hover:text-[#6658dd]'}`}
-        >
-          Email Templates
-        </button>
-      </div>
-
       {/* Sent Offers Tab */}
       {activeTab === 'offers' && (
         <section className="rounded-md border border-slate-100 bg-white shadow-sm">
           <div className="border-b border-dashed border-slate-200 px-4 py-4 sm:px-5">
-            <h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Sent Offers Log</h2>
+            <h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">{pageCopy.sectionTitle}</h2>
             <p className="mt-1 text-xs font-semibold text-slate-400 sm:text-sm">
-              View history of all job offers sent to candidates with their attachments.
+              {pageCopy.sectionDescription}
             </p>
           </div>
 
@@ -527,7 +540,7 @@ export const EmployerOffers = () => {
               </div>
             ) : (
               <div className="py-12 text-center text-sm font-bold text-slate-400">
-                {offersSearch ? 'No offers match your search.' : 'No sent offers yet.'}
+                {pageCopy.emptyText}
               </div>
             )}
           </div>

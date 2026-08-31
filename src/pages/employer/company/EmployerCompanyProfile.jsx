@@ -397,7 +397,7 @@ export const EmployerCompanyProfile = () => {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
           { title: 'Active Jobs', value: stats.activeJobs, icon: Briefcase, color: 'bg-indigo-50 text-indigo-500', to: '/employer/jobs?status=Active' },
-          { title: 'Hired Candidates', value: stats.hired, icon: UserCheck, color: 'bg-emerald-50 text-emerald-500', to: '/employer/selected?status=Hired' },
+          { title: 'Hired Candidates', value: stats.hired, icon: UserCheck, color: 'bg-emerald-50 text-emerald-500', to: '/employer/hired' },
           { title: 'Profile Views', value: stats.profileViews, icon: Eye, color: 'bg-sky-50 text-sky-500' },
           { title: 'Rating', value: `${stats.rating} / 5`, icon: Star, color: 'bg-amber-50 text-amber-500' }
         ].map((item, index) => {

@@ -33,6 +33,29 @@ const getJobSortTime = (job) => {
   return Number.isFinite(objectIdTime) ? objectIdTime : 0;
 };
 
+const normalizeSearchText = (value) => String(value || '')
+  .normalize('NFKD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase()
+  .replace(/[^a-z0-9]+/g, ' ')
+  .trim()
+  .replace(/\s+/g, ' ');
+
+const getSearchTokens = (value) => (
+  Array.from(new Set(normalizeSearchText(value).split(' ').filter(token => token.length >= 2)))
+);
+
+const matchesSearchText = (value, query) => {
+  const haystack = normalizeSearchText(value);
+  const needle = normalizeSearchText(query);
+  if (!needle) return true;
+  if (haystack.includes(needle)) return true;
+
+  const tokens = getSearchTokens(query);
+  if (!tokens.length) return true;
+  return tokens.some(token => haystack.includes(token));
+};
+
 export const Jobs = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryCategory = searchParams.get('category') || '';
@@ -153,17 +176,14 @@ export const Jobs = () => {
     const activeKeyword = (searchKeyword || querySearch).trim();
     const activeLocation = (searchLoc || queryLocation).trim();
     if (activeKeyword !== '') {
-      const kw = activeKeyword.toLowerCase();
       result = result.filter(
         (j) =>
-          String(j.title || '').toLowerCase().includes(kw) ||
-          String(j.company || '').toLowerCase().includes(kw) ||
-          String(j.category || '').toLowerCase().includes(kw)
+          matchesSearchText([j.title, j.company, j.category, j.type, j.experience, j.location].join(' '), activeKeyword)
       );
     }
     if (tagFilter.trim() !== '') {
-      const tag = tagFilter.toLowerCase();
-      result = result.filter((j) => j.category.toLowerCase().includes(tag.split('/')[0]) || j.title.toLowerCase().includes(tag));
+      const tag = tagFilter.split('/')[0];
+      result = result.filter((j) => matchesSearchText([j.category, j.title].join(' '), tag));
     }
     if (searchType) {
       const typeMap = {
@@ -172,30 +192,31 @@ export const Jobs = () => {
         Freelancer: 'Freelance',
         'Online work': 'Remote'
       };
-      const mapped = (typeMap[searchType] || searchType).toLowerCase();
-      result = result.filter((j) => j.type.toLowerCase() === mapped);
+      const mapped = typeMap[searchType] || searchType;
+      result = result.filter((j) => normalizeSearchText(j.type) === normalizeSearchText(mapped));
     }
     if (activeLocation) {
-      result = result.filter((j) => String(j.location || '').toLowerCase().includes(activeLocation.toLowerCase()));
+      result = result.filter((j) => matchesSearchText(j.location, activeLocation));
     }
 
     // Sidebar filters
     if (sidebarLoc.trim() !== '') {
-      result = result.filter((j) => j.location.toLowerCase().includes(sidebarLoc.toLowerCase()));
+      result = result.filter((j) => matchesSearchText(j.location, sidebarLoc));
     }
     const selectedCategory = sidebarCat || queryCategory;
     if (selectedCategory) {
-      result = result.filter((j) => j.category === selectedCategory);
+      result = result.filter((j) => normalizeSearchText(j.category) === normalizeSearchText(selectedCategory));
     }
     if (queryCompany) {
-      const company = queryCompany.trim().toLowerCase();
-      result = result.filter((j) => String(j.company || '').trim().toLowerCase() === company);
+      result = result.filter((j) => normalizeSearchText(j.company) === normalizeSearchText(queryCompany));
     }
     if (sidebarTypes.length > 0) {
-      result = result.filter((j) => sidebarTypes.includes(j.type));
+      const selectedTypes = sidebarTypes.map(normalizeSearchText);
+      result = result.filter((j) => selectedTypes.includes(normalizeSearchText(j.type)));
     }
     if (sidebarExps.length > 0) {
-      result = result.filter((j) => sidebarExps.includes(j.experience));
+      const selectedExperiences = sidebarExps.map(normalizeSearchText);
+      result = result.filter((j) => selectedExperiences.includes(normalizeSearchText(j.experience)));
     }
     const minLpa = Number(salaryMinLacs);
     const maxLpa = Number(salaryMaxLacs);

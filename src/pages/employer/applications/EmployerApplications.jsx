@@ -31,6 +31,7 @@ import {
 import { BASE_API_URL } from '../../../context/AuthContext';
 import ClearFilterButton from '../../../components/ClearFilterButton';
 import InterviewLocationPicker from '../../../components/InterviewLocationPicker';
+import { downloadBlobResponse } from '../../../utils/downloadFile';
 
 const isInPersonInterview = (type) => String(type || '').toLowerCase().includes('person');
 
@@ -362,7 +363,7 @@ export const EmployerApplications = () => {
   };
 
   const handleOfferStatusUpdate = async (appId, offerStatus) => {
-    const actionKey = getActionKey(appId, 'OfferSent');
+    const actionKey = getActionKey(appId, offerStatus);
     if (actionLoading) return;
     setActionLoading(actionKey);
     setError('');
@@ -400,14 +401,7 @@ export const EmployerApplications = () => {
         headers: getTokenHeaders(),
         responseType: 'blob'
       });
-      const blobUrl = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = `${candidateName || 'candidate'}-resume`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(blobUrl);
+      downloadBlobResponse(response, `${candidateName || 'candidate'}-resume`);
       
       setMessage('Resume downloaded successfully.');
     } catch (err) {
@@ -696,12 +690,26 @@ export const EmployerApplications = () => {
                             title="Send Offer"
                             className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-blue-600 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-70"
                           >
-                            <ActionButtonContent loading={isActionLoading(application.id, 'OfferSent')} icon={Send} label="Send Offer" />
+                            <ActionButtonContent loading={isActionLoading(application.id, 'Offer Sent')} icon={Send} label="Send Offer" />
+                          </button>
+                        )}
+
+                        {/* Hire after offer acceptance */}
+                        {application.status === 'Offered' && application.selectionDetails?.offerStatus === 'Offer Accepted' && (
+                          <button
+                            type="button"
+                            onClick={() => handleOfferStatusUpdate(application.id, 'Hired')}
+                            disabled={Boolean(actionLoading)}
+                            title="Hire"
+                            className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-600 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-70"
+                          >
+                            <ActionButtonContent loading={isActionLoading(application.id, 'Hired')} icon={Briefcase} label="Hire" />
                           </button>
                         )}
 
                         {/* Reject */}
-                        {['Applied', 'Reviewed', 'Shortlisted', 'Interview'].includes(application.status) && (
+                        {(['Applied', 'Reviewed', 'Shortlisted', 'Interview'].includes(application.status) ||
+                          (application.status === 'Offered' && application.selectionDetails?.offerStatus === 'Offer Accepted')) && (
                           <button
                             type="button"
                             onClick={() => handleStatusUpdate(application.id, 'Rejected')}

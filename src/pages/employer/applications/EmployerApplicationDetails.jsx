@@ -27,6 +27,7 @@ import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
 import InterviewLocationPicker from '../../../components/InterviewLocationPicker';
 import { SendOfferModal } from '../../../components/SendOfferModal';
+import { downloadBlobResponse } from '../../../utils/downloadFile';
 
 const getTokenHeaders = () => {
   const token = localStorage.getItem('publicToken');
@@ -40,14 +41,7 @@ const downloadCandidateResume = async (candidate) => {
       headers: getTokenHeaders(),
       responseType: 'blob'
     });
-    const blobUrl = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = blobUrl;
-    link.download = `${candidate.name || 'candidate'}-resume`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(blobUrl);
+    downloadBlobResponse(response, `${candidate.name || 'candidate'}-resume`);
 
     const remainingUnlocks = response.headers['x-remaining-unlocks'];
     const isNewUnlock = response.headers['x-is-new-unlock'] === 'true';
@@ -528,32 +522,39 @@ const EmployerApplicationDetails = () => {
         }
       }
     } else if (status === 'Offered') {
-      list.push({
-        key: 'OfferSent',
-        label: 'Offer Sent',
-        tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
-        icon: Send,
-        onClick: () => setOfferModal({
-          isOpen: true,
-          applicationId: id,
-          candidateEmail: application?.candidate?.email || '',
-          candidateName: application?.candidate?.name || ''
-        })
-      });
-      list.push({
-        key: 'OfferAccept',
-        label: 'Accept',
-        tone: 'bg-cyan-500 text-white hover:bg-cyan-600',
-        icon: Check,
-        onClick: () => updateOfferStatus('Offer Accepted')
-      });
-      list.push({
-        key: 'Hire',
-        label: 'Hire',
-        tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
-        icon: Briefcase,
-        onClick: () => updateOfferStatus('Hired')
-      });
+      const offerStatus = application.selectionDetails?.offerStatus || 'Selected';
+      if (offerStatus === 'Selected') {
+        list.push({
+          key: 'OfferSent',
+          label: 'Offer Sent',
+          tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
+          icon: Send,
+          onClick: () => setOfferModal({
+            isOpen: true,
+            applicationId: id,
+            candidateEmail: application?.candidate?.email || '',
+            candidateName: application?.candidate?.name || ''
+          })
+        });
+      }
+      if (offerStatus === 'Offer Accepted') {
+        list.push({
+          key: 'Hire',
+          label: 'Hire',
+          tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
+          icon: Briefcase,
+          onClick: () => updateOfferStatus('Hired')
+        });
+      }
+      if (offerStatus !== 'Hired') {
+        list.push({
+          key: 'Rejected',
+          label: 'Reject',
+          tone: 'border border-rose-200 bg-white text-rose-600 hover:bg-rose-50',
+          icon: UserX,
+          onClick: () => updateStatus('Rejected')
+        });
+      }
     }
 
     return list;
@@ -566,6 +567,43 @@ const EmployerApplicationDetails = () => {
     const status = application.status;
     const details = application.interviewDetails || {};
     const onHold = details.onHold;
+
+    if (status === 'Offered') {
+      const offerStatus = application.selectionDetails?.offerStatus || 'Selected';
+      if (offerStatus === 'Selected') {
+        list.push({
+          key: 'OfferSent',
+          label: 'Offer Sent',
+          tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
+          icon: Send,
+          onClick: () => setOfferModal({
+            isOpen: true,
+            applicationId: id,
+            candidateEmail: application?.candidate?.email || '',
+            candidateName: application?.candidate?.name || ''
+          })
+        });
+      }
+      if (offerStatus === 'Offer Accepted') {
+        list.push({
+          key: 'Hire',
+          label: 'Hire',
+          tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
+          icon: Briefcase,
+          onClick: () => updateOfferStatus('Hired')
+        });
+      }
+      if (offerStatus !== 'Hired') {
+        list.push({
+          key: 'Rejected',
+          label: 'Reject',
+          tone: 'border border-rose-200 bg-white text-rose-600 hover:bg-rose-50',
+          icon: UserX,
+          onClick: () => updateStatus('Rejected')
+        });
+      }
+      return list;
+    }
 
     // 1. Mark as Applied
     list.push({
@@ -618,16 +656,7 @@ const EmployerApplicationDetails = () => {
       })
     });
 
-    // 6. Accept
-    list.push({
-      key: 'OfferAccept',
-      label: 'Accept',
-      tone: 'bg-cyan-500 text-white hover:bg-cyan-600',
-      icon: Check,
-      onClick: () => updateOfferStatus('Offer Accepted')
-    });
-
-    // 7. Hire
+    // 6. Hire
     list.push({
       key: 'Hire',
       label: 'Hire',
@@ -636,7 +665,7 @@ const EmployerApplicationDetails = () => {
       onClick: () => updateOfferStatus('Hired')
     });
 
-    // 8. Reject
+    // 7. Reject
     list.push({
       key: 'Rejected',
       label: 'Reject',

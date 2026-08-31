@@ -27,6 +27,7 @@ import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
 import InterviewLocationPicker from '../../../components/InterviewLocationPicker';
 import { SendOfferModal } from '../../../components/SendOfferModal';
+import { downloadBlobResponse } from '../../../utils/downloadFile';
 
 const getTokenHeaders = () => {
   const token = localStorage.getItem('publicToken');
@@ -70,14 +71,7 @@ const downloadCandidateResume = async (candidate) => {
       headers: getTokenHeaders(),
       responseType: 'blob'
     });
-    const blobUrl = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = blobUrl;
-    link.download = `${candidate.name || 'candidate'}-resume`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(blobUrl);
+    downloadBlobResponse(response, `${candidate.name || 'candidate'}-resume`);
 
     const remainingUnlocks = response.headers['x-remaining-unlocks'];
     const isNewUnlock = response.headers['x-is-new-unlock'] === 'true';

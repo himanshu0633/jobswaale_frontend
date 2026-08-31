@@ -9,7 +9,8 @@ import {
   MapPin,
   Send,
   XCircle,
-  Award
+  Award,
+  UserCheck
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { BASE_API_URL } from '../../../context/AuthContext';
@@ -59,11 +60,25 @@ const statConfig = [
     to: '/jobseeker/jobs-applied?filter=interview'
   },
   {
+    key: 'selected',
+    label: 'Selected',
+    icon: Award,
+    tone: 'bg-emerald-100 text-emerald-800',
+    to: '/jobseeker/jobs-applied?filter=selected'
+  },
+  {
     key: 'offered',
     label: 'Offered',
     icon: Award,
-    tone: 'bg-emerald-100 text-emerald-800',
+    tone: 'bg-blue-50 text-blue-600',
     to: '/jobseeker/jobs-applied?filter=offered'
+  },
+  {
+    key: 'hired',
+    label: 'Hired',
+    icon: UserCheck,
+    tone: 'bg-teal-50 text-teal-600',
+    to: '/jobseeker/jobs-applied?filter=hired'
   },
   {
     key: 'rejected',

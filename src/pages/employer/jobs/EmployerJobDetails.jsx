@@ -28,6 +28,7 @@ import {
 import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
 import InterviewLocationPicker from '../../../components/InterviewLocationPicker';
+import { downloadBlobResponse } from '../../../utils/downloadFile';
 
 const emptyDetails = {
   stats: {},
@@ -71,7 +72,8 @@ const statCards = [
   { key: 'shortlisted', title: 'Shortlisted', icon: UserCheck, tone: 'bg-amber-50 text-amber-500' },
   { key: 'interviews', title: 'Interviews', icon: Calendar, tone: 'bg-indigo-50 text-[#6658dd]' },
   { key: 'onHold', title: 'On Hold Interview', icon: Clock, tone: 'bg-orange-50 text-orange-500' },
-  { key: 'selected', title: 'Selected / Hired', icon: UserPlus, tone: 'bg-emerald-50 text-emerald-500' },
+  { key: 'selected', title: 'Selected', icon: UserPlus, tone: 'bg-teal-50 text-teal-500' },
+  { key: 'hired', title: 'Hired', icon: UserRoundCheck, tone: 'bg-emerald-50 text-emerald-500' },
   { key: 'rejected', title: 'Rejected', icon: UserX, tone: 'bg-rose-50 text-rose-500' }
 ];
 
@@ -82,8 +84,19 @@ const applicantTone = {
   OnHold: 'bg-orange-50 text-orange-500',
   'On Hold': 'bg-orange-50 text-orange-500',
   Reviewed: 'bg-sky-50 text-sky-600',
+  Selected: 'bg-teal-50 text-teal-600',
+  'Offer Sent': 'bg-blue-50 text-blue-600',
+  'Offer Accepted': 'bg-cyan-50 text-cyan-600',
+  Hired: 'bg-emerald-50 text-emerald-600',
+  'Offer Declined': 'bg-rose-50 text-rose-600',
   Rejected: 'bg-rose-50 text-rose-600'
 };
+
+const getCandidateOfferStatus = (candidate) => (
+  candidate.status === 'Offered'
+    ? candidate.selectionDetails?.offerStatus || 'Selected'
+    : candidate.status
+);
 
 const parseJobDate = (value) => {
   if (!value) return null;
@@ -337,14 +350,7 @@ export const EmployerJobDetails = () => {
         headers: getTokenHeaders(),
         responseType: 'blob'
       });
-      const blobUrl = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = `${candidateName || 'candidate'}-resume`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(blobUrl);
+      downloadBlobResponse(response, `${candidateName || 'candidate'}-resume`);
       
       setMessage('Resume downloaded successfully.');
     } catch (err) {
@@ -394,7 +400,8 @@ export const EmployerJobDetails = () => {
     { key: 'shortlisted', title: 'Shortlisted', icon: UserCheck, tone: 'bg-amber-500' },
     { key: 'interviews', title: 'Interviews', icon: Calendar, tone: 'bg-[#6658dd]' },
     { key: 'onHold', title: 'On Hold for Interview', icon: Clock, tone: 'bg-orange-500' },
-    { key: 'selected', title: 'Selected / Hired', icon: UserPlus, tone: 'bg-emerald-500' },
+    { key: 'selected', title: 'Selected', icon: UserPlus, tone: 'bg-teal-500' },
+    { key: 'hired', title: 'Hired', icon: UserRoundCheck, tone: 'bg-emerald-500' },
     { key: 'rejected', title: 'Rejected', icon: UserX, tone: 'bg-rose-500' }
   ];
 
@@ -405,7 +412,8 @@ export const EmployerJobDetails = () => {
     if (selectedStatus === 'shortlisted') return candidate.status === 'Shortlisted';
     if (selectedStatus === 'interviews') return candidate.status === 'Interview' && !candidate.interviewDetails?.onHold;
     if (selectedStatus === 'onHold') return candidate.status === 'Interview' && candidate.interviewDetails?.onHold;
-    if (selectedStatus === 'selected') return ['Offered', 'Selected', 'Hired'].includes(candidate.status);
+    if (selectedStatus === 'selected') return getCandidateOfferStatus(candidate) === 'Selected';
+    if (selectedStatus === 'hired') return getCandidateOfferStatus(candidate) === 'Hired';
     if (selectedStatus === 'rejected') return candidate.status === 'Rejected';
     return true;
   });
@@ -605,7 +613,12 @@ export const EmployerJobDetails = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredApplicants.map((candidate) => (
+              {filteredApplicants.map((candidate) => {
+                const displayStatus = getCandidateOfferStatus(candidate);
+                const statusToneKey = candidate.status === 'Interview' && candidate.interviewDetails?.onHold
+                  ? 'OnHold'
+                  : displayStatus;
+                return (
                 <tr key={candidate.id}>
                   <td className="px-4 py-4">
                     <p className="text-sm font-extrabold text-slate-800">{candidate.name}</p>
@@ -614,8 +627,8 @@ export const EmployerJobDetails = () => {
                   <td className="px-4 py-4 text-sm font-semibold text-slate-500">{formatDate(candidate.appliedAt)}</td>
                   <td className="px-4 py-4"><span className="rounded bg-emerald-50 px-2 py-1 text-xs font-black text-emerald-600">{candidate.matchScore}%</span></td>
                   <td className="px-4 py-4">
-                    <span className={`rounded px-2 py-1 text-xs font-black ${applicantTone[candidate.status === 'Interview' && candidate.interviewDetails?.onHold ? 'OnHold' : candidate.status] || applicantTone.Applied}`}>
-                      {candidate.status === 'Interview' && candidate.interviewDetails?.onHold ? 'On Hold for Interview' : candidate.status}
+                    <span className={`rounded px-2 py-1 text-xs font-black ${applicantTone[statusToneKey] || applicantTone.Applied}`}>
+                      {candidate.status === 'Interview' && candidate.interviewDetails?.onHold ? 'On Hold for Interview' : displayStatus}
                     </span>
                     {candidate.status === 'Interview' && candidate.interviewDetails && !candidate.interviewDetails.onHold && (
                       <div className="mt-2 space-y-0.5 text-[10px] font-semibold text-slate-500 leading-normal">
@@ -726,7 +739,8 @@ export const EmployerJobDetails = () => {
                     </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
               {!filteredApplicants.length && (
                 <tr>
                   <td colSpan="5" className="px-4 py-10 text-center text-sm font-bold text-slate-400">No recent applicants found.</td>

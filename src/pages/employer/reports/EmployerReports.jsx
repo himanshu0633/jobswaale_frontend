@@ -249,10 +249,10 @@ export const EmployerReports = () => {
       { name: 'Applied', value: pipeline.applied || 0, color: '#3b82f6', link: '/employer/applications?status=Applied' },
       { name: 'Shortlisted', value: pipeline.shortlisted || 0, color: '#10b981', link: '/employer/shortlisted' },
       { name: 'Interview', value: pipeline.interview || 0, color: '#6658dd', link: '/employer/interviews' },
-      { name: 'On Hold', value: pipeline.onHold || 0, color: '#f97316', link: '/employer/applications?status=OnHold' },
+      { name: 'On Hold', value: pipeline.onHold || 0, color: '#f97316', link: '/employer/interviews' },
       { name: 'Selected', value: pipeline.selected || 0, color: '#06b6d4', link: '/employer/selected?status=Selected' },
-      { name: 'Offered', value: pipeline.offered || 0, color: '#ec4899', link: '/employer/selected?status=Offer+Sent' },
-      { name: 'Rejected', value: pipeline.rejected || 0, color: '#ef4444', link: '/employer/applications?status=Rejected' }
+      { name: 'Offered', value: pipeline.offered || 0, color: '#ec4899', link: '/employer/offers' },
+      { name: 'Rejected', value: pipeline.rejected || 0, color: '#ef4444', link: '/employer/rejected' }
     ];
   }, [data.pipeline]);
 
@@ -579,7 +579,7 @@ export const EmployerReports = () => {
               </Link>
 
               {/* On Hold */}
-              <Link to="/employer/applications?status=OnHold" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between">
+              <Link to="/employer/interviews" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between">
                 <div className="flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 text-orange-600">
                     <Clock className="h-4 w-4" />
@@ -605,7 +605,7 @@ export const EmployerReports = () => {
               </Link>
 
               {/* Offered */}
-              <Link to="/employer/selected?status=Offer+Sent" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between">
+              <Link to="/employer/offers" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between">
                 <div className="flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-pink-50 text-pink-600">
                     <Mail className="h-4 w-4" />
@@ -618,7 +618,7 @@ export const EmployerReports = () => {
               </Link>
 
               {/* Rejected */}
-              <Link to="/employer/applications?status=Rejected" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between col-span-2 sm:col-span-1">
+              <Link to="/employer/rejected" className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 transition justify-between col-span-2 sm:col-span-1">
                 <div className="flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
                     <XCircle className="h-4 w-4" />
