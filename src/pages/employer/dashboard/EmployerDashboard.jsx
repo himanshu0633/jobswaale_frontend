@@ -18,7 +18,8 @@ import {
   Plus,
   Crown,
   FileText,
-  Pause
+  Pause,
+  AlertCircle
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BASE_API_URL } from '../../../context/AuthContext';
@@ -26,7 +27,7 @@ import PageSkeleton from '../../../components/SkeletonLoader';
 
 const emptyDashboard = {
   stats: {
-    jobs: { total: 0, active: 0, draft: 0, expired: 0, closed: 0 },
+    jobs: { total: 0, active: 0, inactive: 0, draft: 0, expired: 0, closed: 0 },
     applications: 0,
     reviewed: 0,
     shortlisted: 0,
@@ -332,7 +333,7 @@ export const EmployerDashboard = () => {
 
       {/* Jobs Stats Cards */}
       <section className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             {/* Card 1: Total Jobs */}
             <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between h-36">
               <div className="flex items-start justify-between">
@@ -341,7 +342,7 @@ export const EmployerDashboard = () => {
                 </div>
                 <div className="text-right">
                   <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.jobs?.total || 0}</span>
-                  <JobStatLabel tooltip="All jobs created by you, including active, draft, paused, closed, and expired jobs.">Total Jobs</JobStatLabel>
+                  <JobStatLabel tooltip="All jobs created by you, including active, inactive, draft, closed, and expired jobs.">Total Jobs</JobStatLabel>
                 </div>
               </div>
               <Link to="/employer/jobs" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
@@ -365,6 +366,20 @@ export const EmployerDashboard = () => {
             <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between h-36">
               <div className="flex items-start justify-between">
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-amber-500 text-white">
+                  <AlertCircle className="h-5 w-5" />
+                </div>
+                <div className="text-right">
+                  <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.jobs?.inactive || 0}</span>
+                  <JobStatLabel tooltip="Jobs submitted with inactive status awaiting superadmin approval.">Inactive Jobs</JobStatLabel>
+                </div>
+              </div>
+              <Link to="/employer/jobs?status=Inactive" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
+            </div>
+
+            {/* Card 4: Draft Jobs */}
+            <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between h-36">
+              <div className="flex items-start justify-between">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-amber-500 text-white">
                   <XCircle className="h-5 w-5" />
                 </div>
                 <div className="text-right">
@@ -375,7 +390,7 @@ export const EmployerDashboard = () => {
               <Link to="/employer/jobs?status=Draft" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
             </div>
 
-            {/* Card 4: Paused Jobs */}
+            {/* Card 5: Closed Jobs */}
             <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between h-36">
               <div className="flex items-start justify-between">
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#8e44ad] text-white">
@@ -383,13 +398,13 @@ export const EmployerDashboard = () => {
                 </div>
                 <div className="text-right">
                   <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.jobs?.closed || 0}</span>
-                  <JobStatLabel tooltip="Jobs paused or closed by you before expiry. They stay hidden until you reopen or renew them.">Paused Jobs</JobStatLabel>
+                  <JobStatLabel tooltip="Jobs paused or closed by you before expiry. They stay hidden until you reopen or renew them.">Closed Jobs</JobStatLabel>
                 </div>
               </div>
               <Link to="/employer/jobs?status=Closed" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
             </div>
 
-            {/* Card 5: Expired Jobs */}
+            {/* Card 6: Expired Jobs */}
             <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between h-36">
               <div className="flex items-start justify-between">
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-rose-500 text-white">

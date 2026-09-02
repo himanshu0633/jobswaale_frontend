@@ -428,14 +428,21 @@ export const EmployerPostJob = () => {
         phone: employer.phone,
         currentPlan: employer.currentPlan,
         planValidity: form.jobExpiry || employer.planValidity,
-        status: status === 'draft' ? 'draft' : 'publish'
+        status: status === 'draft' ? 'draft' : 'inactive'
       };
       if (isEditMode) {
         await axios.put(`${BASE_API_URL}/employer/jobs/${editJobId}`, payload, { headers: getTokenHeaders() });
       } else {
         await axios.post(`${BASE_API_URL}/employer/jobs`, payload, { headers: getTokenHeaders() });
       }
-      setMessage({ type: 'success', text: isEditMode ? 'Job updated successfully.' : status === 'draft' ? 'Draft saved successfully.' : 'Job published successfully.' });
+      setMessage({
+        type: 'success',
+        text: isEditMode
+          ? 'Job updated successfully.'
+          : status === 'draft'
+            ? 'Draft saved successfully.'
+            : 'Job posted successfully! It will be activated after superadmin review.'
+      });
       setTimeout(() => navigate('/employer/jobs'), 900);
     } catch (err) {
       if (!isEditMode && err.response?.status === 403) {

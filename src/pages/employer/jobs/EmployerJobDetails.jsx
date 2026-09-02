@@ -110,7 +110,8 @@ const parseJobDate = (value) => {
 const normalizeDetails = (payload) => {
   const expiry = parseJobDate(payload?.expiry);
   let status = payload?.status || 'Active';
-  if (!['Draft', 'Paused', 'Closed'].includes(status)) {
+  if (status === 'Paused' || status === 'paused') status = 'Closed';
+  if (!['Draft', 'Closed'].includes(status)) {
     if (expiry) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -253,7 +254,7 @@ export const EmployerJobDetails = () => {
     try {
       await axios.patch(`${BASE_API_URL}/employer/jobs/${id}/action`, { action }, { headers: getTokenHeaders() });
       const messages = {
-        pause: 'Job paused successfully.',
+        pause: 'Job closed successfully.',
         close: 'Job closed successfully.',
         reopen: 'Job reopened successfully.',
         renew: 'Job renewed successfully.'
@@ -460,10 +461,7 @@ export const EmployerJobDetails = () => {
         ) : details.status === 'Expired' ? (
           <button type="button" onClick={() => runJobAction('renew')} disabled={Boolean(actionState)} className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-2 text-sm font-extrabold text-white disabled:opacity-60">{actionState === 'renew' ? <Loader className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} Renew Job</button>
         ) : (
-          <button type="button" onClick={() => runJobAction('pause')} disabled={Boolean(actionState)} className="inline-flex items-center gap-2 rounded-md bg-amber-500 px-3 py-2 text-sm font-extrabold text-white disabled:opacity-60">{actionState === 'pause' ? <Loader className="h-4 w-4 animate-spin" /> : <Pause className="h-4 w-4" />} Pause Job</button>
-        )}
-        {details.status !== 'Closed' && (
-          <button type="button" onClick={() => runJobAction('close')} disabled={Boolean(actionState)} className="inline-flex items-center gap-2 rounded-md bg-rose-500 px-3 py-2 text-sm font-extrabold text-white disabled:opacity-60">{actionState === 'close' ? <Loader className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />} Mark as Closed</button>
+          <button type="button" onClick={() => runJobAction('close')} disabled={Boolean(actionState)} className="inline-flex items-center gap-2 rounded-md bg-amber-500 px-3 py-2 text-sm font-extrabold text-white disabled:opacity-60">{actionState === 'close' ? <Loader className="h-4 w-4 animate-spin" /> : <Pause className="h-4 w-4" />} Close Job</button>
         )}
       </div>
 

@@ -70,8 +70,9 @@ const emptyForm = {
 
 const statusOptions = [
   { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
   { value: 'pending', label: 'Pending' },
-  { value: 'reviewed', label: 'Reviewd' },
+  { value: 'reviewed', label: 'Reviewed' },
   { value: 'featured', label: 'Featured' },
   { value: 'blacklist', label: 'Blacklist' },
 ];

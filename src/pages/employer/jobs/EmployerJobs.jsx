@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
+  AlertCircle,
   Briefcase,
   ChevronRight,
   Clock,
@@ -23,7 +24,7 @@ import PageSkeleton from '../../../components/SkeletonLoader';
 import ClearFilterButton from '../../../components/ClearFilterButton';
 
 const emptyJobs = {
-  stats: { total: 0, active: 0, draft: 0, expired: 0, closed: 0 },
+  stats: { total: 0, active: 0, inactive: 0, draft: 0, expired: 0, closed: 0 },
   filters: { locations: [], jobTypes: [] },
   jobs: []
 };
@@ -40,16 +41,18 @@ const formatDate = (value, fallback = '-') => {
 
 const statusTone = {
   Active: 'bg-emerald-50 text-emerald-600',
-  Draft: 'bg-amber-50 text-amber-600',
+  Draft: 'bg-slate-100 text-slate-600',
   Expired: 'bg-rose-50 text-rose-600',
   Paused: 'bg-slate-100 text-slate-600',
-  Closed: 'bg-slate-100 text-slate-600'
+  Closed: 'bg-slate-100 text-slate-600',
+  Inactive: 'bg-amber-50 text-amber-600'
 };
 
 const statCards = [
   { key: 'total', title: 'Total Jobs', status: '', icon: Layers, tone: 'bg-indigo-50 text-[#6658dd]' },
   { key: 'active', title: 'Active Jobs', status: 'Active', icon: Briefcase, tone: 'bg-emerald-50 text-emerald-500' },
-  { key: 'draft', title: 'Draft Jobs', status: 'Draft', icon: FilePenLine, tone: 'bg-amber-50 text-amber-500' },
+  { key: 'inactive', title: 'Inactive Jobs', status: 'Inactive', icon: AlertCircle, tone: 'bg-amber-50 text-amber-500' },
+  { key: 'draft', title: 'Draft Jobs', status: 'Draft', icon: FilePenLine, tone: 'bg-slate-100 text-slate-500' },
   { key: 'expired', title: 'Expired Jobs', status: 'Expired', icon: Clock, tone: 'bg-rose-50 text-rose-500' },
   { key: 'closed', title: 'Closed Jobs', status: 'Closed', icon: Lock, tone: 'bg-slate-100 text-slate-500' }
 ];
@@ -63,7 +66,8 @@ const parseJobDate = (value) => {
 };
 
 const normalizeJobStatus = (job) => {
-  if (['Draft', 'Paused', 'Closed'].includes(job.status)) return job.status;
+  if (job.status === 'Paused' || job.status === 'paused') return 'Closed';
+  if (['Draft', 'Closed', 'Inactive'].includes(job.status)) return job.status;
   const expiry = parseJobDate(job.expiry);
   if (!expiry) return job.status === 'Expired' ? 'Active' : job.status || 'Active';
   const today = new Date();
@@ -83,9 +87,10 @@ const buildJobsData = (payload) => {
     stats: {
       total: jobs.length,
       active: jobs.filter((job) => job.status === 'Active').length,
+      inactive: jobs.filter((job) => job.status === 'Inactive').length,
       draft: jobs.filter((job) => job.status === 'Draft').length,
       expired: jobs.filter((job) => job.status === 'Expired').length,
-      closed: jobs.filter((job) => job.status === 'Closed' || job.status === 'Paused').length
+      closed: jobs.filter((job) => job.status === 'Closed').length
     }
   };
 };
@@ -177,7 +182,7 @@ export const EmployerJobs = () => {
         await axios.patch(`${BASE_API_URL}/employer/jobs/${jobId}/action`, { action }, { headers: getTokenHeaders() });
       }
       const messages = {
-        pause: 'Job paused successfully.',
+        pause: 'Job closed successfully.',
         close: 'Job closed successfully.',
         reopen: 'Job reopened successfully.',
         renew: 'Job renewed successfully.',
@@ -209,13 +214,10 @@ export const EmployerJobs = () => {
           {actionState.jobId === job.id && ['renew', 'reopen'].includes(actionState.action) ? <Loader className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
         </button>
       ) : (
-        <button type="button" title={job.status === 'Draft' ? 'Publish' : 'Pause'} onClick={() => runJobAction(job.id, job.status === 'Draft' ? 'publish' : 'pause')} disabled={actionState.jobId === job.id} className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-amber-600 disabled:opacity-60">
-          {actionState.jobId === job.id && ['pause', 'publish'].includes(actionState.action) ? <Loader className="h-4 w-4 animate-spin" /> : <Pause className="h-4 w-4" />}
+        <button type="button" title={job.status === 'Draft' ? 'Publish' : 'Closed'} onClick={() => runJobAction(job.id, job.status === 'Draft' ? 'publish' : 'close')} disabled={actionState.jobId === job.id} className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-amber-600 disabled:opacity-60">
+          {actionState.jobId === job.id && ['close', 'pause', 'publish'].includes(actionState.action) ? <Loader className="h-4 w-4 animate-spin" /> : <Pause className="h-4 w-4" />}
         </button>
       )}
-      <button type="button" title="Delete" onClick={() => runJobAction(job.id, 'delete')} disabled={actionState.jobId === job.id} className="rounded p-2 text-slate-500 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-60">
-        {actionState.jobId === job.id && actionState.action === 'delete' ? <Loader className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-      </button>
     </>
   );
 
@@ -245,7 +247,7 @@ export const EmployerJobs = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-6">
         {statCards.map((card) => (
           <button
             key={card.key}
@@ -297,9 +299,9 @@ export const EmployerJobs = () => {
               <select className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]" value={filters.status} onChange={(event) => setFilter('status', event.target.value)}>
                 <option value="">All Status</option>
                 <option>Active</option>
+                <option>Inactive</option>
                 <option>Draft</option>
                 <option>Expired</option>
-                <option>Paused</option>
                 <option>Closed</option>
               </select>
             </div>
