@@ -37,6 +37,7 @@ const mainMenu = [
       { to: '/employer/jobs', label: 'Manage Jobs', exact: true }
     ]
   },
+  { to: '/employer/messages', icon: MessageCircle, label: 'Messages' },
   { to: '/employer/applications', icon: FileText, label: 'Applications' },
   { to: '/employer/shortlisted', icon: UserCheck, label: 'Shortlisted' },
   { to: '/employer/interviews', icon: CalendarCheck, label: 'Interviews' },
@@ -47,8 +48,7 @@ const mainMenu = [
   { to: '/employer/email-templates', icon: MailCheck, label: 'Email Templates' },
   { to: '/employer/candidates', icon: Search, label: 'Search Candidates' },
   { to: '/employer/auto-mail', icon: MailCheck, label: 'Auto Mail' },
-  { to: '/employer/reports', icon: Grid2X2, label: 'Reports' },
-  { to: '/employer/messages', icon: MessageCircle, label: 'Messages' }
+  { to: '/employer/reports', icon: Grid2X2, label: 'Reports' }
 ];
 
 const companyMenu = [
