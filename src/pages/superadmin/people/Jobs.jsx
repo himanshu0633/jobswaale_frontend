@@ -834,107 +834,25 @@ export const Jobs = () => {
         </div>
       </div>
 
-      {/* Global Controls & Tabs */}
+      {/* Global Controls */}
       <div className="rounded-[5px] bg-white p-4 shadow-[0_0.75rem_6rem_rgba(56,65,74,0.03)] border border-slate-200">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          {/* Section Tabs */}
-          <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-lg w-fit flex-wrap">
-            <button
-              type="button"
-              onClick={() => handleTabChange('active')}
-              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-extrabold transition-all ${
-                activeTab === 'active'
-                  ? 'bg-white text-emerald-700 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              Active ({activeJobs.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => handleTabChange('inactive')}
-              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-extrabold transition-all ${
-                activeTab === 'inactive'
-                  ? 'bg-white text-amber-700 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <span className="h-2 w-2 rounded-full bg-amber-500" />
-              Inactive ({inactiveJobs.length})
-              {inactiveJobs.length > 0 && (
-                <span className="rounded-full bg-amber-200/80 px-1.5 py-0.2 text-[10px] font-black text-amber-900">
-                  {inactiveJobs.length}
-                </span>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => handleTabChange('expired')}
-              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-extrabold transition-all ${
-                activeTab === 'expired'
-                  ? 'bg-white text-rose-700 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <span className="h-2 w-2 rounded-full bg-rose-500" />
-              Expired ({expiredJobs.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => handleTabChange('paused')}
-              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-extrabold transition-all ${
-                activeTab === 'paused'
-                  ? 'bg-white text-[#6658dd] shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <span className="h-2 w-2 rounded-full bg-[#6658dd]" />
-              Paused ({pausedJobs.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => handleTabChange('closed')}
-              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-extrabold transition-all ${
-                activeTab === 'closed'
-                  ? 'bg-white text-[#43bfe5] shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <span className="h-2 w-2 rounded-full bg-[#43bfe5]" />
-              Closed ({closedJobs.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => handleTabChange('all')}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-extrabold transition-all ${
-                activeTab === 'all' || activeTab === 'both'
-                  ? 'bg-white text-slate-800 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Layers className="h-3.5 w-3.5" />
-              All ({list.length})
-            </button>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="relative w-full sm:w-80">
+            <input
+              type="text"
+              placeholder="Search job, company, city..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-8 pr-3 py-2 w-full border border-slate-200 rounded-[5px] text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6658dd]/20 focus:border-[#6658dd]"
+            />
+            <Search className="w-3.5 h-3.5 absolute left-2.5 top-3 text-slate-400" />
           </div>
 
-          {/* Right Action: Search + Sort + Post Job Button */}
           <div className="flex items-center gap-2.5 flex-wrap">
-            <div className="relative w-full sm:w-auto">
-              <input
-                type="text"
-                placeholder="Search job, company, city..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-8 pr-3 py-1.5 w-full sm:w-56 border border-slate-200 rounded-[5px] text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6658dd]/20 focus:border-[#6658dd]"
-              />
-              <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400" />
-            </div>
-
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="px-2.5 py-1.5 border border-slate-200 rounded-[5px] text-xs text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#6658dd]/20 cursor-pointer"
+              className="px-2.5 py-2 border border-slate-200 rounded-[5px] text-xs text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#6658dd]/20 cursor-pointer"
             >
               <option value="latest">Sort: Latest</option>
               <option value="oldest">Sort: Oldest</option>
@@ -944,7 +862,7 @@ export const Jobs = () => {
 
             <Link
               to="/admin/jobs/add"
-              className="inline-flex items-center gap-1.5 rounded-[5px] bg-[#6658dd] px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-[#574bbc]"
+              className="inline-flex items-center gap-1.5 rounded-[5px] bg-[#6658dd] px-3.5 py-2 text-xs font-bold text-white transition-colors hover:bg-[#574bbc]"
             >
               <Plus className="w-3.5 h-3.5" />
               Post a Job
@@ -977,16 +895,6 @@ export const Jobs = () => {
           </div>
 
           <div className="p-6">
-            <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50/80 p-3.5 mb-4 text-xs font-semibold text-amber-900">
-              <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
-              <div>
-                <p className="font-bold text-amber-800">Employer Job Postings Pending Approval</p>
-                <p className="mt-0.5 text-amber-700">
-                  When employers submit jobs, they automatically stay inactive until approved. Review the details below and click the green <strong>Activate</strong> button to publish them to candidate search and notify matching jobseekers.
-                </p>
-              </div>
-            </div>
-
             {renderJobTable(filteredInactiveJobs, 'inactive')}
           </div>
         </div>
