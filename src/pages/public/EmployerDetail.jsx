@@ -61,34 +61,99 @@ const OverviewItem = ({ icon: Icon, label, value, link }) => (
   </li>
 );
 
+const statusConfig = {
+  Active: {
+    bg: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    dot: 'bg-emerald-500'
+  },
+  Featured: {
+    bg: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    dot: 'bg-indigo-500'
+  },
+  Closed: {
+    bg: 'bg-slate-100 text-slate-700 border-slate-300',
+    dot: 'bg-slate-400'
+  },
+  Expired: {
+    bg: 'bg-rose-50 text-rose-700 border-rose-200',
+    dot: 'bg-rose-500'
+  },
+  Inactive: {
+    bg: 'bg-amber-50 text-amber-700 border-amber-200',
+    dot: 'bg-amber-500'
+  },
+  Draft: {
+    bg: 'bg-sky-50 text-sky-700 border-sky-200',
+    dot: 'bg-sky-500'
+  }
+};
+
 const JobCard = ({ job }) => {
   const logoColor = job.logoColor || '#dfe3f3';
+  const statusInfo = statusConfig[job.status] || {
+    bg: 'bg-slate-100 text-slate-700 border-slate-300',
+    dot: 'bg-slate-400'
+  };
+
   return (
     <div className="col-span-1">
-      <div className="border border-[#e8ecf3] rounded-[10px] bg-white p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(31,31,51,0.08)]">
-        <div className="flex">
-          <div className="flex-shrink-0">
-            <div
-              className="h-[52px] w-[52px] rounded-[10px] text-white flex items-center justify-center text-xl font-bold"
-              style={{ backgroundColor: logoColor, color: logoColor === '#f5a623' ? '#1f2938' : '#fff' }}
-            >
-              {job.logoLetter || job.company?.charAt(0)?.toUpperCase() || 'J'}
+      <div className={`border rounded-[10px] p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(31,31,51,0.08)] ${
+        job.status === 'Closed' || job.status === 'Expired'
+          ? 'border-slate-200 bg-slate-50/50'
+          : 'border-[#e8ecf3] bg-white'
+      }`}>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex gap-4 min-w-0 flex-1">
+            <div className="flex-shrink-0">
+              <div
+                className="h-[52px] w-[52px] rounded-[10px] text-white flex items-center justify-center text-xl font-bold shadow-sm"
+                style={{ backgroundColor: logoColor, color: logoColor === '#f5a623' ? '#1f2938' : '#fff' }}
+              >
+                {job.logoLetter || job.company?.charAt(0)?.toUpperCase() || 'J'}
+              </div>
+            </div>
+            <div className="flex-grow min-w-0">
+              <h3 className="text-[17px] leading-snug font-bold text-[#1f2938] mb-1">
+                <Link to={`/jobs/${job.id}`} className="hover:text-[#0047C7]">
+                  {job.title}
+                </Link>
+              </h3>
+              <p className="text-sm text-[#88929b] mb-1.5">{job.company}</p>
+              <div className="text-xs text-[#667085] flex items-center">
+                <MapPin className="h-3.5 w-3.5 mr-1 text-[#88929b] shrink-0" />
+                <span className="truncate">{job.location}</span>
+              </div>
             </div>
           </div>
-          <div className="flex-grow ml-4 min-w-0">
-            <h3 className="text-[18px] leading-snug font-bold text-[#1f2938] mb-1">
-              <Link to={`/jobs/${job.id}`} className="hover:text-[#0047C7]">
-                {job.title}
-              </Link>
-            </h3>
-            <p className="text-sm text-[#88929b] mb-2">{job.company}</p>
-            <div className="text-sm text-[#667085] flex items-center">
-              <MapPin className="h-4 w-4 mr-1" />
-              <span className="truncate">{job.location}</span>
-            </div>
+
+          <div className="flex flex-col items-end gap-1.5 shrink-0">
+            {/* Job Status */}
+            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold border ${statusInfo.bg}`}>
+              <span className={`h-2 w-2 rounded-full ${statusInfo.dot} ${job.status === 'Active' ? 'animate-pulse' : ''}`} />
+              {job.status || 'Active'}
+            </span>
+
+            {/* Candidate Applied Status */}
+            {job.hasApplied && (
+              <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-black bg-blue-50 text-blue-700 border border-blue-200">
+                Applied: {job.applicationStatus || 'Submitted'}
+              </span>
+            )}
           </div>
         </div>
-        <div className="mt-6 pt-4 border-t border-[#eef1f6] flex items-center justify-between gap-3">
+
+        {/* Expiry / Posting Date */}
+        {job.jobExpiry && (
+          <div className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+            <Clock className="h-3.5 w-3.5 shrink-0" />
+            <span>
+              {job.isExpired ? 'Expired on: ' : 'Expires on: '}
+              {new Date(job.jobExpiry).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+            </span>
+          </div>
+        )}
+
+        <div className="mt-5 pt-4 border-t border-[#eef1f6] flex items-center justify-between gap-3">
           <span className="text-sm font-bold text-[#0047C7]">{formatJobSalary(job)}</span>
           <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[#eaf1ff] text-[#0047C7]">{job.type}</span>
         </div>
@@ -268,10 +333,31 @@ const EmployerDetail = () => {
     }
   };
 
+  const [statusFilter, setStatusFilter] = useState('all');
+
   const aboutParagraphs = useMemo(() => {
     const text = employer?.description || 'Company description has not been added yet.';
     return text.split(/\n+/).filter(Boolean).slice(0, 3);
   }, [employer?.description]);
+
+  const activeJobsCount = useMemo(() => {
+    return employer?.jobs?.filter((j) => j.status === 'Active' || j.status === 'Featured').length || 0;
+  }, [employer?.jobs]);
+
+  const closedJobsCount = useMemo(() => {
+    return employer?.jobs?.filter((j) => j.status === 'Closed' || j.status === 'Expired' || j.status === 'Inactive').length || 0;
+  }, [employer?.jobs]);
+
+  const filteredJobs = useMemo(() => {
+    if (!employer?.jobs) return [];
+    if (statusFilter === 'active') {
+      return employer.jobs.filter((j) => j.status === 'Active' || j.status === 'Featured');
+    }
+    if (statusFilter === 'closed_expired') {
+      return employer.jobs.filter((j) => j.status === 'Closed' || j.status === 'Expired' || j.status === 'Inactive');
+    }
+    return employer.jobs;
+  }, [employer?.jobs, statusFilter]);
 
   if (loading) {
     return <EmployerDetailSkeleton />;
@@ -329,10 +415,15 @@ const EmployerDetail = () => {
                     </span>
                   </div>
 
-                  <div className="mt-5">
-                    <Link to={openJobsUrl} className="inline-flex items-center rounded-lg bg-[#eef4ff] px-4 py-2 text-sm font-bold text-[#0047C7] hover:bg-[#0047C7] hover:text-white transition">
-                      {employer.openJobs || employer.jobs?.length || 0} open jobs
-                    </Link>
+                  <div className="mt-5 flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center rounded-lg bg-[#eef4ff] px-3.5 py-1.5 text-xs font-bold text-[#0047C7]">
+                      {activeJobsCount} Active Openings
+                    </span>
+                    {employer.jobs?.length > 0 && (
+                      <span className="inline-flex items-center rounded-lg bg-slate-100 px-3.5 py-1.5 text-xs font-bold text-slate-600">
+                        {employer.jobs.length} Total Posted
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -380,16 +471,66 @@ const EmployerDetail = () => {
 
                 <div className="border-t border-[#eef1f6] my-8" />
 
-                <h5 className="text-[22px] font-bold text-[#1f2938] mb-5">Current Openings</h5>
-                {employer.jobs?.length > 0 ? (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                  <div>
+                    <h5 className="text-[22px] font-bold text-[#1f2938]">Posted Jobs & Status</h5>
+                    <p className="text-xs font-semibold text-slate-400 mt-0.5">
+                      Check each job's current status (Active, Closed, Expired)
+                    </p>
+                  </div>
+
+                  {employer.jobs?.length > 0 && (
+                    <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-1 self-start sm:self-auto">
+                      <button
+                        type="button"
+                        onClick={() => setStatusFilter('all')}
+                        className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${
+                          statusFilter === 'all'
+                            ? 'bg-white text-slate-800 shadow-sm'
+                            : 'text-slate-500 hover:text-slate-800'
+                        }`}
+                      >
+                        All ({employer.jobs.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setStatusFilter('active')}
+                        className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${
+                          statusFilter === 'active'
+                            ? 'bg-white text-emerald-700 shadow-sm'
+                            : 'text-slate-500 hover:text-emerald-700'
+                        }`}
+                      >
+                        Active ({activeJobsCount})
+                      </button>
+                      {closedJobsCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setStatusFilter('closed_expired')}
+                          className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${
+                            statusFilter === 'closed_expired'
+                              ? 'bg-white text-rose-700 shadow-sm'
+                              : 'text-slate-500 hover:text-rose-700'
+                          }`}
+                        >
+                          Closed / Expired ({closedJobsCount})
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {filteredJobs.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {employer.jobs.map((job) => (
-                      <JobCard key={job.id} job={job} />
+                    {filteredJobs.map((job) => (
+                      <JobCard key={job.id || job.jobId} job={job} />
                     ))}
                   </div>
                 ) : (
                   <div className="rounded-[10px] border border-[#e8ecf3] bg-white p-6 text-sm font-semibold text-[#667085]">
-                    No open jobs are currently available for this employer.
+                    {statusFilter === 'all'
+                      ? 'No jobs are currently available for this employer.'
+                      : `No ${statusFilter === 'active' ? 'active' : 'closed / expired'} jobs found.`}
                   </div>
                 )}
               </div>
