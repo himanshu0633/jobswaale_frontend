@@ -18,7 +18,6 @@ import {
   Loader,
   X,
   Check,
-  FileText,
   Clock,
   Send,
   MessageSquare
@@ -339,16 +338,7 @@ const EmployerCandidateProfile = () => {
     const details = candidate.application.interviewDetails || {};
     const onHold = details.onHold;
 
-    // 1. Mark as Applied
-    list.push({
-      key: 'Applied',
-      label: 'Mark as Applied',
-      tone: 'border border-emerald-200 bg-white text-emerald-600 hover:bg-emerald-50',
-      icon: FileText,
-      onClick: () => updateStatus('Applied')
-    });
-
-    // 2. Schedule / Reschedule Interview
+    // 1. Schedule / Reschedule Interview
     const isInterview = status === 'Interview';
     list.push({
       key: 'InterviewSchedule',
@@ -358,7 +348,7 @@ const EmployerCandidateProfile = () => {
       onClick: openInterviewModal
     });
 
-    // 3. On Hold for Interview
+    // 2. On Hold for Interview
     list.push({
       key: 'InterviewOnHold',
       label: 'On Hold for Interview',
@@ -389,7 +379,7 @@ const EmployerCandidateProfile = () => {
       }
     });
 
-    // 4. Select
+    // 3. Select
     list.push({
       key: 'Offered',
       label: 'Select',

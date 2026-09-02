@@ -9,7 +9,6 @@ import {
   Check,
   Clock,
   Download,
-  FileText,
   Loader,
   Mail,
   MapPin,
@@ -605,16 +604,7 @@ const EmployerApplicationDetails = () => {
       return list;
     }
 
-    // 1. Mark as Applied
-    list.push({
-      key: 'Applied',
-      label: 'Mark as Applied',
-      tone: 'border border-emerald-200 bg-white text-emerald-600 hover:bg-emerald-50',
-      icon: FileText,
-      onClick: () => updateStatus('Applied')
-    });
-
-    // 2. Schedule / Reschedule Interview
+    // 1. Schedule / Reschedule Interview
     const isInterview = status === 'Interview';
     list.push({
       key: 'InterviewSchedule',
@@ -624,7 +614,7 @@ const EmployerApplicationDetails = () => {
       onClick: openInterviewModal
     });
 
-    // 3. On Hold for Interview
+    // 2. On Hold for Interview
     list.push({
       key: 'InterviewOnHold',
       label: 'On Hold for Interview',
@@ -633,7 +623,7 @@ const EmployerApplicationDetails = () => {
       onClick: scheduleInterviewOnHold
     });
 
-    // 4. Select
+    // 3. Select
     list.push({
       key: 'Offered',
       label: 'Select',
