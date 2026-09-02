@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import ClearFilterButton from '../../../components/ClearFilterButton';
+import { downloadBlobResponse } from '../../../utils/downloadFile';
 
 const getTokenHeaders = () => {
   const token = localStorage.getItem('publicToken');
@@ -219,6 +220,27 @@ export const EmployerOffers = ({ view = 'offers' }) => {
     }
   };
 
+  const downloadOfferPdf = async (offer) => {
+    if (!offer?.attachmentUrl || loading) return;
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    try {
+      const response = await axios.get(`${BASE_API_URL}/employer/sent-offers/${offer._id}/download`, {
+        headers: getTokenHeaders(),
+        responseType: 'blob'
+      });
+      const fallbackName = offer.attachmentName || `${offer.candidate?.name || 'candidate'}-offer-letter`;
+      downloadBlobResponse(response, fallbackName);
+      setSuccess('Offer PDF downloaded successfully.');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to download offer PDF.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const uniquePositions = useMemo(() => {
     const jobs = offers.map(o => o.application?.job?.jobTitle).filter(Boolean);
     return [...new Set(jobs)];
@@ -292,7 +314,7 @@ export const EmployerOffers = ({ view = 'offers' }) => {
 
       {/* Stats Grid */}
       {view !== 'email-templates' && (
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
         <div className="flex items-center gap-4 rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-[#6658dd]">
             <Send className="h-6 w-6" />
@@ -310,16 +332,6 @@ export const EmployerOffers = ({ view = 'offers' }) => {
           <div>
             <p className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Offers with PDF</p>
             <h3 className="text-xl font-black text-slate-800 mt-0.5">{pageOffers.filter(o => o.attachmentUrl).length}</h3>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4 rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-500">
-            <Mail className="h-6 w-6" />
-          </div>
-          <div>
-            <p className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Saved Templates</p>
-            <h3 className="text-xl font-black text-slate-800 mt-0.5">{templates.length}</h3>
           </div>
         </div>
       </div>
@@ -448,7 +460,7 @@ export const EmployerOffers = ({ view = 'offers' }) => {
                           <div>
                             {offer.candidate?._id ? (
                               <Link
-                                to={`/employer/candidateProfile/${offer.candidate._id}`}
+                                to={`/employer/candidateProfile/${offer.candidate._id}${offer.application?.job?._id ? `?jobId=${offer.application.job._id}` : ''}`}
                                 className="text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]"
                               >
                                 {offer.candidate.name}
@@ -475,42 +487,22 @@ export const EmployerOffers = ({ view = 'offers' }) => {
                         </td>
                         <td className="px-5 py-4 text-center">
                           {offer.attachmentUrl ? (
-                            <a
-                              href={`${BASE_API_URL}${offer.attachmentUrl}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                            <button
+                              type="button"
+                              disabled={loading}
+                              onClick={() => downloadOfferPdf(offer)}
                               title="Download Offer Letter PDF"
-                              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-extrabold text-[#6658dd] hover:bg-indigo-50"
+                              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-extrabold text-[#6658dd] hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               <Download className="h-3.5 w-3.5" />
                               <span>Download PDF</span>
-                            </a>
+                            </button>
                           ) : (
                             <span className="text-xs font-semibold text-slate-400">-</span>
                           )}
                         </td>
                         <td className="px-5 py-4 text-center">
                           <div className="flex items-center justify-center gap-2">
-                            {getOfferStatus(offer) === 'Offer Sent' && (
-                              <>
-                                <button
-                                  type="button"
-                                  disabled={loading}
-                                  onClick={() => updateOfferStatus(offer.application?._id, 'Offer Accepted')}
-                                  className="rounded bg-cyan-500 px-2.5 py-1 text-xs font-extrabold text-white hover:bg-cyan-600 transition"
-                                >
-                                  Accept
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={loading}
-                                  onClick={() => handleReject(offer.application?._id)}
-                                  className="rounded bg-rose-500 px-2.5 py-1 text-xs font-extrabold text-white hover:bg-rose-600 transition"
-                                >
-                                  Reject
-                                </button>
-                              </>
-                            )}
                             {getOfferStatus(offer) === 'Offer Accepted' && (
                               <>
                                 <button
@@ -530,6 +522,9 @@ export const EmployerOffers = ({ view = 'offers' }) => {
                                   Reject
                                 </button>
                               </>
+                            )}
+                            {getOfferStatus(offer) !== 'Offer Accepted' && (
+                              <span className="text-xs font-semibold text-slate-400">-</span>
                             )}
                           </div>
                         </td>

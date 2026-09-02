@@ -459,10 +459,14 @@ const AppLayout = () => {
    ========================================== */
 
 function App() {
+  const routerBasename = import.meta.env.BASE_URL === '/'
+    ? undefined
+    : import.meta.env.BASE_URL.replace(/\/$/, '');
+
   return (
     <AppErrorBoundary>
       <AuthProvider>
-        <Router>
+        <Router basename={routerBasename}>
           <AssetRefreshGuard />
           <ScrollToTop />
           <Routes>

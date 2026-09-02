@@ -67,7 +67,7 @@ const getEmployerUser = () => {
   }
 };
 
-export const EmployerSidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
+export const EmployerSidebar = ({ isOpen, isCollapsed, isDesktopShell = false, toggleSidebar }) => {
   const location = useLocation();
   const { unreadCount } = useMessageSocket();
   const user = getEmployerUser();
@@ -84,7 +84,7 @@ export const EmployerSidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
     child.exact ? location.pathname === child.to : location.pathname.startsWith(child.to)
   ));
   const closeMobileSidebar = () => {
-    if (window.innerWidth < 1024) toggleSidebar();
+    if (!isDesktopShell) toggleSidebar();
   };
 
   useEffect(() => {
@@ -202,8 +202,8 @@ export const EmployerSidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
         />
       )}
 
-      <aside className={`fixed bottom-0 left-0 top-[66px] z-50 flex flex-col border-r border-slate-200 bg-white text-slate-700 transition-all duration-300 lg:z-20 lg:translate-x-0 ${
-        isOpen ? 'translate-x-0' : '-translate-x-full'
+      <aside className={`portal-sidebar fixed bottom-0 left-0 top-[66px] flex flex-col border-r border-slate-200 bg-white text-slate-700 transition-all duration-300 ${
+        isDesktopShell ? 'z-20 translate-x-0' : `z-50 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`
       } ${isCollapsed ? 'w-16' : 'w-64'}`}>
         <nav className={`flex-grow overflow-y-auto ${isCollapsed ? 'px-1 py-5' : 'px-4 py-5'}`}>
           {!isCollapsed && (

@@ -147,6 +147,7 @@ export const EmployerSelected = () => {
     if (filters.jobTitle) params.set('jobTitle', filters.jobTitle);
     if (filters.selectionDate) params.set('selectionDate', filters.selectionDate);
     if (filters.minSalary) params.set('minSalary', filters.minSalary);
+    params.set('status', 'Selected');
     params.set('page', String(currentPage));
     params.set('limit', String(pageSize));
     return params.toString();

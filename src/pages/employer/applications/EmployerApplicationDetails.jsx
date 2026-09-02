@@ -891,7 +891,7 @@ const EmployerApplicationDetails = () => {
               {(candidate.skills || []).map((skill) => <span key={skill} className="rounded bg-blue-50 px-2 py-1 text-xs font-black text-blue-600">{skill}</span>)}
             </div>
             <div className="mt-4 grid gap-2">
-              <Link to={`/employer/candidateProfile/${candidate.id}`} className="inline-flex items-center justify-center gap-2 rounded-md bg-[#6658dd] px-3 py-2 text-xs font-extrabold text-white"><User className="h-4 w-4" /> View Full Profile</Link>
+              <Link to={`/employer/candidateProfile/${candidate.id}?jobId=${application.job?.id || application.job?._id}`} className="inline-flex items-center justify-center gap-2 rounded-md bg-[#6658dd] px-3 py-2 text-xs font-extrabold text-white"><User className="h-4 w-4" /> View Full Profile</Link>
             </div>
           </Card>
 

@@ -139,6 +139,12 @@ const SkillBadge = ({ children, tone = 'bg-blue-50 text-blue-600' }) => (
 
 const EmployerCandidateProfile = () => {
   const { id } = useParams();
+  const searchParams = useMemo(() => new URLSearchParams(window.location.search), []);
+  const jobIdParam = searchParams.get('jobId') || '';
+  const profileUrl = useMemo(
+    () => `${BASE_API_URL}/employer/candidateProfile/${id}${jobIdParam ? `?jobId=${encodeURIComponent(jobIdParam)}` : ''}`,
+    [id, jobIdParam]
+  );
   const [candidate, setCandidate] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState('');
@@ -223,7 +229,7 @@ const EmployerCandidateProfile = () => {
       setShowInterviewModal(false);
       setInterviewForm({ date: '', time: '', type: 'Video Call', locationOrLink: '', notes: '', onHold: false, manualAddress: '' });
       setMessage(interviewForm.onHold ? 'Application moved to interview on hold.' : 'Interview scheduled successfully.');
-      const response = await axios.get(`${BASE_API_URL}/employer/candidateProfile/${id}`, { headers: getTokenHeaders() });
+      const response = await axios.get(profileUrl, { headers: getTokenHeaders() });
       setCandidate(response.data);
     } catch (err) {
       setError(err.response?.data?.message || 'Interview schedule failed.');
@@ -240,7 +246,7 @@ const EmployerCandidateProfile = () => {
     try {
       await axios.patch(`${BASE_API_URL}/employer/applications/${candidate.application.id}/status`, { status }, { headers: getTokenHeaders() });
       setMessage(`Application ${status} successfully.`);
-      const response = await axios.get(`${BASE_API_URL}/employer/candidateProfile/${id}`, { headers: getTokenHeaders() });
+      const response = await axios.get(profileUrl, { headers: getTokenHeaders() });
       setCandidate(response.data);
     } catch (err) {
       setError(err.response?.data?.message || 'Status update failed.');
@@ -261,7 +267,7 @@ const EmployerCandidateProfile = () => {
         { headers: getTokenHeaders() }
       );
       setMessage(`Offer status updated to ${offerStatus}.`);
-      const response = await axios.get(`${BASE_API_URL}/employer/candidateProfile/${id}`, { headers: getTokenHeaders() });
+      const response = await axios.get(profileUrl, { headers: getTokenHeaders() });
       setCandidate(response.data);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update offer status.');
@@ -287,7 +293,7 @@ const EmployerCandidateProfile = () => {
         }, { headers: getTokenHeaders() });
         setMessage('Candidate saved to talent pool.');
       }
-      const response = await axios.get(`${BASE_API_URL}/employer/candidateProfile/${id}`, { headers: getTokenHeaders() });
+      const response = await axios.get(profileUrl, { headers: getTokenHeaders() });
       setCandidate(response.data);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update talent pool status.');
@@ -300,7 +306,7 @@ const EmployerCandidateProfile = () => {
     let alive = true;
     setLoading(true);
     setError('');
-    axios.get(`${BASE_API_URL}/employer/candidateProfile/${id}`, { headers: getTokenHeaders() })
+    axios.get(profileUrl, { headers: getTokenHeaders() })
       .then((response) => {
         if (alive) {
           setCandidate(response.data);
@@ -323,7 +329,7 @@ const EmployerCandidateProfile = () => {
         if (alive) setLoading(false);
       });
     return () => { alive = false; };
-  }, [id]);
+  }, [profileUrl]);
 
   const quickActions = useMemo(() => {
     const list = [];
@@ -373,7 +379,7 @@ const EmployerCandidateProfile = () => {
             { headers: getTokenHeaders() }
           );
           setMessage('Application moved to interview on hold.');
-          const response = await axios.get(`${BASE_API_URL}/employer/candidateProfile/${id}`, { headers: getTokenHeaders() });
+          const response = await axios.get(profileUrl, { headers: getTokenHeaders() });
           setCandidate(response.data);
         } catch (err) {
           setError(err.response?.data?.message || 'Failed to move application to interview on hold.');
@@ -547,7 +553,7 @@ const EmployerCandidateProfile = () => {
                     { headers: getTokenHeaders() }
                   );
                   setMessage('Application moved to interview on hold.');
-                  const response = await axios.get(`${BASE_API_URL}/employer/candidateProfile/${id}`, { headers: getTokenHeaders() });
+                  const response = await axios.get(profileUrl, { headers: getTokenHeaders() });
                   setCandidate(response.data);
                 } catch (err) {
                   setError(err.response?.data?.message || 'Failed to move application to interview on hold.');
@@ -965,7 +971,7 @@ const EmployerCandidateProfile = () => {
         candidateEmail={offerModal.candidateEmail}
         candidateName={offerModal.candidateName}
         onSuccess={async () => {
-          const response = await axios.get(`${BASE_API_URL}/employer/candidateProfile/${id}`, { headers: getTokenHeaders() });
+          const response = await axios.get(profileUrl, { headers: getTokenHeaders() });
           setCandidate(response.data);
         }}
       />

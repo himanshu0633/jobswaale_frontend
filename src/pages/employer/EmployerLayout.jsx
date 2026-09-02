@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import EmployerFooter from './components/EmployerFooter';
 import EmployerHeader from './components/EmployerHeader';
@@ -41,9 +41,27 @@ export const EmployerProtectedRoute = () => {
 export const EmployerLayout = () => {
   const [sidebarOpenMobile, setSidebarOpenMobile] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isDesktopShell, setIsDesktopShell] = useState(() => (
+    typeof window !== 'undefined' && window.screen.width >= 1024
+  ));
+
+  useEffect(() => {
+    const syncDesktopShell = () => {
+      setIsDesktopShell(window.screen.width >= 1024);
+    };
+
+    syncDesktopShell();
+    window.addEventListener('resize', syncDesktopShell);
+    document.body.classList.add('zoom-stable-portal');
+
+    return () => {
+      window.removeEventListener('resize', syncDesktopShell);
+      document.body.classList.remove('zoom-stable-portal');
+    };
+  }, []);
 
   const handleToggleSidebar = () => {
-    if (window.innerWidth >= 1024) {
+    if (isDesktopShell) {
       setSidebarCollapsed((current) => !current);
     } else {
       setSidebarOpenMobile((current) => !current);
@@ -52,17 +70,18 @@ export const EmployerLayout = () => {
 
   return (
     <MessageSocketProvider role="employer">
-      <div className="portal-shell flex min-h-screen flex-col bg-slate-50">
-        <EmployerHeader toggleSidebar={handleToggleSidebar} />
+      <div className={`portal-shell flex min-h-screen flex-col bg-slate-50 ${isDesktopShell ? 'zoom-stable-desktop' : ''}`}>
+        <EmployerHeader toggleSidebar={handleToggleSidebar} isDesktopShell={isDesktopShell} />
         <div className="relative flex min-w-0 flex-1 pt-[66px]">
           <ProfileCompletionPopup portal="employer" />
           <EmployerSidebar
             isOpen={sidebarOpenMobile}
             isCollapsed={sidebarCollapsed}
+            isDesktopShell={isDesktopShell}
             toggleSidebar={() => setSidebarOpenMobile(false)}
           />
-          <div className={`portal-content flex min-w-0 flex-grow flex-col bg-[#f5f6f8] transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
-            <main className="min-w-0 flex-grow overflow-x-hidden p-4 md:p-5 lg:p-6">
+          <div className={`portal-content flex min-w-0 flex-grow flex-col bg-[#f5f6f8] transition-all duration-300 ${isDesktopShell ? (sidebarCollapsed ? 'pl-16' : 'pl-64') : ''}`}>
+            <main className="min-w-0 flex-grow p-4 md:p-5 lg:p-6">
               <Suspense fallback={<PageSkeleton />}>
                 <Outlet />
               </Suspense>

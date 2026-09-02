@@ -349,7 +349,7 @@ export const EmployerInterviews = () => {
                   <div className="flex items-start gap-3">
                     <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${interview.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>{interview.initials}</span>
                     <div className="min-w-0 flex-1">
-                      <Link to={`/employer/candidateProfile/${interview.candidateId}`} className="truncate text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{interview.name}</Link>
+                      <Link to={`/employer/candidateProfile/${interview.candidateId}${interview.jobId ? `?jobId=${interview.jobId}` : ''}`} className="truncate text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{interview.name}</Link>
                       <p className="mt-0.5 truncate text-xs font-semibold text-slate-400">{interview.email}</p>
                       <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><Phone className="h-3 w-3 shrink-0" />{interview.phone}</p>
                     </div>
@@ -428,7 +428,7 @@ export const EmployerInterviews = () => {
                   const expired = isInterviewExpired(interview.interviewDate, interview.status);
                   return (
                     <tr key={interview.id} className="transition hover:bg-slate-50">
-                      <td className="px-5 py-4"><div className="flex items-center gap-3"><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${interview.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>{interview.initials}</span><div><Link to={`/employer/candidateProfile/${interview.candidateId}`} className="text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{interview.name}</Link><p className="mt-0.5 text-xs font-semibold text-slate-400">{interview.email}</p><p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><Phone className="h-3 w-3" />{interview.phone}</p></div></div></td>
+                      <td className="px-5 py-4"><div className="flex items-center gap-3"><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${interview.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>{interview.initials}</span><div><Link to={`/employer/candidateProfile/${interview.candidateId}${interview.jobId ? `?jobId=${interview.jobId}` : ''}`} className="text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{interview.name}</Link><p className="mt-0.5 text-xs font-semibold text-slate-400">{interview.email}</p><p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><Phone className="h-3 w-3" />{interview.phone}</p></div></div></td>
                       <td className="px-5 py-4"><p className="text-sm font-extrabold text-[#3f4254]">{interview.jobTitle}</p><p className="mt-0.5 text-xs font-semibold text-slate-400">{interview.jobType}</p></td>
                       <td className="px-5 py-4"><span className={`inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-black ${typeTone[interview.type]?.className || 'bg-slate-100 text-slate-600'}`}><TypeIcon className="h-3.5 w-3.5" />{interview.type}</span></td>
                       <td className={`px-5 py-4 text-sm font-semibold leading-6 ${expired ? 'text-rose-600 font-extrabold' : 'text-slate-600'}`}>{interview.displayDate || formatDate(interview.interviewDate)}<br />{normalizeTime(interview.time)}</td>

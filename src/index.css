@@ -7,6 +7,208 @@ body,
   overflow-x: hidden;
 }
 
+html:has(.zoom-stable-desktop),
+body.zoom-stable-portal {
+  overflow-x: auto;
+}
+
+body.zoom-stable-portal #root {
+  overflow-x: visible;
+}
+
+.zoom-stable-desktop {
+  min-width: 1280px;
+}
+
+.zoom-stable-desktop .portal-header {
+  min-width: 1280px;
+}
+
+.zoom-stable-desktop .portal-header .sm\:inline-flex,
+.zoom-stable-desktop .portal-header .md\:flex,
+.zoom-stable-desktop .portal-header .lg\:block,
+.zoom-stable-desktop .portal-header .lg\:inline,
+.zoom-stable-desktop .portal-header .xl\:block {
+  display: inline-flex !important;
+}
+
+.zoom-stable-desktop .portal-header form.xl\:block {
+  display: block !important;
+}
+
+.zoom-stable-desktop .portal-header .lg\:hidden,
+.zoom-stable-desktop .portal-header .xl\:hidden {
+  display: none !important;
+}
+
+.zoom-stable-desktop .portal-header .lg\:w-\[220px\] {
+  width: 220px !important;
+}
+
+.zoom-stable-desktop .portal-header .lg\:gap-\[30px\] {
+  gap: 30px !important;
+}
+
+.zoom-stable-desktop .portal-header .lg\:gap-\[18px\] {
+  gap: 18px !important;
+}
+
+.zoom-stable-desktop .portal-header .xl\:w-\[270px\] {
+  width: 270px !important;
+}
+
+.zoom-stable-desktop .portal-header .sm\:max-h-\[42px\] {
+  max-height: 42px !important;
+}
+
+.zoom-stable-desktop .portal-header .sm\:h-\[38px\] {
+  height: 38px !important;
+}
+
+.zoom-stable-desktop .portal-header .sm\:w-\[38px\] {
+  width: 38px !important;
+}
+
+.zoom-stable-desktop .portal-header .lg\:px-10 {
+  padding-left: 2.5rem !important;
+  padding-right: 2.5rem !important;
+}
+
+.zoom-stable-desktop .portal-content {
+  min-width: 0;
+}
+
+.zoom-stable-desktop .portal-content .sm\:block,
+.zoom-stable-desktop .portal-content .md\:block,
+.zoom-stable-desktop .portal-content .lg\:block,
+.zoom-stable-desktop .portal-content .xl\:block {
+  display: block !important;
+}
+
+.zoom-stable-desktop .portal-content .sm\:hidden,
+.zoom-stable-desktop .portal-content .md\:hidden,
+.zoom-stable-desktop .portal-content .lg\:hidden,
+.zoom-stable-desktop .portal-content .xl\:hidden,
+.zoom-stable-desktop .portal-content .max-md\:hidden {
+  display: none !important;
+}
+
+.zoom-stable-desktop .portal-content .sm\:flex,
+.zoom-stable-desktop .portal-content .md\:flex,
+.zoom-stable-desktop .portal-content .lg\:flex,
+.zoom-stable-desktop .portal-content .xl\:flex {
+  display: flex !important;
+}
+
+.zoom-stable-desktop .portal-content .sm\:grid,
+.zoom-stable-desktop .portal-content .md\:grid,
+.zoom-stable-desktop .portal-content .lg\:grid,
+.zoom-stable-desktop .portal-content .xl\:grid {
+  display: grid !important;
+}
+
+.zoom-stable-desktop .portal-content .sm\:grid-cols-2,
+.zoom-stable-desktop .portal-content .md\:grid-cols-2,
+.zoom-stable-desktop .portal-content .lg\:grid-cols-2,
+.zoom-stable-desktop .portal-content .xl\:grid-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.zoom-stable-desktop .portal-content .sm\:grid-cols-3,
+.zoom-stable-desktop .portal-content .md\:grid-cols-3,
+.zoom-stable-desktop .portal-content .lg\:grid-cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.zoom-stable-desktop .portal-content .md\:grid-cols-4,
+.zoom-stable-desktop .portal-content .lg\:grid-cols-4,
+.zoom-stable-desktop .portal-content .xl\:grid-cols-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+
+.zoom-stable-desktop .portal-content .xl\:grid-cols-\[1\.5fr_1fr_1fr_1fr_auto\] {
+  grid-template-columns: 1.5fr 1fr 1fr 1fr auto !important;
+}
+
+.zoom-stable-desktop .portal-content .md\:grid-cols-\[repeat\(2\,minmax\(0\,1fr\)\)_260px\] {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) 260px !important;
+}
+
+.zoom-stable-desktop .portal-content .xl\:grid-cols-\[1\.4fr_1fr_1fr_1fr_1fr_auto\] {
+  grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr auto !important;
+}
+
+.zoom-stable-desktop .portal-content .xl\:grid-cols-\[1\.45fr_1fr_1fr_1fr_1fr_auto\] {
+  grid-template-columns: 1.45fr 1fr 1fr 1fr 1fr auto !important;
+}
+
+.zoom-stable-desktop .portal-content .xl\:grid-cols-\[1\.5fr_1fr_1fr_1fr_1fr_auto\] {
+  grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr auto !important;
+}
+
+.zoom-stable-desktop .portal-content .xl\:grid-cols-\[1\.5fr_1fr_1\.2fr_1fr_auto\] {
+  grid-template-columns: 1.5fr 1fr 1.2fr 1fr auto !important;
+}
+
+.zoom-stable-desktop .portal-content .xl\:grid-cols-\[1\.45fr_0\.85fr\] {
+  grid-template-columns: 1.45fr 0.85fr !important;
+}
+
+.zoom-stable-desktop .portal-content .xl\:grid-cols-\[1\.5fr_0\.8fr\] {
+  grid-template-columns: 1.5fr 0.8fr !important;
+}
+
+.zoom-stable-desktop .portal-content .xl\:grid-cols-\[1fr_360px\] {
+  grid-template-columns: 1fr 360px !important;
+}
+
+.zoom-stable-desktop .portal-content .xl\:grid-cols-\[2fr_1fr\] {
+  grid-template-columns: 2fr 1fr !important;
+}
+
+.zoom-stable-desktop .portal-content .xl\:grid-cols-\[1fr_1fr_1\.3fr_1fr_auto_auto\] {
+  grid-template-columns: 1fr 1fr 1.3fr 1fr auto auto !important;
+}
+
+.zoom-stable-desktop .portal-content .lg\:grid-cols-\[1fr_2fr\] {
+  grid-template-columns: 1fr 2fr !important;
+}
+
+.zoom-stable-desktop .portal-content .lg\:col-span-4 {
+  grid-column: span 4 / span 4 !important;
+}
+
+.zoom-stable-desktop .portal-content .sm\:flex-row,
+.zoom-stable-desktop .portal-content .md\:flex-row,
+.zoom-stable-desktop .portal-content .lg\:flex-row {
+  flex-direction: row !important;
+}
+
+.zoom-stable-desktop .portal-content .sm\:items-center,
+.zoom-stable-desktop .portal-content .md\:items-center,
+.zoom-stable-desktop .portal-content .lg\:items-center {
+  align-items: center !important;
+}
+
+.zoom-stable-desktop .portal-content .sm\:text-sm {
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+}
+
+.zoom-stable-desktop .portal-content .sm\:text-xl {
+  font-size: 1.25rem !important;
+  line-height: 1.75rem !important;
+}
+
+.zoom-stable-desktop .portal-content .sm\:px-0 {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.zoom-stable-desktop .portal-content .sm\:p-5 {
+  padding: 1.25rem !important;
+}
+
 body {
   margin: 0;
   font-family: 'Nunito', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
