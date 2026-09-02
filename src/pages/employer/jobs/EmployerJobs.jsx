@@ -66,10 +66,13 @@ const parseJobDate = (value) => {
 };
 
 const normalizeJobStatus = (job) => {
-  if (job.status === 'Paused' || job.status === 'paused') return 'Closed';
-  if (['Draft', 'Closed', 'Inactive'].includes(job.status)) return job.status;
+  const s = String(job.status || job.rawStatus || '').toLowerCase();
+  if (s === 'paused') return 'Closed';
+  if (s === 'draft' || s === 'pending') return 'Draft';
+  if (s === 'closed') return 'Closed';
+  if (s === 'inactive') return 'Inactive';
   const expiry = parseJobDate(job.expiry);
-  if (!expiry) return job.status === 'Expired' ? 'Active' : job.status || 'Active';
+  if (!expiry) return s === 'expired' ? 'Active' : (job.status || 'Active');
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return expiry.getTime() < today.getTime() ? 'Expired' : 'Active';
@@ -213,8 +216,12 @@ export const EmployerJobs = () => {
         <button type="button" title={job.status === 'Expired' ? 'Renew' : 'Reopen'} onClick={() => runJobAction(job.id, job.status === 'Expired' ? 'renew' : 'reopen')} disabled={actionState.jobId === job.id} className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-emerald-600 disabled:opacity-60">
           {actionState.jobId === job.id && ['renew', 'reopen'].includes(actionState.action) ? <Loader className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
         </button>
+      ) : job.status === 'Inactive' ? (
+        <button type="button" title="Close Job" onClick={() => runJobAction(job.id, 'close')} disabled={actionState.jobId === job.id} className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-amber-600 disabled:opacity-60">
+          {actionState.jobId === job.id && actionState.action === 'close' ? <Loader className="h-4 w-4 animate-spin" /> : <Pause className="h-4 w-4" />}
+        </button>
       ) : (
-        <button type="button" title={job.status === 'Draft' ? 'Publish' : 'Closed'} onClick={() => runJobAction(job.id, job.status === 'Draft' ? 'publish' : 'close')} disabled={actionState.jobId === job.id} className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-amber-600 disabled:opacity-60">
+        <button type="button" title={job.status === 'Draft' ? 'Publish' : 'Pause Job'} onClick={() => runJobAction(job.id, job.status === 'Draft' ? 'publish' : 'close')} disabled={actionState.jobId === job.id} className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-amber-600 disabled:opacity-60">
           {actionState.jobId === job.id && ['close', 'pause', 'publish'].includes(actionState.action) ? <Loader className="h-4 w-4 animate-spin" /> : <Pause className="h-4 w-4" />}
         </button>
       )}
