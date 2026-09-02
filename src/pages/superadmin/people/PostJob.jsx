@@ -72,8 +72,8 @@ const statusOptions = [
   { value: 'active', label: 'Active' },
   { value: 'inactive', label: 'Inactive' },
   { value: 'pending', label: 'Pending' },
-  { value: 'reviewed', label: 'Reviewed' },
-  { value: 'featured', label: 'Featured' },
+  { value: 'paused', label: 'Paused' },
+  { value: 'closed', label: 'Closed' },
   { value: 'blacklist', label: 'Blacklist' },
 ];
 
@@ -189,7 +189,7 @@ export const PostJob = () => {
       currentPlan: job.currentPlan?._id || job.currentPlan || '',
       planValidity: toDateInput(job.planValidity),
       document: job.document || '',
-      status: job.status || 'active',
+      status: job.status === 'featured' ? 'active' : job.status === 'reviewed' ? 'inactive' : (job.status || 'active'),
       blacklistReason: job.blacklistReason || '',
     });
   };
@@ -463,42 +463,108 @@ export const PostJob = () => {
                   </Field>
                 </div>
 
-                <SectionTitle icon={<Briefcase className="w-4 h-4" />} label="Company Detail" />
+                <SectionTitle
+                  icon={<Briefcase className="w-4 h-4" />}
+                  label="Company Detail"
+                  badge={
+                    Boolean(id) && (
+                      <span className="text-[11px] font-semibold text-slate-400 bg-white px-2 py-0.5 rounded border border-slate-200">
+                        Non-editable
+                      </span>
+                    )
+                  }
+                />
                 <div className="grid gap-4 md:grid-cols-2">
                   <Field label="Company Name" required>
-                    <input type="text" value={form.companyName} onChange={(e) => setValue('companyName', e.target.value)} placeholder="Name of Company" className={inputCls} />
+                    <input
+                      type="text"
+                      value={form.companyName}
+                      onChange={(e) => setValue('companyName', e.target.value)}
+                      placeholder="Name of Company"
+                      disabled={Boolean(id)}
+                      className={`${inputCls} ${Boolean(id) ? 'bg-slate-100/90 cursor-not-allowed text-slate-500' : ''}`}
+                    />
                   </Field>
                   <Field label="Contact Person">
-                    <input type="text" value={form.contactPerson} onChange={(e) => setValue('contactPerson', e.target.value)} placeholder="Contact Person" className={inputCls} />
+                    <input
+                      type="text"
+                      value={form.contactPerson}
+                      onChange={(e) => setValue('contactPerson', e.target.value)}
+                      placeholder="Contact Person"
+                      disabled={Boolean(id)}
+                      className={`${inputCls} ${Boolean(id) ? 'bg-slate-100/90 cursor-not-allowed text-slate-500' : ''}`}
+                    />
                   </Field>
                   <Field label="Email" required>
-                    <input type="email" value={form.email} onChange={(e) => setValue('email', e.target.value)} placeholder="Email" className={inputCls} />
+                    <input
+                      type="email"
+                      value={form.email}
+                      onChange={(e) => setValue('email', e.target.value)}
+                      placeholder="Email"
+                      disabled={Boolean(id)}
+                      className={`${inputCls} ${Boolean(id) ? 'bg-slate-100/90 cursor-not-allowed text-slate-500' : ''}`}
+                    />
                   </Field>
                   <Field label="Phone" required>
-                    <input type="text" value={form.phone} onChange={(e) => setValue('phone', e.target.value)} placeholder="Phone Number" className={inputCls} />
+                    <input
+                      type="text"
+                      value={form.phone}
+                      onChange={(e) => setValue('phone', e.target.value)}
+                      placeholder="Phone Number"
+                      disabled={Boolean(id)}
+                      className={`${inputCls} ${Boolean(id) ? 'bg-slate-100/90 cursor-not-allowed text-slate-500' : ''}`}
+                    />
                   </Field>
                 </div>
               </div>
 
               <div className="space-y-4">
                 <div className="rounded-lg bg-amber-50 border border-amber-100 p-4">
-                  <h5 className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-4"><CalendarDays className="w-4 h-4" /> Subscription Detail</h5>
+                  <div className="flex items-center justify-between mb-4">
+                    <h5 className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                      <CalendarDays className="w-4 h-4" /> Subscription Detail
+                    </h5>
+                    <span className="text-[11px] font-semibold text-slate-400 bg-white/80 px-2 py-0.5 rounded border border-amber-200">
+                      Non-editable
+                    </span>
+                  </div>
                   <div className="space-y-4">
                     <Field label="Current Plan">
-                      <select value={form.currentPlan} onChange={(e) => setValue('currentPlan', e.target.value)} className={inputCls}>
-                        <option value="">Choose</option>
-                        {plans.map((plan) => <option key={plan._id} value={plan._id}>{plan.planName} - {Number(plan.cost || 0)}</option>)}
+                      <select
+                        value={form.currentPlan}
+                        disabled
+                        className={`${inputCls} bg-slate-100/90 cursor-not-allowed text-slate-500`}
+                      >
+                        <option value="">No Plan Selected</option>
+                        {plans.map((plan) => (
+                          <option key={plan._id} value={plan._id}>
+                            {plan.planName} - {Number(plan.cost || 0)}
+                          </option>
+                        ))}
                       </select>
                     </Field>
                     {selectedPlan?.features?.length > 0 && (
                       <ul className="space-y-1 text-xs font-semibold text-slate-600">
-                        {selectedPlan.features.slice(0, 4).map((feature) => <li key={feature._id} className="text-emerald-700">✓ {feature.featureName || feature.name}</li>)}
+                        {selectedPlan.features.slice(0, 4).map((feature) => (
+                          <li key={feature._id} className="text-emerald-700">
+                            ✓ {feature.featureName || feature.name}
+                          </li>
+                        ))}
                       </ul>
                     )}
                     <Field label="Plan Validity">
-                      <input type="date" value={form.planValidity} onChange={(e) => setValue('planValidity', e.target.value)} className={inputCls} />
+                      <input
+                        type="date"
+                        value={form.planValidity}
+                        disabled
+                        className={`${inputCls} bg-slate-100/90 cursor-not-allowed text-slate-500`}
+                      />
                     </Field>
-                    {form.planValidity && <p className="text-sm font-bold text-emerald-600">Valid Till : {new Date(form.planValidity).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>}
+                    {form.planValidity && (
+                      <p className="text-sm font-bold text-emerald-600">
+                        Valid Till : {new Date(form.planValidity).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -519,9 +585,17 @@ export const PostJob = () => {
                     <option value="scheduled">Scheduled</option>
                   </select>
                 </Field>
-                <Field label="Reson for Blacklist" required={form.status === 'blacklist'}>
-                  <textarea value={form.blacklistReason} onChange={(e) => setValue('blacklistReason', e.target.value)} rows={4} placeholder="Write a Reason" className={inputCls} />
-                </Field>
+                {form.status === 'blacklist' && (
+                  <Field label="Reason for Blacklist" required>
+                    <textarea
+                      value={form.blacklistReason}
+                      onChange={(e) => setValue('blacklistReason', e.target.value)}
+                      rows={4}
+                      placeholder="Write a Reason"
+                      className={inputCls}
+                    />
+                  </Field>
+                )}
               </div>
             </div>
 
@@ -547,10 +621,13 @@ const Field = ({ label, required = false, className = '', children }) => (
   </div>
 );
 
-const SectionTitle = ({ icon, label }) => (
-  <h5 className="flex items-center gap-2 bg-slate-50 text-slate-700 text-sm font-bold px-3 py-3 rounded-lg">
-    {icon}
-    {label}
+const SectionTitle = ({ icon, label, badge = null }) => (
+  <h5 className="flex items-center justify-between bg-slate-50 text-slate-700 text-sm font-bold px-3 py-3 rounded-lg">
+    <div className="flex items-center gap-2">
+      {icon}
+      {label}
+    </div>
+    {badge}
   </h5>
 );
 
