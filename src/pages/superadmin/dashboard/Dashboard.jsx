@@ -4,6 +4,7 @@ import axios from 'axios';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
 import {
+  AlertCircle,
   ArrowUp,
   Briefcase,
   Building2,
@@ -203,6 +204,7 @@ export const Dashboard = () => {
     jobseekers: 0,
     jobsPosted: 0,
     activeJobs: 0,
+    inactiveJobs: 0,
     totalUsers: 0,
     activeUsers: 0,
     activeCompanies: 0,
@@ -241,9 +243,13 @@ export const Dashboard = () => {
     return <PageSkeleton variant="dashboard" />;
   }
 
-  const statCards = [
+  const jobCards = [
     { title: 'Total Jobs', value: stats.jobsPosted, icon: Briefcase, tone: 'primary', to: '/admin/jobs' },
     { title: 'Active Jobs', value: stats.activeJobs, icon: ClipboardCheck, tone: 'success', to: '/admin/jobs?status=active' },
+    { title: 'Inactive Jobs', value: stats.inactiveJobs ?? Math.max(stats.jobsPosted - stats.activeJobs, 0), icon: AlertCircle, tone: 'warning', to: '/admin/jobs?status=inactive' }
+  ];
+
+  const userAndCompanyCards = [
     { title: 'Total Users', value: stats.totalUsers, icon: Users, tone: 'warning', to: '/admin/jobseekers' },
     { title: 'Active Users', value: stats.activeUsers, icon: UserRound, tone: 'danger', to: '/admin/jobseekers?status=active' },
     { title: 'Companies', value: stats.employers, icon: Building2, tone: 'info', to: '/admin/employers' },
@@ -262,8 +268,13 @@ export const Dashboard = () => {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[7fr_5fr]">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          {statCards.map((card) => <StatCard key={card.title} {...card} />)}
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {jobCards.map((card) => <StatCard key={card.title} {...card} />)}
+          </div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            {userAndCompanyCards.map((card) => <StatCard key={card.title} {...card} />)}
+          </div>
         </div>
 
         <DashboardCard title="Quick Actions">
