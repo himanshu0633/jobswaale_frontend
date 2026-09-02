@@ -12,14 +12,17 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardCheck,
+  Clock,
   CreditCard,
   Eye,
   FileText,
   Home,
   Image,
+  PauseCircle,
   Plus,
   UserRound,
-  Users
+  Users,
+  XCircle
 } from 'lucide-react';
 
 const formatNumber = (value) => Number(value || 0).toLocaleString('en-IN');
@@ -45,6 +48,8 @@ const statusTone = {
   Pending: 'warning',
   Expired: 'danger',
   Inactive: 'secondary',
+  Paused: 'secondary',
+  Closed: 'info',
   Selected: 'info',
   Blacklist: 'danger'
 };
@@ -205,6 +210,9 @@ export const Dashboard = () => {
     jobsPosted: 0,
     activeJobs: 0,
     inactiveJobs: 0,
+    expiredJobs: 0,
+    pausedJobs: 0,
+    closedJobs: 0,
     totalUsers: 0,
     activeUsers: 0,
     activeCompanies: 0,
@@ -246,7 +254,10 @@ export const Dashboard = () => {
   const jobCards = [
     { title: 'Total Jobs', value: stats.jobsPosted, icon: Briefcase, tone: 'primary', to: '/admin/jobs' },
     { title: 'Active Jobs', value: stats.activeJobs, icon: ClipboardCheck, tone: 'success', to: '/admin/jobs?status=active' },
-    { title: 'Inactive Jobs', value: stats.inactiveJobs ?? 0, icon: AlertCircle, tone: 'warning', to: '/admin/jobs?status=inactive' }
+    { title: 'Inactive Jobs', value: stats.inactiveJobs ?? 0, icon: AlertCircle, tone: 'warning', to: '/admin/jobs?status=inactive' },
+    { title: 'Expired Jobs', value: stats.expiredJobs ?? 0, icon: Clock, tone: 'danger', to: '/admin/jobs?status=expired' },
+    { title: 'Paused Jobs', value: stats.pausedJobs ?? 0, icon: PauseCircle, tone: 'secondary', to: '/admin/jobs?status=paused' },
+    { title: 'Closed Jobs', value: stats.closedJobs ?? 0, icon: XCircle, tone: 'info', to: '/admin/jobs?status=closed' }
   ];
 
   const userAndCompanyCards = [
