@@ -246,7 +246,7 @@ export const Dashboard = () => {
   const jobCards = [
     { title: 'Total Jobs', value: stats.jobsPosted, icon: Briefcase, tone: 'primary', to: '/admin/jobs' },
     { title: 'Active Jobs', value: stats.activeJobs, icon: ClipboardCheck, tone: 'success', to: '/admin/jobs?status=active' },
-    { title: 'Inactive Jobs', value: stats.inactiveJobs ?? Math.max(stats.jobsPosted - stats.activeJobs, 0), icon: AlertCircle, tone: 'warning', to: '/admin/jobs?status=inactive' }
+    { title: 'Inactive Jobs', value: stats.inactiveJobs ?? 0, icon: AlertCircle, tone: 'warning', to: '/admin/jobs?status=inactive' }
   ];
 
   const userAndCompanyCards = [
