@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Briefcase, MapPin, ChevronDown, Mail, ArrowRight, Search, X } from 'lucide-react';
 import TrustedCompanies from './TrustedCompanies';
@@ -92,6 +92,9 @@ export const Jobs = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [currentPage, setCurrentPage] = useState(queryPage);
+  const [appliedOnly, setAppliedOnly] = useState(false);
+
+  const appliedCount = useMemo(() => dbJobs.filter((j) => j.hasApplied).length, [dbJobs]);
 
   // Fetch jobs from database on mount
   useEffect(() => {
@@ -99,7 +102,13 @@ export const Jobs = () => {
       try {
         const params = new URLSearchParams();
         if (queryEmployer) params.set('employer', queryEmployer);
-        const res = await axios.get(`${BASE_API_URL}/jobs${params.toString() ? `?${params.toString()}` : ''}`);
+        const token = localStorage.getItem('publicToken');
+        const res = await axios.get(
+          `${BASE_API_URL}/jobs${params.toString() ? `?${params.toString()}` : ''}`,
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+          }
+        );
         const mappedJobs = (res.data || []).map(j => ({
           id: j.slug || j._id,
           title: j.jobTitle,
@@ -116,7 +125,11 @@ export const Jobs = () => {
           logoLetter: j.companyName ? j.companyName.charAt(0).toUpperCase() : 'J',
           logoBg: ['bg-red-500', 'bg-blue-600', 'bg-emerald-500', 'bg-purple-500', 'bg-amber-500'][Math.floor(Math.random() * 5)],
           jobExpiry: j.jobExpiry || null,
-          expiry: j.jobExpiry || null
+          expiry: j.jobExpiry || null,
+          status: j.displayStatus || j.status || 'Active',
+          isExpired: Boolean(j.isExpired || (j.jobExpiry && new Date(j.jobExpiry) < new Date())),
+          hasApplied: Boolean(j.hasApplied),
+          applicationStatus: j.applicationStatus || null
         }));
         setDbJobs(mappedJobs);
         setFilteredJobs(mappedJobs);
@@ -233,6 +246,10 @@ export const Jobs = () => {
       });
     }
 
+    if (appliedOnly) {
+      result = result.filter((j) => j.hasApplied);
+    }
+
     // Sort
     if (sortBy === 'newest') {
       result.sort((a, b) => getJobSortTime(b) - getJobSortTime(a));
@@ -245,7 +262,7 @@ export const Jobs = () => {
 
   useEffect(() => {
     filterJobs();
-  }, [dbJobs, sortBy, queryCategory, queryCompany, queryEmployer, querySearch, queryLocation]);
+  }, [dbJobs, sortBy, queryCategory, queryCompany, queryEmployer, querySearch, queryLocation, appliedOnly]);
 
   useEffect(() => {
     const totalPages = Math.max(1, Math.ceil(filteredJobs.length / JOBS_PER_PAGE));
@@ -532,11 +549,35 @@ export const Jobs = () => {
           <div className="lg:col-span-8 space-y-6 order-1 lg:order-2">
 
             {/* Header / Info bar */}
-            <div className="flex items-center justify-between pb-2">
-              <span className="text-sm text-[#37404e]">
-                Showing <strong className="text-[#37404e]">{totalJobs ? firstJobIndex + 1 : 0}-{lastJobIndex}</strong> of <strong className="text-[#37404e]">{totalJobs}</strong> jobs
-              </span>
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2">
+              <div className="flex items-center flex-wrap gap-3">
+                <span className="text-sm text-[#37404e]">
+                  Showing <strong className="text-[#37404e]">{totalJobs ? firstJobIndex + 1 : 0}-{lastJobIndex}</strong> of <strong className="text-[#37404e]">{totalJobs}</strong> jobs
+                </span>
+                {appliedCount > 0 && (
+                  <div className="inline-flex items-center rounded-lg bg-slate-100 p-1 text-xs font-bold">
+                    <button
+                      type="button"
+                      onClick={() => { setAppliedOnly(false); setCurrentPage(1); }}
+                      className={`rounded-md px-2.5 py-1 transition ${
+                        !appliedOnly ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      All Jobs
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setAppliedOnly(true); setCurrentPage(1); }}
+                      className={`rounded-md px-2.5 py-1 transition ${
+                        appliedOnly ? 'bg-[#0047C7] text-white shadow-sm' : 'text-blue-600 hover:bg-blue-50'
+                      }`}
+                    >
+                      Applied ({appliedCount})
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-2 self-end sm:self-auto">
                 <span className="text-sm font-semibold text-[#9c9ca3]">Sort by:</span>
                 <select
                   value={sortBy}
@@ -596,16 +637,29 @@ export const Jobs = () => {
                         </div>
                       </div>
                       <div className="flex-grow-1 ms-4 min-w-0">
-                        <h3 className="job-title font-bold text-[#1f2938] text-base leading-snug truncate flex items-center gap-2 flex-wrap">
-                          <Link to={`/jobs/${job.id}`} className="text-dark hover:text-[#0047C7] truncate">
-                            {job.title}
-                          </Link>
-                          {job.jobExpiry && new Date(job.jobExpiry) < new Date() && (
-                            <span className="shrink-0 rounded bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-600 border border-rose-100 uppercase tracking-wide">
-                              Expired
-                            </span>
-                          )}
-                        </h3>
+                        <div className="flex items-start justify-between gap-2">
+                          <h3 className="job-title font-bold text-[#1f2938] text-base leading-snug truncate flex-1">
+                            <Link to={`/jobs/${job.id}`} className="text-dark hover:text-[#0047C7] truncate">
+                              {job.title}
+                            </Link>
+                          </h3>
+                          <div className="flex flex-wrap items-center gap-1 shrink-0">
+                            {job.hasApplied && (
+                              <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-black text-blue-700 border border-blue-200">
+                                ✓ Applied{job.applicationStatus && job.applicationStatus !== 'Applied' ? `: ${job.applicationStatus}` : ''}
+                              </span>
+                            )}
+                            {job.isExpired ? (
+                              <span className="shrink-0 rounded bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-600 border border-rose-100 uppercase tracking-wide">
+                                Expired
+                              </span>
+                            ) : job.status === 'Closed' ? (
+                              <span className="shrink-0 rounded bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 border border-slate-200 uppercase tracking-wide">
+                                Closed
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
                         <p className="company-name text-xs font-bold text-[black] truncate mb-2 mt-2">
                           {job.company}
                         </p>

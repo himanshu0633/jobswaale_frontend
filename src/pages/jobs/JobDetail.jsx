@@ -366,6 +366,9 @@ export const JobDetail = () => {
 
       setApplied(true);
       setMatchScore(response.data?.application?.matchScore ?? matchScore);
+      if (response.data?.resume) {
+        setProfile((current) => ({ ...(current || {}), resume: response.data.resume }));
+      }
       setResumeFile(null);
       setCoverLetterText('');
     } catch (err) {
