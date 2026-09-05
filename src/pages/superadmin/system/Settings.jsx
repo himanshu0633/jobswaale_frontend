@@ -28,6 +28,7 @@ const defaultSettings = {
   dateFormat: 'd-m-Y',
   maintenanceMode: false,
   userRegistration: true,
+  jobApprovalRequired: true,
 
   // Notifications
   notifNewJob: true,
@@ -334,6 +335,12 @@ export const Settings = () => {
                     subtext="Allow new users to register on the platform."
                     checked={form.userRegistration} 
                     onChange={() => handleToggle('userRegistration')} 
+                  />
+                  <ToggleSwitch 
+                    label="Require SuperAdmin Approval for Job Postings" 
+                    subtext="When enabled (ON), employer job posts default to Inactive and require SuperAdmin approval. When disabled (OFF), job posts are published live as Active directly."
+                    checked={form.jobApprovalRequired} 
+                    onChange={() => handleToggle('jobApprovalRequired')} 
                   />
                 </div>
               </div>

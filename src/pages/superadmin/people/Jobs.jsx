@@ -87,6 +87,25 @@ const formatDate = (value) => {
   });
 };
 
+export const getStatusChangerName = (job) => {
+  const user = job?.statusUpdatedBy || job?.updatedLogin || job?.login;
+  if (user && typeof user === 'object') {
+    const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+    if (fullName) return fullName;
+    if (user.username) return user.username;
+    if (user.role === 'Admin' || user.role === 'SuperAdmin') return user.role;
+    if (user.companyName) return user.companyName;
+    if (user.email) return user.email.split('@')[0];
+    if (user.role) return user.role;
+  }
+  if (typeof user === 'string' && user.trim()) {
+    return user.trim();
+  }
+  if (job?.contactPerson) return job.contactPerson;
+  if (job?.companyName) return job.companyName;
+  return 'Admin';
+};
+
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token') || localStorage.getItem('adminToken') || localStorage.getItem('publicToken');
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -239,7 +258,14 @@ export const Jobs = () => {
         headers: getAuthHeaders()
       });
 
+      const storedUser = localStorage.getItem('user');
+      let currentUser = null;
+      try { currentUser = storedUser ? JSON.parse(storedUser) : null; } catch {}
+
       const updatedJob = res.data || { ...item, status: targetStatus, jobExpiry };
+      if (!updatedJob.statusUpdatedBy && currentUser) {
+        updatedJob.statusUpdatedBy = currentUser;
+      }
       setList(prev => prev.map(j => j._id === item._id ? { ...j, ...updatedJob, status: targetStatus, jobExpiry } : j));
 
       if (targetStatus === 'active') {
@@ -383,7 +409,14 @@ export const Jobs = () => {
                   <div className="text-right">
                     <div className="text-xs text-[#9ba6b7]">{new Date(item.postingDate).toLocaleDateString()}</div>
                     <div className="text-xs font-semibold text-[#1abc9c]">{item.salary || 'Negotiable'}</div>
-                    <div className="mt-1"><StatusBadge job={item} status={item.status} /></div>
+                    <div className="mt-1 flex flex-col items-end">
+                      <StatusBadge job={item} status={item.status} />
+                      {getStatusChangerName(item) && (
+                        <div className="text-[10px] text-[#9ba6b7] mt-0.5 font-medium">
+                          by <span className="text-[#4c4c5c] font-semibold">{getStatusChangerName(item)}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -426,12 +459,12 @@ export const Jobs = () => {
                 <th className="px-4 py-2.5">Job Title</th>
                 <th className="px-4 py-2.5">Status</th>
                 <th className="px-4 py-2.5 text-center">Action</th>
+                <th className="px-4 py-2.5">Posted</th>
                 <th className="px-4 py-2.5">Company</th>
                 <th className="px-4 py-2.5">Category / Type</th>
                 <th className="px-4 py-2.5">Experience</th>
                 <th className="px-4 py-2.5">Salary</th>
                 <th className="px-4 py-2.5">Location</th>
-                <th className="px-4 py-2.5">Posted</th>
               </tr>
             </thead>
             <tbody>
@@ -474,6 +507,15 @@ export const Jobs = () => {
                     </td>
                     <td className="px-4 py-3">
                       <StatusBadge job={item} status={item.status} />
+                      {getStatusChangerName(item) && (
+                        <div
+                          className="text-[11px] text-[#9ba6b7] mt-1 font-medium whitespace-nowrap flex items-center gap-1"
+                          title={`Status updated by ${getStatusChangerName(item)}`}
+                        >
+                          <span>by</span>
+                          <span className="text-[#4c4c5c] font-semibold">{getStatusChangerName(item)}</span>
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <div className="flex items-center justify-center gap-1.5" onClick={(e) => e.stopPropagation()}>
@@ -494,6 +536,12 @@ export const Jobs = () => {
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-[#9ba6b7] whitespace-nowrap">
+                      <div className="flex items-center gap-1 font-medium text-[#4c4c5c]">
+                        <Calendar className="w-3.5 h-3.5 text-[#9ba6b7] shrink-0" />
+                        {formatDate(item.postingDate || item.createDate || item.createdAt)}
                       </div>
                     </td>
                     <td className="px-4 py-3">
@@ -520,12 +568,6 @@ export const Jobs = () => {
                         {item.city}, {item.state}
                       </div>
                       <div className="text-[10px] text-[#9ba6b7] uppercase mt-0.5">{item.country}</div>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-[#9ba6b7] whitespace-nowrap">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3 shrink-0" />
-                        {formatDate(item.postingDate || item.createDate || item.createdAt)}
-                      </div>
                     </td>
                   </tr>
                 ))
@@ -581,6 +623,11 @@ export const Jobs = () => {
                         <div>
                           <span className="block text-xs font-bold uppercase text-slate-400">Status</span>
                           <span className="font-bold capitalize text-slate-800">{detailModal.data?.job?.status || '—'}</span>
+                          {detailModal.data?.job && getStatusChangerName(detailModal.data.job) && (
+                            <span className="block text-[11px] text-slate-400 mt-0.5">
+                              by <span className="font-semibold text-slate-600">{getStatusChangerName(detailModal.data.job)}</span>
+                            </span>
+                          )}
                         </div>
                         <div>
                           <span className="block text-xs font-bold uppercase text-slate-400">Vacancies</span>
