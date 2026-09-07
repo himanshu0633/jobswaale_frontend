@@ -453,13 +453,19 @@ export const EmployerJobDetails = () => {
       )}
 
       <div className="flex flex-wrap gap-2">
-        <Link to={`/employer/jobs/${details.id}/edit`} className="inline-flex items-center gap-2 rounded-md bg-[#6658dd] px-3 py-2 text-sm font-extrabold text-white"><Edit className="h-4 w-4" /> Edit Job</Link>
+        {details.status === 'Inactive' || details.status === 'Expired' ? (
+          <button type="button" disabled title={details.status === 'Expired' ? 'Cannot edit expired job' : 'Cannot edit inactive job'} className="inline-flex cursor-not-allowed items-center gap-2 rounded-md bg-slate-200 px-3 py-2 text-sm font-extrabold text-slate-400 opacity-60"><Edit className="h-4 w-4" /> Edit Job</button>
+        ) : (
+          <Link to={`/employer/jobs/${details.id}/edit`} className="inline-flex items-center gap-2 rounded-md bg-[#6658dd] px-3 py-2 text-sm font-extrabold text-white"><Edit className="h-4 w-4" /> Edit Job</Link>
+        )}
         <Link to={`/employer/applications?jobTitle=${encodeURIComponent(details.title || '')}`} className="inline-flex items-center gap-2 rounded-md bg-sky-500 px-3 py-2 text-sm font-extrabold text-white"><FileText className="h-4 w-4" /> View Applications</Link>
         <button type="button" onClick={duplicateJob} disabled={duplicating} className="inline-flex items-center gap-2 rounded-md bg-emerald-500 px-3 py-2 text-sm font-extrabold text-white disabled:opacity-60">{duplicating ? <Loader className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />} Duplicate</button>
         {details.status === 'Closed' || details.status === 'Paused' ? (
           <button type="button" onClick={() => runJobAction('reopen')} disabled={Boolean(actionState)} className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-2 text-sm font-extrabold text-white disabled:opacity-60">{actionState === 'reopen' ? <Loader className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} Reopen Job</button>
         ) : details.status === 'Expired' ? (
           <button type="button" onClick={() => runJobAction('renew')} disabled={Boolean(actionState)} className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-2 text-sm font-extrabold text-white disabled:opacity-60">{actionState === 'renew' ? <Loader className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} Renew Job</button>
+        ) : details.status === 'Inactive' ? (
+          <button type="button" title="Inactive jobs cannot be closed" disabled className="inline-flex cursor-not-allowed items-center gap-2 rounded-md bg-slate-200 px-3 py-2 text-sm font-extrabold text-slate-400 opacity-60"><Pause className="h-4 w-4" /> Close Job</button>
         ) : (
           <button type="button" onClick={() => runJobAction('close')} disabled={Boolean(actionState)} className="inline-flex items-center gap-2 rounded-md bg-amber-500 px-3 py-2 text-sm font-extrabold text-white disabled:opacity-60">{actionState === 'close' ? <Loader className="h-4 w-4 animate-spin" /> : <Pause className="h-4 w-4" />} Close Job</button>
         )}

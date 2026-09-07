@@ -59,11 +59,11 @@ export const isJobExpired = (job) => {
 };
 
 export const getJobSection = (job) => {
+  if (isJobExpired(job)) return 'expired';
   const s = String(job?.status || '').toLowerCase();
   if (s === 'paused') return 'paused';
   if (s === 'closed') return 'closed';
   if (s === 'inactive' || s === 'pending' || s === 'reviewed' || s === 'blacklist') return 'inactive';
-  if (isJobExpired(job)) return 'expired';
   return 'active';
 };
 

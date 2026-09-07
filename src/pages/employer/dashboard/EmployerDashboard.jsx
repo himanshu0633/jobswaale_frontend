@@ -649,13 +649,22 @@ export const EmployerDashboard = () => {
                         <>
                           <div className="fixed inset-0 z-10" onClick={() => setActiveMenuJobId(null)} />
                           <div className="absolute left-0 top-9 z-20 w-40 rounded-lg border border-slate-100 bg-white py-1 shadow-lg text-left">
-                            <Link
-                              to={`/employer/jobs/${job.id}/edit`}
-                              className="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                              onClick={() => setActiveMenuJobId(null)}
-                            >
-                              Edit Job
-                            </Link>
+                            {job.status !== 'Inactive' && job.status !== 'Expired' ? (
+                              <Link
+                                to={`/employer/jobs/${job.id}/edit`}
+                                className="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                                onClick={() => setActiveMenuJobId(null)}
+                              >
+                                Edit Job
+                              </Link>
+                            ) : (
+                              <span
+                                className="block px-4 py-2 text-xs font-semibold text-slate-400 cursor-not-allowed opacity-60"
+                                title={`${job.status} jobs cannot be edited`}
+                              >
+                                Edit Job (Disabled)
+                              </span>
+                            )}
                             <button
                               type="button"
                               onClick={async () => {

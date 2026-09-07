@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const AuthContext = createContext();
 
-export const BASE_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+export const BASE_API_URL = import.meta.env.VITE_API_URL || 'https://jobswaale-backend.vercel.app/api';
 const API_URL = `${BASE_API_URL}/auth`;
 const SUPER_ADMIN_ROLES = ['admin', 'superadmin', 'super admin'];
 const SUPERADMIN_LOGIN_PATH = '/superadmin-login';

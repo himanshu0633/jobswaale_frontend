@@ -67,15 +67,16 @@ const parseJobDate = (value) => {
 
 const normalizeJobStatus = (job) => {
   const s = String(job.status || job.rawStatus || '').toLowerCase();
-  if (s === 'paused') return 'Closed';
   if (s === 'draft' || s === 'pending') return 'Draft';
-  if (s === 'closed') return 'Closed';
-  if (s === 'inactive') return 'Inactive';
   const expiry = parseJobDate(job.expiry);
-  if (!expiry) return s === 'expired' ? 'Active' : (job.status || 'Active');
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  return expiry.getTime() < today.getTime() ? 'Expired' : 'Active';
+  const isExpired = s === 'expired' || (expiry && expiry.getTime() < today.getTime());
+  if (isExpired) return 'Expired';
+  if (s === 'paused' || s === 'closed') return 'Closed';
+  if (s === 'inactive') return 'Inactive';
+  if (!expiry) return job.status || 'Active';
+  return 'Active';
 };
 
 const buildJobsData = (payload) => {
@@ -205,28 +206,45 @@ export const EmployerJobs = () => {
     return <PageSkeleton variant="list" />;
   }
 
-  const renderRowActions = (job) => (
-    <>
-      <Link to={`/employer/jobs/${job.id}`} title="View" className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-[#6658dd]"><Eye className="h-4 w-4" /></Link>
-      <Link to={`/employer/jobs/${job.id}/edit`} title={job.status === 'Draft' ? 'Continue Draft' : 'Edit'} className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-[#6658dd]"><Edit className="h-4 w-4" /></Link>
-      <button type="button" title="Duplicate" onClick={() => duplicateJob(job.id)} disabled={duplicatingJobId === job.id} className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-[#6658dd] disabled:opacity-60">
-        {duplicatingJobId === job.id ? <Loader className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}
-      </button>
-      {job.status === 'Closed' || job.status === 'Paused' || job.status === 'Expired' ? (
-        <button type="button" title={job.status === 'Expired' ? 'Renew' : 'Reopen'} onClick={() => runJobAction(job.id, job.status === 'Expired' ? 'renew' : 'reopen')} disabled={actionState.jobId === job.id} className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-emerald-600 disabled:opacity-60">
-          {actionState.jobId === job.id && ['renew', 'reopen'].includes(actionState.action) ? <Loader className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+  const renderRowActions = (job) => {
+    const isInactive = job.status === 'Inactive';
+    const isExpired = job.status === 'Expired';
+    const isEditDisabled = isInactive || isExpired;
+
+    return (
+      <>
+        <Link to={`/employer/jobs/${job.id}`} title="View" className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-[#6658dd]"><Eye className="h-4 w-4" /></Link>
+        {isEditDisabled ? (
+          <button
+            type="button"
+            disabled
+            title={isExpired ? 'Cannot edit expired job' : 'Cannot edit inactive job'}
+            className="cursor-not-allowed rounded p-2 text-slate-300 opacity-50"
+          >
+            <Edit className="h-4 w-4" />
+          </button>
+        ) : (
+          <Link to={`/employer/jobs/${job.id}/edit`} title={job.status === 'Draft' ? 'Continue Draft' : 'Edit'} className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-[#6658dd]"><Edit className="h-4 w-4" /></Link>
+        )}
+        <button type="button" title="Duplicate" onClick={() => duplicateJob(job.id)} disabled={duplicatingJobId === job.id} className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-[#6658dd] disabled:opacity-60">
+          {duplicatingJobId === job.id ? <Loader className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}
         </button>
-      ) : job.status === 'Inactive' ? (
-        <button type="button" title="Close Job" onClick={() => runJobAction(job.id, 'close')} disabled={actionState.jobId === job.id} className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-amber-600 disabled:opacity-60">
-          {actionState.jobId === job.id && actionState.action === 'close' ? <Loader className="h-4 w-4 animate-spin" /> : <Pause className="h-4 w-4" />}
-        </button>
-      ) : (
-        <button type="button" title={job.status === 'Draft' ? 'Publish' : 'Pause Job'} onClick={() => runJobAction(job.id, job.status === 'Draft' ? 'publish' : 'close')} disabled={actionState.jobId === job.id} className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-amber-600 disabled:opacity-60">
-          {actionState.jobId === job.id && ['close', 'pause', 'publish'].includes(actionState.action) ? <Loader className="h-4 w-4 animate-spin" /> : <Pause className="h-4 w-4" />}
-        </button>
-      )}
-    </>
-  );
+        {job.status === 'Closed' || job.status === 'Paused' || job.status === 'Expired' ? (
+          <button type="button" title={job.status === 'Expired' ? 'Renew' : 'Reopen'} onClick={() => runJobAction(job.id, job.status === 'Expired' ? 'renew' : 'reopen')} disabled={actionState.jobId === job.id} className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-emerald-600 disabled:opacity-60">
+            {actionState.jobId === job.id && ['renew', 'reopen'].includes(actionState.action) ? <Loader className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+          </button>
+        ) : isInactive ? (
+          <button type="button" title="Inactive jobs cannot be closed" disabled className="cursor-not-allowed rounded p-2 text-slate-300 opacity-50">
+            <Pause className="h-4 w-4" />
+          </button>
+        ) : (
+          <button type="button" title={job.status === 'Draft' ? 'Publish' : 'Pause Job'} onClick={() => runJobAction(job.id, job.status === 'Draft' ? 'publish' : 'close')} disabled={actionState.jobId === job.id} className="rounded p-2 text-slate-500 transition hover:bg-slate-100 hover:text-amber-600 disabled:opacity-60">
+            {actionState.jobId === job.id && ['close', 'pause', 'publish'].includes(actionState.action) ? <Loader className="h-4 w-4 animate-spin" /> : <Pause className="h-4 w-4" />}
+          </button>
+        )}
+      </>
+    );
+  };
 
   return (
     <div className="space-y-4 px-3 sm:space-y-5 sm:px-0">
