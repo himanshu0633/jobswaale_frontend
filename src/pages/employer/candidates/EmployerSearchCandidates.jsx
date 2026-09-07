@@ -75,7 +75,7 @@ const downloadCandidateResume = async (candidate) => {
       headers: getTokenHeaders(),
       responseType: 'blob'
     });
-    downloadBlobResponse(response, `${candidate.name || 'candidate'}-resume`);
+    await downloadBlobResponse(response, `${candidate.name || 'candidate'}-resume`);
 
     const remainingUnlocks = response.headers['x-remaining-unlocks'];
     const isNewUnlock = response.headers['x-is-new-unlock'] === 'true';

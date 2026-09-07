@@ -40,7 +40,7 @@ const downloadCandidateResume = async (candidate) => {
       headers: getTokenHeaders(),
       responseType: 'blob'
     });
-    downloadBlobResponse(response, `${candidate.name || 'candidate'}-resume`);
+    await downloadBlobResponse(response, `${candidate.name || 'candidate'}-resume`);
 
     const remainingUnlocks = response.headers['x-remaining-unlocks'];
     const isNewUnlock = response.headers['x-is-new-unlock'] === 'true';
@@ -525,7 +525,7 @@ const EmployerApplicationDetails = () => {
       if (offerStatus === 'Selected') {
         list.push({
           key: 'OfferSent',
-          label: 'Offer Sent',
+          label: 'Send Offer',
           tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
           icon: Send,
           onClick: () => setOfferModal({
@@ -572,7 +572,7 @@ const EmployerApplicationDetails = () => {
       if (offerStatus === 'Selected') {
         list.push({
           key: 'OfferSent',
-          label: 'Offer Sent',
+          label: 'Send Offer',
           tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
           icon: Send,
           onClick: () => setOfferModal({
@@ -632,10 +632,10 @@ const EmployerApplicationDetails = () => {
       onClick: () => updateStatus('Offered')
     });
 
-    // 5. Offer Sent
+    // 5. Send Offer
     list.push({
       key: 'OfferSent',
-      label: 'Offer Sent',
+      label: 'Send Offer',
       tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
       icon: Send,
       onClick: () => setOfferModal({

@@ -352,7 +352,7 @@ export const EmployerJobDetails = () => {
         headers: getTokenHeaders(),
         responseType: 'blob'
       });
-      downloadBlobResponse(response, `${candidateName || 'candidate'}-resume`);
+      await downloadBlobResponse(response, `${candidateName || 'candidate'}-resume`);
       
       setMessage('Resume downloaded successfully.');
     } catch (err) {

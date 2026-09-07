@@ -71,11 +71,11 @@ const OfferActions = ({ candidate, isUpdating, onReject, onSendOffer }) => (
       type="button"
       disabled={isUpdating}
       onClick={() => onSendOffer(candidate)}
-      title="Mark Offer Sent"
+      title="Send Offer"
       className="inline-flex h-8 flex-1 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50 disabled:opacity-60"
     >
       <Send className="h-3.5 w-3.5" />
-      <span>Offer Sent</span>
+      <span>Send Offer</span>
     </button>
 
     <button

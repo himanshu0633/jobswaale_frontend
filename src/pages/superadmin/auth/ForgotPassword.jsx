@@ -178,7 +178,7 @@ export const ForgotPassword = () => {
 
         {/* Footer */}
         <p className="text-center text-xs text-slate-400 mt-6 font-semibold">
-          &copy; {new Date().getFullYear()} JobsWaale — by <span className="font-bold text-slate-500">Duke Infosys</span>
+          &copy; {new Date().getFullYear()} JobsWaale — by <a href="https://www.dukeinfosys.com" target="_blank" rel="noopener noreferrer" className="font-bold text-slate-500 hover:text-[#6658dd] transition-colors">Duke Infosys</a>
         </p>
 
       </div>

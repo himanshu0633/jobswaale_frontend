@@ -89,6 +89,14 @@ export const EmployerSettings = () => {
     emailSearch: true
   });
 
+  const [twoFactor, setTwoFactor] = useState({
+    authApp: false,
+    emailOtp: true
+  });
+
+  const [deleteReason, setDeleteReason] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
   const [sessions, setSessions] = useState([
     { id: '1', device: 'Windows PC - Chrome', location: 'Bangalore, India · Current session', icon: Laptop, active: true },
     { id: '2', device: 'iPhone 15 - Safari', location: 'Bangalore, India · 2 hours ago', icon: Smartphone, active: false },
@@ -104,6 +112,7 @@ export const EmployerSettings = () => {
       if (response.data.settings?.notifications) setNotifications(response.data.settings.notifications);
       if (response.data.settings?.preferences) setPreferences(response.data.settings.preferences);
       if (response.data.settings?.privacy) setPrivacy(response.data.settings.privacy);
+      if (response.data.settings?.twoFactor) setTwoFactor(response.data.settings.twoFactor);
     } catch (err) {
       setErrorMsg(err.response?.data?.message || 'Failed to load settings details.');
     } finally {
@@ -125,10 +134,18 @@ export const EmployerSettings = () => {
     e.preventDefault();
     setErrorMsg('');
     try {
-      await axios.put(`${BASE_API_URL}/employer/settings`, {
+      const response = await axios.put(`${BASE_API_URL}/employer/settings`, {
         type: 'profile',
         profile: profileForm
       }, { headers: getTokenHeaders() });
+
+      if (response.data?.user) {
+        try {
+          const existing = JSON.parse(localStorage.getItem('publicUser') || '{}');
+          localStorage.setItem('publicUser', JSON.stringify({ ...existing, ...response.data.user }));
+        } catch {}
+      }
+
       showNotification('Profile information saved successfully!');
     } catch (err) {
       setErrorMsg(err.response?.data?.message || 'Failed to save profile settings.');
@@ -170,7 +187,11 @@ export const EmployerSettings = () => {
     e.preventDefault();
     setErrorMsg('');
     if (passwordForm.newPass !== passwordForm.confirm) {
-      alert('New password and confirm password do not match.');
+      setErrorMsg('New password and confirm password do not match.');
+      return;
+    }
+    if (passwordForm.newPass.length < 6) {
+      setErrorMsg('New password must be at least 6 characters.');
       return;
     }
     try {
@@ -182,6 +203,21 @@ export const EmployerSettings = () => {
       setPasswordForm({ current: '', newPass: '', confirm: '' });
     } catch (err) {
       setErrorMsg(err.response?.data?.message || 'Failed to update password.');
+    }
+  };
+
+  const handleToggleTwoFactor = async (key, val) => {
+    const updated = { ...twoFactor, [key]: val };
+    setTwoFactor(updated);
+    setErrorMsg('');
+    try {
+      await axios.put(`${BASE_API_URL}/employer/settings`, {
+        type: 'twoFactor',
+        twoFactor: updated
+      }, { headers: getTokenHeaders() });
+      showNotification('Two-factor authentication updated.');
+    } catch (err) {
+      setErrorMsg(err.response?.data?.message || 'Failed to update two-factor authentication.');
     }
   };
 
@@ -230,15 +266,17 @@ export const EmployerSettings = () => {
   };
 
   const handleDeleteAccountSubmit = async () => {
-    const checked = document.getElementById('confirmDelete')?.checked;
-    if (!checked) {
-      alert('Please check the confirmation box to delete your account.');
+    if (!confirmDelete) {
+      setErrorMsg('Please check the confirmation box to delete your account.');
       return;
     }
     if (window.confirm('WARNING: Are you absolutely sure you want to delete your recruiter account? This is irreversible.')) {
       setErrorMsg('');
       try {
-        await axios.put(`${BASE_API_URL}/employer/settings`, { type: 'delete' }, { headers: getTokenHeaders() });
+        await axios.put(`${BASE_API_URL}/employer/settings`, {
+          type: 'delete',
+          reason: deleteReason
+        }, { headers: getTokenHeaders() });
         alert('Account deleted successfully. You will be redirected.');
         localStorage.clear();
         window.location.href = '/login';
@@ -550,7 +588,13 @@ export const EmployerSettings = () => {
                         <p className="text-xs font-semibold text-slate-400">Use Google Authenticator, Microsoft Authenticator, or Authy.</p>
                       </div>
                       <div className="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="authApp" className="sr-only peer" />
+                        <input
+                          type="checkbox"
+                          id="authApp"
+                          checked={twoFactor.authApp}
+                          onChange={e => handleToggleTwoFactor('authApp', e.target.checked)}
+                          className="sr-only peer"
+                        />
                         <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#6658dd]"></div>
                       </div>
                     </div>
@@ -561,7 +605,13 @@ export const EmployerSettings = () => {
                         <p className="text-xs font-semibold text-slate-400">Receive a one-time password on your registered email.</p>
                       </div>
                       <div className="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="emailOTP" defaultChecked className="sr-only peer" />
+                        <input
+                          type="checkbox"
+                          id="emailOTP"
+                          checked={twoFactor.emailOtp}
+                          onChange={e => handleToggleTwoFactor('emailOtp', e.target.checked)}
+                          className="sr-only peer"
+                        />
                         <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#6658dd]"></div>
                       </div>
                     </div>
@@ -862,12 +912,24 @@ export const EmployerSettings = () => {
 
                   <div className="space-y-1.5">
                     <label className="block text-slate-600">Please tell us why you are leaving (Optional)</label>
-                    <textarea rows="3" placeholder="e.g. Completed hiring cycle, switching tools..." className="w-full rounded border border-slate-200 px-3 py-2 text-sm text-[#3f4254] focus:border-[#6658dd] outline-none" />
+                    <textarea
+                      rows="3"
+                      placeholder="e.g. Completed hiring cycle, switching tools..."
+                      className="w-full rounded border border-slate-200 px-3 py-2 text-sm text-[#3f4254] focus:border-[#6658dd] outline-none"
+                      value={deleteReason}
+                      onChange={e => setDeleteReason(e.target.value)}
+                    />
                   </div>
 
                   <div className="flex items-center gap-2 pt-2">
-                    <input type="checkbox" id="confirmDelete" className="h-4 w-4 text-[#6658dd] border-slate-200 rounded focus:ring-[#6658dd]" />
-                    <label htmlFor="confirmDelete" className="text-[11px] font-bold text-slate-500">I confirm that I want to delete my recruiter account and all associated records.</label>
+                    <input
+                      type="checkbox"
+                      id="confirmDelete"
+                      checked={confirmDelete}
+                      onChange={e => setConfirmDelete(e.target.checked)}
+                      className="h-4 w-4 text-[#6658dd] border-slate-200 rounded focus:ring-[#6658dd]"
+                    />
+                    <label htmlFor="confirmDelete" className="text-[11px] font-bold text-slate-500 cursor-pointer">I confirm that I want to delete my recruiter account and all associated records.</label>
                   </div>
 
                   <div className="flex justify-end pt-4 border-t border-slate-100">

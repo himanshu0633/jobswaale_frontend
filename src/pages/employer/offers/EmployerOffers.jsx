@@ -231,7 +231,7 @@ export const EmployerOffers = ({ view = 'offers' }) => {
         responseType: 'blob'
       });
       const fallbackName = offer.attachmentName || `${offer.candidate?.name || 'candidate'}-offer-letter`;
-      downloadBlobResponse(response, fallbackName);
+      await downloadBlobResponse(response, fallbackName);
       setSuccess('Offer PDF downloaded successfully.');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
