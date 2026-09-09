@@ -25,6 +25,19 @@ import {
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
+
+const runAutoTable = (doc, options) => {
+  if (typeof autoTable === 'function') {
+    autoTable(doc, options);
+  } else if (autoTable?.default) {
+    autoTable.default(doc, options);
+  } else if (typeof doc.autoTable === 'function') {
+    doc.autoTable(options);
+  }
+};
 
 const colors = ['#3b82f6', '#ef4444', '#f59e0b', '#8b5cf6', '#10b981', '#9ca3af'];
 
@@ -298,79 +311,240 @@ export const EmployerReports = () => {
   }, [data]);
 
   const handleExcelExport = () => {
-    const sections = [
-      ['JobsWaale Employer Reports'],
-      ['Range', data.range?.label || 'Selected range'],
-      ['Job', data.filters?.jobs?.find((job) => String(job.id) === filters.jobId)?.title || 'All Jobs'],
-      ['Status', data.filters?.statuses?.find((status) => status.key === filters.status)?.label || 'All Statuses'],
-      [],
-      ['Section', 'Metric', 'Value A', 'Value B', 'Value C', 'Value D', 'Value E', 'Value F'],
-      ...exportRows.statsRows,
-      [],
-      ['Section', 'Month', 'Applied', 'Reviewed', 'Shortlisted', 'Interviewed', 'On Hold', 'Selected', 'Offered', 'Rejected'],
-      ...exportRows.monthlyRows,
-      [],
-      ['Section', 'Source', 'Applications', 'Percent'],
-      ...exportRows.sourceRows,
-      [],
-      ['Section', 'Stage', 'Candidates', 'Percent'],
-      ...exportRows.funnelRows,
-      [],
-      ['Section', 'Job Title', 'Applications', 'Shortlisted', 'Interview Rate', 'Hired', 'Conversion'],
-      ...exportRows.jobRows,
-      [],
-      ['Section', 'Candidate', 'Job Title', 'Status', 'Applied Date', 'Updated Date'],
-      ...exportRows.historyRows
-    ];
-    const csv = sections.map((row) => row.map(escapeCsv).join(',')).join('\n');
-    downloadBlob(csv, `jobswaale-employer-report-${formatFileDate()}.csv`, 'text/csv;charset=utf-8;');
+    try {
+      setError('');
+      const wb = XLSX.utils.book_new();
+
+      const selectedJob = data.filters?.jobs?.find((job) => String(job.id) === filters.jobId)?.title || 'All Jobs';
+      const selectedStatus = data.filters?.statuses?.find((status) => status.key === filters.status)?.label || 'All Statuses';
+
+      // 1. Overview Sheet
+      const overviewRows = [
+        ['JobsWaale Employer Reports & Analytics'],
+        ['Generated At', new Date().toLocaleString('en-IN')],
+        ['Date Range', data.range?.label || 'Selected range'],
+        ['Job Filter', selectedJob],
+        ['Status Filter', selectedStatus],
+        [],
+        ['Key Metrics', 'Value'],
+        ...statCards.map((c) => [c.title, `${data.stats?.[c.key] ?? 0}${c.suffix || ''}`]),
+        [],
+        ['Application Sources', 'Applications', 'Percentage'],
+        ...(data.sources || []).map((s) => [s.name, s.value || 0, `${s.percent || 0}%`]),
+        [],
+        ['Hiring Funnel Stage', 'Candidates', 'Percentage'],
+        ...(data.funnel || []).map((f) => [f.title, f.value || 0, `${f.percent || 0}%`])
+      ];
+      const wsOverview = XLSX.utils.aoa_to_sheet(overviewRows);
+      wsOverview['!cols'] = [{ wch: 30 }, { wch: 20 }, { wch: 15 }];
+      XLSX.utils.book_append_sheet(wb, wsOverview, 'Overview');
+
+      // 2. Monthly Overview Sheet
+      if (data.monthlyOverview?.length) {
+        const monthlyHeaders = ['Month', 'Applied', 'Reviewed', 'Shortlisted', 'Interviewed', 'On Hold', 'Selected', 'Offered', 'Rejected'];
+        const monthlyData = (data.monthlyOverview || []).map((m) => [
+          m.month, m.applied || 0, m.reviewed || 0, m.shortlisted || 0, m.interview || 0, m.onHold || 0, m.selected || 0, m.offered || 0, m.rejected || 0
+        ]);
+        const wsMonthly = XLSX.utils.aoa_to_sheet([monthlyHeaders, ...monthlyData]);
+        wsMonthly['!cols'] = [{ wch: 15 }, { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }];
+        XLSX.utils.book_append_sheet(wb, wsMonthly, 'Monthly');
+      }
+
+      // 3. Top Jobs Sheet
+      if (data.topJobs?.length) {
+        const jobsHeaders = ['Job Title', 'Applications', 'Shortlisted', 'Interview Rate', 'Hired', 'Conversion Rate'];
+        const jobsData = (data.topJobs || []).map((j) => [
+          j.title, j.applications || 0, j.shortlisted || 0, `${j.interviewRate || 0}%`, j.hired || 0, `${j.conversionRate || 0}%`
+        ]);
+        const wsJobs = XLSX.utils.aoa_to_sheet([jobsHeaders, ...jobsData]);
+        wsJobs['!cols'] = [{ wch: 30 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 12 }, { wch: 16 }];
+        XLSX.utils.book_append_sheet(wb, wsJobs, 'Top Jobs');
+      }
+
+      // 4. Application History Sheet
+      if (data.history?.length) {
+        const historyHeaders = ['Candidate Name', 'Email', 'Job Title', 'Status', 'Applied Date', 'Updated Date'];
+        const historyData = (data.history || []).map((h) => [
+          h.candidateName, h.email || '', h.jobTitle, h.status, h.appliedDate || '', h.updatedDate || ''
+        ]);
+        const wsHistory = XLSX.utils.aoa_to_sheet([historyHeaders, ...historyData]);
+        wsHistory['!cols'] = [{ wch: 25 }, { wch: 30 }, { wch: 25 }, { wch: 16 }, { wch: 16 }, { wch: 16 }];
+        XLSX.utils.book_append_sheet(wb, wsHistory, 'History');
+      }
+
+      XLSX.writeFile(wb, `jobswaale-employer-report-${formatFileDate()}.xlsx`);
+    } catch (err) {
+      console.error('Excel export error:', err);
+      try {
+        const sections = [
+          ['JobsWaale Employer Reports'],
+          ['Range', data.range?.label || 'Selected range'],
+          [],
+          ['Section', 'Metric', 'Value'],
+          ...exportRows.statsRows,
+          [],
+          ['Month', 'Applied', 'Reviewed', 'Shortlisted', 'Interviewed', 'On Hold', 'Selected', 'Offered', 'Rejected'],
+          ...exportRows.monthlyRows.map((r) => r.slice(1)),
+          [],
+          ['Candidate', 'Job Title', 'Status', 'Applied Date', 'Updated Date'],
+          ...exportRows.historyRows.map((r) => r.slice(1))
+        ];
+        const csv = '\uFEFF' + sections.map((row) => row.map(escapeCsv).join(',')).join('\n');
+        downloadBlob(csv, `jobswaale-employer-report-${formatFileDate()}.csv`, 'text/csv;charset=utf-8;');
+      } catch (fallbackErr) {
+        setError('Failed to export report. Please try again.');
+      }
+    }
   };
 
   const handlePdfExport = () => {
-    const printable = window.open('', '_blank', 'noopener,noreferrer,width=1100,height=800');
-    if (!printable) {
-      setError('Popup blocked. Please allow popups to export PDF.');
-      return;
-    }
+    try {
+      setError('');
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
 
-    const rows = (label, values) => values.map((row) => `<tr>${row.map((cell) => `<td>${String(cell ?? '')}</td>`).join('')}</tr>`).join('');
-    printable.document.write(`
-      <!doctype html>
-      <html>
-        <head>
-          <title>JobsWaale Employer Report</title>
-          <style>
-            body { font-family: Arial, sans-serif; color: #313a46; padding: 28px; }
-            h1 { margin: 0 0 6px; font-size: 24px; }
-            h2 { margin: 28px 0 10px; font-size: 16px; }
-            p { margin: 0 0 18px; color: #667085; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
-            th, td { border: 1px solid #e5e7eb; padding: 8px; font-size: 12px; text-align: left; }
-            th { background: #eef2ff; }
-            @media print { button { display: none; } body { padding: 0; } }
-          </style>
-        </head>
-        <body>
-          <button onclick="window.print()" style="float:right;padding:10px 14px;border:0;background:#6658dd;color:white;border-radius:6px;font-weight:700">Print / Save PDF</button>
-          <h1>JobsWaale Employer Report</h1>
-          <p>${data.range?.label || 'Selected range'}</p>
-          <h2>Summary</h2>
-          <table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>${statCards.map((item) => `<tr><td>${item.title}</td><td>${data.stats?.[item.key] ?? 0}${item.suffix || ''}</td></tr>`).join('')}</tbody></table>
-          <h2>Monthly Overview</h2>
-          <table><thead><tr><th>Month</th><th>Applied</th><th>Reviewed</th><th>Shortlisted</th><th>Interviewed</th><th>On Hold</th><th>Selected</th><th>Offered</th><th>Rejected</th></tr></thead><tbody>${rows('Monthly', exportRows.monthlyRows.map((row) => row.slice(1)))}</tbody></table>
-          <h2>Application Sources</h2>
-          <table><thead><tr><th>Source</th><th>Applications</th><th>Percent</th></tr></thead><tbody>${rows('Sources', exportRows.sourceRows.map((row) => row.slice(1, 4)))}</tbody></table>
-          <h2>Hiring Funnel</h2>
-          <table><thead><tr><th>Stage</th><th>Candidates</th><th>Percent</th></tr></thead><tbody>${rows('Funnel', exportRows.funnelRows.map((row) => row.slice(1, 4)))}</tbody></table>
-          <h2>Top Job Postings</h2>
-          <table><thead><tr><th>Job</th><th>Applications</th><th>Shortlisted</th><th>Interview Rate</th><th>Hired</th><th>Conversion</th></tr></thead><tbody>${rows('Jobs', exportRows.jobRows.map((row) => row.slice(1)))}</tbody></table>
-          <h2>Application History</h2>
-          <table><thead><tr><th>Candidate</th><th>Job</th><th>Status</th><th>Applied</th><th>Updated</th></tr></thead><tbody>${rows('History', exportRows.historyRows.map((row) => row.slice(1)))}</tbody></table>
-          <script>window.onload = function(){ setTimeout(function(){ window.print(); }, 250); };</script>
-        </body>
-      </html>
-    `);
-    printable.document.close();
+      const primaryColor = [102, 88, 221]; // #6658dd
+      const textColor = [63, 66, 84]; // #3f4254
+
+      // Header
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.setTextColor(...primaryColor);
+      doc.text('JobsWaale', 14, 18);
+
+      doc.setFontSize(13);
+      doc.setTextColor(...textColor);
+      doc.text('Employer Hiring Report & Analytics', 14, 25);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(100, 116, 139);
+      const selectedJob = data.filters?.jobs?.find((job) => String(job.id) === filters.jobId)?.title || 'All Jobs';
+      const selectedStatus = data.filters?.statuses?.find((status) => status.key === filters.status)?.label || 'All Statuses';
+      doc.text(`Range: ${data.range?.label || 'Selected range'}  |  Job: ${selectedJob}  |  Status: ${selectedStatus}`, 14, 31);
+      doc.text(`Generated on: ${new Date().toLocaleString('en-IN')}`, 14, 36);
+
+      // Divider line
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.4);
+      doc.line(14, 39, 196, 39);
+
+      let currentY = 44;
+
+      // 1. Key Metrics Table
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10.5);
+      doc.setTextColor(...textColor);
+      doc.text('Key Performance Indicators', 14, currentY);
+      currentY += 3;
+
+      const stats = statCards.map((c) => [c.title, `${data.stats?.[c.key] ?? 0}${c.suffix || ''}`]);
+      const statsBody = [];
+      for (let i = 0; i < stats.length; i += 2) {
+        statsBody.push([
+          stats[i]?.[0] || '', stats[i]?.[1] || '',
+          stats[i + 1]?.[0] || '', stats[i + 1]?.[1] || ''
+        ]);
+      }
+
+      runAutoTable(doc, {
+        startY: currentY,
+        head: [['Metric', 'Value', 'Metric', 'Value']],
+        body: statsBody,
+        theme: 'grid',
+        headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold', fontSize: 8 },
+        bodyStyles: { textColor: [51, 65, 85], fontSize: 7.5 },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        margin: { left: 14, right: 14 }
+      });
+      currentY = (doc.lastAutoTable?.finalY || currentY) + 8;
+
+      // 2. Monthly Overview
+      if (data.monthlyOverview?.length) {
+        if (currentY > 230) { doc.addPage(); currentY = 18; }
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10.5);
+        doc.setTextColor(...textColor);
+        doc.text('Monthly Overview', 14, currentY);
+        currentY += 3;
+
+        runAutoTable(doc, {
+          startY: currentY,
+          head: [['Month', 'Applied', 'Reviewed', 'Shortlisted', 'Interview', 'On Hold', 'Selected', 'Offered', 'Rejected']],
+          body: (data.monthlyOverview || []).map((m) => [
+            m.month, m.applied || 0, m.reviewed || 0, m.shortlisted || 0, m.interview || 0, m.onHold || 0, m.selected || 0, m.offered || 0, m.rejected || 0
+          ]),
+          theme: 'striped',
+          headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold', fontSize: 7.5 },
+          bodyStyles: { textColor: [51, 65, 85], fontSize: 7 },
+          margin: { left: 14, right: 14 }
+        });
+        currentY = (doc.lastAutoTable?.finalY || currentY) + 8;
+      }
+
+      // 3. Top Jobs
+      if (data.topJobs?.length) {
+        if (currentY > 230) { doc.addPage(); currentY = 18; }
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10.5);
+        doc.setTextColor(...textColor);
+        doc.text('Top Job Postings', 14, currentY);
+        currentY += 3;
+
+        runAutoTable(doc, {
+          startY: currentY,
+          head: [['Job Title', 'Applications', 'Shortlisted', 'Interview Rate', 'Hired', 'Conversion']],
+          body: (data.topJobs || []).map((j) => [
+            j.title, j.applications || 0, j.shortlisted || 0, `${j.interviewRate || 0}%`, j.hired || 0, `${j.conversionRate || 0}%`
+          ]),
+          theme: 'striped',
+          headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold', fontSize: 7.5 },
+          bodyStyles: { textColor: [51, 65, 85], fontSize: 7 },
+          margin: { left: 14, right: 14 }
+        });
+        currentY = (doc.lastAutoTable?.finalY || currentY) + 8;
+      }
+
+      // 4. Application History
+      if (data.history?.length) {
+        if (currentY > 230) { doc.addPage(); currentY = 18; }
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10.5);
+        doc.setTextColor(...textColor);
+        doc.text('Recent Application History', 14, currentY);
+        currentY += 3;
+
+        runAutoTable(doc, {
+          startY: currentY,
+          head: [['Candidate', 'Job Title', 'Status', 'Applied Date', 'Updated Date']],
+          body: (data.history || []).slice(0, 50).map((h) => [
+            h.candidateName, h.jobTitle, h.status, h.appliedDate || '-', h.updatedDate || '-'
+          ]),
+          theme: 'striped',
+          headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold', fontSize: 7.5 },
+          bodyStyles: { textColor: [51, 65, 85], fontSize: 7 },
+          margin: { left: 14, right: 14 }
+        });
+      }
+
+      // Page numbering footer
+      const pageCount = doc.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(150, 150, 150);
+        doc.text(`Page ${i} of ${pageCount}  |  JobsWaale Confidential Report`, 14, 290);
+      }
+
+      doc.save(`jobswaale-employer-report-${formatFileDate()}.pdf`);
+    } catch (err) {
+      console.error('PDF export error:', err);
+      setError('Failed to generate PDF. Please try again.');
+    }
   };
 
   const handleScheduleExport = () => {
