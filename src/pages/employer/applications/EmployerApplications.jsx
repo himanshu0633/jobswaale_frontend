@@ -26,12 +26,13 @@ import {
   AlertCircle,
   Send,
   BadgeCheck,
-  Briefcase
+  Briefcase,
+  Download
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import ClearFilterButton from '../../../components/ClearFilterButton';
 import InterviewLocationPicker from '../../../components/InterviewLocationPicker';
-import { downloadBlobResponse } from '../../../utils/downloadFile';
+import { downloadBlobResponse, viewBlobResponse } from '../../../utils/downloadFile';
 
 const isInPersonInterview = (type) => String(type || '').toLowerCase().includes('person');
 
@@ -428,6 +429,44 @@ export const EmployerApplications = () => {
     }
   };
 
+  const viewResume = async (candidateId, appId) => {
+    const actionKey = getActionKey(appId || candidateId, 'viewResume');
+    if (actionLoading) return;
+    setActionLoading(actionKey);
+    setError('');
+    setMessage('');
+    const newTab = window.open('about:blank', '_blank');
+    try {
+      const response = await axios.get(`${BASE_API_URL}/employer/candidates/${candidateId}/resume-download`, {
+        headers: getTokenHeaders(),
+        responseType: 'blob'
+      });
+      await viewBlobResponse(response, newTab);
+    } catch (err) {
+      if (newTab) newTab.close();
+      if (err.response?.status === 451 || err.response?.status === 403) {
+        if (err.response.data instanceof Blob) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            try {
+              const errorObj = JSON.parse(reader.result);
+              setUpgradePopup({ open: true, message: errorObj.message });
+            } catch {
+              setUpgradePopup({ open: true, message: 'Resume downloads are not supported under your current plan.' });
+            }
+          };
+          reader.readAsText(err.response.data);
+        } else {
+          setUpgradePopup({ open: true, message: err.response?.data?.message });
+        }
+      } else {
+        setError(err.response?.data?.message || 'Resume could not be opened.');
+      }
+    } finally {
+      setActionLoading('');
+    }
+  };
+
   return (
     <div className="space-y-4 px-3 sm:space-y-5 sm:px-0">
       <div className="flex flex-col justify-between gap-2 md:flex-row md:items-center md:gap-3">
@@ -614,17 +653,28 @@ export const EmployerApplications = () => {
                           <Link to={`/employer/messages?application=${application.id}`} title="Message Candidate" className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-sky-200 px-2 text-xs font-extrabold text-sky-600 transition hover:bg-sky-50"><MessageCircle className="h-3.5 w-3.5" /><span>Message</span></Link>
                         )}
 
-                        {/* Download Resume */}
+                        {/* View & Download Resume */}
                         {application.hasResume && application.status !== 'Applied' && (
-                          <button
-                            type="button"
-                            onClick={() => downloadResume(application.candidateId, application.name, application.id)}
-                            disabled={Boolean(actionLoading)}
-                            title="Download Resume"
-                            className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-70"
-                          >
-                            <ActionButtonContent loading={isActionLoading(application.id, 'resume')} icon={FileText} label="Resume" />
-                          </button>
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => viewResume(application.candidateId, application.id)}
+                              disabled={Boolean(actionLoading)}
+                              title="View Resume in New Tab"
+                              className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-blue-200 px-2 text-xs font-extrabold text-blue-600 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-70"
+                            >
+                              <ActionButtonContent loading={isActionLoading(application.id, 'viewResume')} icon={Eye} label="View Resume" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => downloadResume(application.candidateId, application.name, application.id)}
+                              disabled={Boolean(actionLoading)}
+                              title="Download Resume"
+                              className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-70"
+                            >
+                              <ActionButtonContent loading={isActionLoading(application.id, 'resume')} icon={Download} label="Download Resume" />
+                            </button>
+                          </>
                         )}
 
                         {/* Shortlist */}

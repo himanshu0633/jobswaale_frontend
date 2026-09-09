@@ -4,11 +4,9 @@ import { Link } from 'react-router-dom';
 import { 
   Menu, 
   Search, 
-  LayoutGrid, 
   Moon,
   Sun, 
   Maximize, 
-  Palette, 
   ChevronDown, 
   LogOut, 
   UserPlus, 
@@ -160,13 +158,6 @@ export const Header = ({ toggleSidebar, isCollapsed, title = '' }) => {
           
           {/* Quick Tools */}
           <div className="hidden sm:flex items-center gap-1 lg:gap-2">
-            <button 
-              title="Dashboard grid"
-              className={`p-1.5 lg:p-2 rounded-lg transition-colors ${theme === 'dark' ? 'text-slate-300 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'}`}
-              aria-label="Dashboard grid"
-            >
-              <LayoutGrid className="w-4 h-4 lg:w-5 lg:h-5" />
-            </button>
             <button
               onClick={toggleTheme}
               title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
@@ -182,13 +173,6 @@ export const Header = ({ toggleSidebar, isCollapsed, title = '' }) => {
               aria-label="Toggle fullscreen"
             >
               <Maximize className="w-5 h-5" />
-            </button>
-            <button 
-              title="Theme palette"
-              className={`hidden xl:flex p-2 rounded-lg transition-colors ${theme === 'dark' ? 'text-slate-300 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'}`}
-              aria-label="Theme palette"
-            >
-              <Palette className="w-5 h-5" />
             </button>
           </div>
 

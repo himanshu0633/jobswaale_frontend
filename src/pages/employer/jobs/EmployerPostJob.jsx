@@ -164,6 +164,7 @@ export const EmployerPostJob = () => {
   const [locationSearch, setLocationSearch] = useState('');
   const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
   const [loadedJobStatus, setLoadedJobStatus] = useState('');
+  const [maxJobExpiry, setMaxJobExpiry] = useState('');
 
   useEffect(() => {
     const loadFormData = async () => {
@@ -172,14 +173,20 @@ export const EmployerPostJob = () => {
         const [formResponse, jobResponse, subscriptionResponse] = await Promise.all([
           axios.get(`${BASE_API_URL}/employer/job-form`, { headers: getTokenHeaders() }),
           isEditMode ? axios.get(`${BASE_API_URL}/employer/jobs/${editJobId}`, { headers: getTokenHeaders() }) : Promise.resolve(null),
-          isEditMode ? Promise.resolve(null) : axios.get(`${BASE_API_URL}/employer/subscription-details`, { headers: getTokenHeaders() })
+          axios.get(`${BASE_API_URL}/employer/subscription-details`, { headers: getTokenHeaders() }).catch(() => null)
         ]);
-        const formData = formResponse.data || {};
+        const formData = formResponse?.data || {};
         const jobForm = jobResponse?.data?.form;
         const remainingCredits = Number(subscriptionResponse?.data?.subscription?.remainingCredits ?? 0);
         setMeta(formData);
         if (!isEditMode && remainingCredits <= 0) {
           setUpgradePopup({ open: true, remainingCredits });
+        }
+
+        const planValidUntil = subscriptionResponse?.data?.subscription?.validUntil || formData?.employer?.planValidity || formData?.employer?.planExpiryDate || null;
+        const maxExpiry = toDateInput(planValidUntil);
+        if (maxExpiry) {
+          setMaxJobExpiry(maxExpiry);
         }
 
         const employerCity = formData?.employer?.city || '';
@@ -245,8 +252,8 @@ export const EmployerPostJob = () => {
 
         const currentStatus = jobResponse?.data?.status || '';
         setLoadedJobStatus(currentStatus);
-        if (isEditMode && (currentStatus === 'Inactive' || currentStatus === 'Expired')) {
-          setMessage({ type: 'error', text: `${currentStatus} jobs cannot be edited.` });
+        if (isEditMode && currentStatus !== 'Active') {
+          setMessage({ type: 'error', text: `${currentStatus} jobs cannot be edited. Only active jobs can be edited.` });
         }
       } catch (err) {
         setMessage({ type: 'error', text: err.response?.data?.message || (isEditMode ? 'Unable to load job data.' : 'Unable to load job form data.') });
@@ -368,6 +375,11 @@ export const EmployerPostJob = () => {
       scrollToFirstInvalidField();
       return false;
     }
+    if (step === 0 && maxJobExpiry && form.jobExpiry && form.jobExpiry > maxJobExpiry) {
+      setMessage({ type: 'error', text: `Job expiry date cannot be after your plan expiry date (${maxJobExpiry}).` });
+      return false;
+    }
+
     setMessage({ type: '', text: '' });
     setMissingFields([]);
     return true;
@@ -378,8 +390,13 @@ export const EmployerPostJob = () => {
   };
 
   const submitJob = async (status = 'publish') => {
-    if (isEditMode && (loadedJobStatus === 'Inactive' || loadedJobStatus === 'Expired')) {
-      setMessage({ type: 'error', text: `${loadedJobStatus} jobs cannot be edited.` });
+    if (isEditMode && loadedJobStatus !== 'Active') {
+      setMessage({ type: 'error', text: `${loadedJobStatus} jobs cannot be edited. Only active jobs can be edited.` });
+      return;
+    }
+
+    if (maxJobExpiry && form.jobExpiry && form.jobExpiry > maxJobExpiry) {
+      setMessage({ type: 'error', text: `Job expiry date cannot be after your plan expiry date (${maxJobExpiry}).` });
       return;
     }
 
@@ -672,7 +689,31 @@ export const EmployerPostJob = () => {
                   <div><label className={labelClass}>Notice Period</label><select className={inputClass} value={form.noticePeriod} onChange={(e) => setValue('noticePeriod', e.target.value)}><option value="">Select Notice Period</option><option>Immediate</option><option>15 Days</option><option>30 Days</option><option>60 Days</option></select></div>
                   <div><label className={labelClass}>Date of Joining</label><input type="date" className={inputClass} value={form.joiningDate} onChange={(e) => setValue('joiningDate', e.target.value)} /></div>
                   <div><label className={labelClass}>Shift Timings</label><select className={inputClass} value={form.shiftTiming} onChange={(e) => setValue('shiftTiming', e.target.value)}><option value="">Select Shift Timing</option><option>Day Shift</option><option>Night Shift</option><option>Rotational Shift</option></select></div>
-                  <div><label className={labelClass}>Job Expiry</label><input type="date" className={inputClass} value={form.jobExpiry} onChange={(e) => setValue('jobExpiry', e.target.value)} min={today()} /></div>
+                  <div>
+                    <label className={labelClass}>Job Expiry</label>
+                    <input
+                      type="date"
+                      className={inputClass}
+                      value={form.jobExpiry}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (maxJobExpiry && val && val > maxJobExpiry) {
+                          setMessage({ type: 'error', text: `Job expiry date cannot be after your plan expiry date (${maxJobExpiry}).` });
+                          setValue('jobExpiry', maxJobExpiry);
+                          return;
+                        }
+                        setMessage((curr) => (curr.text?.includes('Job expiry date') ? { type: '', text: '' } : curr));
+                        setValue('jobExpiry', val);
+                      }}
+                      min={today()}
+                      max={maxJobExpiry || undefined}
+                    />
+                    {maxJobExpiry && (
+                      <p className="mt-1 text-xs font-semibold text-slate-500">
+                        Max allowed: {maxJobExpiry} (Current Plan Expiry)
+                      </p>
+                    )}
+                  </div>
                   <div className="md:col-span-2"><label className={labelClass}>Benefits & Perks</label><input className={inputClass} value={form.benefits} onChange={(e) => setValue('benefits', e.target.value)} placeholder="PF, Health Insurance, Bonus" /></div>
                   <div className="md:col-span-2"><label className={labelClass}>About Company</label><textarea className={inputClass} rows="3" maxLength="500" value={form.aboutCompany} onChange={(e) => setValue('aboutCompany', e.target.value)} /></div>
                 </div>
@@ -720,13 +761,13 @@ export const EmployerPostJob = () => {
           )}
 
           <div className="flex flex-wrap justify-between gap-2">
-            <button type="button" onClick={() => submitJob('draft')} disabled={submitting || (isEditMode && (loadedJobStatus === 'Inactive' || loadedJobStatus === 'Expired'))} className="inline-flex items-center gap-2 rounded-md border border-[#6658dd] px-4 py-2 text-sm font-extrabold text-[#6658dd] disabled:opacity-60"><Save className="h-4 w-4" /> Save as Draft</button>
+            <button type="button" onClick={() => submitJob('draft')} disabled={submitting || (isEditMode && loadedJobStatus !== 'Active')} className="inline-flex items-center gap-2 rounded-md border border-[#6658dd] px-4 py-2 text-sm font-extrabold text-[#6658dd] disabled:opacity-60"><Save className="h-4 w-4" /> Save as Draft</button>
             <div className="flex gap-2">
               {step > 0 && <button type="button" onClick={() => setStep((current) => current - 1)} className="inline-flex items-center gap-2 rounded-md bg-amber-500 px-4 py-2 text-sm font-extrabold text-white"><ArrowLeft className="h-4 w-4" /> Back</button>}
               {step < 3 ? (
                 <button type="button" onClick={handleNext} className="inline-flex items-center gap-2 rounded-md bg-[#6658dd] px-4 py-2 text-sm font-extrabold text-white">Save & Continue <ArrowRight className="h-4 w-4" /></button>
               ) : (
-                <button type="button" onClick={() => submitJob(form.publishStatus)} disabled={submitting || (isEditMode && (loadedJobStatus === 'Inactive' || loadedJobStatus === 'Expired'))} className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-extrabold text-white disabled:opacity-60">{submitting ? <Loader className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} {isEditMode ? 'Update Job' : 'Publish Job'}</button>
+                <button type="button" onClick={() => submitJob(form.publishStatus)} disabled={submitting || (isEditMode && loadedJobStatus !== 'Active')} className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-extrabold text-white disabled:opacity-60">{submitting ? <Loader className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} {isEditMode ? 'Update Job' : 'Publish Job'}</button>
               )}
             </div>
           </div>

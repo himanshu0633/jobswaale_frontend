@@ -9,6 +9,7 @@ import {
   Check,
   Clock,
   Download,
+  Eye,
   Loader,
   Mail,
   MapPin,
@@ -26,7 +27,7 @@ import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
 import InterviewLocationPicker from '../../../components/InterviewLocationPicker';
 import { SendOfferModal } from '../../../components/SendOfferModal';
-import { downloadBlobResponse } from '../../../utils/downloadFile';
+import { downloadBlobResponse, viewBlobResponse } from '../../../utils/downloadFile';
 
 const getTokenHeaders = () => {
   const token = localStorage.getItem('publicToken');
@@ -63,6 +64,44 @@ const downloadCandidateResume = async (candidate) => {
       reader.readAsText(err.response.data);
     } else {
       alert(err.response?.data?.message || 'Resume could not be downloaded.');
+    }
+  }
+};
+
+const viewCandidateResume = async (candidate) => {
+  if (!candidate?.id) return;
+  const newTab = window.open('about:blank', '_blank');
+  try {
+    const response = await axios.get(`${BASE_API_URL}/employer/candidates/${candidate.id}/resume-download`, {
+      headers: getTokenHeaders(),
+      responseType: 'blob'
+    });
+    await viewBlobResponse(response, newTab);
+
+    const remainingUnlocks = response.headers['x-remaining-unlocks'];
+    const isNewUnlock = response.headers['x-is-new-unlock'] === 'true';
+
+    if (isNewUnlock && remainingUnlocks !== undefined) {
+      const event = new CustomEvent('resume-unlock-success', { detail: { remainingUnlocks } });
+      window.dispatchEvent(event);
+    }
+  } catch (err) {
+    if (newTab && !newTab.closed) {
+      newTab.close();
+    }
+    if (err.response?.data instanceof Blob) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const errorObj = JSON.parse(reader.result);
+          alert(errorObj.message || 'Resume could not be viewed.');
+        } catch {
+          alert('Resume could not be viewed.');
+        }
+      };
+      reader.readAsText(err.response.data);
+    } else {
+      alert(err.response?.data?.message || 'Resume could not be viewed.');
     }
   }
 };
@@ -171,14 +210,31 @@ const ResumeDownloadLink = ({ candidate, className }) => {
     downloadCandidateResume(candidate);
   };
 
+  const handleView = () => {
+    if (!candidate.allowResumeDownload) {
+      alert("Please upgrade your plan to view candidate resumes.");
+      return;
+    }
+    viewCandidateResume(candidate);
+  };
+
   return (
-    <button
-      type="button"
-      onClick={handleDownload}
-      className={`inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-600 transition hover:bg-slate-50 ${className || ''}`}
-    >
-      <Download className="h-4 w-4" /> Download Resume
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={handleView}
+        className={`inline-flex items-center justify-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-extrabold text-blue-600 transition hover:bg-blue-100 ${className || ''}`}
+      >
+        <Eye className="h-4 w-4" /> View Resume
+      </button>
+      <button
+        type="button"
+        onClick={handleDownload}
+        className={`inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-600 transition hover:bg-slate-50 ${className || ''}`}
+      >
+        <Download className="h-4 w-4" /> Download Resume
+      </button>
+    </>
   );
 };
 

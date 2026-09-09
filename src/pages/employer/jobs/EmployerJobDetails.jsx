@@ -24,12 +24,13 @@ import {
   Send,
   Users,
   Inbox,
-  X
+  X,
+  Download
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
 import InterviewLocationPicker from '../../../components/InterviewLocationPicker';
-import { downloadBlobResponse } from '../../../utils/downloadFile';
+import { downloadBlobResponse, viewBlobResponse } from '../../../utils/downloadFile';
 
 const emptyDetails = {
   stats: {},
@@ -377,6 +378,39 @@ export const EmployerJobDetails = () => {
     }
   };
 
+  const viewResume = async (candidateId) => {
+    setMessage('');
+    setError('');
+    const newTab = window.open('about:blank', '_blank');
+    try {
+      const response = await axios.get(`${BASE_API_URL}/employer/candidates/${candidateId}/resume-download`, {
+        headers: getTokenHeaders(),
+        responseType: 'blob'
+      });
+      await viewBlobResponse(response, newTab);
+    } catch (err) {
+      if (newTab) newTab.close();
+      if (err.response?.status === 451 || err.response?.status === 403) {
+        if (err.response.data instanceof Blob) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            try {
+              const errorObj = JSON.parse(reader.result);
+              setUpgradePopup({ open: true, message: errorObj.message });
+            } catch {
+              setUpgradePopup({ open: true, message: 'Resume downloads are not supported under your current plan.' });
+            }
+          };
+          reader.readAsText(err.response.data);
+        } else {
+          setUpgradePopup({ open: true, message: err.response?.data?.message });
+        }
+      } else {
+        setError(err.response?.data?.message || 'Resume could not be opened.');
+      }
+    }
+  };
+
   if (loading) {
     return <PageSkeleton variant="detail" />;
   }
@@ -453,8 +487,8 @@ export const EmployerJobDetails = () => {
       )}
 
       <div className="flex flex-wrap gap-2">
-        {details.status === 'Inactive' || details.status === 'Expired' ? (
-          <button type="button" disabled title={details.status === 'Expired' ? 'Cannot edit expired job' : 'Cannot edit inactive job'} className="inline-flex cursor-not-allowed items-center gap-2 rounded-md bg-slate-200 px-3 py-2 text-sm font-extrabold text-slate-400 opacity-60"><Edit className="h-4 w-4" /> Edit Job</button>
+        {details.status !== 'Active' ? (
+          <button type="button" disabled title={`Only active jobs can be edited (${details.status})`} className="inline-flex cursor-not-allowed items-center gap-2 rounded-md bg-slate-200 px-3 py-2 text-sm font-extrabold text-slate-400 opacity-60"><Edit className="h-4 w-4" /> Edit Job</button>
         ) : (
           <Link to={`/employer/jobs/${details.id}/edit`} className="inline-flex items-center gap-2 rounded-md bg-[#6658dd] px-3 py-2 text-sm font-extrabold text-white"><Edit className="h-4 w-4" /> Edit Job</Link>
         )}
@@ -464,10 +498,10 @@ export const EmployerJobDetails = () => {
           <button type="button" onClick={() => runJobAction('reopen')} disabled={Boolean(actionState)} className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-2 text-sm font-extrabold text-white disabled:opacity-60">{actionState === 'reopen' ? <Loader className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} Reopen Job</button>
         ) : details.status === 'Expired' ? (
           <button type="button" onClick={() => runJobAction('renew')} disabled={Boolean(actionState)} className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-2 text-sm font-extrabold text-white disabled:opacity-60">{actionState === 'renew' ? <Loader className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} Renew Job</button>
-        ) : details.status === 'Inactive' ? (
-          <button type="button" title="Inactive jobs cannot be closed" disabled className="inline-flex cursor-not-allowed items-center gap-2 rounded-md bg-slate-200 px-3 py-2 text-sm font-extrabold text-slate-400 opacity-60"><Pause className="h-4 w-4" /> Close Job</button>
-        ) : (
+        ) : details.status === 'Active' ? (
           <button type="button" onClick={() => runJobAction('close')} disabled={Boolean(actionState)} className="inline-flex items-center gap-2 rounded-md bg-amber-500 px-3 py-2 text-sm font-extrabold text-white disabled:opacity-60">{actionState === 'close' ? <Loader className="h-4 w-4 animate-spin" /> : <Pause className="h-4 w-4" />} Close Job</button>
+        ) : (
+          <button type="button" title={`Only active jobs can be closed (${details.status})`} disabled className="inline-flex cursor-not-allowed items-center gap-2 rounded-md bg-slate-200 px-3 py-2 text-sm font-extrabold text-slate-400 opacity-60"><Pause className="h-4 w-4" /> Close Job</button>
         )}
       </div>
 
@@ -607,7 +641,7 @@ export const EmployerJobDetails = () => {
         </div>
 
         <div className="overflow-x-auto p-5 pb-24">
-          <table className="w-full min-w-[720px] text-left">
+          <table className="w-full min-w-[840px] text-left">
             <thead className="bg-slate-100 text-[11px] uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-4 py-3">Candidate</th>
@@ -644,23 +678,34 @@ export const EmployerJobDetails = () => {
                     )}
                   </td>
                   <td className="px-4 py-4 text-right">
-                    <div className="flex flex-wrap items-center gap-1.5 justify-end max-w-[280px] ml-auto">
+                    <div className="flex flex-wrap items-center gap-1.5 justify-end max-w-[360px] ml-auto">
                       <Link to={`/employer/applications/${candidate.id}`} title="View Application Details" className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-slate-500 transition hover:bg-slate-50">
                         <Eye className="h-4 w-4" />
                         <span>View</span>
                       </Link>
                       
-                      {/* Download Resume */}
+                      {/* View & Download Resume */}
                       {candidate.hasResume && candidate.status !== 'Applied' && (
-                        <button
-                          type="button"
-                          onClick={() => downloadResume(candidate.candidateId, candidate.name)}
-                          title="Download Resume"
-                          className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50"
-                        >
-                          <FileText className="h-4 w-4" />
-                          <span>Resume</span>
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => viewResume(candidate.candidateId)}
+                            title="View Resume in New Tab"
+                            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-blue-200 px-2 text-xs font-extrabold text-blue-600 transition hover:bg-blue-50"
+                          >
+                            <Eye className="h-4 w-4" />
+                            <span>View Resume</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => downloadResume(candidate.candidateId, candidate.name)}
+                            title="Download Resume"
+                            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50"
+                          >
+                            <Download className="h-4 w-4" />
+                            <span>Download Resume</span>
+                          </button>
+                        </>
                       )}
 
                       {/* Shortlist */}

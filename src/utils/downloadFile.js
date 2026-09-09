@@ -67,3 +67,48 @@ export const downloadBlobResponse = async (response, fallbackName = 'candidate-r
   link.remove();
   window.URL.revokeObjectURL(blobUrl);
 };
+
+export const viewBlobResponse = async (response, targetWindow = null) => {
+  let blob = response.data instanceof Blob
+    ? response.data
+    : new Blob([response.data], {
+        type: String(response.headers?.['content-type'] || '').split(';')[0].trim() || 'application/pdf'
+      });
+
+  // Check if blob is actually base64-encoded PDF or text/json containing PDF base64
+  try {
+    const textPreview = await blob.slice(0, 200).text();
+    const trimmed = textPreview.trim();
+    if (trimmed.startsWith('"JVBERi') || trimmed.startsWith('JVBERi') || (trimmed.startsWith('"') && trimmed.includes('JVBERi'))) {
+      const fullText = await blob.text();
+      const rawBase64 = fullText.trim().replace(/^"|"$/g, '');
+      const binaryString = window.atob(rawBase64);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      blob = new Blob([bytes], { type: 'application/pdf' });
+    }
+  } catch (e) {
+    console.warn('Could not inspect blob content:', e);
+  }
+
+  // Force application/pdf so browser renders it inline in the new tab instead of downloading
+  if (!blob.type || blob.type === 'application/octet-stream') {
+    blob = new Blob([blob], { type: 'application/pdf' });
+  }
+
+  const blobUrl = window.URL.createObjectURL(blob);
+  if (targetWindow && !targetWindow.closed) {
+    targetWindow.location.href = blobUrl;
+  } else {
+    window.open(blobUrl, '_blank');
+  }
+
+  // Revoke object URL after delay to allow browser tab time to load
+  setTimeout(() => {
+    window.URL.revokeObjectURL(blobUrl);
+  }, 120000);
+};
+

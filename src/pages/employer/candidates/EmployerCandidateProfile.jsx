@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import {
   ArrowLeft,
@@ -8,6 +8,7 @@ import {
   CalendarPlus,
   CheckCircle2,
   Download,
+  Eye,
   Mail,
   MapPin,
   Phone,
@@ -26,7 +27,7 @@ import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
 import InterviewLocationPicker from '../../../components/InterviewLocationPicker';
 import { SendOfferModal } from '../../../components/SendOfferModal';
-import { downloadBlobResponse } from '../../../utils/downloadFile';
+import { downloadBlobResponse, viewBlobResponse } from '../../../utils/downloadFile';
 
 const getTokenHeaders = () => {
   const token = localStorage.getItem('publicToken');
@@ -97,6 +98,44 @@ const downloadCandidateResume = async (candidate) => {
   }
 };
 
+const viewCandidateResume = async (candidate) => {
+  if (!candidate?.id) return;
+  const newTab = window.open('about:blank', '_blank');
+  try {
+    const response = await axios.get(`${BASE_API_URL}/employer/candidates/${candidate.id}/resume-download`, {
+      headers: getTokenHeaders(),
+      responseType: 'blob'
+    });
+    await viewBlobResponse(response, newTab);
+
+    const remainingUnlocks = response.headers['x-remaining-unlocks'];
+    const isNewUnlock = response.headers['x-is-new-unlock'] === 'true';
+
+    if (isNewUnlock && remainingUnlocks !== undefined) {
+      const event = new CustomEvent('resume-unlock-success', { detail: { remainingUnlocks } });
+      window.dispatchEvent(event);
+    }
+  } catch (err) {
+    if (newTab && !newTab.closed) {
+      newTab.close();
+    }
+    if (err.response?.data instanceof Blob) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const errorObj = JSON.parse(reader.result);
+          alert(errorObj.message || 'Resume could not be viewed.');
+        } catch {
+          alert('Resume could not be viewed.');
+        }
+      };
+      reader.readAsText(err.response.data);
+    } else {
+      alert(err.response?.data?.message || 'Resume could not be viewed.');
+    }
+  }
+};
+
 const Card = ({ title, children }) => (
   <section className="rounded-md border border-slate-100 bg-white shadow-sm">
     <div className="border-b border-dashed border-slate-200 px-5 py-4">
@@ -118,17 +157,26 @@ const ActionButton = ({ tone, icon: Icon, children, onClick, disabled }) => (
   </button>
 );
 
-const ResumeDownloadLink = ({ candidate, onDownload, className }) => {
+const ResumeDownloadLink = ({ candidate, onDownload, onView, className }) => {
   if (!candidate.hasResume) return null;
 
   return (
-    <button
-      type="button"
-      onClick={onDownload}
-      className={`inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-600 transition hover:bg-slate-50 ${className || ''}`}
-    >
-      <Download className="h-4 w-4" /> Download Resume
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={onView}
+        className={`inline-flex items-center justify-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-extrabold text-blue-600 transition hover:bg-blue-100 ${className || ''}`}
+      >
+        <Eye className="h-4 w-4" /> View Resume
+      </button>
+      <button
+        type="button"
+        onClick={onDownload}
+        className={`inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-600 transition hover:bg-slate-50 ${className || ''}`}
+      >
+        <Download className="h-4 w-4" /> Download Resume
+      </button>
+    </>
   );
 };
 
@@ -137,6 +185,7 @@ const SkillBadge = ({ children, tone = 'bg-blue-50 text-blue-600' }) => (
 );
 
 const EmployerCandidateProfile = () => {
+  const navigate = useNavigate();
   const { id } = useParams();
   const searchParams = useMemo(() => new URLSearchParams(window.location.search), []);
   const jobIdParam = searchParams.get('jobId') || '';
@@ -149,6 +198,22 @@ const EmployerCandidateProfile = () => {
   const [saving, setSaving] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+
+  const handleContactFromProfile = async () => {
+    if (!candidate?.id) return;
+    try {
+      const res = await axios.post(`${BASE_API_URL}/employer/candidates/${candidate.id}/contact`, {}, {
+        headers: getTokenHeaders()
+      });
+      if (res.data?.applicationId) {
+        navigate(`/employer/messages?application=${res.data.applicationId}`);
+      } else {
+        navigate('/employer/messages');
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Could not initiate conversation.');
+    }
+  };
   const [showInterviewModal, setShowInterviewModal] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
@@ -497,6 +562,22 @@ const EmployerCandidateProfile = () => {
     downloadCandidateResume(candidate);
   };
 
+  const handleResumeView = () => {
+    if (candidate.hasCandidateAccess === false) {
+      setShowUpgradeModal(true);
+      return;
+    }
+    if (candidate.unlockLimitExhausted === true) {
+      setShowLimitModal(true);
+      return;
+    }
+    if (candidate.hasResume && !candidate.allowResumeDownload) {
+      setShowUpgradeModal(true);
+      return;
+    }
+    viewCandidateResume(candidate);
+  };
+
   return (
     <div className="space-y-5">
       <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
@@ -583,25 +664,43 @@ const EmployerCandidateProfile = () => {
         </ActionButton>
 
         {!candidate.application && (
-          <button
-            type="button"
-            onClick={handleResumeDownload}
-            disabled={Boolean(saving)}
-            className={`inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-600 transition hover:bg-slate-50 ${!candidate.hasResume ? 'pointer-events-none opacity-60' : ''}`}
-          >
-            <Download className="h-4 w-4" /> Download Resume
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={handleResumeView}
+              disabled={Boolean(saving)}
+              className={`inline-flex items-center justify-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-extrabold text-blue-600 transition hover:bg-blue-100 ${!candidate.hasResume ? 'pointer-events-none opacity-60' : ''}`}
+            >
+              <Eye className="h-4 w-4" /> View Resume
+            </button>
+            <button
+              type="button"
+              onClick={handleResumeDownload}
+              disabled={Boolean(saving)}
+              className={`inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-600 transition hover:bg-slate-50 ${!candidate.hasResume ? 'pointer-events-none opacity-60' : ''}`}
+            >
+              <Download className="h-4 w-4" /> Download Resume
+            </button>
+          </>
         )}
       </div>
 
-      {candidate.application && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3">
+        {candidate.application ? (
           <Link to={`/employer/messages?application=${candidate.application.id}`} className="inline-flex items-center justify-center gap-2 rounded-md border border-sky-200 bg-white px-3 py-2 text-xs font-extrabold text-sky-600 hover:bg-sky-50 w-full">
             <MessageSquare className="h-4 w-4" /> Send Message
           </Link>
-          <ResumeDownloadLink candidate={candidate} onDownload={handleResumeDownload} className="w-full" />
-        </div>
-      )}
+        ) : (
+          <button
+            type="button"
+            onClick={handleContactFromProfile}
+            className="inline-flex items-center justify-center gap-2 rounded-md border border-sky-200 bg-white px-3 py-2 text-xs font-extrabold text-sky-600 hover:bg-sky-50 w-full cursor-pointer"
+          >
+            <MessageSquare className="h-4 w-4" /> Contact / Send Message
+          </button>
+        )}
+        <ResumeDownloadLink candidate={candidate} onDownload={handleResumeDownload} onView={handleResumeView} className="w-full" />
+      </div>
 
       <section className="rounded-md border border-slate-100 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-5 md:flex-row md:items-center">
@@ -609,7 +708,14 @@ const EmployerCandidateProfile = () => {
             {candidate.initials}
           </span>
           <div className="min-w-0 flex-1">
-            <h2 className="text-2xl font-black text-[#3f4254]">{candidate.name}</h2>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-2xl font-black text-[#3f4254]">{candidate.name}</h2>
+              {candidate.isApplied && (
+                <span className="rounded bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 border border-emerald-200">
+                  Applicant
+                </span>
+              )}
+            </div>
             <p className="mt-1 text-base font-semibold text-slate-400">{candidate.designation || candidate.role}</p>
             <div className="mt-3 flex flex-wrap items-center gap-4 text-sm font-semibold text-slate-500">
               <span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4" />{candidate.location}</span>
@@ -685,7 +791,7 @@ const EmployerCandidateProfile = () => {
                     {action.label}
                   </ActionButton>
                 ))}
-                <ResumeDownloadLink candidate={candidate} onDownload={handleResumeDownload} />
+                <ResumeDownloadLink candidate={candidate} onDownload={handleResumeDownload} onView={handleResumeView} />
               </div>
             </Card>
           )}

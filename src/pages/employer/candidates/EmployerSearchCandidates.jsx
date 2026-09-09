@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Activity,
   Bookmark,
@@ -10,13 +10,16 @@ import {
   ChevronsRight,
   ChevronUp,
   Download,
+  Eye,
   Loader,
+  Lock,
   MapPin,
   MessageCircle,
   MoreVertical,
   Search,
   SlidersHorizontal,
   Star,
+  Unlock,
   User,
   UserCheck,
   UserPlus,
@@ -25,7 +28,7 @@ import {
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import ClearFilterButton from '../../../components/ClearFilterButton';
-import { downloadBlobResponse } from '../../../utils/downloadFile';
+import { downloadBlobResponse, viewBlobResponse } from '../../../utils/downloadFile';
 
 const initialFilters = {
   search: '',
@@ -102,6 +105,44 @@ const downloadCandidateResume = async (candidate) => {
   }
 };
 
+const viewCandidateResume = async (candidate) => {
+  if (!candidate?.id) return;
+  const newTab = window.open('about:blank', '_blank');
+  try {
+    const response = await axios.get(`${BASE_API_URL}/employer/candidates/${candidate.id}/resume-download`, {
+      headers: getTokenHeaders(),
+      responseType: 'blob'
+    });
+    await viewBlobResponse(response, newTab);
+
+    const remainingUnlocks = response.headers['x-remaining-unlocks'];
+    const isNewUnlock = response.headers['x-is-new-unlock'] === 'true';
+
+    if (isNewUnlock && remainingUnlocks !== undefined) {
+      const event = new CustomEvent('resume-unlock-success', { detail: { remainingUnlocks } });
+      window.dispatchEvent(event);
+    }
+  } catch (err) {
+    if (newTab && !newTab.closed) {
+      newTab.close();
+    }
+    if (err.response?.data instanceof Blob) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const errorObj = JSON.parse(reader.result);
+          alert(errorObj.message || 'Resume could not be viewed.');
+        } catch {
+          alert('Resume could not be viewed.');
+        }
+      };
+      reader.readAsText(err.response.data);
+    } else {
+      alert(err.response?.data?.message || 'Resume could not be viewed.');
+    }
+  }
+};
+
 const filterLabelClass = 'mb-2 block text-xs font-extrabold text-slate-500';
 const filterControlClass = 'candidate-filter-control h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100';
 
@@ -114,7 +155,15 @@ const SelectField = ({ label, value, onChange, children, uppercase = false }) =>
   </div>
 );
 
-const CandidateActions = ({ candidate, isOpen, onToggle, onClose, align = 'right-6 top-12' }) => (
+const CandidateActions = ({
+  candidate,
+  isOpen,
+  onToggle,
+  onClose,
+  onContact,
+  onUnlock,
+  align = 'right-6 top-12'
+}) => (
   <div className="relative inline-block text-left">
     <button type="button" onClick={onToggle} className="rounded p-2 text-slate-400 transition hover:bg-slate-100 hover:text-[#6658dd]" aria-label={`Actions for ${candidate.name}`}>
       <MoreVertical className="h-4 w-4" />
@@ -122,23 +171,61 @@ const CandidateActions = ({ candidate, isOpen, onToggle, onClose, align = 'right
     {isOpen && (
       <>
         <button type="button" className="fixed inset-0 z-10 cursor-default" onClick={onClose} aria-label="Close menu" />
-        <div className={`absolute ${align} z-20 w-44 rounded-md border border-slate-100 bg-white py-1.5 text-left shadow-lg`}>
-          <Link to={`/employer/candidateProfile/${candidate.id}`} className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"><User className="h-4 w-4" /> View Profile</Link>
-          <Link to="/employer/messages" className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"><MessageCircle className="h-4 w-4" /> Contact</Link>
-          {candidate.hasResume ? (
+        <div className={`absolute ${align} z-20 w-48 rounded-md border border-slate-100 bg-white py-1.5 text-left shadow-lg`}>
+          <Link to={`/employer/candidateProfile/${candidate.id}`} className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">
+            <User className="h-4 w-4" /> View Profile
+          </Link>
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              onContact(candidate);
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
+          >
+            <MessageCircle className="h-4 w-4" /> Contact
+          </button>
+          {!candidate.isUnlocked && (
             <button
               type="button"
               onClick={() => {
-                if (!candidate.allowResumeDownload) {
-                  alert('Upgrade Plan: Resume downloads are not supported under your current plan. Please upgrade to download resumes.');
-                  return;
-                }
-                downloadCandidateResume(candidate);
+                onClose();
+                onUnlock(candidate);
               }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-bold text-slate-600 hover:bg-slate-50"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-bold text-amber-600 hover:bg-amber-50 cursor-pointer"
             >
-              <Download className="h-4 w-4" /> Download Resume
+              <Unlock className="h-4 w-4" /> Unlock Profile
             </button>
+          )}
+          {candidate.hasResume ? (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!candidate.allowResumeDownload) {
+                    alert('Upgrade Plan: Resume viewing is not supported under your current plan. Please upgrade to view resumes.');
+                    return;
+                  }
+                  viewCandidateResume(candidate);
+                }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-bold text-blue-600 hover:bg-blue-50 cursor-pointer"
+              >
+                <Eye className="h-4 w-4" /> View Resume
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!candidate.allowResumeDownload) {
+                    alert('Upgrade Plan: Resume downloads are not supported under your current plan. Please upgrade to download resumes.');
+                    return;
+                  }
+                  downloadCandidateResume(candidate);
+                }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
+              >
+                <Download className="h-4 w-4" /> Download Resume
+              </button>
+            </>
           ) : (
             <button type="button" className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-bold text-slate-400" disabled>
               <Download className="h-4 w-4" /> No Resume
@@ -151,6 +238,7 @@ const CandidateActions = ({ candidate, isOpen, onToggle, onClose, align = 'right
 );
 
 export const EmployerSearchCandidates = () => {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [filters, setFilters] = useState(() => ({
     ...initialFilters,
@@ -167,6 +255,8 @@ export const EmployerSearchCandidates = () => {
   const [error, setError] = useState('');
   const [unlockSuccessModal, setUnlockSuccessModal] = useState({
     show: false,
+    title: 'Profile Unlocked!',
+    message: "Candidate's details have been unlocked.",
     remainingUnlocks: ''
   });
 
@@ -174,6 +264,8 @@ export const EmployerSearchCandidates = () => {
     const handleUnlockSuccess = (e) => {
       setUnlockSuccessModal({
         show: true,
+        title: 'Resume Unlocked!',
+        message: "Candidate's resume has been successfully unlocked and downloaded.",
         remainingUnlocks: e.detail.remainingUnlocks
       });
     };
@@ -182,6 +274,45 @@ export const EmployerSearchCandidates = () => {
       window.removeEventListener('resume-unlock-success', handleUnlockSuccess);
     };
   }, []);
+
+  const handleContactCandidate = async (candidate) => {
+    try {
+      const res = await axios.post(`${BASE_API_URL}/employer/candidates/${candidate.id}/contact`, {}, {
+        headers: getTokenHeaders()
+      });
+      if (res.data?.applicationId) {
+        navigate(`/employer/messages?application=${res.data.applicationId}`);
+      } else {
+        navigate('/employer/messages');
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Could not initiate conversation.');
+    }
+  };
+
+  const handleUnlockCandidate = async (candidate) => {
+    try {
+      const res = await axios.post(`${BASE_API_URL}/employer/candidates/${candidate.id}/unlock`, {}, {
+        headers: getTokenHeaders()
+      });
+      if (res.data?.success) {
+        setData(prev => ({
+          ...prev,
+          candidates: prev.candidates.map(c => (c.id === candidate.id ? { ...c, ...res.data.candidate, isUnlocked: true } : c))
+        }));
+        setUnlockSuccessModal({
+          show: true,
+          title: res.data.alreadyUnlocked ? 'Already Unlocked' : 'Profile Unlocked!',
+          message: res.data.alreadyUnlocked
+            ? (res.data.message || 'Candidate is already unlocked under your active plan.')
+            : 'Candidate profile and contact details have been successfully unlocked.',
+          remainingUnlocks: res.data.remainingUnlocks ?? ''
+        });
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to unlock profile.');
+    }
+  };
 
   const setFilter = (key, value) => {
     setFilters((current) => ({ ...current, [key]: value }));
@@ -323,8 +454,25 @@ export const EmployerSearchCandidates = () => {
                 <div className="flex items-start gap-3">
                   <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${candidate.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>{candidate.initials}</span>
                   <div className="min-w-0 flex-1">
-                    <Link to={`/employer/candidateProfile/${candidate.id}`} className="truncate text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{candidate.name}</Link>
-                    <p className="mt-0.5 truncate text-xs font-semibold text-slate-400">{candidate.email || candidate.phone}</p>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <Link to={`/employer/candidateProfile/${candidate.id}`} className="truncate text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{candidate.name}</Link>
+                      {candidate.isApplied && (
+                        <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">Applicant</span>
+                      )}
+                    </div>
+                    {candidate.isUnlocked ? (
+                      <p className="mt-0.5 truncate text-xs font-semibold text-slate-500">{[candidate.email, candidate.phone].filter(Boolean).join(' • ') || 'No contact info'}</p>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleUnlockCandidate(candidate)}
+                        className="mt-0.5 inline-flex items-center gap-1 text-xs font-semibold text-amber-600 hover:text-amber-700 underline cursor-pointer"
+                        title="Click to unlock contact details"
+                      >
+                        <Lock className="h-3 w-3" />
+                        <span>{candidate.email || 'Hidden (Unlock to View)'}</span>
+                      </button>
+                    )}
                     <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><MapPin className="h-3 w-3 shrink-0" />{candidate.location}</p>
                   </div>
                   <span className={`shrink-0 rounded px-2 py-1 text-[11px] font-black ${availabilityTone[candidate.availability] || availabilityTone.Immediate}`}>{candidate.availability}</span>
@@ -342,6 +490,8 @@ export const EmployerSearchCandidates = () => {
                     isOpen={openMenuId === candidate.id}
                     onToggle={() => setOpenMenuId(openMenuId === candidate.id ? null : candidate.id)}
                     onClose={() => setOpenMenuId(null)}
+                    onContact={handleContactCandidate}
+                    onUnlock={handleUnlockCandidate}
                     align="right-0 top-10"
                   />
                 </div>
@@ -358,7 +508,33 @@ export const EmployerSearchCandidates = () => {
               <tbody className="divide-y divide-slate-100">
                 {loading ? <tr><td colSpan="6" className="px-5 py-12 text-center"><Loader className="mx-auto h-7 w-7 animate-spin text-[#6658dd]" /></td></tr> : visibleRows.length ? visibleRows.map((candidate) => (
                   <tr key={candidate.id} className="transition hover:bg-slate-50">
-                    <td className="px-5 py-4"><div className="flex items-center gap-3"><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${candidate.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>{candidate.initials}</span><div><Link to={`/employer/candidateProfile/${candidate.id}`} className="text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{candidate.name}</Link><p className="mt-0.5 text-xs font-semibold text-slate-400">{candidate.email || candidate.phone}</p><p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><MapPin className="h-3 w-3" />{candidate.location}</p></div></div></td>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${candidate.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>{candidate.initials}</span>
+                        <div>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <Link to={`/employer/candidateProfile/${candidate.id}`} className="text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{candidate.name}</Link>
+                            {candidate.isApplied && (
+                              <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">Applicant</span>
+                            )}
+                          </div>
+                          {candidate.isUnlocked ? (
+                            <p className="mt-0.5 text-xs font-semibold text-slate-500">{[candidate.email, candidate.phone].filter(Boolean).join(' • ') || 'No contact info'}</p>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleUnlockCandidate(candidate)}
+                              className="mt-0.5 inline-flex items-center gap-1 text-xs font-semibold text-amber-600 hover:text-amber-700 underline cursor-pointer"
+                              title="Click to unlock contact details"
+                            >
+                              <Lock className="h-3 w-3" />
+                              <span>{candidate.email || 'Hidden (Unlock to View)'}</span>
+                            </button>
+                          )}
+                          <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><MapPin className="h-3 w-3" />{candidate.location}</p>
+                        </div>
+                      </div>
+                    </td>
                     <td className="px-5 py-4 text-sm font-semibold text-slate-600">{candidate.experience}</td>
                     <td className="px-5 py-4 text-sm font-semibold text-slate-600">{candidate.qualification || '-'}</td>
                     <td className="px-5 py-4 text-sm font-extrabold text-slate-700">{candidate.expectedSalary || 'Not specified'}</td>
@@ -369,6 +545,8 @@ export const EmployerSearchCandidates = () => {
                         isOpen={openMenuId === candidate.id}
                         onToggle={() => setOpenMenuId(openMenuId === candidate.id ? null : candidate.id)}
                         onClose={() => setOpenMenuId(null)}
+                        onContact={handleContactCandidate}
+                        onUnlock={handleUnlockCandidate}
                         align="right-6 top-12"
                       />
                     </td>
@@ -391,9 +569,9 @@ export const EmployerSearchCandidates = () => {
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-500">
               <Check className="h-8 w-8" />
             </div>
-            <h3 className="text-lg font-black text-slate-800">Resume Unlocked!</h3>
+            <h3 className="text-lg font-black text-slate-800">{unlockSuccessModal.title || 'Profile Unlocked!'}</h3>
             <p className="mt-2 text-sm text-slate-500 font-semibold leading-relaxed">
-              Candidate's resume has been successfully unlocked and downloaded.
+              {unlockSuccessModal.message || "Candidate's profile and contact details have been successfully unlocked."}
             </p>
             <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
               <span>Remaining Unlocks:</span>

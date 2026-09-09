@@ -2,12 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   ChevronDown,
-  Grid2X2,
   LogOut,
   Maximize,
   Menu,
   Moon,
-  Palette,
   Plus,
   Search,
   Sun
@@ -132,9 +130,6 @@ export const EmployerHeader = ({ toggleSidebar }) => {
         </form>
 
         <div className="hidden items-center gap-1 md:flex lg:gap-3">
-          <button type="button" className={`rounded-lg p-2 transition-colors ${theme === 'dark' ? 'text-slate-300 hover:bg-slate-700 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'}`} aria-label="Apps">
-            <Grid2X2 className="h-4.5 w-4.5" />
-          </button>
           <button
             type="button"
             onClick={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}
@@ -146,9 +141,6 @@ export const EmployerHeader = ({ toggleSidebar }) => {
           </button>
           <button type="button" onClick={toggleFullscreen} className={`hidden rounded-lg p-2 transition-colors lg:block ${theme === 'dark' ? 'text-slate-300 hover:bg-slate-700 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'}`} aria-label="Fullscreen">
             <Maximize className="h-4.5 w-4.5" />
-          </button>
-          <button type="button" className={`hidden rounded-lg p-2 transition-colors lg:block ${theme === 'dark' ? 'text-slate-300 hover:bg-slate-700 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'}`} aria-label="Theme settings">
-            <Palette className="h-4.5 w-4.5" />
           </button>
         </div>
 

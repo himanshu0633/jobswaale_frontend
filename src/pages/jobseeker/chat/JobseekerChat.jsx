@@ -205,6 +205,9 @@ export const JobseekerChat = ({ portal = 'jobseeker' }) => {
     if (urlApplicationId && String(urlApplicationId) !== String(activeId)) {
       if (threads.some(thread => String(thread.id) === String(urlApplicationId))) {
         setActiveId(urlApplicationId);
+        setMobileView('chat');
+      } else if (!loadingThreads) {
+        loadThreads(urlApplicationId, true);
       }
     }
   }, [searchParams, threads]);
