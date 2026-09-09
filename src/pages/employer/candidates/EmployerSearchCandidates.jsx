@@ -185,19 +185,7 @@ const CandidateActions = ({
           >
             <MessageCircle className="h-4 w-4" /> Contact
           </button>
-          {!candidate.isUnlocked && (
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                onUnlock(candidate);
-              }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-bold text-amber-600 hover:bg-amber-50 cursor-pointer"
-            >
-              <Unlock className="h-4 w-4" /> Unlock Profile
-            </button>
-          )}
-          {candidate.hasResume ? (
+          {candidate.hasResume && (
             <>
               <button
                 type="button"
@@ -226,10 +214,6 @@ const CandidateActions = ({
                 <Download className="h-4 w-4" /> Download Resume
               </button>
             </>
-          ) : (
-            <button type="button" className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-bold text-slate-400" disabled>
-              <Download className="h-4 w-4" /> No Resume
-            </button>
           )}
         </div>
       </>
