@@ -208,8 +208,12 @@ export const EmployerSidebar = ({ isOpen, isCollapsed, isDesktopShell = false, t
         <nav className={`flex-grow overflow-y-auto ${isCollapsed ? 'px-1 py-5' : 'px-4 py-5'}`}>
           {!isCollapsed && (
             <div className="mb-6 flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e8e6fa] text-[#6658dd]">
-                <Building2 className="h-5 w-5" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e8e6fa] text-[#6658dd] overflow-hidden border border-slate-100">
+                {profile.logo ? (
+                  <img src={profile.logo} alt={profile.name} className="h-full w-full object-cover" />
+                ) : (
+                  <Building2 className="h-5 w-5" />
+                )}
               </div>
               <div className="min-w-0">
                 <h3 className="truncate text-sm font-extrabold text-slate-800">{profile.name}</h3>

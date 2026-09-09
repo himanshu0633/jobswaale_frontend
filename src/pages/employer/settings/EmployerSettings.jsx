@@ -15,7 +15,8 @@ import {
   AlertTriangle,
   Lock,
   CheckCircle2,
-  Loader
+  Loader,
+  Building2
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
@@ -27,9 +28,11 @@ const getTokenHeaders = () => {
 
 export const EmployerSettings = () => {
   const bannerInputRef = useRef(null);
+  const logoInputRef = useRef(null);
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(true);
   const [bannerUploading, setBannerUploading] = useState(false);
+  const [logoUploading, setLogoUploading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -52,7 +55,9 @@ export const EmployerSettings = () => {
     department: '',
     altEmail: '',
     bio: '',
-    companyBanner: ''
+    companyBanner: '',
+    logo: '',
+    profileImage: ''
   });
 
   const [passwordForm, setPasswordForm] = useState({
@@ -181,6 +186,51 @@ export const EmployerSettings = () => {
   const handleRemoveCompanyBanner = async () => {
     setProfileForm(prev => ({ ...prev, companyBanner: '' }));
     showNotification('Company banner preview removed. Save changes to keep profile details.');
+  };
+
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
+      setErrorMsg('Only JPG, PNG, GIF, and WEBP logo images are allowed.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMsg('Logo / profile image cannot exceed 5 MB.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('logo', file);
+    setLogoUploading(true);
+    setErrorMsg('');
+
+    try {
+      const response = await axios.post(`${BASE_API_URL}/employer/profile/logo`, formData, {
+        headers: {
+          ...getTokenHeaders(),
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      const newLogo = response.data?.logo || '';
+      setProfileForm(prev => ({ ...prev, logo: newLogo, profileImage: newLogo }));
+      showNotification('Profile image / logo uploaded successfully!');
+      try {
+        const existing = JSON.parse(localStorage.getItem('publicUser') || '{}');
+        localStorage.setItem('publicUser', JSON.stringify({ ...existing, profileImage: newLogo, logo: newLogo }));
+      } catch {}
+    } catch (err) {
+      setErrorMsg(err.response?.data?.message || 'Failed to upload profile image.');
+    } finally {
+      setLogoUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    setProfileForm(prev => ({ ...prev, logo: '', profileImage: '' }));
+    showNotification('Profile image / logo removed. Save changes to keep profile details.');
   };
 
   const handlePasswordSubmit = async (e) => {
@@ -332,12 +382,20 @@ export const EmployerSettings = () => {
             
             {/* Header info */}
             <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-              <div className="h-12 w-12 rounded-full overflow-hidden shrink-0 border border-slate-100">
-                <img src="/assets/images/users/user-3.jpg" alt="User avatar" className="h-full w-full object-cover" onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150" }} />
+              <div className="h-12 w-12 rounded-full overflow-hidden shrink-0 border border-slate-200 bg-indigo-50 flex items-center justify-center">
+                {(profileForm.logo || profileForm.profileImage) ? (
+                  <img
+                    src={profileForm.logo || profileForm.profileImage}
+                    alt="User avatar"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <Building2 className="h-6 w-6 text-[#6658dd]" />
+                )}
               </div>
-              <div className="space-y-0.5">
-                <h5 className="font-extrabold text-[#3f4254] text-sm">{profileForm.fullName}</h5>
-                <span className="block text-slate-400 text-xs font-semibold break-all">{profileForm.email}</span>
+              <div className="space-y-0.5 min-w-0">
+                <h5 className="font-extrabold text-[#3f4254] text-sm truncate">{profileForm.fullName || 'Recruiter'}</h5>
+                <span className="block text-slate-400 text-xs font-semibold truncate">{profileForm.email}</span>
               </div>
             </div>
 
@@ -373,9 +431,56 @@ export const EmployerSettings = () => {
               <div className="rounded-lg border border-slate-100 bg-white shadow-sm overflow-hidden">
                 <div className="border-b border-slate-100 p-5 bg-slate-50/50">
                   <h3 className="font-extrabold text-[#3f4254] text-base">Personal Information</h3>
-                  <p className="text-xs font-semibold text-slate-400 mt-1">Update your personal details and company banner image.</p>
+                  <p className="text-xs font-semibold text-slate-400 mt-1">Update your personal details, profile picture, and company banner image.</p>
                 </div>
                 <form onSubmit={handleProfileSubmit} className="p-5 space-y-5 text-xs font-bold text-slate-500">
+                  
+                  {/* Profile image / logo upload section */}
+                  <div className="flex flex-col gap-4 p-4 bg-slate-50/60 rounded-lg border border-slate-100 sm:flex-row sm:items-center">
+                    <div className="h-20 w-20 overflow-hidden rounded-full border-2 border-slate-200 bg-white shadow-sm shrink-0 flex items-center justify-center">
+                      {(profileForm.logo || profileForm.profileImage) ? (
+                        <img
+                          src={profileForm.logo || profileForm.profileImage}
+                          alt="Company Logo"
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <Building2 className="h-9 w-9 text-[#6658dd]" />
+                      )}
+                    </div>
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleLogoUpload}
+                    />
+                    <div className="space-y-1.5">
+                      <h6 className="font-extrabold text-sm text-[#3f4254]">Profile Image / Company Logo</h6>
+                      <p className="text-xs font-semibold text-slate-400">Upload your profile image or company logo. Maximum size: 5MB.</p>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          disabled={logoUploading}
+                          onClick={() => logoInputRef.current?.click()}
+                          className="inline-flex items-center gap-1 bg-[#6658dd] text-white px-2.5 py-1.5 rounded hover:bg-[#5848d8] transition disabled:cursor-not-allowed disabled:opacity-60 text-xs font-bold"
+                        >
+                          <Upload className="h-3.5 w-3.5" />
+                          {logoUploading ? 'Uploading...' : 'Upload Image'}
+                        </button>
+                        {(profileForm.logo || profileForm.profileImage) && (
+                          <button
+                            type="button"
+                            onClick={handleRemoveLogo}
+                            className="inline-flex items-center gap-1 bg-rose-50 text-rose-600 px-2.5 py-1.5 rounded hover:bg-rose-100 transition border border-rose-100 text-xs font-bold"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                   
                   {/* Company banner upload section */}
                   <div className="flex flex-col gap-4 p-4 bg-slate-50/60 rounded-lg border border-slate-100 sm:flex-row sm:items-center">

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import {
   ChevronDown,
   LogOut,
@@ -11,6 +12,7 @@ import {
   Sun
 } from 'lucide-react';
 import logo from '../../../assets/logo.png';
+import { BASE_API_URL } from '../../../context/AuthContext';
 import { NotificationDropdown } from '../../../components/NotificationDropdown';
 
 const getEmployerUser = () => {
@@ -28,7 +30,19 @@ export const EmployerHeader = ({ toggleSidebar }) => {
   const [searchValue, setSearchValue] = useState('');
   const searchRef = useRef(null);
   const user = getEmployerUser();
-  const displayName = user?.firstName || user?.companyName || 'Nitika';
+  const displayName = user?.firstName || user?.companyName || 'Employer';
+  const [avatar, setAvatar] = useState(user?.profileImage || user?.logo || '');
+
+  useEffect(() => {
+    const token = localStorage.getItem('publicToken');
+    if (token) {
+      axios.get(`${BASE_API_URL}/employer/profile`, { headers: { Authorization: `Bearer ${token}` } })
+        .then((res) => {
+          if (res.data?.logo) setAvatar(res.data.logo);
+        })
+        .catch(() => {});
+    }
+  }, []);
 
   useEffect(() => {
     document.documentElement.dataset.employerTheme = theme;
@@ -152,11 +166,17 @@ export const EmployerHeader = ({ toggleSidebar }) => {
             onClick={() => setDropdownOpen((current) => !current)}
             className={`flex items-center gap-2 rounded-lg p-1 transition-colors sm:gap-3 ${theme === 'dark' ? 'hover:bg-slate-700/70' : 'hover:bg-slate-100'}`}
           >
-            <img
-              src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=120"
-              alt="profile"
-              className="h-7 w-7 shrink-0 rounded-full border-2 border-emerald-400 object-cover sm:h-8 sm:w-8"
-            />
+            {avatar ? (
+              <img
+                src={avatar}
+                alt="profile"
+                className="h-7 w-7 shrink-0 rounded-full border-2 border-emerald-400 object-cover sm:h-8 sm:w-8"
+              />
+            ) : (
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-emerald-400 bg-emerald-50 text-xs font-black text-emerald-700 sm:h-8 sm:w-8">
+                {(displayName[0] || 'E').toUpperCase()}
+              </div>
+            )}
             <span className={`hidden items-center gap-1 text-sm font-extrabold md:flex ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
               <span className="max-w-24 truncate lg:max-w-32">{displayName}</span>
               <ChevronDown className="h-4 w-4 text-slate-400" />
