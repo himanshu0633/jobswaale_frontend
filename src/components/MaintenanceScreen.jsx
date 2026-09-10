@@ -65,7 +65,7 @@ export const MaintenanceScreen = ({ settings = {} }) => {
       </div>
 
       {/* Footer link for SuperAdmin */}
-      <div className="w-full max-w-2xl flex justify-center pb-6 sm:pb-8">
+      {/* <div className="w-full max-w-2xl flex justify-center pb-6 sm:pb-8">
         <Link
           to="/superadmin-login"
           className="inline-flex items-center gap-1 text-xs font-semibold text-slate-400 hover:text-indigo-600 transition"
@@ -73,7 +73,7 @@ export const MaintenanceScreen = ({ settings = {} }) => {
           <span>Administrator Access</span>
           <ArrowRight className="h-3 w-3" />
         </Link>
-      </div>
+      </div> */}
     </div>
   );
 };

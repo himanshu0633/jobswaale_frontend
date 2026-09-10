@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { GoogleLogin } from '@react-oauth/google';
@@ -84,6 +84,8 @@ export const Login = () => {
   const [captchaEnabled, setCaptchaEnabled] = useState(false);
   const [captchaCode, setCaptchaCode] = useState(makeCaptcha);
   const [captchaInput, setCaptchaInput] = useState('');
+  const [captchaError, setCaptchaError] = useState('');
+  const captchaInputRef = useRef(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(location.state?.message || '');
   const [blacklistNotice, setBlacklistNotice] = useState(null);
@@ -137,12 +139,29 @@ export const Login = () => {
     setCaptchaInput('');
   };
 
+  const handleManualRefreshCaptcha = () => {
+    refreshCaptcha();
+    setCaptchaError('');
+    if (error && error.toLowerCase().includes('captcha')) {
+      setError('');
+    }
+  };
+
+  const handleCaptchaInputChange = (event) => {
+    setCaptchaInput(event.target.value.toUpperCase());
+    if (captchaError) setCaptchaError('');
+    if (error && error.toLowerCase().includes('captcha')) {
+      setError('');
+    }
+  };
+
   const fillTestEmployerLogin = () => {
     setRole('employer');
     setLoginMethod('password');
     setIdentifier(TEST_EMPLOYER_LOGIN.identifier);
     setPassword(TEST_EMPLOYER_LOGIN.password);
     setError('');
+    setCaptchaError('');
     setSuccess('');
   };
 
@@ -152,19 +171,32 @@ export const Login = () => {
     setIdentifier(TEST_JOBSEEKER_LOGIN.identifier);
     setPassword(TEST_JOBSEEKER_LOGIN.password);
     setError('');
+    setCaptchaError('');
     setSuccess('');
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
+    setCaptchaError('');
     setSuccess('');
     setBlacklistNotice(null);
 
-    if (captchaEnabled && captchaInput.trim().toUpperCase() !== captchaCode) {
-      setError('Captcha does not match. Please try again.');
-      refreshCaptcha();
-      return;
+    if (captchaEnabled) {
+      const cleanCaptcha = captchaInput.trim().toUpperCase();
+      if (!cleanCaptcha) {
+        setCaptchaError('Please enter the captcha code.');
+        setError('Please enter the captcha code.');
+        captchaInputRef.current?.focus();
+        return;
+      }
+      if (cleanCaptcha !== captchaCode) {
+        setCaptchaError('Captcha does not match. Please try again.');
+        setError('Captcha does not match. Please try again.');
+        refreshCaptcha();
+        captchaInputRef.current?.focus();
+        return;
+      }
     }
 
     if (loginMethod === 'otp') {
@@ -330,8 +362,26 @@ export const Login = () => {
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="flex rounded-2xl bg-slate-50 p-2">
-                <RoleButton active={role === 'jobseeker'} icon={User} label="Job Seeker" onClick={() => setRole('jobseeker')} />
-                <RoleButton active={role === 'employer'} icon={Briefcase} label="Employer" onClick={() => setRole('employer')} />
+                <RoleButton
+                  active={role === 'jobseeker'}
+                  icon={User}
+                  label="Job Seeker"
+                  onClick={() => {
+                    setRole('jobseeker');
+                    setError('');
+                    setCaptchaError('');
+                  }}
+                />
+                <RoleButton
+                  active={role === 'employer'}
+                  icon={Briefcase}
+                  label="Employer"
+                  onClick={() => {
+                    setRole('employer');
+                    setError('');
+                    setCaptchaError('');
+                  }}
+                />
               </div>
 
               {/* Test Employer Login Button */}
@@ -423,6 +473,7 @@ export const Login = () => {
                   onClick={() => {
                     setLoginMethod((current) => current === 'password' ? 'otp' : 'password');
                     setError('');
+                    setCaptchaError('');
                   }}
                   className="text-sm font-extrabold text-[#0058bf] hover:underline"
                 >
@@ -431,23 +482,54 @@ export const Login = () => {
               </div>
 
               {captchaEnabled && (
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <label className="mb-2 block text-sm font-extrabold text-slate-800">Captcha Verification</label>
+                <div
+                  className={`rounded-xl border p-4 transition-colors ${
+                    captchaError ? 'border-rose-200 bg-rose-50/40' : 'border-slate-200 bg-slate-50'
+                  }`}
+                >
+                  <label
+                    htmlFor="captchaInput"
+                    className={`mb-2 block text-sm font-extrabold ${captchaError ? 'text-rose-800' : 'text-slate-800'}`}
+                  >
+                    Captcha Verification
+                  </label>
                   <div className="flex flex-col gap-3 sm:flex-row">
-                    <div className="flex min-w-36 items-center justify-between rounded-xl border border-dashed border-slate-300 bg-white px-4 py-3">
+                    <div className="flex min-w-36 items-center justify-between rounded-xl border border-dashed border-slate-300 bg-white px-4 py-3 shadow-sm">
                       <span className="select-none font-mono text-xl font-black tracking-[0.3em] text-slate-800">{captchaCode}</span>
-                      <button type="button" onClick={refreshCaptcha} className="text-[#0058bf]" aria-label="Refresh captcha">
+                      <button
+                        type="button"
+                        onClick={handleManualRefreshCaptcha}
+                        className="text-[#0058bf] hover:text-[#004aa3] transition"
+                        aria-label="Refresh captcha"
+                        title="Refresh captcha"
+                      >
                         <RefreshCw className="h-4 w-4" />
                       </button>
                     </div>
-                    <input
-                      type="text"
-                      value={captchaInput}
-                      onChange={(event) => setCaptchaInput(event.target.value.toUpperCase())}
-                      placeholder="Enter captcha"
-                      className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold uppercase outline-none focus:border-[#0058bf] focus:ring-2 focus:ring-blue-100"
-                    />
+                    <div className="flex-1">
+                      <input
+                        ref={captchaInputRef}
+                        id="captchaInput"
+                        name="captcha"
+                        type="text"
+                        autoComplete="off"
+                        value={captchaInput}
+                        onChange={handleCaptchaInputChange}
+                        placeholder="Enter captcha"
+                        className={`w-full rounded-xl border bg-white px-4 py-3 text-sm font-bold uppercase outline-none transition ${
+                          captchaError
+                            ? 'border-red-500 text-slate-900 placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-100'
+                            : 'border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-[#0058bf] focus:ring-2 focus:ring-blue-100'
+                        }`}
+                      />
+                    </div>
                   </div>
+                  {captchaError && (
+                    <p className="mt-2 flex items-center gap-1.5 text-xs font-bold text-rose-600">
+                      <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
+                      {captchaError}
+                    </p>
+                  )}
                 </div>
               )}
 
