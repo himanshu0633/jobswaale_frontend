@@ -20,6 +20,8 @@ import ForgotPassword from './pages/superadmin/auth/ForgotPassword';
 // Public Portal Pages (Visitor Pages)
 import PublicPage from './pages/public/PublicPage';
 import PublicBlogs from './pages/public/PublicBlogs';
+import MaintenanceScreen from './components/MaintenanceScreen';
+import { getPublicSettings } from './utils/publicSettings';
 
 // Protected Route Guards
 import { EmployerProtectedRoute, JobseekerProtectedRoute } from './utils/protectedRoutes';
@@ -224,6 +226,69 @@ const AssetRefreshGuard = () => {
   }, []);
 
   return null;
+};
+
+const isSuperAdminRoute = (pathname) => {
+  return (
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/superadmin-login') ||
+    pathname.startsWith('/forgot-password-SuperAdmin')
+  );
+};
+
+const MaintenanceGuard = ({ children }) => {
+  const location = useLocation();
+  const [maintenanceMode, setMaintenanceMode] = useState(() => {
+    try {
+      const cached = localStorage.getItem('public_settings_cache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        return Boolean(parsed.data?.maintenanceMode);
+      }
+    } catch {}
+    return false;
+  });
+  const [settings, setSettings] = useState(() => {
+    try {
+      const cached = localStorage.getItem('public_settings_cache');
+      if (cached) return JSON.parse(cached).data || null;
+    } catch {}
+    return null;
+  });
+
+  useEffect(() => {
+    let mounted = true;
+
+    const checkStatus = async () => {
+      try {
+        const data = await getPublicSettings();
+        if (mounted && data) {
+          setMaintenanceMode(Boolean(data.maintenanceMode));
+          setSettings(data);
+        }
+      } catch (e) {
+        console.error('Maintenance check error:', e);
+      }
+    };
+
+    checkStatus();
+    const interval = setInterval(checkStatus, 10000);
+
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, [location.pathname]);
+
+  if (isSuperAdminRoute(location.pathname)) {
+    return children;
+  }
+
+  if (maintenanceMode) {
+    return <MaintenanceScreen settings={settings} />;
+  }
+
+  return children;
 };
 
 // Protected Route Guard: Checks auth and superadmin access
@@ -469,99 +534,101 @@ function App() {
         <Router basename={routerBasename}>
           <AssetRefreshGuard />
           <ScrollToTop />
-          <Routes>
-          {/* A. Visitor Authentication Routes */}
-          <Route path="/login" element={<PublicLogin />} />
-          <Route path="/superadmin-login" element={<SuperAdminLogin />} />      
-          <Route path="/jobseeker-register" element={<JobSeekerRegister />} />
-          <Route path="/employer-register" element={<EmployerRegister />} />
-          <Route path="/forgot-password-SuperAdmin" element={<ForgotPassword />} />
+          <MaintenanceGuard>
+            <Routes>
+            {/* A. Visitor Authentication Routes */}
+            <Route path="/login" element={<PublicLogin />} />
+            <Route path="/superadmin-login" element={<SuperAdminLogin />} />      
+            <Route path="/jobseeker-register" element={<JobSeekerRegister />} />
+            <Route path="/employer-register" element={<EmployerRegister />} />
+            <Route path="/forgot-password-SuperAdmin" element={<ForgotPassword />} />
 
-          {/* B. Secure SuperAdmin Console Route Block */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/admin/*" element={<AppLayout />} />
-          </Route>
-
-          {/* C. Public Employers Page */}
-          <Route path="/employers" element={<PublicPage />} />
-
-          {/* D. Secure Employer Console Route Block */}
-          <Route element={<EmployerProtectedRoute />}>
-            <Route path="/employer" element={
-              <Suspense fallback={
-                <div className="min-h-screen bg-slate-50 p-6">
-                  <PageSkeleton />
-                </div>
-              }>
-                <EmployerLayout />
-              </Suspense>
-            }>
-              <Route index element={<EmployerDashboard />} />
-              <Route path="dashboard" element={<EmployerDashboard />} />
-              <Route path="search-results" element={<EmployerSearchResults />} />
-              <Route path="jobs" element={<EmployerJobs />} />
-              <Route path="jobs/create" element={<EmployerPostJob />} />
-              <Route path="jobs/:id/edit" element={<EmployerPostJob />} />
-              <Route path="jobs/:id" element={<EmployerJobDetails />} />
-              <Route path="applications" element={<EmployerApplications />} />
-              <Route path="applications/:id" element={<EmployerApplicationDetails />} />
-              <Route path="applicant-history" element={<EmployerApplicantHistory />} />
-              <Route path="shortlisted" element={<EmployerShortlisted />} />
-              <Route path="interviews" element={<EmployerInterviews />} />
-              <Route path="selected" element={<EmployerSelected />} />
-              <Route path="rejected" element={<EmployerRejected />} />
-              <Route path="offers" element={<EmployerOffers />} />
-              <Route path="hired" element={<EmployerHired />} />
-              <Route path="email-templates" element={<EmployerEmailTemplates />} />
-              <Route path="candidates" element={<EmployerSearchCandidates />} />
-              <Route path="candidateProfile/:id" element={<EmployerCandidateProfile />} />
-              <Route path="company" element={<EmployerCompanyProfile />} />
-              <Route path="payments" element={<EmployerPlaceholder title="Payments" />} />
-              <Route path="subscription" element={<EmployerSubscription />} />
-              <Route path="talent-pool" element={<EmployerTalentPool />} />
-              <Route path="messages" element={<EmployerMessages />} />
-              <Route path="auto-mail" element={<EmployerAutoMail />} />
-              <Route path="reports" element={<EmployerPortalReports />} />
-              <Route path="settings" element={<EmployerSettings />} />
-              <Route path="support" element={<EmployerSupport />} />
-              <Route path="*" element={<Navigate to="/employer" replace />} />
+            {/* B. Secure SuperAdmin Console Route Block */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/admin/*" element={<AppLayout />} />
             </Route>
-          </Route>
 
-          {/* E. Public Web Blogs Pages */}
-          <Route path="/blogs" element={<PublicBlogs />} />
-          <Route path="/blogs/:slug" element={<PublicBlogs />} />
-          
-          {/* F. Secure Jobseeker Console Route Block */}
-          <Route element={<JobseekerProtectedRoute />}>
-            <Route path="/jobseeker" element={
-              <Suspense fallback={
-                <div className="min-h-screen bg-slate-50 p-6">
-                  <PageSkeleton />
-                </div>
+            {/* C. Public Employers Page */}
+            <Route path="/employers" element={<PublicPage />} />
+
+            {/* D. Secure Employer Console Route Block */}
+            <Route element={<EmployerProtectedRoute />}>
+              <Route path="/employer" element={
+                <Suspense fallback={
+                  <div className="min-h-screen bg-slate-50 p-6">
+                    <PageSkeleton />
+                  </div>
+                }>
+                  <EmployerLayout />
+                </Suspense>
               }>
-                <JobseekerLayout />
-              </Suspense>
-            }>
-              <Route index element={<JobseekerDashboard />} />
-              <Route path="dashboard" element={<JobseekerDashboard />} />
-              <Route path="profile" element={<JobseekerProfile />} />
-              <Route path="subscription" element={<JobseekerSubscription />} />
-              <Route path="jobs-applied" element={<JobseekerApplications />} />
-              <Route path="saved-jobs" element={<JobseekerSavedJobs />} />
-              <Route path="saved-employers" element={<JobseekerSavedEmployers />} />
-              <Route path="messages" element={<JobseekerChat />} />
-              <Route path="applications" element={<JobseekerApplications />} />
-              <Route path="applications/:id" element={<JobseekerApplicationTracker />} />
-              
-              <Route path="*" element={<Navigate to="/jobseeker" replace />} />
+                <Route index element={<EmployerDashboard />} />
+                <Route path="dashboard" element={<EmployerDashboard />} />
+                <Route path="search-results" element={<EmployerSearchResults />} />
+                <Route path="jobs" element={<EmployerJobs />} />
+                <Route path="jobs/create" element={<EmployerPostJob />} />
+                <Route path="jobs/:id/edit" element={<EmployerPostJob />} />
+                <Route path="jobs/:id" element={<EmployerJobDetails />} />
+                <Route path="applications" element={<EmployerApplications />} />
+                <Route path="applications/:id" element={<EmployerApplicationDetails />} />
+                <Route path="applicant-history" element={<EmployerApplicantHistory />} />
+                <Route path="shortlisted" element={<EmployerShortlisted />} />
+                <Route path="interviews" element={<EmployerInterviews />} />
+                <Route path="selected" element={<EmployerSelected />} />
+                <Route path="rejected" element={<EmployerRejected />} />
+                <Route path="offers" element={<EmployerOffers />} />
+                <Route path="hired" element={<EmployerHired />} />
+                <Route path="email-templates" element={<EmployerEmailTemplates />} />
+                <Route path="candidates" element={<EmployerSearchCandidates />} />
+                <Route path="candidateProfile/:id" element={<EmployerCandidateProfile />} />
+                <Route path="company" element={<EmployerCompanyProfile />} />
+                <Route path="payments" element={<EmployerPlaceholder title="Payments" />} />
+                <Route path="subscription" element={<EmployerSubscription />} />
+                <Route path="talent-pool" element={<EmployerTalentPool />} />
+                <Route path="messages" element={<EmployerMessages />} />
+                <Route path="auto-mail" element={<EmployerAutoMail />} />
+                <Route path="reports" element={<EmployerPortalReports />} />
+                <Route path="settings" element={<EmployerSettings />} />
+                <Route path="support" element={<EmployerSupport />} />
+                <Route path="*" element={<Navigate to="/employer" replace />} />
+              </Route>
             </Route>
-          </Route>
-          
-          {/* F. Public Web Portal Wildcard Route Fallback */}
-          <Route path="/jobs/:id" element={<PublicPage />} />
-          <Route path="*" element={<PublicPage />} />
-          </Routes>
+
+            {/* E. Public Web Blogs Pages */}
+            <Route path="/blogs" element={<PublicBlogs />} />
+            <Route path="/blogs/:slug" element={<PublicBlogs />} />
+            
+            {/* F. Secure Jobseeker Console Route Block */}
+            <Route element={<JobseekerProtectedRoute />}>
+              <Route path="/jobseeker" element={
+                <Suspense fallback={
+                  <div className="min-h-screen bg-slate-50 p-6">
+                    <PageSkeleton />
+                  </div>
+                }>
+                  <JobseekerLayout />
+                </Suspense>
+              }>
+                <Route index element={<JobseekerDashboard />} />
+                <Route path="dashboard" element={<JobseekerDashboard />} />
+                <Route path="profile" element={<JobseekerProfile />} />
+                <Route path="subscription" element={<JobseekerSubscription />} />
+                <Route path="jobs-applied" element={<JobseekerApplications />} />
+                <Route path="saved-jobs" element={<JobseekerSavedJobs />} />
+                <Route path="saved-employers" element={<JobseekerSavedEmployers />} />
+                <Route path="messages" element={<JobseekerChat />} />
+                <Route path="applications" element={<JobseekerApplications />} />
+                <Route path="applications/:id" element={<JobseekerApplicationTracker />} />
+                
+                <Route path="*" element={<Navigate to="/jobseeker" replace />} />
+              </Route>
+            </Route>
+            
+            {/* F. Public Web Portal Wildcard Route Fallback */}
+            <Route path="/jobs/:id" element={<PublicPage />} />
+            <Route path="*" element={<PublicPage />} />
+            </Routes>
+          </MaintenanceGuard>
         </Router>
       </AuthProvider>
     </AppErrorBoundary>

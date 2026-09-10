@@ -15,6 +15,7 @@ import {
   X 
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import { clearPublicSettingsCache } from '../../../utils/publicSettings';
 
 const defaultSettings = {
   // General
@@ -65,11 +66,16 @@ export const Settings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  const getAdminHeaders = () => {
+    const token = localStorage.getItem('token');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
   useEffect(() => {
     const loadSettings = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(`${BASE_API_URL}/settings`);
+        const response = await axios.get(`${BASE_API_URL}/settings`, { headers: getAdminHeaders() });
         setForm({ ...defaultSettings, ...(response.data || {}) });
       } catch (err) {
         showMessage('error', err.response?.data?.message || 'Failed to load settings.');
@@ -93,8 +99,9 @@ export const Settings = () => {
   const handleSave = async (tabName) => {
     setSaving(true);
     try {
-      const response = await axios.put(`${BASE_API_URL}/settings`, form);
+      const response = await axios.put(`${BASE_API_URL}/settings`, form, { headers: getAdminHeaders() });
       setForm({ ...defaultSettings, ...(response.data.settings || {}) });
+      clearPublicSettingsCache();
       showMessage('success', `${tabName.charAt(0).toUpperCase() + tabName.slice(1)} settings saved successfully.`);
     } catch (err) {
       console.error(err);
@@ -107,7 +114,7 @@ export const Settings = () => {
   const handleTestEmail = async () => {
     setTestingEmail(true);
     try {
-      const response = await axios.post(`${BASE_API_URL}/settings/test-email`, form);
+      const response = await axios.post(`${BASE_API_URL}/settings/test-email`, form, { headers: getAdminHeaders() });
       showMessage('success', response.data.message || 'Test email sent successfully.');
     } catch (err) {
       const rawMessage = err.response?.data?.message || 'Failed to send test email.';

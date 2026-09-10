@@ -2,23 +2,32 @@ import axios from 'axios';
 import { BASE_API_URL } from '../context/AuthContext';
 
 const CACHE_KEY = 'public_settings_cache';
+const CACHE_TTL_MS = 10 * 1000; // 10 seconds TTL so system status changes reflect quickly
 
 let activePromise = null;
 
 /**
+ * Clears the cached public settings.
+ */
+export const clearPublicSettingsCache = () => {
+  try {
+    localStorage.removeItem(CACHE_KEY);
+  } catch {}
+};
+
+/**
  * Gets public settings with local caching.
- * Expiry is set on a daily calendar date basis (expires when calendar date changes).
  *
  * @param {boolean} forceRefresh - If true, ignores cache and requests a new fetch.
  * @returns {Promise<Object>} The public settings data.
  */
 export const getPublicSettings = async (forceRefresh = false) => {
   const cached = localStorage.getItem(CACHE_KEY);
+  const now = Date.now();
   if (cached && !forceRefresh) {
     try {
       const parsed = JSON.parse(cached);
-      const todayStr = new Date().toDateString(); // e.g. "Tue Jul 14 2026"
-      if (parsed.expiryDate === todayStr && parsed.data) {
+      if (parsed.timestamp && (now - parsed.timestamp < CACHE_TTL_MS) && parsed.data) {
         return parsed.data;
       }
     } catch (e) {
@@ -33,10 +42,10 @@ export const getPublicSettings = async (forceRefresh = false) => {
 
   activePromise = (async () => {
     try {
-      const response = await axios.get(`${BASE_API_URL}/settings/public`);
+      const response = await axios.get(`${BASE_API_URL}/settings/public?_t=${Date.now()}`);
       const data = response.data || {};
       const cacheObj = {
-        expiryDate: new Date().toDateString(),
+        timestamp: Date.now(),
         data
       };
       localStorage.setItem(CACHE_KEY, JSON.stringify(cacheObj));
