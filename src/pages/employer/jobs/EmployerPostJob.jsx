@@ -252,8 +252,9 @@ export const EmployerPostJob = () => {
 
         const currentStatus = jobResponse?.data?.status || '';
         setLoadedJobStatus(currentStatus);
-        if (isEditMode && currentStatus !== 'Active') {
-          setMessage({ type: 'error', text: `${currentStatus} jobs cannot be edited. Only active jobs can be edited.` });
+        const canEditLoadedJob = ['Active', 'Draft'].includes(currentStatus);
+        if (isEditMode && !canEditLoadedJob) {
+          setMessage({ type: 'error', text: `${currentStatus} jobs cannot be edited. Only active or draft jobs can be edited.` });
         }
       } catch (err) {
         setMessage({ type: 'error', text: err.response?.data?.message || (isEditMode ? 'Unable to load job data.' : 'Unable to load job form data.') });
@@ -390,8 +391,9 @@ export const EmployerPostJob = () => {
   };
 
   const submitJob = async (status = 'publish') => {
-    if (isEditMode && loadedJobStatus !== 'Active') {
-      setMessage({ type: 'error', text: `${loadedJobStatus} jobs cannot be edited. Only active jobs can be edited.` });
+    const canEditLoadedJob = ['Active', 'Draft'].includes(loadedJobStatus);
+    if (isEditMode && !canEditLoadedJob) {
+      setMessage({ type: 'error', text: `${loadedJobStatus} jobs cannot be edited. Only active or draft jobs can be edited.` });
       return;
     }
 
@@ -761,13 +763,13 @@ export const EmployerPostJob = () => {
           )}
 
           <div className="flex flex-wrap justify-between gap-2">
-            <button type="button" onClick={() => submitJob('draft')} disabled={submitting || (isEditMode && loadedJobStatus !== 'Active')} className="inline-flex items-center gap-2 rounded-md border border-[#6658dd] px-4 py-2 text-sm font-extrabold text-[#6658dd] disabled:opacity-60"><Save className="h-4 w-4" /> Save as Draft</button>
+            <button type="button" onClick={() => submitJob('draft')} disabled={submitting || (isEditMode && !['Active', 'Draft'].includes(loadedJobStatus))} className="inline-flex items-center gap-2 rounded-md border border-[#6658dd] px-4 py-2 text-sm font-extrabold text-[#6658dd] disabled:opacity-60"><Save className="h-4 w-4" /> Save as Draft</button>
             <div className="flex gap-2">
               {step > 0 && <button type="button" onClick={() => setStep((current) => current - 1)} className="inline-flex items-center gap-2 rounded-md bg-amber-500 px-4 py-2 text-sm font-extrabold text-white"><ArrowLeft className="h-4 w-4" /> Back</button>}
               {step < 3 ? (
                 <button type="button" onClick={handleNext} className="inline-flex items-center gap-2 rounded-md bg-[#6658dd] px-4 py-2 text-sm font-extrabold text-white">Save & Continue <ArrowRight className="h-4 w-4" /></button>
               ) : (
-                <button type="button" onClick={() => submitJob(form.publishStatus)} disabled={submitting || (isEditMode && loadedJobStatus !== 'Active')} className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-extrabold text-white disabled:opacity-60">{submitting ? <Loader className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} {isEditMode ? 'Update Job' : 'Publish Job'}</button>
+                <button type="button" onClick={() => submitJob(form.publishStatus)} disabled={submitting || (isEditMode && !['Active', 'Draft'].includes(loadedJobStatus))} className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-extrabold text-white disabled:opacity-60">{submitting ? <Loader className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} {isEditMode ? (form.publishStatus === 'draft' ? 'Save as Draft' : (loadedJobStatus === 'Draft' ? 'Publish Job' : 'Update Job')) : (form.publishStatus === 'draft' ? 'Save as Draft' : 'Publish Job')}</button>
               )}
             </div>
           </div>
