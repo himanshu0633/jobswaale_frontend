@@ -21,7 +21,9 @@ import {
   Video,
   X,
   UserPlus,
-  UserX
+  UserX,
+  MessageCircle,
+  Clock
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import ClearFilterButton from '../../../components/ClearFilterButton';
@@ -285,6 +287,34 @@ export const EmployerInterviews = () => {
     }
   };
 
+  const handleInterviewOnHold = async (applicationId, interview) => {
+    setLoading(true);
+    setError('');
+    try {
+      await axios.post(
+        `${BASE_API_URL}/employer/applications/${applicationId}/schedule-interview`,
+        {
+          onHold: true,
+          type: interview?.type === 'Telephonic' ? 'Phone Call' : (interview?.type || 'Video Call'),
+          notes: interview?.notes || 'Interview kept on hold.'
+        },
+        { headers: getTokenHeaders() }
+      );
+      const response = await axios.get(`${BASE_API_URL}/employer/interviews?${queryParams}`, { headers: getTokenHeaders() });
+      setData({
+        stats: { total: 0, scheduled: 0, onHold: 0 },
+        filters: { jobTitles: [], types: [] },
+        interviews: [],
+        pagination: { page: 1, limit: pageSize, total: 0, totalPages: 1 },
+        ...response.data
+      });
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to move interview to hold.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-4 px-3 sm:space-y-5 sm:px-0">
       <div className="flex flex-col justify-between gap-2 md:flex-row md:items-center md:gap-3">
@@ -371,7 +401,7 @@ export const EmployerInterviews = () => {
                     </div>
                   </div>
 
-                   <div className="mt-3 grid w-full grid-cols-2 gap-2">
+                  <div className="mt-3 grid w-full grid-cols-2 gap-2">
                     <Link
                       to={`/employer/applications/${interview.applicationId}`}
                       title="View Application Details"
@@ -380,36 +410,69 @@ export const EmployerInterviews = () => {
                       <Eye className="h-3.5 w-3.5" />
                       <span>View</span>
                     </Link>
-                    <button
-                      type="button"
-                      disabled={loading}
-                      onClick={() => openEditModal(interview)}
-                      title="Reschedule Interview"
-                      className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    <Link
+                      to={`/employer/messages?application=${interview.applicationId}`}
+                      title="Message Candidate"
+                      className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-sky-200 px-2 text-xs font-extrabold text-sky-600 transition hover:bg-sky-50"
                     >
-                      <Calendar className="h-3.5 w-3.5" />
-                      <span>Reschedule</span>
-                    </button>
-                    <button
-                      type="button"
-                      disabled={loading}
-                      onClick={() => handleStatusUpdate(interview.applicationId, 'Offered')}
-                      title="Select Candidate"
-                      className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <UserPlus className="h-3.5 w-3.5" />
-                      <span>Select</span>
-                    </button>
-                    <button
-                      type="button"
-                      disabled={loading}
-                      onClick={() => handleStatusUpdate(interview.applicationId, 'Rejected')}
-                      title="Reject Candidate"
-                      className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <UserX className="h-3.5 w-3.5" />
-                      <span>Reject</span>
-                    </button>
+                      <MessageCircle className="h-3.5 w-3.5" />
+                      <span>Message</span>
+                    </Link>
+                    {interview.status === 'On Hold' ? (
+                      <button
+                        type="button"
+                        disabled={loading}
+                        onClick={() => openEditModal(interview)}
+                        title="Reschedule Interview"
+                        className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed col-span-2 sm:col-span-1"
+                      >
+                        <Calendar className="h-3.5 w-3.5" />
+                        <span>Reschedule</span>
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          disabled={loading}
+                          onClick={() => handleStatusUpdate(interview.applicationId, 'Offered')}
+                          title="Select Candidate"
+                          className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <UserPlus className="h-3.5 w-3.5" />
+                          <span>Select</span>
+                        </button>
+                        <button
+                          type="button"
+                          disabled={loading}
+                          onClick={() => openEditModal(interview)}
+                          title="Reschedule Interview"
+                          className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Calendar className="h-3.5 w-3.5" />
+                          <span>Reschedule</span>
+                        </button>
+                        <button
+                          type="button"
+                          disabled={loading}
+                          onClick={() => handleInterviewOnHold(interview.applicationId, interview)}
+                          title="On Hold for Interview"
+                          className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-amber-700 transition hover:bg-amber-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Clock className="h-3.5 w-3.5" />
+                          <span>Hold</span>
+                        </button>
+                        <button
+                          type="button"
+                          disabled={loading}
+                          onClick={() => handleStatusUpdate(interview.applicationId, 'Rejected')}
+                          title="Reject Candidate"
+                          className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <UserX className="h-3.5 w-3.5" />
+                          <span>Reject</span>
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               );
@@ -444,36 +507,69 @@ export const EmployerInterviews = () => {
                             <Eye className="h-3.5 w-3.5" />
                             <span>View</span>
                           </Link>
-                          <button
-                            type="button"
-                            disabled={loading}
-                            onClick={() => openEditModal(interview)}
-                            title="Reschedule Interview"
-                            className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          <Link
+                            to={`/employer/messages?application=${interview.applicationId}`}
+                            title="Message Candidate"
+                            className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-sky-200 px-2 text-xs font-extrabold text-sky-600 transition hover:bg-sky-50"
                           >
-                            <Calendar className="h-3.5 w-3.5" />
-                            <span>Reschedule</span>
-                          </button>
-                          <button
-                            type="button"
-                            disabled={loading}
-                            onClick={() => handleStatusUpdate(interview.applicationId, 'Offered')}
-                            title="Select Candidate"
-                            className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <UserPlus className="h-3.5 w-3.5" />
-                            <span>Select</span>
-                          </button>
-                          <button
-                            type="button"
-                            disabled={loading}
-                            onClick={() => handleStatusUpdate(interview.applicationId, 'Rejected')}
-                            title="Reject Candidate"
-                            className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <UserX className="h-3.5 w-3.5" />
-                            <span>Reject</span>
-                          </button>
+                            <MessageCircle className="h-3.5 w-3.5" />
+                            <span>Message</span>
+                          </Link>
+                          {interview.status === 'On Hold' ? (
+                            <button
+                              type="button"
+                              disabled={loading}
+                              onClick={() => openEditModal(interview)}
+                              title="Reschedule Interview"
+                              className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed col-span-2"
+                            >
+                              <Calendar className="h-3.5 w-3.5" />
+                              <span>Reschedule</span>
+                            </button>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                disabled={loading}
+                                onClick={() => handleStatusUpdate(interview.applicationId, 'Offered')}
+                                title="Select Candidate"
+                                className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                <UserPlus className="h-3.5 w-3.5" />
+                                <span>Select</span>
+                              </button>
+                              <button
+                                type="button"
+                                disabled={loading}
+                                onClick={() => openEditModal(interview)}
+                                title="Reschedule Interview"
+                                className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                <Calendar className="h-3.5 w-3.5" />
+                                <span>Reschedule</span>
+                              </button>
+                              <button
+                                type="button"
+                                disabled={loading}
+                                onClick={() => handleInterviewOnHold(interview.applicationId, interview)}
+                                title="On Hold for Interview"
+                                className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-amber-700 transition hover:bg-amber-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                <Clock className="h-3.5 w-3.5" />
+                                <span>Hold</span>
+                              </button>
+                              <button
+                                type="button"
+                                disabled={loading}
+                                onClick={() => handleStatusUpdate(interview.applicationId, 'Rejected')}
+                                title="Reject Candidate"
+                                className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                <UserX className="h-3.5 w-3.5" />
+                                <span>Reject</span>
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>

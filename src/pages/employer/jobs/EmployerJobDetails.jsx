@@ -25,11 +25,14 @@ import {
   Users,
   Inbox,
   X,
-  Download
+  Download,
+  MessageCircle,
+  Briefcase
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
 import InterviewLocationPicker from '../../../components/InterviewLocationPicker';
+import { SendOfferModal } from '../../../components/SendOfferModal';
 import { downloadBlobResponse, viewBlobResponse } from '../../../utils/downloadFile';
 
 const emptyDetails = {
@@ -164,6 +167,12 @@ export const EmployerJobDetails = () => {
     locationOrLink: '',
     notes: '',
     manualAddress: ''
+  });
+  const [offerModal, setOfferModal] = useState({
+    isOpen: false,
+    applicationId: '',
+    candidateEmail: '',
+    candidateName: ''
   });
 
   const openInterviewModal = (candidate) => {
@@ -676,113 +685,174 @@ export const EmployerJobDetails = () => {
                     )}
                   </td>
                   <td className="px-4 py-4 text-right">
-                    <div className="flex flex-wrap items-center gap-1.5 justify-end max-w-[360px] ml-auto">
+                    <div className="flex flex-wrap items-center gap-1.5 justify-end max-w-[400px] ml-auto">
                       <Link to={`/employer/applications/${candidate.id}`} title="View Application Details" className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-slate-500 transition hover:bg-slate-50">
                         <Eye className="h-4 w-4" />
                         <span>View</span>
                       </Link>
-                      
-                      {/* View & Download Resume */}
-                      {candidate.hasResume && candidate.status !== 'Applied' && (
+
+                      <Link to={`/employer/messages?application=${candidate.id}`} title="Message Candidate" className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50">
+                        <MessageCircle className="h-4 w-4" />
+                        <span>Message</span>
+                      </Link>
+
+                      {/* Shortlist for Applied or Reviewed */}
+                      {(candidate.status === 'Applied' || candidate.status === 'Reviewed') && (
                         <>
                           <button
                             type="button"
-                            onClick={() => viewResume(candidate.candidateId)}
-                            title="View Resume in New Tab"
-                            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-blue-200 px-2 text-xs font-extrabold text-blue-600 transition hover:bg-blue-50"
+                            onClick={() => updateCandidateStatus(candidate.id, 'Shortlisted')}
+                            title="Shortlist"
+                            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-amber-500 transition hover:bg-amber-50"
                           >
-                            <Eye className="h-4 w-4" />
-                            <span>View Resume</span>
+                            <UserCheck className="h-4 w-4" />
+                            <span>Shortlist</span>
                           </button>
                           <button
                             type="button"
-                            onClick={() => downloadResume(candidate.candidateId, candidate.name)}
-                            title="Download Resume"
-                            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50"
+                            onClick={() => updateCandidateStatus(candidate.id, 'Rejected')}
+                            title="Reject"
+                            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50"
                           >
-                            <Download className="h-4 w-4" />
-                            <span>Download Resume</span>
+                            <UserX className="h-4 w-4" />
+                            <span>Reject</span>
                           </button>
                         </>
                       )}
 
-                      {/* Shortlist */}
-                      {candidate.status === 'Reviewed' && (
-                        <button
-                          type="button"
-                          onClick={() => updateCandidateStatus(candidate.id, 'Shortlisted')}
-                          title="Shortlist"
-                          className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-amber-500 transition hover:bg-amber-50"
-                        >
-                          <UserCheck className="h-4 w-4" />
-                          <span>Shortlist</span>
-                        </button>
+                      {/* Shortlisted: Interview, Reject */}
+                      {candidate.status === 'Shortlisted' && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => openInterviewModal(candidate)}
+                            title="Schedule Interview"
+                            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50"
+                          >
+                            <Calendar className="h-4 w-4" />
+                            <span>Interview</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => updateCandidateStatus(candidate.id, 'Rejected')}
+                            title="Reject"
+                            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50"
+                          >
+                            <UserX className="h-4 w-4" />
+                            <span>Reject</span>
+                          </button>
+                        </>
                       )}
 
-                      {/* Schedule / Reschedule Interview */}
-                      {(candidate.status === 'Shortlisted' || candidate.status === 'Interview') && (
-                        <button
-                          type="button"
-                          onClick={() => openInterviewModal(candidate)}
-                          title={candidate.status === 'Interview' ? "Reschedule Interview" : "Schedule Interview"}
-                          className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50"
-                        >
-                          <Calendar className="h-4 w-4" />
-                          <span>{candidate.status === 'Interview' ? "Reschedule" : "Interview"}</span>
-                        </button>
+                      {/* Interview: On Hold -> Reschedule; Scheduled -> Select, Reschedule, Hold, Reject */}
+                      {candidate.status === 'Interview' && (
+                        <>
+                          {candidate.interviewDetails?.onHold ? (
+                            <button
+                              type="button"
+                              onClick={() => openInterviewModal(candidate)}
+                              title="Reschedule Interview"
+                              className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50"
+                            >
+                              <Calendar className="h-4 w-4" />
+                              <span>Reschedule</span>
+                            </button>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => updateCandidateStatus(candidate.id, 'Offered')}
+                                title="Select Candidate"
+                                className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-600 transition hover:bg-emerald-50"
+                              >
+                                <UserPlus className="h-4 w-4" />
+                                <span>Select</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => openInterviewModal(candidate)}
+                                title="Reschedule Interview"
+                                className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50"
+                              >
+                                <Calendar className="h-4 w-4" />
+                                <span>Reschedule</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleInterviewOnHold(candidate.id)}
+                                title="On Hold for Interview"
+                                className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-amber-700 transition hover:bg-amber-50"
+                              >
+                                <Clock className="h-4 w-4" />
+                                <span>Hold</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => updateCandidateStatus(candidate.id, 'Rejected')}
+                                title="Reject"
+                                className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50"
+                              >
+                                <UserX className="h-4 w-4" />
+                                <span>Reject</span>
+                              </button>
+                            </>
+                          )}
+                        </>
                       )}
 
-                      {/* On Hold for Interview */}
-                      {(candidate.status === 'Shortlisted' ||
-                        (candidate.status === 'Interview' && !candidate.interviewDetails?.onHold && !getIsInterviewPassed(candidate))) && (
-                        <button
-                          type="button"
-                          onClick={() => handleInterviewOnHold(candidate.id)}
-                          title="On Hold for Interview"
-                          className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-amber-700 transition hover:bg-amber-50"
-                        >
-                          <Clock className="h-4 w-4" />
-                          <span>Hold</span>
-                        </button>
-                      )}
-
-                      {/* Select / Hire */}
-                      {candidate.status === 'Interview' && !candidate.interviewDetails?.onHold && getIsInterviewPassed(candidate) && (
-                        <button
-                          type="button"
-                          onClick={() => updateCandidateStatus(candidate.id, 'Offered')}
-                          title="Select / Hire"
-                          className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50"
-                        >
-                          <UserPlus className="h-4 w-4" />
-                          <span>Select</span>
-                        </button>
-                      )}
-
-                      {/* Send Offer */}
-                      {candidate.status === 'Offered' && (!candidate.selectionDetails || candidate.selectionDetails.offerStatus === 'Selected') && (
-                        <button
-                          type="button"
-                          onClick={() => updateCandidateOfferStatus(candidate.id, 'Offer Sent')}
-                          title="Send Offer"
-                          className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-blue-600 transition hover:bg-blue-50"
-                        >
-                          <Send className="h-4 w-4" />
-                          <span>Send Offer</span>
-                        </button>
-                      )}
-
-                      {/* Reject */}
-                      {['Applied', 'Reviewed', 'Shortlisted', 'Interview'].includes(candidate.status) && (
-                        <button
-                          type="button"
-                          onClick={() => updateCandidateStatus(candidate.id, 'Rejected')}
-                          title="Reject"
-                          className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50"
-                        >
-                          <UserX className="h-4 w-4" />
-                          <span>Reject</span>
-                        </button>
+                      {/* Selected / Offered: Send Offer, Reject (HIRE NEVER ON SELECTED) */}
+                      {candidate.status === 'Offered' && (
+                        <>
+                          {(!candidate.selectionDetails || candidate.selectionDetails.offerStatus === 'Selected') && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => setOfferModal({
+                                  isOpen: true,
+                                  applicationId: candidate.id,
+                                  candidateEmail: candidate.email,
+                                  candidateName: candidate.name
+                                })}
+                                title="Send Offer"
+                                className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50"
+                              >
+                                <Send className="h-4 w-4" />
+                                <span>Send Offer</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => updateCandidateStatus(candidate.id, 'Rejected')}
+                                title="Reject"
+                                className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50"
+                              >
+                                <UserX className="h-4 w-4" />
+                                <span>Reject</span>
+                              </button>
+                            </>
+                          )}
+                          {candidate.selectionDetails?.offerStatus === 'Offer Accepted' && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => updateCandidateOfferStatus(candidate.id, 'Hired')}
+                                title="Hire Candidate"
+                                className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-600 transition hover:bg-emerald-50"
+                              >
+                                <Briefcase className="h-4 w-4" />
+                                <span>Hire</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => updateCandidateStatus(candidate.id, 'Rejected')}
+                                title="Reject"
+                                className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50"
+                              >
+                                <UserX className="h-4 w-4" />
+                                <span>Reject</span>
+                              </button>
+                            </>
+                          )}
+                        </>
                       )}
                     </div>
                   </td>
@@ -958,6 +1028,16 @@ export const EmployerJobDetails = () => {
           </div>
         </div>
       )}
+      <SendOfferModal
+        isOpen={offerModal.isOpen}
+        onClose={() => setOfferModal(prev => ({ ...prev, isOpen: false }))}
+        applicationId={offerModal.applicationId}
+        candidateEmail={offerModal.candidateEmail}
+        candidateName={offerModal.candidateName}
+        onSuccess={() => {
+          loadDetails({ silent: true });
+        }}
+      />
     </div>
   );
 };

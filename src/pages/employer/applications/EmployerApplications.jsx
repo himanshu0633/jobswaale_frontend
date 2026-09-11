@@ -33,6 +33,7 @@ import { BASE_API_URL } from '../../../context/AuthContext';
 import ClearFilterButton from '../../../components/ClearFilterButton';
 import InterviewLocationPicker from '../../../components/InterviewLocationPicker';
 import { downloadBlobResponse, viewBlobResponse } from '../../../utils/downloadFile';
+import { SendOfferModal } from '../../../components/SendOfferModal';
 
 const isInPersonInterview = (type) => String(type || '').toLowerCase().includes('person');
 
@@ -147,6 +148,12 @@ export const EmployerApplications = () => {
   const [activeApplication, setActiveApplication] = useState(null);
   const [showInterviewModal, setShowInterviewModal] = useState(false);
   const [showHoldModal, setShowHoldModal] = useState(false);
+  const [offerModal, setOfferModal] = useState({
+    isOpen: false,
+    applicationId: '',
+    candidateEmail: '',
+    candidateName: ''
+  });
   const [savingInterview, setSavingInterview] = useState(false);
   const [actionLoading, setActionLoading] = useState('');
   const [interviewForm, setInterviewForm] = useState({
@@ -588,8 +595,38 @@ export const EmployerApplications = () => {
                   <span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${scoreTone(application.matchScore)}`}>{application.matchScore}% match</span>
                   <div className="flex flex-wrap items-center gap-1.5">
                     <Link to={`/employer/applications/${application.id}`} className="inline-flex h-8 items-center justify-center gap-1 rounded border border-[#6658dd] px-2 text-[10px] font-extrabold text-[#6658dd] transition hover:bg-violet-50">View</Link>
-                    {application.status !== 'Applied' && (
-                      <Link to={`/employer/messages?application=${application.id}`} className="inline-flex h-8 items-center justify-center gap-1 rounded border border-sky-200 px-2 text-[10px] font-extrabold text-sky-600 transition hover:bg-sky-50">Message</Link>
+                    <Link to={`/employer/messages?application=${application.id}`} className="inline-flex h-8 items-center justify-center gap-1 rounded border border-sky-200 px-2 text-[10px] font-extrabold text-sky-600 transition hover:bg-sky-50">Message</Link>
+                    {application.status === 'Reviewed' && (
+                      <button type="button" onClick={() => handleStatusUpdate(application.id, 'Shortlisted')} disabled={Boolean(actionLoading)} className="inline-flex h-8 items-center justify-center gap-1 rounded border border-slate-200 px-2 text-[10px] font-extrabold text-amber-500 transition hover:bg-amber-50">Shortlist</button>
+                    )}
+                    {application.status === 'Shortlisted' && (
+                      <button type="button" onClick={() => openInterviewModal(application)} disabled={Boolean(actionLoading)} className="inline-flex h-8 items-center justify-center gap-1 rounded border border-slate-200 px-2 text-[10px] font-extrabold text-[#6658dd] transition hover:bg-indigo-50">Interview</button>
+                    )}
+                    {application.status === 'Interview' && !application.interviewDetails?.onHold && (
+                      <>
+                        <button type="button" onClick={() => handleStatusUpdate(application.id, 'Offered')} disabled={Boolean(actionLoading)} className="inline-flex h-8 items-center justify-center gap-1 rounded border border-slate-200 px-2 text-[10px] font-extrabold text-emerald-500 transition hover:bg-emerald-50">Select</button>
+                        <button type="button" onClick={() => openInterviewModal(application)} disabled={Boolean(actionLoading)} className="inline-flex h-8 items-center justify-center gap-1 rounded border border-slate-200 px-2 text-[10px] font-extrabold text-[#6658dd] transition hover:bg-indigo-50">Reschedule</button>
+                        <button type="button" onClick={() => handleInterviewOnHold(application.id)} disabled={Boolean(actionLoading)} className="inline-flex h-8 items-center justify-center gap-1 rounded border border-slate-200 px-2 text-[10px] font-extrabold text-amber-700 transition hover:bg-amber-50">Hold</button>
+                      </>
+                    )}
+                    {application.status === 'Interview' && Boolean(application.interviewDetails?.onHold) && (
+                      <button type="button" onClick={() => openInterviewModal(application)} disabled={Boolean(actionLoading)} className="inline-flex h-8 items-center justify-center gap-1 rounded border border-slate-200 px-2 text-[10px] font-extrabold text-[#6658dd] transition hover:bg-indigo-50">Reschedule</button>
+                    )}
+                    {(application.status === 'Offered' || application.status === 'Selected') && (!application.selectionDetails || application.selectionDetails?.offerStatus === 'Selected') && (
+                      <button type="button" onClick={() => setOfferModal({ isOpen: true, applicationId: application.id, candidateEmail: application.email, candidateName: application.name })} disabled={Boolean(actionLoading)} className="inline-flex h-8 items-center justify-center gap-1 rounded border border-slate-200 px-2 text-[10px] font-extrabold text-blue-600 transition hover:bg-blue-50">Send Offer</button>
+                    )}
+                    {application.status === 'Offered' && application.selectionDetails?.offerStatus === 'Offer Accepted' && (
+                      <button type="button" onClick={() => handleOfferStatusUpdate(application.id, 'Hired')} disabled={Boolean(actionLoading)} className="inline-flex h-8 items-center justify-center gap-1 rounded border border-slate-200 px-2 text-[10px] font-extrabold text-emerald-600 transition hover:bg-emerald-50">Hire</button>
+                    )}
+                    {(
+                      application.status === 'Applied' ||
+                      application.status === 'Reviewed' ||
+                      application.status === 'Shortlisted' ||
+                      (application.status === 'Interview' && !application.interviewDetails?.onHold) ||
+                      ((application.status === 'Offered' || application.status === 'Selected') &&
+                        (!application.selectionDetails || application.selectionDetails?.offerStatus === 'Selected' || application.selectionDetails?.offerStatus === 'Offer Accepted'))
+                    ) && (
+                      <button type="button" onClick={() => handleStatusUpdate(application.id, 'Rejected')} disabled={Boolean(actionLoading)} className="inline-flex h-8 items-center justify-center gap-1 rounded border border-slate-200 px-2 text-[10px] font-extrabold text-rose-500 transition hover:bg-rose-50">Reject</button>
                     )}
                   </div>
                 </div>
@@ -644,40 +681,19 @@ export const EmployerApplications = () => {
                     </td>
                     <td className="px-5 py-4 text-center align-middle">
                       <div className="mx-auto grid w-[260px] grid-cols-2 gap-2">
+                        {/* 1. View is available for all applications */}
                         <Link to={`/employer/applications/${application.id}`} title="View Application Details" className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-slate-500 transition hover:bg-slate-50">
                           <Eye className="h-3.5 w-3.5" />
                           <span>View</span>
                         </Link>
 
-                        {application.status !== 'Applied' && (
-                          <Link to={`/employer/messages?application=${application.id}`} title="Message Candidate" className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-sky-200 px-2 text-xs font-extrabold text-sky-600 transition hover:bg-sky-50"><MessageCircle className="h-3.5 w-3.5" /><span>Message</span></Link>
-                        )}
+                        {/* 2. Message is available for all applications */}
+                        <Link to={`/employer/messages?application=${application.id}`} title="Message Candidate" className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-sky-200 px-2 text-xs font-extrabold text-sky-600 transition hover:bg-sky-50">
+                          <MessageCircle className="h-3.5 w-3.5" />
+                          <span>Message</span>
+                        </Link>
 
-                        {/* View & Download Resume */}
-                        {application.hasResume && application.status !== 'Applied' && (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => viewResume(application.candidateId, application.id)}
-                              disabled={Boolean(actionLoading)}
-                              title="View Resume in New Tab"
-                              className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-blue-200 px-2 text-xs font-extrabold text-blue-600 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-70"
-                            >
-                              <ActionButtonContent loading={isActionLoading(application.id, 'viewResume')} icon={Eye} label="View Resume" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => downloadResume(application.candidateId, application.name, application.id)}
-                              disabled={Boolean(actionLoading)}
-                              title="Download Resume"
-                              className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-70"
-                            >
-                              <ActionButtonContent loading={isActionLoading(application.id, 'resume')} icon={Download} label="Download Resume" />
-                            </button>
-                          </>
-                        )}
-
-                        {/* Shortlist */}
+                        {/* Reviewed: Shortlist, Reject */}
                         {application.status === 'Reviewed' && (
                           <button
                             type="button"
@@ -690,52 +706,79 @@ export const EmployerApplications = () => {
                           </button>
                         )}
 
-                        {/* Schedule / Reschedule Interview */}
-                        {(application.status === 'Shortlisted' || application.status === 'Interview') && (
+                        {/* Shortlisted: Interview, Reject */}
+                        {application.status === 'Shortlisted' && (
                           <button
                             type="button"
                             onClick={() => openInterviewModal(application)}
                             disabled={Boolean(actionLoading)}
-                            title={application.status === 'Interview' ? "Reschedule Interview" : "Schedule Interview"}
+                            title="Schedule Interview"
                             className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-70"
                           >
                             <Calendar className="h-3.5 w-3.5" />
-                            <span>{application.status === 'Interview' ? "Reschedule" : "Interview"}</span>
+                            <span>Interview</span>
                           </button>
                         )}
 
-                        {/* On Hold for Interview */}
-                        {(application.status === 'Shortlisted' ||
-                          (application.status === 'Interview' && !application.interviewDetails?.onHold && !getIsInterviewPassed(application))) && (
+                        {/* Interview (Not on hold): Select, Reschedule, Hold, Reject */}
+                        {application.status === 'Interview' && !application.interviewDetails?.onHold && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleStatusUpdate(application.id, 'Offered')}
+                              disabled={Boolean(actionLoading)}
+                              title="Select Candidate"
+                              className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-70"
+                            >
+                              <ActionButtonContent loading={isActionLoading(application.id, 'Offered')} icon={UserPlus} label="Select" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => openInterviewModal(application)}
+                              disabled={Boolean(actionLoading)}
+                              title="Reschedule Interview"
+                              className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-70"
+                            >
+                              <Calendar className="h-3.5 w-3.5" />
+                              <span>Reschedule</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleInterviewOnHold(application.id)}
+                              disabled={Boolean(actionLoading)}
+                              title="On Hold for Interview"
+                              className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-amber-700 transition hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-70"
+                            >
+                              <ActionButtonContent loading={isActionLoading(application.id, 'hold')} icon={Clock} label="Hold" />
+                            </button>
+                          </>
+                        )}
+
+                        {/* On Hold: Reschedule */}
+                        {application.status === 'Interview' && Boolean(application.interviewDetails?.onHold) && (
                           <button
                             type="button"
-                            onClick={() => handleInterviewOnHold(application.id)}
+                            onClick={() => openInterviewModal(application)}
                             disabled={Boolean(actionLoading)}
-                            title="On Hold for Interview"
-                            className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-amber-700 transition hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-70"
+                            title="Reschedule Interview"
+                            className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-70"
                           >
-                            <ActionButtonContent loading={isActionLoading(application.id, 'hold')} icon={Clock} label="Hold" />
+                            <Calendar className="h-3.5 w-3.5" />
+                            <span>Reschedule</span>
                           </button>
                         )}
 
-                        {/* Select / Hire */}
-                        {application.status === 'Interview' && !application.interviewDetails?.onHold && getIsInterviewPassed(application) && (
+                        {/* Selected: Send Offer, Reject (HIRE NEVER SHOWN) */}
+                        {(application.status === 'Offered' || application.status === 'Selected') &&
+                          (!application.selectionDetails || application.selectionDetails?.offerStatus === 'Selected') && (
                           <button
                             type="button"
-                            onClick={() => handleStatusUpdate(application.id, 'Offered')}
-                            disabled={Boolean(actionLoading)}
-                            title="Select / Hire"
-                            className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-70"
-                          >
-                            <ActionButtonContent loading={isActionLoading(application.id, 'Offered')} icon={UserPlus} label="Select" />
-                          </button>
-                        )}
-
-                        {/* Send Offer */}
-                        {application.status === 'Offered' && (!application.selectionDetails || application.selectionDetails.offerStatus === 'Selected') && (
-                          <button
-                            type="button"
-                            onClick={() => handleOfferStatusUpdate(application.id, 'Offer Sent')}
+                            onClick={() => setOfferModal({
+                              isOpen: true,
+                              applicationId: application.id,
+                              candidateEmail: application.email,
+                              candidateName: application.name
+                            })}
                             disabled={Boolean(actionLoading)}
                             title="Send Offer"
                             className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-blue-600 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-70"
@@ -744,22 +787,28 @@ export const EmployerApplications = () => {
                           </button>
                         )}
 
-                        {/* Hire after offer acceptance */}
+                        {/* Offer Accepted: Hire, Reject */}
                         {application.status === 'Offered' && application.selectionDetails?.offerStatus === 'Offer Accepted' && (
                           <button
                             type="button"
                             onClick={() => handleOfferStatusUpdate(application.id, 'Hired')}
                             disabled={Boolean(actionLoading)}
-                            title="Hire"
+                            title="Hire Candidate"
                             className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-600 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-70"
                           >
                             <ActionButtonContent loading={isActionLoading(application.id, 'Hired')} icon={Briefcase} label="Hire" />
                           </button>
                         )}
 
-                        {/* Reject */}
-                        {(['Applied', 'Reviewed', 'Shortlisted', 'Interview'].includes(application.status) ||
-                          (application.status === 'Offered' && application.selectionDetails?.offerStatus === 'Offer Accepted')) && (
+                        {/* Reject: Shortlisted, Interview (not on hold), Selected, Offer Accepted, Applied, Reviewed */}
+                        {(
+                          application.status === 'Applied' ||
+                          application.status === 'Reviewed' ||
+                          application.status === 'Shortlisted' ||
+                          (application.status === 'Interview' && !application.interviewDetails?.onHold) ||
+                          ((application.status === 'Offered' || application.status === 'Selected') &&
+                            (!application.selectionDetails || application.selectionDetails?.offerStatus === 'Selected' || application.selectionDetails?.offerStatus === 'Offer Accepted'))
+                        ) && (
                           <button
                             type="button"
                             onClick={() => handleStatusUpdate(application.id, 'Rejected')}
@@ -823,37 +872,39 @@ export const EmployerApplications = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-3 backdrop-blur-sm sm:p-4">
           <div className="relative flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-slate-100 bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-200 px-4 py-4 sm:px-5">
-              <h3 className="text-sm font-extrabold text-[#3f4254] sm:text-base">Schedule Interview</h3>
+              <div>
+                <h3 className="text-sm font-extrabold text-[#3f4254] sm:text-base">
+                  {activeApplication.status === 'Interview' ? 'Reschedule Interview' : 'Schedule Interview'}
+                </h3>
+                <p className="mt-0.5 text-xs font-semibold text-slate-400">
+                  {activeApplication.name} &bull; {activeApplication.jobTitle}
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={() => setShowInterviewModal(false)}
-                disabled={savingInterview}
-                className="rounded p-1 text-slate-400 hover:bg-slate-50 hover:text-slate-600 disabled:opacity-60"
+                className="rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4" />
               </button>
             </div>
 
             <div className="overflow-y-auto p-4 sm:p-5">
               <form onSubmit={scheduleInterviewSubmit} className="space-y-4">
-                <p className="text-xs font-semibold text-slate-400">
-                  Schedule a dynamic interview with <span className="font-extrabold text-[#3f4254]">{activeApplication.name}</span> for the position of <span className="font-extrabold text-[#3f4254]">{activeApplication.jobTitle}</span>.
-                </p>
-
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="grid gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Date</label>
+                    <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Date *</label>
                     <input
                       type="date"
-                      required
                       min={todayDateString}
+                      required
                       value={interviewForm.date}
                       onChange={(event) => setInterviewForm({ ...interviewForm, date: event.target.value })}
                       className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
                     />
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Time</label>
+                    <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Time *</label>
                     <input
                       type="time"
                       required
@@ -865,28 +916,28 @@ export const EmployerApplications = () => {
                 </div>
 
                 <div>
-                  <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Type</label>
+                  <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Mode</label>
                   <select
                     value={interviewForm.type}
                     onChange={(event) => setInterviewForm({ ...interviewForm, type: event.target.value, locationOrLink: '' })}
-                    className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 outline-none focus:border-[#6658dd]"
+                    className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
                   >
-                    <option>Video Call</option>
-                    <option>Phone Call</option>
-                    <option>In-Person</option>
-                    <option>Other</option>
+                    <option value="Video Call">Video Call</option>
+                    <option value="In-Person">In-Person</option>
+                    <option value="Telephonic">Telephonic</option>
+                    <option value="Other">Other</option>
                   </select>
                 </div>
 
                 {isInPersonInterview(interviewForm.type) ? (
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <div>
-                      <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Manual Address / Office Location (Optional)</label>
+                      <label className="mb-1.5 block text-xs font-extrabold text-slate-500">Interview Address</label>
                       <input
                         type="text"
-                        placeholder="Enter complete address manually"
-                        value={interviewForm.manualAddress || ''}
-                        onChange={(event) => setInterviewForm({ ...interviewForm, manualAddress: event.target.value })}
+                        placeholder="Enter office address or venue..."
+                        value={interviewForm.manualAddress || interviewForm.locationOrLink}
+                        onChange={(event) => setInterviewForm(prev => ({ ...prev, manualAddress: event.target.value, locationOrLink: event.target.value }))}
                         className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]"
                       />
                     </div>
@@ -944,6 +995,17 @@ export const EmployerApplications = () => {
           </div>
         </div>
       )}
+
+      <SendOfferModal
+        isOpen={offerModal.isOpen}
+        onClose={() => setOfferModal(prev => ({ ...prev, isOpen: false }))}
+        applicationId={offerModal.applicationId}
+        candidateEmail={offerModal.candidateEmail}
+        candidateName={offerModal.candidateName}
+        onSuccess={() => {
+          loadData();
+        }}
+      />
     </div>
   );
 };

@@ -468,7 +468,7 @@ const EmployerApplicationDetails = () => {
     const onHold = details.onHold;
 
     // 1. If status is Applied or Reviewed:
-    // Only show: Shortlist, Reject
+    // Shortlist, Reject
     if (status === 'Applied' || status === 'Reviewed') {
       list.push({
         key: 'Shortlisted',
@@ -487,7 +487,7 @@ const EmployerApplicationDetails = () => {
     }
 
     // 2. If status is Shortlisted:
-    // Only show: Schedule Interview, On Hold for Interview, Reject
+    // Schedule Interview, Reject
     else if (status === 'Shortlisted') {
       list.push({
         key: 'InterviewSchedule',
@@ -495,13 +495,6 @@ const EmployerApplicationDetails = () => {
         tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
         icon: CalendarPlus,
         onClick: openInterviewModal
-      });
-      list.push({
-        key: 'InterviewOnHold',
-        label: 'On Hold for Interview',
-        tone: 'border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100',
-        icon: Clock,
-        onClick: scheduleInterviewOnHold
       });
       list.push({
         key: 'Rejected',
@@ -515,70 +508,49 @@ const EmployerApplicationDetails = () => {
     // 3. If status is Interview:
     else if (status === 'Interview') {
       if (onHold) {
-        // If on hold:
-        // Only show: Schedule Interview, Reject
+        // On Hold: Reschedule Interview
         list.push({
           key: 'InterviewSchedule',
-          label: 'Schedule Interview',
+          label: 'Reschedule Interview',
+          tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
+          icon: CalendarPlus,
+          onClick: openInterviewModal
+        });
+      } else {
+        // Scheduled: Select, Reschedule Interview, Hold, Reject
+        list.push({
+          key: 'Offered',
+          label: 'Select',
+          tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
+          icon: UserPlus,
+          onClick: () => updateStatus('Offered')
+        });
+        list.push({
+          key: 'InterviewSchedule',
+          label: 'Reschedule Interview',
           tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
           icon: CalendarPlus,
           onClick: openInterviewModal
         });
         list.push({
+          key: 'InterviewOnHold',
+          label: 'Hold',
+          tone: 'border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100',
+          icon: Clock,
+          onClick: scheduleInterviewOnHold
+        });
+        list.push({
           key: 'Rejected',
           label: 'Reject',
           tone: 'border border-rose-200 bg-white text-rose-600 hover:bg-rose-50',
           icon: UserX,
           onClick: () => updateStatus('Rejected')
         });
-      } else {
-        // If NOT on hold:
-        if (isInterviewPassed) {
-          // If interview time has passed:
-          // Only show: Select, Reject
-          list.push({
-            key: 'Offered',
-            label: 'Select',
-            tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
-            icon: UserPlus,
-            onClick: () => updateStatus('Offered')
-          });
-          list.push({
-            key: 'Rejected',
-            label: 'Reject',
-            tone: 'border border-rose-200 bg-white text-rose-600 hover:bg-rose-50',
-            icon: UserX,
-            onClick: () => updateStatus('Rejected')
-          });
-        } else {
-          // If interview time has NOT passed:
-          // Only show: Reschedule Interview, On Hold for Interview, Reject
-          list.push({
-            key: 'InterviewSchedule',
-            label: 'Reschedule Interview',
-            tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
-            icon: CalendarPlus,
-            onClick: openInterviewModal
-          });
-          list.push({
-            key: 'InterviewOnHold',
-            label: 'On Hold for Interview',
-            tone: 'border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100',
-            icon: Clock,
-            onClick: scheduleInterviewOnHold
-          });
-          list.push({
-            key: 'Rejected',
-            label: 'Reject',
-            tone: 'border border-rose-200 bg-white text-rose-600 hover:bg-rose-50',
-            icon: UserX,
-            onClick: () => updateStatus('Rejected')
-          });
-        }
       }
     } else if (status === 'Offered') {
       const offerStatus = application.selectionDetails?.offerStatus || 'Selected';
       if (offerStatus === 'Selected') {
+        // Selected: Send Offer, Reject (HIRE IS NEVER SHOWN ON SELECTED)
         list.push({
           key: 'OfferSent',
           label: 'Send Offer',
@@ -591,8 +563,15 @@ const EmployerApplicationDetails = () => {
             candidateName: application?.candidate?.name || ''
           })
         });
-      }
-      if (offerStatus === 'Offer Accepted') {
+        list.push({
+          key: 'Rejected',
+          label: 'Reject',
+          tone: 'border border-rose-200 bg-white text-rose-600 hover:bg-rose-50',
+          icon: UserX,
+          onClick: () => updateStatus('Rejected')
+        });
+      } else if (offerStatus === 'Offer Accepted') {
+        // Offer Accepted: Hire, Reject
         list.push({
           key: 'Hire',
           label: 'Hire',
@@ -600,8 +579,6 @@ const EmployerApplicationDetails = () => {
           icon: Briefcase,
           onClick: () => updateOfferStatus('Hired')
         });
-      }
-      if (offerStatus !== 'Hired') {
         list.push({
           key: 'Rejected',
           label: 'Reject',
@@ -610,118 +587,13 @@ const EmployerApplicationDetails = () => {
           onClick: () => updateStatus('Rejected')
         });
       }
+      // Offer Sent / Hired: No state change action buttons
     }
 
     return list;
-  }, [application, isInterviewPassed]);
+  }, [application, id]);
 
-  const quickActions = useMemo(() => {
-    const list = [];
-    if (!application) return list;
-
-    const status = application.status;
-    const details = application.interviewDetails || {};
-    const onHold = details.onHold;
-
-    if (status === 'Offered') {
-      const offerStatus = application.selectionDetails?.offerStatus || 'Selected';
-      if (offerStatus === 'Selected') {
-        list.push({
-          key: 'OfferSent',
-          label: 'Send Offer',
-          tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
-          icon: Send,
-          onClick: () => setOfferModal({
-            isOpen: true,
-            applicationId: id,
-            candidateEmail: application?.candidate?.email || '',
-            candidateName: application?.candidate?.name || ''
-          })
-        });
-      }
-      if (offerStatus === 'Offer Accepted') {
-        list.push({
-          key: 'Hire',
-          label: 'Hire',
-          tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
-          icon: Briefcase,
-          onClick: () => updateOfferStatus('Hired')
-        });
-      }
-      if (offerStatus !== 'Hired') {
-        list.push({
-          key: 'Rejected',
-          label: 'Reject',
-          tone: 'border border-rose-200 bg-white text-rose-600 hover:bg-rose-50',
-          icon: UserX,
-          onClick: () => updateStatus('Rejected')
-        });
-      }
-      return list;
-    }
-
-    // 1. Schedule / Reschedule Interview
-    const isInterview = status === 'Interview';
-    list.push({
-      key: 'InterviewSchedule',
-      label: (isInterview && !onHold) ? 'Reschedule Interview' : 'Schedule Interview',
-      tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
-      icon: CalendarPlus,
-      onClick: openInterviewModal
-    });
-
-    // 2. On Hold for Interview
-    list.push({
-      key: 'InterviewOnHold',
-      label: 'On Hold for Interview',
-      tone: 'border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100',
-      icon: Clock,
-      onClick: scheduleInterviewOnHold
-    });
-
-    // 3. Select
-    list.push({
-      key: 'Offered',
-      label: 'Select',
-      tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
-      icon: UserPlus,
-      onClick: () => updateStatus('Offered')
-    });
-
-    // 5. Send Offer
-    list.push({
-      key: 'OfferSent',
-      label: 'Send Offer',
-      tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
-      icon: Send,
-      onClick: () => setOfferModal({
-        isOpen: true,
-        applicationId: id,
-        candidateEmail: application?.candidate?.email || '',
-        candidateName: application?.candidate?.name || ''
-      })
-    });
-
-    // 6. Hire
-    list.push({
-      key: 'Hire',
-      label: 'Hire',
-      tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
-      icon: Briefcase,
-      onClick: () => updateOfferStatus('Hired')
-    });
-
-    // 7. Reject
-    list.push({
-      key: 'Rejected',
-      label: 'Reject',
-      tone: 'border border-rose-200 bg-white text-rose-600 hover:bg-rose-50',
-      icon: UserX,
-      onClick: () => updateStatus('Rejected')
-    });
-
-    return list;
-  }, [application]);
+  const quickActions = topActions;
 
   const activeStepIndex = useMemo(() => {
     if (!application?.status) return 0;
@@ -831,7 +703,6 @@ const EmployerApplicationDetails = () => {
         <Link to={`/employer/messages?application=${application.id}`} className="inline-flex items-center justify-center gap-2 rounded-md border border-sky-200 bg-white px-3 py-2 text-xs font-extrabold text-sky-600 hover:bg-sky-50 w-full">
           <MessageCircle className="h-4 w-4" /> Send Message
         </Link>
-        <ResumeDownloadLink candidate={candidate} className="w-full" />
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[1fr_360px]">
@@ -914,7 +785,9 @@ const EmployerApplicationDetails = () => {
                   {action.label}
                 </ActionButton>
               ))}
-              <ResumeDownloadLink candidate={candidate} />
+              <Link to={`/employer/messages?application=${application.id}`} className="inline-flex items-center justify-center gap-2 rounded-md border border-sky-200 bg-white px-3 py-2 text-xs font-extrabold text-sky-600 hover:bg-sky-50 w-full">
+                <MessageCircle className="h-4 w-4" /> Send Message
+              </Link>
             </div>
           </Card>
 

@@ -14,7 +14,8 @@ import {
   Briefcase,
   RefreshCcw,
   Calendar,
-  Sparkles
+  Sparkles,
+  MessageCircle
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import ClearFilterButton from '../../../components/ClearFilterButton';
@@ -294,15 +295,23 @@ export const EmployerRejected = () => {
                   <Link
                     to={`/employer/applications/${app.id}`}
                     title="View Application Details"
-                    className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 bg-white px-3 text-xs font-extrabold text-slate-500 hover:bg-slate-50 transition"
+                    className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 text-xs font-extrabold text-slate-500 hover:bg-slate-50 transition"
                   >
                     <Eye className="h-3.5 w-3.5" />
                     <span>View</span>
                   </Link>
+                  <Link
+                    to={`/employer/messages?application=${app.id}`}
+                    title="Message Candidate"
+                    className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 text-xs font-extrabold text-[#6658dd] hover:bg-indigo-50 transition"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" />
+                    <span>Message</span>
+                  </Link>
                   <button
                     disabled={actionLoadingId === app.id}
                     onClick={() => handleReevaluate(app.id, app.previousStatus)}
-                    className="inline-flex h-8 items-center justify-center gap-1 rounded-md bg-indigo-50 border border-indigo-100 px-3 text-xs font-extrabold text-[#6658dd] hover:bg-indigo-100 transition disabled:opacity-50"
+                    className="inline-flex h-8 items-center justify-center gap-1 rounded-md bg-indigo-50 border border-indigo-100 px-2.5 text-xs font-extrabold text-[#6658dd] hover:bg-indigo-100 transition disabled:opacity-50"
                   >
                     <RefreshCcw className={`h-3.5 w-3.5 ${actionLoadingId === app.id ? 'animate-spin' : ''}`} />
                     <span>Re-evaluate</span>
@@ -368,19 +377,27 @@ export const EmployerRejected = () => {
                       {app.rejectedFromStatus || 'Applied'}
                     </td>
                     <td className="px-5 py-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
+                      <div className="flex items-center justify-center gap-1.5">
                         <Link
                           to={`/employer/applications/${app.id}`}
                           title="View Application Details"
-                          className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-extrabold text-slate-500 hover:bg-slate-50 transition"
+                          className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 text-xs font-extrabold text-slate-500 hover:bg-slate-50 transition"
                         >
                           <Eye className="h-3.5 w-3.5" />
                           <span>View</span>
                         </Link>
+                        <Link
+                          to={`/employer/messages?application=${app.id}`}
+                          title="Message Candidate"
+                          className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 text-xs font-extrabold text-[#6658dd] hover:bg-indigo-50 transition"
+                        >
+                          <MessageCircle className="h-3.5 w-3.5" />
+                          <span>Message</span>
+                        </Link>
                         <button
                           disabled={actionLoadingId === app.id}
                           onClick={() => handleReevaluate(app.id, app.previousStatus)}
-                          className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md bg-indigo-50 border border-indigo-100 px-3 text-xs font-extrabold text-[#6658dd] hover:bg-indigo-100 transition disabled:opacity-50"
+                          className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md bg-indigo-50 border border-indigo-100 px-2.5 text-xs font-extrabold text-[#6658dd] hover:bg-indigo-100 transition disabled:opacity-50"
                         >
                           <RefreshCcw className={`h-3.5 w-3.5 ${actionLoadingId === app.id ? 'animate-spin' : ''}`} />
                           <span>Re-evaluate</span>

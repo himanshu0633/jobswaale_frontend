@@ -14,7 +14,11 @@ import {
   ChevronRight,
   X,
   Search,
-  Send
+  Send,
+  Eye,
+  MessageCircle,
+  Briefcase,
+  UserX
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import ClearFilterButton from '../../../components/ClearFilterButton';
@@ -441,7 +445,7 @@ export const EmployerOffers = ({ view = 'offers' }) => {
               </div>
             ) : filteredOffers.length > 0 ? (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[900px] text-left">
+                <table className="w-full min-w-[1050px] text-left">
                   <thead className="bg-[#dbe6f6] text-[11px] uppercase text-slate-600">
                     <tr>
                       <th className="px-5 py-3">Candidate</th>
@@ -502,29 +506,44 @@ export const EmployerOffers = ({ view = 'offers' }) => {
                           )}
                         </td>
                         <td className="px-5 py-4 text-center">
-                          <div className="flex items-center justify-center gap-2">
+                          <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                            <Link
+                              to={`/employer/applications/${offer.application?._id || offer.application?.id || offer.application}`}
+                              title="View Application Details"
+                              className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-slate-500 transition hover:bg-slate-50"
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                              <span>View</span>
+                            </Link>
+                            <Link
+                              to={`/employer/messages?application=${offer.application?._id || offer.application?.id || offer.application}`}
+                              title="Message Candidate"
+                              className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50"
+                            >
+                              <MessageCircle className="h-3.5 w-3.5" />
+                              <span>Message</span>
+                            </Link>
                             {getOfferStatus(offer) === 'Offer Accepted' && (
                               <>
                                 <button
                                   type="button"
                                   disabled={loading}
-                                  onClick={() => updateOfferStatus(offer.application?._id, 'Hired')}
-                                  className="rounded bg-emerald-500 px-2.5 py-1 text-xs font-extrabold text-white hover:bg-emerald-600 transition"
+                                  onClick={() => updateOfferStatus(offer.application?._id || offer.application?.id || offer.application, 'Hired')}
+                                  className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-600 transition hover:bg-emerald-50 disabled:opacity-60"
                                 >
-                                  Hire
+                                  <Briefcase className="h-3.5 w-3.5" />
+                                  <span>Hire</span>
                                 </button>
                                 <button
                                   type="button"
                                   disabled={loading}
-                                  onClick={() => handleReject(offer.application?._id)}
-                                  className="rounded bg-rose-500 px-2.5 py-1 text-xs font-extrabold text-white hover:bg-rose-600 transition"
+                                  onClick={() => handleReject(offer.application?._id || offer.application?.id || offer.application)}
+                                  className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50 disabled:opacity-60"
                                 >
-                                  Reject
+                                  <UserX className="h-3.5 w-3.5" />
+                                  <span>Reject</span>
                                 </button>
                               </>
-                            )}
-                            {getOfferStatus(offer) !== 'Offer Accepted' && (
-                              <span className="text-xs font-semibold text-slate-400">-</span>
                             )}
                           </div>
                         </td>

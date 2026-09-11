@@ -19,7 +19,8 @@ import {
   Send,
   UserPlus,
   UserX,
-  Eye
+  Eye,
+  MessageCircle
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import ClearFilterButton from '../../../components/ClearFilterButton';
@@ -57,14 +58,23 @@ const SelectField = ({ label, value, onChange, children }) => (
 );
 
 const OfferActions = ({ candidate, isUpdating, onReject, onSendOffer }) => (
-  <div className="mx-auto flex w-[280px] gap-2">
+  <div className="mx-auto grid w-full grid-cols-2 gap-1.5 sm:w-[220px]">
     <Link
-      to={`/employer/applications/${candidate.applicationId}`}
+      to={`/employer/applications/${candidate.applicationId || candidate.id}`}
       title="View Application Details"
-      className="inline-flex h-8 flex-1 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-slate-500 transition hover:bg-slate-50"
+      className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-slate-500 transition hover:bg-slate-50"
     >
       <Eye className="h-3.5 w-3.5" />
       <span>View</span>
+    </Link>
+
+    <Link
+      to={`/employer/messages?application=${candidate.applicationId || candidate.id}`}
+      title="Message Candidate"
+      className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50"
+    >
+      <MessageCircle className="h-3.5 w-3.5" />
+      <span>Message</span>
     </Link>
 
     <button
@@ -72,7 +82,7 @@ const OfferActions = ({ candidate, isUpdating, onReject, onSendOffer }) => (
       disabled={isUpdating}
       onClick={() => onSendOffer(candidate)}
       title="Send Offer"
-      className="inline-flex h-8 flex-1 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50 disabled:opacity-60"
+      className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50 disabled:opacity-60"
     >
       <Send className="h-3.5 w-3.5" />
       <span>Send Offer</span>
@@ -83,7 +93,7 @@ const OfferActions = ({ candidate, isUpdating, onReject, onSendOffer }) => (
       disabled={isUpdating}
       onClick={() => onReject(candidate)}
       title="Reject Candidate"
-      className="inline-flex h-8 flex-1 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50 disabled:opacity-60"
+      className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50 disabled:opacity-60"
     >
       <UserX className="h-3.5 w-3.5" />
       <span>Reject</span>
@@ -255,7 +265,7 @@ export const EmployerSelected = () => {
                 <div className="flex items-start gap-3">
                   <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${candidate.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>{candidate.initials}</span>
                   <div className="min-w-0 flex-1">
-                    <Link to="/employer/applications" className="truncate text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{candidate.name}</Link>
+                    <Link to={`/employer/applications/${candidate.applicationId || candidate.id}`} className="truncate text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{candidate.name}</Link>
                     <p className="mt-0.5 truncate text-xs font-semibold text-slate-400">{candidate.email}</p>
                     <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><MapPin className="h-3 w-3 shrink-0" />{candidate.location}</p>
                   </div>
@@ -269,15 +279,17 @@ export const EmployerSelected = () => {
                   <p><span className="text-slate-400">Salary:</span> {candidate.salaryText}</p>
                 </div>
 
-                <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
-                  <span className={`inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-black ${scoreTone(candidate.interviewScore || 0)}`}>Score: {candidate.interviewScore || 0}%</span>
+                <div className="mt-3 border-t border-slate-100 pt-3">
+                  <div className="mb-2.5 flex items-center justify-between">
+                    <span className={`inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-black ${scoreTone(candidate.interviewScore || 0)}`}>Score: {candidate.interviewScore || 0}%</span>
+                  </div>
                   <OfferActions
                     candidate={candidate}
                     isUpdating={updatingId === candidate.id}
                     onReject={handleReject}
                     onSendOffer={(cand) => setOfferModal({
                       isOpen: true,
-                      applicationId: cand.applicationId,
+                      applicationId: cand.applicationId || cand.id,
                       candidateEmail: cand.email,
                       candidateName: cand.name
                     })}
@@ -309,7 +321,7 @@ export const EmployerSelected = () => {
                         onReject={handleReject}
                         onSendOffer={(cand) => setOfferModal({
                           isOpen: true,
-                          applicationId: cand.applicationId,
+                          applicationId: cand.applicationId || cand.id,
                           candidateEmail: cand.email,
                           candidateName: cand.name
                         })}

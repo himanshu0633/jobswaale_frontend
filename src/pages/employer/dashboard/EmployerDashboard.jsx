@@ -79,16 +79,74 @@ const normalizeTime = (value) => {
 };
 
 const JobStatLabel = ({ children, tooltip }) => (
-  <span className="group relative mt-1 inline-flex cursor-help justify-end text-xs font-semibold text-slate-400">
+  <span className="group/tip relative mt-0.5 sm:mt-1 inline-flex cursor-help justify-end text-[9px] sm:text-[10px] md:text-[11px] xl:text-xs font-semibold text-slate-400 leading-tight text-right transition-colors group-hover:text-slate-600">
     {children}
     <span
       role="tooltip"
-      className="pointer-events-none absolute left-1/2 top-full z-30 mt-2 w-56 -translate-x-1/2 rounded-md bg-slate-900 px-3 py-2 text-left text-[11px] font-semibold leading-4 text-white opacity-0 shadow-lg transition group-hover:opacity-100 group-focus-within:opacity-100"
+      className="pointer-events-none absolute right-0 top-full z-40 mt-1.5 w-44 sm:w-52 rounded-md bg-slate-900/95 px-2.5 py-1.5 text-left text-[10px] sm:text-[11px] font-medium leading-snug text-white opacity-0 shadow-xl backdrop-blur-sm transition-opacity duration-150 group-hover/tip:opacity-100 group-focus-within/tip:opacity-100"
     >
       {tooltip}
     </span>
   </span>
 );
+
+const jobStatCardsConfig = [
+  {
+    key: 'total',
+    label: 'Total Jobs',
+    countKey: 'total',
+    tooltip: 'All jobs created by you, including active, inactive, draft, closed, and expired jobs.',
+    icon: Briefcase,
+    iconBg: 'bg-[#0047C7]',
+    to: '/employer/jobs'
+  },
+  {
+    key: 'active',
+    label: 'Active Jobs',
+    countKey: 'active',
+    tooltip: 'Published jobs that are currently visible to candidates and open for applications.',
+    icon: Send,
+    iconBg: 'bg-emerald-500',
+    iconClass: 'rotate-45',
+    to: '/employer/jobs?status=Active'
+  },
+  {
+    key: 'inactive',
+    label: 'Inactive Jobs',
+    countKey: 'inactive',
+    tooltip: 'Jobs submitted with inactive status awaiting superadmin approval.',
+    icon: AlertCircle,
+    iconBg: 'bg-amber-500',
+    to: '/employer/jobs?status=Inactive'
+  },
+  {
+    key: 'draft',
+    label: 'Draft Jobs',
+    countKey: 'draft',
+    tooltip: 'Draft jobs saved by you but not published yet. Candidates cannot see or apply to them until you publish.',
+    icon: XCircle,
+    iconBg: 'bg-amber-500',
+    to: '/employer/jobs?status=Draft'
+  },
+  {
+    key: 'closed',
+    label: 'Closed Jobs',
+    countKey: 'closed',
+    tooltip: 'Jobs paused or closed by you before expiry. They stay hidden until you reopen or renew them.',
+    icon: Pause,
+    iconBg: 'bg-[#8e44ad]',
+    to: '/employer/jobs?status=Closed'
+  },
+  {
+    key: 'expired',
+    label: 'Expired Jobs',
+    countKey: 'expired',
+    tooltip: 'Jobs whose expiry date has passed automatically. Renew them to make them active again.',
+    icon: Clock,
+    iconBg: 'bg-rose-500',
+    to: '/employer/jobs?status=Expired'
+  }
+];
 
 const pipelineStatCards = [
   {
@@ -332,91 +390,44 @@ export const EmployerDashboard = () => {
       </section>
 
       {/* Jobs Stats Cards */}
-      <section className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-            {/* Card 1: Total Jobs */}
-            <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between h-36">
-              <div className="flex items-start justify-between">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0047C7] text-white">
-                  <Briefcase className="h-5 w-5" />
-                </div>
-                <div className="text-right">
-                  <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.jobs?.total || 0}</span>
-                  <JobStatLabel tooltip="All jobs created by you, including active, inactive, draft, closed, and expired jobs.">Total Jobs</JobStatLabel>
-                </div>
-              </div>
-              <Link to="/employer/jobs" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
-            </div>
+      <section className="rounded-xl sm:rounded-2xl border border-slate-100/90 bg-white p-3 sm:p-4 md:p-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+        <div className="grid grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-2.5 md:gap-3 lg:gap-2.5 xl:gap-4">
+          {jobStatCardsConfig.map((card) => {
+            const Icon = card.icon;
+            const count = dashboard.stats?.jobs?.[card.countKey] || 0;
 
-            {/* Card 2: Active Jobs */}
-            <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between h-36">
-              <div className="flex items-start justify-between">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-500 text-white">
-                  <Send className="h-5 w-5 rotate-45" />
+            return (
+              <div
+                key={card.key}
+                className="group relative flex flex-col justify-between rounded-xl sm:rounded-2xl border border-slate-200/80 bg-white p-2.5 sm:p-3 md:p-3.5 lg:p-2.5 xl:p-4 shadow-[0_1px_3px_rgba(0,0,0,0.03)] transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_4px_14px_rgba(0,0,0,0.06)] min-h-[105px] sm:min-h-[115px] md:min-h-[125px] xl:min-h-[132px]"
+              >
+                <div className="flex items-start justify-between gap-1 sm:gap-1.5">
+                  <div
+                    className={`flex h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9 lg:h-8 lg:w-8 xl:h-10 xl:w-10 shrink-0 items-center justify-center rounded-full ${card.iconBg} text-white shadow-sm transition-transform duration-200 group-hover:scale-105`}
+                  >
+                    <Icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-4.5 md:w-4.5 lg:h-4 lg:w-4 xl:h-5 xl:w-5 ${card.iconClass || ''}`} />
+                  </div>
+                  <div className="text-right min-w-0 flex-1">
+                    <span className="block text-lg sm:text-2xl md:text-2xl lg:text-xl xl:text-3xl font-black text-slate-800 tracking-tight leading-none">
+                      {count}
+                    </span>
+                    <JobStatLabel tooltip={card.tooltip}>
+                      {card.label}
+                    </JobStatLabel>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.jobs?.active || 0}</span>
-                  <JobStatLabel tooltip="Published jobs that are currently visible to candidates and open for applications.">Active Jobs</JobStatLabel>
-                </div>
-              </div>
-              <Link to="/employer/jobs?status=Active" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
-            </div>
 
-            {/* Card 3: Inactive Jobs */}
-            <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between h-36">
-              <div className="flex items-start justify-between">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-amber-500 text-white">
-                  <AlertCircle className="h-5 w-5" />
-                </div>
-                <div className="text-right">
-                  <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.jobs?.inactive || 0}</span>
-                  <JobStatLabel tooltip="Jobs submitted with inactive status awaiting superadmin approval.">Inactive Jobs</JobStatLabel>
+                <div className="mt-auto pt-2 sm:pt-2.5">
+                  <Link
+                    to={card.to}
+                    className="inline-flex items-center text-[10px] sm:text-xs font-bold text-[#0047C7] hover:text-[#00389e] hover:underline transition-colors focus:outline-none"
+                  >
+                    View all
+                  </Link>
                 </div>
               </div>
-              <Link to="/employer/jobs?status=Inactive" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
-            </div>
-
-            {/* Card 4: Draft Jobs */}
-            <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between h-36">
-              <div className="flex items-start justify-between">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-amber-500 text-white">
-                  <XCircle className="h-5 w-5" />
-                </div>
-                <div className="text-right">
-                  <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.jobs?.draft || 0}</span>
-                  <JobStatLabel tooltip="Draft jobs saved by you but not published yet. Candidates cannot see or apply to them until you publish.">Draft Jobs</JobStatLabel>
-                </div>
-              </div>
-              <Link to="/employer/jobs?status=Draft" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
-            </div>
-
-            {/* Card 5: Closed Jobs */}
-            <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between h-36">
-              <div className="flex items-start justify-between">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#8e44ad] text-white">
-                  <Pause className="h-5 w-5" />
-                </div>
-                <div className="text-right">
-                  <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.jobs?.closed || 0}</span>
-                  <JobStatLabel tooltip="Jobs paused or closed by you before expiry. They stay hidden until you reopen or renew them.">Closed Jobs</JobStatLabel>
-                </div>
-              </div>
-              <Link to="/employer/jobs?status=Closed" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
-            </div>
-
-            {/* Card 6: Expired Jobs */}
-            <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between h-36">
-              <div className="flex items-start justify-between">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-rose-500 text-white">
-                  <Clock className="h-5 w-5" />
-                </div>
-                <div className="text-right">
-                  <span className="block text-3xl font-extrabold text-slate-800">{dashboard.stats?.jobs?.expired || 0}</span>
-                  <JobStatLabel tooltip="Jobs whose expiry date has passed automatically. Renew them to make them active again.">Expired Jobs</JobStatLabel>
-                </div>
-              </div>
-              <Link to="/employer/jobs?status=Expired" className="text-xs font-bold text-[#0047C7] hover:underline mt-auto">View all</Link>
-            </div>
+            );
+          })}
         </div>
       </section>
 

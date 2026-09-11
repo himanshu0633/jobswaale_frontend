@@ -21,7 +21,8 @@ import {
   Phone,
   Building,
   Briefcase,
-  Clock
+  Clock,
+  MessageCircle
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import ClearFilterButton from '../../../components/ClearFilterButton';
@@ -338,52 +339,34 @@ export const EmployerShortlisted = () => {
         <span>View</span>
       </button>
 
+      <Link
+        to={`/employer/messages?application=${app.id}`}
+        title="Message Candidate"
+        className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-sky-200 px-2 text-xs font-extrabold text-sky-600 transition hover:bg-sky-50"
+      >
+        <MessageCircle className="h-3.5 w-3.5" />
+        <span>Message</span>
+      </Link>
+
       <button
         type="button"
         onClick={() => openModal(app, 'interview')}
-        title={app.status === 'Interview' ? "Reschedule Interview" : "Schedule Interview"}
+        title="Schedule Interview"
         className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-50"
       >
         <Calendar className="h-3.5 w-3.5" />
-        <span>{app.status === 'Interview' ? "Reschedule" : "Interview"}</span>
+        <span>Interview</span>
       </button>
 
-      {app.status !== 'Interview' && app.status !== 'Offered' && app.status !== 'Rejected' && (
-        <button
-          type="button"
-          disabled={modalLoading}
-          onClick={() => openModal(app, 'interviewHold')}
-          title="On Hold for Interview"
-          className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-amber-700 transition hover:bg-amber-50"
-        >
-          <Clock className="h-3.5 w-3.5" />
-          <span>Hold</span>
-        </button>
-      )}
-
-      {app.status !== 'Offered' && (
-        <button
-          type="button"
-          onClick={() => openModal(app, 'select')}
-          title="Select Candidate"
-          className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-emerald-500 transition hover:bg-emerald-50"
-        >
-          <UserPlus className="h-3.5 w-3.5" />
-          <span>Select</span>
-        </button>
-      )}
-
-      {app.status !== 'Rejected' && (
-        <button
-          type="button"
-          onClick={() => openModal(app, 'reject')}
-          title="Reject Candidate"
-          className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50"
-        >
-          <UserX className="h-3.5 w-3.5" />
-          <span>Reject</span>
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={() => openModal(app, 'reject')}
+        title="Reject Candidate"
+        className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-rose-500 transition hover:bg-rose-50"
+      >
+        <UserX className="h-3.5 w-3.5" />
+        <span>Reject</span>
+      </button>
     </div>
   );
 
@@ -503,7 +486,6 @@ export const EmployerShortlisted = () => {
                       <span className="truncate">{app.location}</span>
                     </p>
                   </div>
-                  {renderRowMenu(app)}
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs font-semibold text-slate-500">
                   <p className="truncate"><span className="text-slate-400">Job:</span> {app.jobTitle}</p>
@@ -515,6 +497,9 @@ export const EmployerShortlisted = () => {
                   <span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${statusTone[app.status] || 'bg-slate-100 text-slate-600'}`}>
                     {statusLabel[app.status] || app.status}
                   </span>
+                </div>
+                <div className="mt-3 border-t border-slate-100 pt-3">
+                  {renderRowMenu(app)}
                 </div>
               </div>
             )) : (
