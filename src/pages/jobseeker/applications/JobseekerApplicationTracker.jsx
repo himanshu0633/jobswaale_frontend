@@ -104,13 +104,15 @@ export const JobseekerApplicationTracker = () => {
   const timeline = useMemo(() => {
     if (!tracker) return [];
     const status = normalizeStatus(tracker.status);
+    const offerStatus = String(tracker.selectionDetails?.offerStatus || '').toLowerCase();
+    const isOfferDeclined = offerStatus === 'offer declined';
     const accepted =
-      String(tracker.selectionDetails?.offerStatus || '').toLowerCase().includes('accepted') ||
-      String(tracker.selectionDetails?.offerStatus || '').toLowerCase().includes('hired');
+      offerStatus.includes('accepted') ||
+      offerStatus.includes('hired');
     
-    const currentKey = accepted ? 'accepted' : status === 'rejected' ? 'rejected' : status;
-    const currentIndex = currentKey === 'rejected'
-      ? statusOrder.indexOf('interview')
+    const currentKey = isOfferDeclined ? 'declined' : accepted ? 'accepted' : status === 'rejected' ? 'rejected' : status;
+    const currentIndex = (currentKey === 'rejected' || currentKey === 'declined')
+      ? statusOrder.indexOf('offered')
       : Math.max(0, statusOrder.indexOf(currentKey));
 
     const base = [
@@ -166,7 +168,16 @@ export const JobseekerApplicationTracker = () => {
       }
     ];
 
-    if (status === 'rejected') {
+    if (isOfferDeclined) {
+      base.push({
+        key: 'declined',
+        title: 'Offer Declined',
+        date: formatDate(tracker.selectionDetails?.offerRespondedAt || tracker.updatedAt),
+        icon: X,
+        color: 'bg-rose-500',
+        text: 'You declined this job offer.'
+      });
+    } else if (status === 'rejected') {
       base.splice(3, 0, {
         key: 'rejected',
         title: 'Application Rejected',
@@ -179,7 +190,7 @@ export const JobseekerApplicationTracker = () => {
 
     return base.map((step, idx) => ({
       ...step,
-      done: step.key === 'rejected' || idx <= currentIndex,
+      done: step.key === 'rejected' || step.key === 'declined' || idx <= currentIndex,
       current: step.key === currentKey
     }));
   }, [tracker]);
@@ -240,7 +251,7 @@ export const JobseekerApplicationTracker = () => {
           </div>
           <div className="flex flex-row items-center gap-3 sm:flex-col sm:items-end">
             <span className={`rounded-full px-3.5 py-1.5 text-xs font-bold border ${
-              tracker.status === 'Rejected' 
+              tracker.status === 'Rejected' || String(tracker.selectionDetails?.offerStatus || '').toLowerCase() === 'offer declined'
                 ? 'bg-rose-50 text-rose-600 border-rose-100'
                 : tracker.status === 'Offered'
                 ? 'bg-emerald-50 text-emerald-600 border-emerald-100 animate-pulse'

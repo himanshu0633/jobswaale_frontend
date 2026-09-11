@@ -84,12 +84,13 @@ const canJobseekerMessage = (status) => ['shortlisted', 'interview', 'offered', 
 
 const getApplicationFilterStatus = (job) => {
   const status = String(job.status || '').toLowerCase();
+  const offerStatus = String(job.selectionDetails?.offerStatus || '').toLowerCase();
+  if (offerStatus === 'offer declined' || status === 'offer declined') return 'rejected';
   if (status !== 'offered') return status;
 
-  const offerStatus = String(job.selectionDetails?.offerStatus || 'Selected').toLowerCase();
-  if (offerStatus === 'selected') return 'selected';
-  if (offerStatus === 'hired') return 'hired';
-  if (offerStatus === 'offer declined') return 'offer-declined';
+  const currentOfferStatus = String(job.selectionDetails?.offerStatus || 'Selected').toLowerCase();
+  if (currentOfferStatus === 'selected') return 'selected';
+  if (currentOfferStatus === 'hired') return 'hired';
   return 'offered';
 };
 

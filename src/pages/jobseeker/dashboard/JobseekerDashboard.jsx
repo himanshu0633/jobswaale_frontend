@@ -102,6 +102,18 @@ const activityColors = {
   viewed: 'bg-blue-500'
 };
 
+const getApplicationFilterStatus = (job) => {
+  const status = String(job.status || '').toLowerCase();
+  const offerStatus = String(job.selectionDetails?.offerStatus || '').toLowerCase();
+  if (offerStatus === 'offer declined' || status === 'offer declined') return 'rejected';
+  if (status !== 'offered') return status;
+
+  const currentOfferStatus = String(job.selectionDetails?.offerStatus || 'Selected').toLowerCase();
+  if (currentOfferStatus === 'selected') return 'selected';
+  if (currentOfferStatus === 'hired') return 'hired';
+  return 'offered';
+};
+
 export const JobseekerDashboard = () => {
   const [dashboard, setDashboard] = useState(emptyDashboard);
   const [loading, setLoading] = useState(true);
@@ -111,19 +123,95 @@ export const JobseekerDashboard = () => {
     const loadDashboard = async () => {
       try {
         const token = localStorage.getItem('publicToken');
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-        const response = await axios.get(
-          `${BASE_API_URL}/jobseeker/dashboard`,
-          {
-            headers: token
-              ? { Authorization: `Bearer ${token}` }
-              : {}
-          }
-        );
+        const [dashRes, appsRes] = await Promise.allSettled([
+          axios.get(`${BASE_API_URL}/jobseeker/dashboard`, { headers }),
+          axios.get(`${BASE_API_URL}/jobseeker/applications`, { headers })
+        ]);
+
+        const dashData = dashRes.status === 'fulfilled' ? (dashRes.value?.data || {}) : {};
+        const appliedJobs = appsRes.status === 'fulfilled' && Array.isArray(appsRes.value?.data) ? appsRes.value.data : [];
+
+        // Compute application-based stats to guarantee 100% consistency with Applied Jobs page
+        let computedStats = { ...(dashData.stats || {}) };
+        if (appliedJobs.length > 0) {
+          const countByStatus = (status) => {
+            if (status === 'all') return appliedJobs.length;
+            return appliedJobs.filter(job => getApplicationFilterStatus(job) === status).length;
+          };
+
+          computedStats = {
+            ...computedStats,
+            jobsApplied: {
+              ...computedStats.jobsApplied,
+              value: countByStatus('all')
+            },
+            applied: {
+              ...computedStats.applied,
+              value: countByStatus('applied')
+            },
+            reviewed: {
+              ...computedStats.reviewed,
+              value: countByStatus('reviewed')
+            },
+            shortlisted: {
+              ...computedStats.shortlisted,
+              value: countByStatus('shortlisted')
+            },
+            interviews: {
+              ...computedStats.interviews,
+              value: countByStatus('interview')
+            },
+            onHold: {
+              ...computedStats.onHold,
+              value: countByStatus('onhold')
+            },
+            selected: {
+              ...computedStats.selected,
+              value: countByStatus('selected')
+            },
+            offered: {
+              ...computedStats.offered,
+              value: countByStatus('offered')
+            },
+            hired: {
+              ...computedStats.hired,
+              value: countByStatus('hired')
+            },
+            rejected: {
+              ...computedStats.rejected,
+              value: countByStatus('rejected')
+            }
+          };
+        }
+
+        // Ensure recentActivity reflects declined offers properly
+        let recentActivity = Array.isArray(dashData.recentActivity) ? [...dashData.recentActivity] : [];
+        if (appliedJobs.length > 0) {
+          recentActivity = recentActivity.map(act => {
+            if (act.text && !act.text.includes('declined')) {
+              const matchedApp = appliedJobs.find(app =>
+                (app.title && act.text.includes(app.title)) &&
+                String(app.selectionDetails?.offerStatus || '').toLowerCase() === 'offer declined'
+              );
+              if (matchedApp) {
+                return {
+                  ...act,
+                  type: 'rejected',
+                  text: `Job offer for <strong>${matchedApp.title}</strong> was declined`
+                };
+              }
+            }
+            return act;
+          });
+        }
 
         setDashboard({
           ...emptyDashboard,
-          ...response.data
+          ...dashData,
+          stats: computedStats,
+          recentActivity
         });
       } catch (err) {
         setDashboard(emptyDashboard);
