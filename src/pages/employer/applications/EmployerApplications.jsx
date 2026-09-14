@@ -93,6 +93,28 @@ const scoreTone = (score) => {
   return 'bg-rose-50 text-rose-500';
 };
 
+const normalizeStatsAndPipeline = (rawStats = {}, rawPipeline = {}) => {
+  const offerDeclined = Number(rawStats.offerDeclined || 0);
+  const alreadyCombined = rawStats.employerRejected !== undefined;
+  const totalRejected = alreadyCombined
+    ? Number(rawStats.rejected || 0)
+    : Number(rawStats.rejected || 0) + offerDeclined;
+
+  const stats = {
+    ...rawStats,
+    rejected: totalRejected,
+    employerRejected: rawStats.employerRejected ?? rawStats.rejected,
+    offerDeclined
+  };
+
+  const pipeline = {
+    ...rawPipeline,
+    rejected: totalRejected
+  };
+
+  return { stats, pipeline };
+};
+
 const getTokenHeaders = () => {
   const token = localStorage.getItem('publicToken');
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -251,28 +273,94 @@ export const EmployerApplications = () => {
     let alive = true;
     setLoading(true);
     setError('');
-    axios.get(`${BASE_API_URL}/employer/applications?${queryParams}`, { headers: getTokenHeaders() })
-      .then((response) => {
-        if (alive) {
-          const applications = response.data?.applications || [];
-          setData({
-            stats: {},
-            pipeline: {},
-            filters: {},
-            ...response.data,
-            applications,
-            pagination: response.data?.pagination || { page: 1, limit: pageSize, total: applications.length, totalPages: 1 }
+
+    if (filters.status === 'Rejected') {
+      const rejectedParams = new URLSearchParams(queryParams);
+      rejectedParams.set('status', 'Rejected');
+      rejectedParams.set('limit', '500');
+
+      const declinedParams = new URLSearchParams(queryParams);
+      declinedParams.set('status', 'Offer Declined');
+      declinedParams.set('limit', '500');
+
+      Promise.all([
+        axios.get(`${BASE_API_URL}/employer/applications?${rejectedParams.toString()}`, { headers: getTokenHeaders() }).catch(() => ({ data: {} })),
+        axios.get(`${BASE_API_URL}/employer/applications?${declinedParams.toString()}`, { headers: getTokenHeaders() }).catch(() => ({ data: {} }))
+      ])
+        .then(([rejRes, decRes]) => {
+          if (!alive) return;
+          const rejApps = rejRes.data?.applications || [];
+          const decApps = decRes.data?.applications || [];
+          const map = new Map();
+          [...rejApps, ...decApps].forEach((a) => {
+            if (a && a.id && !map.has(a.id)) {
+              map.set(a.id, a);
+            }
           });
-        }
-      })
-      .catch((err) => {
-        if (alive) setError(err.response?.data?.message || 'Applications could not be loaded.');
-      })
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
+          const combinedApps = Array.from(map.values());
+
+          const rawStats = rejRes.data?.stats || decRes.data?.stats || {};
+          const rawPipeline = rejRes.data?.pipeline || decRes.data?.pipeline || {};
+          const { stats, pipeline } = normalizeStatsAndPipeline(rawStats, rawPipeline);
+
+          const totalRejected = Math.max(stats.rejected || 0, combinedApps.length);
+          stats.rejected = totalRejected;
+          pipeline.rejected = totalRejected;
+
+          const baseData = rejRes.data?.applications ? rejRes.data : decRes.data;
+          const totalCount = combinedApps.length;
+          const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+          const safePage = Math.min(currentPage, totalPages);
+          const pagedApps = combinedApps.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+          setData({
+            stats,
+            pipeline,
+            filters: baseData?.filters || {},
+            applications: pagedApps,
+            pagination: {
+              page: safePage,
+              limit: pageSize,
+              total: totalCount,
+              totalPages
+            }
+          });
+        })
+        .catch((err) => {
+          if (alive) setError(err.response?.data?.message || 'Applications could not be loaded.');
+        })
+        .finally(() => {
+          if (alive) setLoading(false);
+        });
+    } else {
+      axios.get(`${BASE_API_URL}/employer/applications?${queryParams}`, { headers: getTokenHeaders() })
+        .then((response) => {
+          if (alive) {
+            const applications = response.data?.applications || [];
+            const rawStats = response.data?.stats || {};
+            const rawPipeline = response.data?.pipeline || {};
+            const { stats, pipeline } = normalizeStatsAndPipeline(rawStats, rawPipeline);
+
+            setData({
+              filters: {},
+              ...response.data,
+              stats,
+              pipeline,
+              applications,
+              pagination: response.data?.pagination || { page: 1, limit: pageSize, total: applications.length, totalPages: 1 }
+            });
+          }
+        })
+        .catch((err) => {
+          if (alive) setError(err.response?.data?.message || 'Applications could not be loaded.');
+        })
+        .finally(() => {
+          if (alive) setLoading(false);
+        });
+    }
+
     return () => { alive = false; };
-  }, [queryParams, pageSize, refreshKey]);
+  }, [queryParams, pageSize, refreshKey, filters.status, currentPage]);
 
   const pagination = data.pagination || { page: currentPage, limit: pageSize, total: 0, totalPages: 1 };
   const startIndex = pagination.total ? (pagination.page - 1) * pagination.limit : 0;
@@ -281,6 +369,22 @@ export const EmployerApplications = () => {
   const hasActiveFilters = Object.entries(filters).some(([key, value]) => key !== 'applicationActivity' && Boolean(value)) || Boolean(tableSearch) || filters.applicationActivity !== 'active';
   const getActionKey = (appId, action) => `${appId}:${action}`;
   const isActionLoading = (appId, action) => actionLoading === getActionKey(appId, action);
+
+  const getCardCount = (card) => {
+    if (card.key === 'total') {
+      return Number(data.stats?.total || 0);
+    }
+    if (card.key === 'rejected') {
+      const rejCount = Number(data.pipeline?.rejected ?? data.stats?.rejected ?? 0);
+      const decCount = Number(data.stats?.offerDeclined || 0);
+      const combined = (data.stats?.employerRejected !== undefined)
+        ? rejCount
+        : (rejCount + decCount);
+
+      return combined;
+    }
+    return Number((data.pipeline?.[card.key] ?? data.stats?.[card.key]) || 0);
+  };
 
   const [currentTime, setCurrentTime] = useState(() => Date.now());
 
@@ -510,7 +614,7 @@ export const EmployerApplications = () => {
                   ))}
                 </p>
                 <p className="mt-1 text-base font-black text-[#3f4254] sm:text-xl">
-                  {Number((card.key === 'total' ? data.stats?.total : data.pipeline?.[card.key] ?? data.stats?.[card.key]) || 0).toLocaleString('en-IN')}
+                  {getCardCount(card).toLocaleString('en-IN')}
                 </p>
               </div>
             </div>
@@ -590,6 +694,9 @@ export const EmployerApplications = () => {
                   {application.status === 'Rejected' && (
                     <p className="col-span-2"><span className="text-slate-400">Rejected after:</span> {application.rejectedFromStatus || 'Not available'}</p>
                   )}
+                  {application.status === 'Offered' && application.selectionDetails?.offerStatus === 'Offer Declined' && (
+                    <p className="col-span-2"><span className="text-slate-400">Status:</span> <span className="font-extrabold text-rose-600">Offer Declined by Candidate</span></p>
+                  )}
                 </div>
                 <div className="mt-3 flex flex-wrap items-center justify-between border-t border-slate-100 pt-3 gap-2">
                   <span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${scoreTone(application.matchScore)}`}>{application.matchScore}% match</span>
@@ -648,6 +755,9 @@ export const EmployerApplications = () => {
                       <p className="mt-0.5 text-xs font-semibold text-slate-400">{application.jobType}</p>
                       {application.status === 'Rejected' && (
                         <p className="mt-1 text-xs font-black text-rose-500">Rejected after: {application.rejectedFromStatus || 'Not available'}</p>
+                      )}
+                      {application.status === 'Offered' && application.selectionDetails?.offerStatus === 'Offer Declined' && (
+                        <p className="mt-1 text-xs font-black text-rose-500">Offer Declined by Candidate</p>
                       )}
                     </td>
                     <td className="px-5 py-4 text-sm font-semibold text-slate-600">{application.experience}</td>

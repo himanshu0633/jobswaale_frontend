@@ -42,9 +42,26 @@ const statusTone = {
   Rejected: 'bg-rose-50 text-rose-500'
 };
 
+const isOfferApplicable = (offer) => {
+  const app = offer.application;
+  if (!app) return false;
+  // Candidates whose status is in pre-offer stages (Applied, Reviewed, Shortlisted, Interview) are not active offers
+  if (['Applied', 'Reviewed', 'Shortlisted', 'Interview'].includes(app.status)) {
+    return false;
+  }
+  // Candidates marked as 'Selected' belong in the Selected candidates page, not Sent Offers
+  const rawStatus = app.selectionDetails?.offerStatus;
+  if (rawStatus === 'Selected') {
+    return false;
+  }
+  return true;
+};
+
 const getOfferStatus = (offer) => {
   if (offer.application?.status === 'Rejected') return 'Rejected';
-  return offer.application?.selectionDetails?.offerStatus || 'Offer Sent';
+  const rawStatus = offer.application?.selectionDetails?.offerStatus;
+  if (rawStatus && rawStatus !== 'Selected') return rawStatus;
+  return 'Offer Sent';
 };
 
 export const EmployerOffers = ({ view = 'offers' }) => {
@@ -246,7 +263,7 @@ export const EmployerOffers = ({ view = 'offers' }) => {
   };
 
   const uniquePositions = useMemo(() => {
-    const jobs = offers.map(o => o.application?.job?.jobTitle).filter(Boolean);
+    const jobs = offers.filter(isOfferApplicable).map(o => o.application?.job?.jobTitle).filter(Boolean);
     return [...new Set(jobs)];
   }, [offers]);
 
@@ -275,6 +292,8 @@ export const EmployerOffers = ({ view = 'offers' }) => {
 
   // Filtered lists
   const filteredOffers = offers.filter((o) => {
+    if (!isOfferApplicable(o)) return false;
+
     const q = offersSearch.toLowerCase();
     const candName = o.candidate?.name?.toLowerCase() || '';
     const candEmail = o.candidateEmail?.toLowerCase() || '';
@@ -295,6 +314,7 @@ export const EmployerOffers = ({ view = 'offers' }) => {
   });
 
   const pageOffers = offers.filter((offer) => {
+    if (!isOfferApplicable(offer)) return false;
     const status = getOfferStatus(offer);
     return view === 'hired' ? status === 'Hired' : status !== 'Hired';
   });

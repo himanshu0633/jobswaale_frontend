@@ -458,8 +458,9 @@ export const EmployerJobDetails = () => {
     if (selectedStatus === 'interviews') return candidate.status === 'Interview' && !candidate.interviewDetails?.onHold;
     if (selectedStatus === 'onHold') return candidate.status === 'Interview' && candidate.interviewDetails?.onHold;
     if (selectedStatus === 'selected') return getCandidateOfferStatus(candidate) === 'Selected';
-    if (selectedStatus === 'hired') return getCandidateOfferStatus(candidate) === 'Hired';
-    if (selectedStatus === 'rejected') return candidate.status === 'Rejected';
+    if (selectedStatus === 'rejected') {
+      return candidate.status === 'Rejected' || (candidate.status === 'Offered' && candidate.selectionDetails?.offerStatus === 'Offer Declined');
+    }
     return true;
   });
 
@@ -572,7 +573,13 @@ export const EmployerJobDetails = () => {
             </div>
             <div className="space-y-4 p-5">
               {pipeline.map((item) => {
-                const value = Number(details.stats?.[item.key] || 0);
+                let value = Number(details.stats?.[item.key] || 0);
+                if (item.key === 'rejected') {
+                  const rej = Number(details.stats?.rejected || 0);
+                  const dec = Number(details.stats?.offerDeclined || 0);
+                  const alreadyCombined = details.stats?.employerRejected !== undefined;
+                  value = alreadyCombined ? rej : (rej + dec);
+                }
                 const width = Math.min(Math.round((value / totalApplications) * 100), 100);
                 return (
                   <div key={item.key} className="flex items-center gap-3">

@@ -281,7 +281,18 @@ export const EmployerDashboard = () => {
 
   const subscription = dashboard.subscription || {};
   const upcomingInterviews = dashboard.upcomingInterviews || [];
-  const pipeline = dashboard.pipeline || {};
+  const pipeline = useMemo(() => {
+    const raw = dashboard.pipeline || {};
+    const stats = dashboard.stats || {};
+    const rej = Number(raw.rejected ?? stats.rejected ?? 0);
+    const declined = Number(stats.offerDeclined || 0);
+    const alreadyCombined = stats.employerRejected !== undefined;
+    const finalRejected = alreadyCombined ? rej : (rej + declined);
+    return {
+      ...raw,
+      rejected: finalRejected
+    };
+  }, [dashboard.pipeline, dashboard.stats]);
 
   return (
     <div className="space-y-6 px-3 sm:px-0" style={{ fontFamily: "'Inter', sans-serif" }}>
