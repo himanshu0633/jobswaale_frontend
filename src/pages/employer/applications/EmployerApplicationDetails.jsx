@@ -662,14 +662,6 @@ const EmployerApplicationDetails = () => {
       })
     };
 
-    const acceptAction = {
-      key: 'OfferAccept',
-      label: 'Accept Offer',
-      tone: 'bg-cyan-500 text-white hover:bg-cyan-600',
-      icon: Check,
-      onClick: () => updateOfferStatus('Offer Accepted')
-    };
-
     const hireAction = {
       key: 'Hire',
       label: 'Hire',
@@ -723,7 +715,7 @@ const EmployerApplicationDetails = () => {
         list.push(sendOfferAction);
         list.push(rejectAction);
       } else if (offerStatus === 'Offer Sent') {
-        list.push(acceptAction);
+        // Employer has sent the offer and waits for candidate to accept; only reject is available
         list.push(rejectAction);
       } else if (offerStatus === 'Offer Accepted') {
         list.push(hireAction);
