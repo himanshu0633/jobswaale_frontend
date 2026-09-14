@@ -96,7 +96,7 @@ const getAssetUrl = (value) => {
   return `${apiOrigin}${value.startsWith('/') ? '' : '/'}${value}`;
 };
 
-const SearchableSelect = ({ label, value, options, search, onSearch, onSelect, placeholder, disabled, invalid }) => {
+const SearchableSelect = ({ label, value, options, search, onSearch, onSelect, placeholder, disabled, invalid, error }) => {
   const [isOpen, setIsOpen] = useState(false);
   const filteredOptions = options.filter((item) => item.name.toLowerCase().includes(search.trim().toLowerCase()));
   const selectedOption = options.find((item) => item.value === value);
@@ -105,9 +105,9 @@ const SearchableSelect = ({ label, value, options, search, onSearch, onSelect, p
   return (
     <div>
       <label className="mb-1.5 block text-xs font-extrabold text-slate-600">{label}</label>
-      <div className={`rounded-md border bg-white p-2 ${invalid ? '!border-rose-500 !ring-2 !ring-rose-200' : 'border-slate-200'} ${disabled ? 'opacity-60' : ''}`}>
+      <div className={`rounded-md border bg-white p-2 ${invalid || error ? '!border-2 !border-rose-500 !ring-2 !ring-rose-200' : 'border-slate-200'} ${disabled ? 'opacity-60' : ''}`}>
         <input
-          className={`w-full rounded-md border bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 outline-none transition focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100 ${invalid ? '!border-rose-400 !bg-rose-50' : 'border-slate-200'}`}
+          className={`w-full rounded-md border bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 outline-none transition focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100 ${invalid || error ? '!border-rose-400 !bg-rose-50' : 'border-slate-200'}`}
           value={displayValue}
           onChange={(e) => {
             onSearch(e.target.value);
@@ -141,6 +141,12 @@ const SearchableSelect = ({ label, value, options, search, onSearch, onSelect, p
           </div>
         )}
       </div>
+      {error && (
+        <p className="mt-1 flex items-center gap-1 text-xs font-bold text-rose-600">
+          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+          <span>{error}</span>
+        </p>
+      )}
     </div>
   );
 };
@@ -154,6 +160,7 @@ export const EmployerPostJob = () => {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [missingFields, setMissingFields] = useState([]);
+  const [fieldErrors, setFieldErrors] = useState({});
   const [upgradePopup, setUpgradePopup] = useState({ open: false, remainingCredits: null });
   const [meta, setMeta] = useState({ employer: {}, categories: [], jobTypes: [], qualifications: [], countries: [], states: [], districts: [], locations: [] });
   const [form, setForm] = useState(emptyForm);
@@ -290,7 +297,20 @@ export const EmployerPostJob = () => {
   const setValue = (key, value) => {
     setForm((current) => ({ ...current, [key]: value }));
     setMissingFields((current) => current.filter((field) => field !== key));
+    setFieldErrors((current) => {
+      if (!current[key]) return current;
+      const next = { ...current };
+      delete next[key];
+      return next;
+    });
+    setMessage((current) => {
+      if (current.type === 'error' && (current.text?.includes('required') || current.text?.includes('fill'))) {
+        return { type: '', text: '' };
+      }
+      return current;
+    });
   };
+
   const toggleLocation = (locationName) => {
     setForm((current) => {
       const selectedLocations = current.location || [];
@@ -301,33 +321,77 @@ export const EmployerPostJob = () => {
       return { ...current, location: nextLocations };
     });
     setMissingFields((current) => current.filter((field) => field !== 'location'));
+    setFieldErrors((current) => {
+      if (!current.location) return current;
+      const next = { ...current };
+      delete next.location;
+      return next;
+    });
     setCityDropdownOpen(false);
   };
+
   const selectCountry = (countryId) => {
     setForm((current) => ({ ...current, country: countryId, state: '', district: '', location: [] }));
-    setMissingFields((current) => current.filter((field) => !['country'].includes(field)));
+    setMissingFields((current) => current.filter((field) => !['country', 'state', 'district', 'location'].includes(field)));
+    setFieldErrors((current) => {
+      const next = { ...current };
+      delete next.country;
+      delete next.state;
+      delete next.district;
+      delete next.location;
+      return next;
+    });
     setStateSearch('');
     setDistrictSearch('');
     setLocationSearch('');
     setCityDropdownOpen(false);
   };
+
   const selectState = (stateId) => {
     setForm((current) => ({ ...current, state: stateId, district: '', location: [] }));
-    setMissingFields((current) => current.filter((field) => !['state'].includes(field)));
+    setMissingFields((current) => current.filter((field) => !['state', 'district', 'location'].includes(field)));
+    setFieldErrors((current) => {
+      const next = { ...current };
+      delete next.state;
+      delete next.district;
+      delete next.location;
+      return next;
+    });
     setDistrictSearch('');
     setLocationSearch('');
     setCityDropdownOpen(false);
   };
+
   const selectDistrict = (districtId) => {
     setForm((current) => ({ ...current, district: districtId, location: [] }));
-    setMissingFields((current) => current.filter((field) => !['district'].includes(field)));
+    setMissingFields((current) => current.filter((field) => !['district', 'location'].includes(field)));
+    setFieldErrors((current) => {
+      const next = { ...current };
+      delete next.district;
+      delete next.location;
+      return next;
+    });
     setLocationSearch('');
     setCityDropdownOpen(false);
   };
+
   const inputClass = 'w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none transition focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100';
-  const fieldClass = (key) => `${inputClass} ${missingFields.includes(key) ? '!border-2 !border-rose-500 !bg-rose-50 !ring-2 !ring-rose-200 focus:!border-rose-500 focus:!ring-rose-200' : ''}`;
+  const isInvalid = (key) => missingFields.includes(key) || Boolean(fieldErrors[key]);
+  const fieldClass = (key) => `${inputClass} ${isInvalid(key) ? '!border-2 !border-rose-500 !bg-rose-50/50 !ring-2 !ring-rose-200 focus:!border-rose-500 focus:!ring-rose-200' : ''}`;
   const labelClass = 'mb-1.5 block text-xs font-extrabold text-slate-600';
-  const isMissing = (key) => missingFields.includes(key);
+  const isMissing = (key) => isInvalid(key);
+
+  const renderFieldError = (key) => {
+    const errorText = fieldErrors[key];
+    if (!errorText) return null;
+    return (
+      <p className="mt-1 flex items-center gap-1 text-xs font-bold text-rose-600">
+        <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+        <span>{errorText}</span>
+      </p>
+    );
+  };
+
   const countryOptions = meta.countries.map((item) => ({ value: item.cid, name: item.name }));
   const stateOptions = meta.states.filter((item) => !form.country || item.cid === form.country).map((item) => ({ value: item.sid, name: item.name }));
   const districtOptions = meta.districts.filter((item) => !form.state || item.sid === form.state).map((item) => ({ value: item.did, name: item.name }));
@@ -344,7 +408,7 @@ export const EmployerPostJob = () => {
 
   const scrollToFirstInvalidField = () => {
     setTimeout(() => {
-      const firstInvalidEl = document.querySelector('.border-rose-500, .border-rose-400');
+      const firstInvalidEl = document.querySelector('.border-rose-500, .border-rose-400, [class*="!border-rose"]');
       if (firstInvalidEl) {
         firstInvalidEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         const inputEl = ['INPUT', 'SELECT', 'TEXTAREA'].includes(firstInvalidEl.tagName)
@@ -357,37 +421,98 @@ export const EmployerPostJob = () => {
     }, 150);
   };
 
-  const validateStep = () => {
+  const getStepValidationErrors = (targetStep) => {
+    const errors = {};
+
+    if (targetStep === 0) {
+      if (!String(form.jobTitle || '').trim()) {
+        errors.jobTitle = 'Job Title is required';
+      }
+      if (!String(form.jobCategory || '').trim()) {
+        errors.jobCategory = 'Job Category is required';
+      }
+      if (!String(form.jobType || '').trim()) {
+        errors.jobType = 'Employment Type is required';
+      }
+      if (!String(form.workMode || '').trim()) {
+        errors.workMode = 'Work Mode is required';
+      }
+      if (!String(form.country || '').trim()) {
+        errors.country = 'Country is required';
+      }
+      if (!String(form.state || '').trim()) {
+        errors.state = 'State is required';
+      }
+      if (!String(form.district || '').trim()) {
+        errors.district = 'District is required';
+      }
+      if (!form.location || form.location.length === 0) {
+        errors.location = 'City / Location is required';
+      }
+      if (!String(form.vacancies || '').trim()) {
+        errors.vacancies = 'Number of openings is required';
+      } else if (Number(form.vacancies) < 1) {
+        errors.vacancies = 'Number of openings must be at least 1';
+      }
+      if (form.minSalary === '' || form.minSalary === null || form.minSalary === undefined) {
+        errors.minSalary = 'Minimum salary is required';
+      }
+      if (form.maxSalary === '' || form.maxSalary === null || form.maxSalary === undefined) {
+        errors.maxSalary = 'Maximum salary is required';
+      } else if (
+        form.minSalary !== '' &&
+        form.minSalary !== null &&
+        Number(form.maxSalary) < Number(form.minSalary)
+      ) {
+        errors.maxSalary = 'Maximum salary must be greater than or equal to minimum salary';
+      }
+      if (maxJobExpiry && form.jobExpiry && form.jobExpiry > maxJobExpiry) {
+        errors.jobExpiry = `Job expiry date cannot be after your plan expiry date (${maxJobExpiry})`;
+      }
+    } else if (targetStep === 1) {
+      if (!String(form.jobSummary || '').trim()) {
+        errors.jobSummary = 'Short Summary is required';
+      }
+      if (!String(form.description || '').trim()) {
+        errors.description = 'Detailed Job Description is required';
+      }
+    } else if (targetStep === 2) {
+      if (!String(form.skills || '').trim()) {
+        errors.skills = 'Key Skills are required';
+      }
+    }
+
+    return errors;
+  };
+
+  const validateStep = (stepIndex = step) => {
     if (upgradePopup.open) return false;
 
-    const requiredByStep = [
-       ['jobTitle', 'jobCategory', 'jobType', 'country', 'state', 'district', 'vacancies', 'location', 'minSalary', 'maxSalary'],
-      ['jobSummary', 'description'],
-      ['skills'],
-      []
-    ];
-    const stepMissingFields = requiredByStep[step].filter((key) => {
-      const value = form[key];
-      return Array.isArray(value) ? value.length === 0 : !String(value || '').trim();
-    });
-    setMissingFields(stepMissingFields);
-    if (stepMissingFields.length) {
-      setMessage({ type: 'error', text: 'Please fill required fields before continuing.' });
+    const errors = getStepValidationErrors(stepIndex);
+    const missing = Object.keys(errors);
+    setFieldErrors((prev) => ({ ...prev, ...errors }));
+    setMissingFields(missing);
+
+    if (missing.length > 0) {
+      const errorList = Object.values(errors);
+      if (errorList.length === 1) {
+        setMessage({ type: 'error', text: errorList[0] });
+      } else {
+        setMessage({
+          type: 'error',
+          text: `Please fill required fields: ${errorList.slice(0, 3).join(', ')}${errorList.length > 3 ? ` and ${errorList.length - 3} more` : ''}.`
+        });
+      }
       scrollToFirstInvalidField();
-      return false;
-    }
-    if (step === 0 && maxJobExpiry && form.jobExpiry && form.jobExpiry > maxJobExpiry) {
-      setMessage({ type: 'error', text: `Job expiry date cannot be after your plan expiry date (${maxJobExpiry}).` });
       return false;
     }
 
     setMessage({ type: '', text: '' });
-    setMissingFields([]);
     return true;
   };
 
   const handleNext = () => {
-    if (validateStep()) setStep((current) => Math.min(current + 1, steps.length - 1));
+    if (validateStep(step)) setStep((current) => Math.min(current + 1, steps.length - 1));
   };
 
   const submitJob = async (status = 'publish') => {
@@ -407,11 +532,33 @@ export const EmployerPostJob = () => {
       return;
     }
 
-    const submitMissingFields = ['jobTitle', 'jobCategory', 'jobType', 'vacancies', 'description'].filter((key) => !String(form[key] || '').trim());
-    if (submitMissingFields.length) {
-      setMissingFields(submitMissingFields);
-      setMessage({ type: 'error', text: 'Please complete required job information.' });
-      setStep(submitMissingFields.includes('description') ? 1 : 0);
+    const step0Errors = getStepValidationErrors(0);
+    const step1Errors = getStepValidationErrors(1);
+    const step2Errors = getStepValidationErrors(2);
+    const allErrors = { ...step0Errors, ...step1Errors, ...step2Errors };
+    const allMissing = Object.keys(allErrors);
+
+    if (allMissing.length > 0) {
+      setFieldErrors(allErrors);
+      setMissingFields(allMissing);
+
+      if (Object.keys(step0Errors).length > 0) {
+        setStep(0);
+      } else if (Object.keys(step1Errors).length > 0) {
+        setStep(1);
+      } else if (Object.keys(step2Errors).length > 0) {
+        setStep(2);
+      }
+
+      const errorList = Object.values(allErrors);
+      if (errorList.length === 1) {
+        setMessage({ type: 'error', text: errorList[0] });
+      } else {
+        setMessage({
+          type: 'error',
+          text: `Please complete required job details: ${errorList.slice(0, 3).join(', ')}${errorList.length > 3 ? ` and ${errorList.length - 3} more` : ''}.`
+        });
+      }
       scrollToFirstInvalidField();
       return;
     }
@@ -572,22 +719,41 @@ export const EmployerPostJob = () => {
               <section className="rounded-md border border-slate-100 bg-white shadow-sm">
                 <div className="border-b border-slate-100 px-5 py-4"><h2 className="text-base font-extrabold text-[#3f4254]">Basic Job Information</h2></div>
                 <div className="grid gap-4 p-5 md:grid-cols-2">
-                  <div><label className={labelClass}>Job Title *</label><input className={fieldClass('jobTitle')} value={form.jobTitle} onChange={(e) => setValue('jobTitle', e.target.value)} placeholder="e.g. Software Developer" /></div>
-                  <div><label className={labelClass}>Job Category *</label><select className={fieldClass('jobCategory')} value={form.jobCategory} onChange={(e) => setValue('jobCategory', e.target.value)}><option value="">Select Category</option>{meta.categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
-                   <div><label className={labelClass}>Employment Type *</label><select className={fieldClass('jobType')} value={form.jobType} onChange={(e) => setValue('jobType', e.target.value)}><option value="">Select Employment Type</option>{meta.jobTypes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
-                   <div className="md:col-span-2">
+                  <div>
+                    <label className={labelClass}>Job Title *</label>
+                    <input className={fieldClass('jobTitle')} value={form.jobTitle} onChange={(e) => setValue('jobTitle', e.target.value)} placeholder="e.g. Software Developer" />
+                    {renderFieldError('jobTitle')}
+                  </div>
+                  <div>
+                    <label className={labelClass}>Job Category *</label>
+                    <select className={fieldClass('jobCategory')} value={form.jobCategory} onChange={(e) => setValue('jobCategory', e.target.value)}>
+                      <option value="">Select Category</option>
+                      {meta.categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                    </select>
+                    {renderFieldError('jobCategory')}
+                  </div>
+                  <div>
+                    <label className={labelClass}>Employment Type *</label>
+                    <select className={fieldClass('jobType')} value={form.jobType} onChange={(e) => setValue('jobType', e.target.value)}>
+                      <option value="">Select Employment Type</option>
+                      {meta.jobTypes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                    </select>
+                    {renderFieldError('jobType')}
+                  </div>
+                  <div className="md:col-span-2">
                     <label className={labelClass}>Work Mode *</label>
                     <div className="grid gap-2 md:grid-cols-3">
                       {[['Office', 'Office', Building2], ['Work from Home', 'Work from Home', Briefcase], ['Hybrid', 'Hybrid', Building2]].map(([value, label, Icon]) => (
                         <button key={label} type="button" onClick={() => setValue('workMode', value)} className={`flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-bold ${form.workMode === value ? 'border-[#6658dd] bg-[#e8e6fa] text-[#6658dd]' : 'border-slate-200 text-slate-600'}`}><Icon className="h-4 w-4" />{label}</button>
                       ))}
                     </div>
+                    {renderFieldError('workMode')}
                   </div>
                   <div className="md:col-span-2">
                     <label className={labelClass}>Job Location *</label>
                     <div className="mb-3 grid gap-3 md:grid-cols-3">
                       <SearchableSelect
-                        label="Country"
+                        label="Country *"
                         value={form.country}
                         options={countryOptions}
                         search={countrySearch}
@@ -595,9 +761,10 @@ export const EmployerPostJob = () => {
                         onSelect={selectCountry}
                         placeholder="Search country..."
                         invalid={isMissing('country')}
+                        error={fieldErrors.country}
                       />
                       <SearchableSelect
-                        label="State"
+                        label="State *"
                         value={form.state}
                         options={stateOptions}
                         search={stateSearch}
@@ -606,9 +773,10 @@ export const EmployerPostJob = () => {
                         placeholder="Search state..."
                         disabled={!form.country}
                         invalid={isMissing('state')}
+                        error={fieldErrors.state}
                       />
                       <SearchableSelect
-                        label="District"
+                        label="District *"
                         value={form.district}
                         options={districtOptions}
                         search={districtSearch}
@@ -617,10 +785,11 @@ export const EmployerPostJob = () => {
                         placeholder="Search district..."
                         disabled={!form.state}
                         invalid={isMissing('district')}
+                        error={fieldErrors.district}
                       />
                     </div>
-                    <div className={`rounded-md border bg-white p-3 ${isMissing('location') ? '!border-rose-500 !ring-2 !ring-rose-200' : 'border-slate-200'}`}>
-                      <label className={labelClass}>City</label>
+                    <div className={`rounded-md border bg-white p-3 ${isMissing('location') ? '!border-2 !border-rose-500 !ring-2 !ring-rose-200' : 'border-slate-200'}`}>
+                      <label className={labelClass}>City *</label>
                       <div className="relative">
                         <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                         <input
@@ -675,13 +844,29 @@ export const EmployerPostJob = () => {
                         )}
                       </div>}
                     </div>
+                    {renderFieldError('location')}
                     <p className="mt-1 text-xs font-semibold text-slate-400">Country, state, district, and city are managed by superadmin masters.</p>
                   </div>
-                  <div><label className={labelClass}>No. of Openings *</label><input type="number" min="1" className={fieldClass('vacancies')} value={form.vacancies} onChange={(e) => setValue('vacancies', e.target.value)} /></div>
+                  <div>
+                    <label className={labelClass}>No. of Openings *</label>
+                    <input type="number" min="1" className={fieldClass('vacancies')} value={form.vacancies} onChange={(e) => setValue('vacancies', e.target.value)} />
+                    {renderFieldError('vacancies')}
+                  </div>
                   <div className="grid gap-2 md:grid-cols-3">
-                    <div><label className={labelClass}>Min Salary *</label><input type="number" className={fieldClass('minSalary')} value={form.minSalary} onChange={(e) => setValue('minSalary', e.target.value)} /></div>
-                    <div><label className={labelClass}>Max Salary *</label><input type="number" className={fieldClass('maxSalary')} value={form.maxSalary} onChange={(e) => setValue('maxSalary', e.target.value)} /></div>
-                    <div><label className={labelClass}>Unit</label><select className={inputClass} value={form.salaryUnit} onChange={(e) => setValue('salaryUnit', e.target.value)}><option>P.A.</option><option>Monthly</option></select></div>
+                    <div>
+                      <label className={labelClass}>Min Salary *</label>
+                      <input type="number" className={fieldClass('minSalary')} value={form.minSalary} onChange={(e) => setValue('minSalary', e.target.value)} />
+                      {renderFieldError('minSalary')}
+                    </div>
+                    <div>
+                      <label className={labelClass}>Max Salary *</label>
+                      <input type="number" className={fieldClass('maxSalary')} value={form.maxSalary} onChange={(e) => setValue('maxSalary', e.target.value)} />
+                      {renderFieldError('maxSalary')}
+                    </div>
+                    <div>
+                      <label className={labelClass}>Unit</label>
+                      <select className={inputClass} value={form.salaryUnit} onChange={(e) => setValue('salaryUnit', e.target.value)}><option>P.A.</option><option>Monthly</option></select>
+                    </div>
                   </div>
                 </div>
               </section>
@@ -695,7 +880,7 @@ export const EmployerPostJob = () => {
                     <label className={labelClass}>Job Expiry</label>
                     <input
                       type="date"
-                      className={inputClass}
+                      className={fieldClass('jobExpiry')}
                       value={form.jobExpiry}
                       onChange={(e) => {
                         const val = e.target.value;
@@ -710,6 +895,7 @@ export const EmployerPostJob = () => {
                       min={today()}
                       max={maxJobExpiry || undefined}
                     />
+                    {renderFieldError('jobExpiry')}
                     {maxJobExpiry && (
                       <p className="mt-1 text-xs font-semibold text-slate-500">
                         Max allowed: {maxJobExpiry} (Current Plan Expiry)
@@ -727,8 +913,16 @@ export const EmployerPostJob = () => {
             <section className="rounded-md border border-slate-100 bg-white shadow-sm">
               <div className="border-b border-slate-100 px-5 py-4"><h2 className="text-base font-extrabold text-[#3f4254]">Job Description</h2></div>
               <div className="space-y-4 p-5">
-                <div><label className={labelClass}>Short Summary *</label><textarea className={fieldClass('jobSummary')} rows="3" value={form.jobSummary} onChange={(e) => setValue('jobSummary', e.target.value)} /></div>
-                <div><label className={labelClass}>Detailed Job Description *</label><textarea className={fieldClass('description')} rows="8" value={form.description} onChange={(e) => setValue('description', e.target.value)} /></div>
+                <div>
+                  <label className={labelClass}>Short Summary *</label>
+                  <textarea className={fieldClass('jobSummary')} rows="3" value={form.jobSummary} onChange={(e) => setValue('jobSummary', e.target.value)} />
+                  {renderFieldError('jobSummary')}
+                </div>
+                <div>
+                  <label className={labelClass}>Detailed Job Description *</label>
+                  <textarea className={fieldClass('description')} rows="8" value={form.description} onChange={(e) => setValue('description', e.target.value)} />
+                  {renderFieldError('description')}
+                </div>
                 <div><label className={labelClass}>Responsibilities</label><textarea className={inputClass} rows="6" value={form.responsibilities} onChange={(e) => setValue('responsibilities', e.target.value)} /></div>
               </div>
             </section>
@@ -740,7 +934,11 @@ export const EmployerPostJob = () => {
               <div className="grid gap-4 p-5 md:grid-cols-2">
                 <div><label className={labelClass}>Qualification</label><select className={inputClass} value={form.qualification} onChange={(e) => setValue('qualification', e.target.value)}><option value="">Select Qualification</option>{meta.qualifications.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
                 <div><label className={labelClass}>Required Experience</label><select className={inputClass} value={form.requiredExperience} onChange={(e) => setValue('requiredExperience', e.target.value)}><option value="">Select Experience</option>{experienceOptions.map((item) => <option key={item} value={item}>{item}</option>)}</select></div>
-                <div className="md:col-span-2"><label className={labelClass}>Key Skills *</label><input className={fieldClass('skills')} value={form.skills} onChange={(e) => setValue('skills', e.target.value)} placeholder="JavaScript, React.js, HTML" /></div>
+                <div className="md:col-span-2">
+                  <label className={labelClass}>Key Skills *</label>
+                  <input className={fieldClass('skills')} value={form.skills} onChange={(e) => setValue('skills', e.target.value)} placeholder="JavaScript, React.js, HTML" />
+                  {renderFieldError('skills')}
+                </div>
                 <div><label className={labelClass}>Language Preference</label><input className={inputClass} value={form.language} onChange={(e) => setValue('language', e.target.value)} /></div>
                 <div><label className={labelClass}>Candidate Location Preference</label><select className={inputClass} value={form.candidateLocation} onChange={(e) => setValue('candidateLocation', e.target.value)}><option>Open to all locations</option><option>Same city only</option><option>Same state only</option></select></div>
                 <div className="md:col-span-2"><label className={labelClass}>Screening Questions</label><textarea className={inputClass} rows="4" value={form.screeningQuestions} onChange={(e) => setValue('screeningQuestions', e.target.value)} /></div>
