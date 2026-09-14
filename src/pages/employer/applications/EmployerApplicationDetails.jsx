@@ -111,6 +111,8 @@ const statusTone = {
   Reviewed: 'bg-sky-50 text-sky-600',
   Shortlisted: 'bg-amber-50 text-amber-600',
   Interview: 'bg-violet-50 text-violet-600',
+  'On Hold for Interview': 'bg-amber-50 text-amber-700',
+  'Interview (On Hold)': 'bg-amber-50 text-amber-700',
   Selected: 'bg-emerald-50 text-emerald-600',
   'Offer Sent': 'bg-blue-50 text-blue-600',
   'Offer Accepted': 'bg-cyan-50 text-cyan-600',
@@ -199,20 +201,36 @@ const ActionButton = ({ tone, icon: Icon, children, onClick, disabled, className
   </button>
 );
 
-const ResumeDownloadLink = ({ candidate, className }) => {
-  if (!candidate.hasResume) return null;
+const ResumeDownloadLink = ({ candidate, onUpgradeRequired, className }) => {
+  const hasResume = Boolean(candidate?.hasResume || candidate?.resume);
 
   const handleDownload = () => {
-    if (!candidate.allowResumeDownload) {
-      alert("Please upgrade your plan to download candidate resumes.");
+    if (!hasResume) {
+      alert("Candidate has not uploaded a resume.");
+      return;
+    }
+    if (candidate?.allowResumeDownload === false) {
+      if (onUpgradeRequired) {
+        onUpgradeRequired();
+      } else {
+        alert("Please upgrade your plan to download candidate resumes.");
+      }
       return;
     }
     downloadCandidateResume(candidate);
   };
 
   const handleView = () => {
-    if (!candidate.allowResumeDownload) {
-      alert("Please upgrade your plan to view candidate resumes.");
+    if (!hasResume) {
+      alert("Candidate has not uploaded a resume.");
+      return;
+    }
+    if (candidate?.allowResumeDownload === false) {
+      if (onUpgradeRequired) {
+        onUpgradeRequired();
+      } else {
+        alert("Please upgrade your plan to view candidate resumes.");
+      }
       return;
     }
     viewCandidateResume(candidate);
@@ -223,14 +241,18 @@ const ResumeDownloadLink = ({ candidate, className }) => {
       <button
         type="button"
         onClick={handleView}
-        className={`inline-flex items-center justify-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-extrabold text-blue-600 transition hover:bg-blue-100 ${className || ''}`}
+        disabled={!hasResume}
+        title={!hasResume ? 'No resume uploaded' : 'View Resume'}
+        className={`inline-flex items-center justify-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-extrabold text-blue-600 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50 ${className || ''}`}
       >
         <Eye className="h-4 w-4" /> View Resume
       </button>
       <button
         type="button"
         onClick={handleDownload}
-        className={`inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-600 transition hover:bg-slate-50 ${className || ''}`}
+        disabled={!hasResume}
+        title={!hasResume ? 'No resume uploaded' : 'Download Resume'}
+        className={`inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 ${className || ''}`}
       >
         <Download className="h-4 w-4" /> Download Resume
       </button>
@@ -450,10 +472,10 @@ const EmployerApplicationDetails = () => {
         },
         { headers: getTokenHeaders() }
       );
-      setMessage('Application moved to interview on hold.');
+      setMessage('Application moved to on hold for interview.');
       await loadDetails();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to move application to interview on hold.');
+      setError(err.response?.data?.message || 'Failed to move application to on hold for interview.');
     } finally {
       setSaving('');
     }
@@ -467,133 +489,238 @@ const EmployerApplicationDetails = () => {
     const details = application.interviewDetails || {};
     const onHold = details.onHold;
 
-    // 1. If status is Applied or Reviewed:
-    // Shortlist, Reject
+    const shortlistAction = {
+      key: 'Shortlisted',
+      label: 'Shortlist',
+      tone: 'bg-amber-500 text-white hover:bg-amber-600',
+      icon: UserCheck,
+      onClick: () => updateStatus('Shortlisted')
+    };
+
+    const scheduleInterviewAction = {
+      key: 'InterviewSchedule',
+      label: 'Schedule Interview',
+      tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
+      icon: CalendarPlus,
+      onClick: openInterviewModal
+    };
+
+    const rescheduleInterviewAction = {
+      key: 'InterviewSchedule',
+      label: 'Reschedule Interview',
+      tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
+      icon: CalendarPlus,
+      onClick: openInterviewModal
+    };
+
+    const holdAction = {
+      key: 'InterviewOnHold',
+      label: 'Hold for Interview',
+      tone: 'border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100',
+      icon: Clock,
+      onClick: scheduleInterviewOnHold
+    };
+
+    const selectAction = {
+      key: 'Offered',
+      label: 'Select',
+      tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
+      icon: UserPlus,
+      onClick: () => updateStatus('Offered')
+    };
+
+    const sendOfferAction = {
+      key: 'OfferSent',
+      label: 'Send Offer',
+      tone: 'bg-blue-600 text-white hover:bg-blue-700',
+      icon: Send,
+      onClick: () => setOfferModal({
+        isOpen: true,
+        applicationId: id,
+        candidateEmail: application?.candidate?.email || '',
+        candidateName: application?.candidate?.name || ''
+      })
+    };
+
+    const hireAction = {
+      key: 'Hire',
+      label: 'Hire',
+      tone: 'bg-teal-600 text-white hover:bg-teal-700',
+      icon: Briefcase,
+      onClick: () => updateOfferStatus('Hired')
+    };
+
+    const rejectAction = {
+      key: 'Rejected',
+      label: 'Reject',
+      tone: 'border border-rose-200 bg-white text-rose-600 hover:bg-rose-50',
+      icon: UserX,
+      onClick: () => updateStatus('Rejected')
+    };
+
+    // Stage-specific actions for Top Bar (matching Screenshot 2):
+    // 1. Applied / Reviewed:
     if (status === 'Applied' || status === 'Reviewed') {
-      list.push({
-        key: 'Shortlisted',
-        label: 'Shortlist',
-        tone: 'bg-amber-500 text-white hover:bg-amber-600',
-        icon: UserCheck,
-        onClick: () => updateStatus('Shortlisted')
-      });
-      list.push({
-        key: 'Rejected',
-        label: 'Reject',
-        tone: 'border border-rose-200 bg-white text-rose-600 hover:bg-rose-50',
-        icon: UserX,
-        onClick: () => updateStatus('Rejected')
-      });
+      list.push(shortlistAction);
+      list.push(rejectAction);
     }
-
-    // 2. If status is Shortlisted:
-    // Schedule Interview, Reject
+    // 2. Shortlisted (Screenshot Row 1: Interview, Reject):
     else if (status === 'Shortlisted') {
-      list.push({
-        key: 'InterviewSchedule',
-        label: 'Schedule Interview',
-        tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
-        icon: CalendarPlus,
-        onClick: openInterviewModal
-      });
-      list.push({
-        key: 'Rejected',
-        label: 'Reject',
-        tone: 'border border-rose-200 bg-white text-rose-600 hover:bg-rose-50',
-        icon: UserX,
-        onClick: () => updateStatus('Rejected')
-      });
+      list.push(scheduleInterviewAction);
+      list.push(rejectAction);
     }
-
-    // 3. If status is Interview:
+    // 3. Interview:
     else if (status === 'Interview') {
       if (onHold) {
-        // On Hold: Reschedule Interview
-        list.push({
-          key: 'InterviewSchedule',
-          label: 'Reschedule Interview',
-          tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
-          icon: CalendarPlus,
-          onClick: openInterviewModal
-        });
+        // Screenshot Row 3: On Hold: Reschedule, Reject
+        list.push(rescheduleInterviewAction);
+        list.push(rejectAction);
       } else {
-        // Scheduled: Select, Reschedule Interview, Hold, Reject
-        list.push({
-          key: 'Offered',
-          label: 'Select',
-          tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
-          icon: UserPlus,
-          onClick: () => updateStatus('Offered')
-        });
-        list.push({
-          key: 'InterviewSchedule',
-          label: 'Reschedule Interview',
-          tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
-          icon: CalendarPlus,
-          onClick: openInterviewModal
-        });
-        list.push({
-          key: 'InterviewOnHold',
-          label: 'Hold',
-          tone: 'border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100',
-          icon: Clock,
-          onClick: scheduleInterviewOnHold
-        });
-        list.push({
-          key: 'Rejected',
-          label: 'Reject',
-          tone: 'border border-rose-200 bg-white text-rose-600 hover:bg-rose-50',
-          icon: UserX,
-          onClick: () => updateStatus('Rejected')
-        });
+        // Screenshot Row 2: Interview Scheduled: Select, Reschedule, Hold, Reject
+        list.push(selectAction);
+        list.push(rescheduleInterviewAction);
+        list.push(holdAction);
+        list.push(rejectAction);
       }
-    } else if (status === 'Offered') {
+    }
+    // 4. Selected / Offered:
+    else if (status === 'Offered' || status === 'Selected') {
       const offerStatus = application.selectionDetails?.offerStatus || 'Selected';
       if (offerStatus === 'Selected') {
-        // Selected: Send Offer, Reject (HIRE IS NEVER SHOWN ON SELECTED)
-        list.push({
-          key: 'OfferSent',
-          label: 'Send Offer',
-          tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
-          icon: Send,
-          onClick: () => setOfferModal({
-            isOpen: true,
-            applicationId: id,
-            candidateEmail: application?.candidate?.email || '',
-            candidateName: application?.candidate?.name || ''
-          })
-        });
-        list.push({
-          key: 'Rejected',
-          label: 'Reject',
-          tone: 'border border-rose-200 bg-white text-rose-600 hover:bg-rose-50',
-          icon: UserX,
-          onClick: () => updateStatus('Rejected')
-        });
+        // Screenshot Row 4: Selected: Send Offer, Reject (Hire/Add is crossed out)
+        list.push(sendOfferAction);
+        list.push(rejectAction);
       } else if (offerStatus === 'Offer Accepted') {
-        // Offer Accepted: Hire, Reject
-        list.push({
-          key: 'Hire',
-          label: 'Hire',
-          tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
-          icon: Briefcase,
-          onClick: () => updateOfferStatus('Hired')
-        });
-        list.push({
-          key: 'Rejected',
-          label: 'Reject',
-          tone: 'border border-rose-200 bg-white text-rose-600 hover:bg-rose-50',
-          icon: UserX,
-          onClick: () => updateStatus('Rejected')
-        });
+        // Screenshot Row 7: Offer Accepted: Hire, Reject
+        list.push(hireAction);
+        list.push(rejectAction);
       }
-      // Offer Sent / Hired: No state change action buttons
+      // Offer Sent (Row 6) & Hired (Row 8): No pipeline action buttons
     }
 
     return list;
   }, [application, id]);
 
-  const quickActions = topActions;
+  const quickActions = useMemo(() => {
+    const list = [];
+    if (!application) return list;
+
+    const status = application.status;
+    const details = application.interviewDetails || {};
+    const onHold = details.onHold;
+
+    const shortlistAction = {
+      key: 'Shortlisted',
+      label: 'Shortlist',
+      tone: 'bg-amber-500 text-white hover:bg-amber-600',
+      icon: UserCheck,
+      onClick: () => updateStatus('Shortlisted')
+    };
+
+    const scheduleInterviewAction = {
+      key: 'InterviewSchedule',
+      label: 'Schedule Interview',
+      tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
+      icon: CalendarPlus,
+      onClick: openInterviewModal
+    };
+
+    const rescheduleInterviewAction = {
+      key: 'InterviewSchedule',
+      label: 'Reschedule Interview',
+      tone: 'bg-[#6658dd] text-white hover:bg-[#5848d8]',
+      icon: CalendarPlus,
+      onClick: openInterviewModal
+    };
+
+    const holdAction = {
+      key: 'InterviewOnHold',
+      label: 'Hold for Interview',
+      tone: 'border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100',
+      icon: Clock,
+      onClick: scheduleInterviewOnHold
+    };
+
+    const selectAction = {
+      key: 'Offered',
+      label: 'Select',
+      tone: 'bg-emerald-500 text-white hover:bg-emerald-600',
+      icon: UserPlus,
+      onClick: () => updateStatus('Offered')
+    };
+
+    const sendOfferAction = {
+      key: 'OfferSent',
+      label: 'Send Offer',
+      tone: 'bg-blue-600 text-white hover:bg-blue-700',
+      icon: Send,
+      onClick: () => setOfferModal({
+        isOpen: true,
+        applicationId: id,
+        candidateEmail: application?.candidate?.email || '',
+        candidateName: application?.candidate?.name || ''
+      })
+    };
+
+    const hireAction = {
+      key: 'Hire',
+      label: 'Hire',
+      tone: 'bg-teal-600 text-white hover:bg-teal-700',
+      icon: Briefcase,
+      onClick: () => updateOfferStatus('Hired')
+    };
+
+    const rejectAction = {
+      key: 'Rejected',
+      label: 'Reject',
+      tone: 'border border-rose-200 bg-white text-rose-600 hover:bg-rose-50',
+      icon: UserX,
+      onClick: () => updateStatus('Rejected')
+    };
+
+    // Full sequential pipeline actions for Bottom-Right Quick Actions sidebar
+    if (status === 'Applied' || status === 'Reviewed') {
+      list.push(shortlistAction);
+      list.push(scheduleInterviewAction);
+      list.push(holdAction);
+      list.push(selectAction);
+      list.push(sendOfferAction);
+      list.push(hireAction);
+      list.push(rejectAction);
+    } else if (status === 'Shortlisted') {
+      list.push(shortlistAction);
+      list.push(scheduleInterviewAction);
+      list.push(holdAction);
+      list.push(selectAction);
+      list.push(sendOfferAction);
+      list.push(hireAction);
+      list.push(rejectAction);
+    } else if (status === 'Interview') {
+      list.push(shortlistAction);
+      list.push(rescheduleInterviewAction);
+      list.push(holdAction);
+      list.push(selectAction);
+      list.push(sendOfferAction);
+      list.push(hireAction);
+      list.push(rejectAction);
+    } else if (status === 'Offered' || status === 'Selected') {
+      const offerStatus = application.selectionDetails?.offerStatus || 'Selected';
+      if (offerStatus === 'Selected') {
+        list.push(shortlistAction);
+        list.push(scheduleInterviewAction);
+        list.push(holdAction);
+        list.push(selectAction);
+        list.push(sendOfferAction);
+        list.push(hireAction);
+        list.push(rejectAction);
+      } else if (offerStatus === 'Offer Accepted') {
+        list.push(hireAction);
+        list.push(rejectAction);
+      }
+    }
+
+    return list;
+  }, [application, id]);
 
   const activeStepIndex = useMemo(() => {
     if (!application?.status) return 0;
@@ -664,8 +791,8 @@ const EmployerApplicationDetails = () => {
       <div className="rounded-md border border-slate-100 bg-slate-50 px-4 py-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-[#3f4254]">
-            <span className={`rounded px-2.5 py-1 text-xs font-black ${statusTone[application.status === 'Offered' ? (application.selectionDetails?.offerStatus || 'Selected') : application.status] || statusTone.Applied}`}>
-              {application.status === 'Offered' ? (application.selectionDetails?.offerStatus || 'Selected') : application.status}
+            <span className={`rounded px-2.5 py-1 text-xs font-black ${statusTone[application.status === 'Offered' ? (application.selectionDetails?.offerStatus || 'Selected') : (application.status === 'Interview' && application.interviewDetails?.onHold) ? 'On Hold for Interview' : application.status] || statusTone.Applied}`}>
+              {application.status === 'Offered' ? (application.selectionDetails?.offerStatus || 'Selected') : (application.status === 'Interview' && application.interviewDetails?.onHold) ? 'On Hold for Interview' : application.status}
             </span>
             <span className="inline-flex items-center gap-1"><User className="h-4 w-4" /><strong>{candidate.name}</strong></span>
             <span className="inline-flex items-center gap-1"><Briefcase className="h-4 w-4" />{job.title}</span>
@@ -700,6 +827,15 @@ const EmployerApplicationDetails = () => {
             {action.label}
           </ActionButton>
         ))}
+        <ResumeDownloadLink
+          candidate={candidate}
+          onUpgradeRequired={() => setAccessModal({
+            show: true,
+            title: 'Upgrade Plan Required',
+            message: 'Viewing and downloading candidate resumes is not supported under your current plan. Please upgrade your plan.'
+          })}
+          className="w-full"
+        />
         <Link to={`/employer/messages?application=${application.id}`} className="inline-flex items-center justify-center gap-2 rounded-md border border-sky-200 bg-white px-3 py-2 text-xs font-extrabold text-sky-600 hover:bg-sky-50 w-full">
           <MessageCircle className="h-4 w-4" /> Send Message
         </Link>
@@ -785,6 +921,14 @@ const EmployerApplicationDetails = () => {
                   {action.label}
                 </ActionButton>
               ))}
+              <ResumeDownloadLink
+                candidate={candidate}
+                onUpgradeRequired={() => setAccessModal({
+                  show: true,
+                  title: 'Upgrade Plan Required',
+                  message: 'Viewing and downloading candidate resumes is not supported under your current plan. Please upgrade your plan.'
+                })}
+              />
               <Link to={`/employer/messages?application=${application.id}`} className="inline-flex items-center justify-center gap-2 rounded-md border border-sky-200 bg-white px-3 py-2 text-xs font-extrabold text-sky-600 hover:bg-sky-50 w-full">
                 <MessageCircle className="h-4 w-4" /> Send Message
               </Link>

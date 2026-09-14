@@ -329,15 +329,14 @@ export const EmployerShortlisted = () => {
 
   const renderRowMenu = (app) => (
     <div className="mx-auto grid w-[260px] grid-cols-2 gap-2">
-      <button
-        type="button"
-        onClick={() => openModal(app, 'viewProfile')}
-        title="View Profile"
+      <Link
+        to={`/employer/applications/${app.id}`}
+        title="View Application Details"
         className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-extrabold text-slate-500 transition hover:bg-slate-50"
       >
         <Eye className="h-3.5 w-3.5" />
         <span>View</span>
-      </button>
+      </Link>
 
       <Link
         to={`/employer/messages?application=${app.id}`}
@@ -477,9 +476,9 @@ export const EmployerShortlisted = () => {
               <div key={app.id} className="p-4">
                 <div className="flex items-start gap-3">
                   <div className="min-w-0 flex-1">
-                    <button type="button" onClick={() => openModal(app, 'viewProfile')} className="truncate text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd] text-left block w-full">
+                    <Link to={`/employer/applications/${app.id}`} className="truncate text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd] text-left block w-full">
                       {app.name}
-                    </button>
+                    </Link>
                     <p className="mt-0.5 truncate text-xs font-semibold text-slate-400">{app.email}</p>
                     <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400">
                       <MapPin className="h-3 w-3 shrink-0" />
@@ -532,9 +531,9 @@ export const EmployerShortlisted = () => {
                     <tr key={app.id} className="transition hover:bg-slate-50">
                       <td className="px-5 py-4">
                         <div>
-                          <button type="button" onClick={() => openModal(app, 'viewProfile')} className="text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd] text-left">
+                          <Link to={`/employer/applications/${app.id}`} className="text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd] text-left">
                             {app.name}
-                          </button>
+                          </Link>
                           <p className="mt-0.5 text-xs font-semibold text-slate-400">{app.email}</p>
                           <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400">
                             <MapPin className="h-3 w-3" />

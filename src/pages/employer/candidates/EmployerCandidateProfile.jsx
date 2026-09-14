@@ -326,7 +326,7 @@ const EmployerCandidateProfile = () => {
     setMessage('');
     try {
       await axios.patch(
-        `${BASE_API_URL}/employer/applications/${candidate.application.id}/offer-status`,
+        `${BASE_API_URL}/employer/selected/${candidate.application.id}/offer`,
         { offerStatus },
         { headers: getTokenHeaders() }
       );
@@ -335,6 +335,31 @@ const EmployerCandidateProfile = () => {
       setCandidate(response.data);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update offer status.');
+    } finally {
+      setSaving('');
+    }
+  };
+
+  const handleScheduleOnHold = async () => {
+    if (!candidate?.application?.id) return;
+    setSaving('InterviewOnHold');
+    setError('');
+    setMessage('');
+    try {
+      await axios.post(
+        `${BASE_API_URL}/employer/applications/${candidate.application.id}/schedule-interview`,
+        {
+          onHold: true,
+          type: candidate.application.interviewDetails?.type || 'Video Call',
+          notes: candidate.application.interviewDetails?.notes || 'Interview kept on hold.'
+        },
+        { headers: getTokenHeaders() }
+      );
+      setMessage('Application moved to interview on hold.');
+      const response = await axios.get(profileUrl, { headers: getTokenHeaders() });
+      setCandidate(response.data);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to move application to interview on hold.');
     } finally {
       setSaving('');
     }
@@ -403,6 +428,15 @@ const EmployerCandidateProfile = () => {
     const details = candidate.application.interviewDetails || {};
     const onHold = details.onHold;
 
+    // 0. Shortlist
+    list.push({
+      key: 'Shortlisted',
+      label: 'Shortlist',
+      tone: 'bg-amber-500 text-white hover:bg-amber-600',
+      icon: UserCheck,
+      onClick: () => updateStatus('Shortlisted')
+    });
+
     // 1. Schedule / Reschedule Interview
     const isInterview = status === 'Interview';
     list.push({
@@ -419,29 +453,7 @@ const EmployerCandidateProfile = () => {
       label: 'On Hold for Interview',
       tone: 'border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100',
       icon: Clock,
-      onClick: async () => {
-        setSaving('InterviewOnHold');
-        setError('');
-        setMessage('');
-        try {
-          await axios.post(
-            `${BASE_API_URL}/employer/applications/${candidate.application.id}/schedule-interview`,
-            {
-              onHold: true,
-              type: candidate.application.interviewDetails?.type || 'Video Call',
-              notes: candidate.application.interviewDetails?.notes || 'Interview kept on hold.'
-            },
-            { headers: getTokenHeaders() }
-          );
-          setMessage('Application moved to interview on hold.');
-          const response = await axios.get(profileUrl, { headers: getTokenHeaders() });
-          setCandidate(response.data);
-        } catch (err) {
-          setError(err.response?.data?.message || 'Failed to move application to interview on hold.');
-        } finally {
-          setSaving('');
-        }
-      }
+      onClick: handleScheduleOnHold
     });
 
     // 3. Select
@@ -453,7 +465,7 @@ const EmployerCandidateProfile = () => {
       onClick: () => updateStatus('Offered')
     });
 
-    // 5. Send Offer
+    // 4. Send Offer
     list.push({
       key: 'OfferSent',
       label: 'Send Offer',
@@ -467,7 +479,7 @@ const EmployerCandidateProfile = () => {
       })
     });
 
-    // 6. Accept
+    // 5. Accept
     list.push({
       key: 'OfferAccept',
       label: 'Accept',
@@ -476,7 +488,7 @@ const EmployerCandidateProfile = () => {
       onClick: () => updateOfferStatus('Offer Accepted')
     });
 
-    // 7. Hire
+    // 6. Hire
     list.push({
       key: 'Hire',
       label: 'Hire',
@@ -485,7 +497,7 @@ const EmployerCandidateProfile = () => {
       onClick: () => updateOfferStatus('Hired')
     });
 
-    // 8. Reject
+    // 7. Reject
     list.push({
       key: 'Rejected',
       label: 'Reject',
@@ -598,6 +610,15 @@ const EmployerCandidateProfile = () => {
         {candidate.application ? (
           <>
             <ActionButton
+              tone="bg-amber-500 text-white hover:bg-amber-600"
+              icon={UserCheck}
+              onClick={() => updateStatus('Shortlisted')}
+              disabled={Boolean(saving)}
+            >
+              Shortlist
+            </ActionButton>
+
+            <ActionButton
               tone="bg-[#6658dd] text-white hover:bg-[#5848d8]"
               icon={CalendarPlus}
               onClick={openInterviewModal}
@@ -609,29 +630,7 @@ const EmployerCandidateProfile = () => {
             <ActionButton
               tone="border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
               icon={Clock}
-              onClick={async () => {
-                setSaving('InterviewOnHold');
-                setError('');
-                setMessage('');
-                try {
-                  await axios.post(
-                    `${BASE_API_URL}/employer/applications/${candidate.application.id}/schedule-interview`,
-                    {
-                      onHold: true,
-                      type: candidate.application.interviewDetails?.type || 'Video Call',
-                      notes: candidate.application.interviewDetails?.notes || 'Interview kept on hold.'
-                    },
-                    { headers: getTokenHeaders() }
-                  );
-                  setMessage('Application moved to interview on hold.');
-                  const response = await axios.get(profileUrl, { headers: getTokenHeaders() });
-                  setCandidate(response.data);
-                } catch (err) {
-                  setError(err.response?.data?.message || 'Failed to move application to interview on hold.');
-                } finally {
-                  setSaving('');
-                }
-              }}
+              onClick={handleScheduleOnHold}
               disabled={Boolean(saving)}
             >
               On Hold for Interview

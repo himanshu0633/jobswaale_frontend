@@ -66,7 +66,7 @@ const pipelineConfig = [
   { key: 'reviewed', title: 'Reviewed', status: 'Reviewed', icon: Eye, tone: 'bg-sky-500 text-white' },
   { key: 'shortlisted', title: 'Shortlisted', status: 'Shortlisted', icon: UserCheck, tone: 'bg-amber-400 text-white' },
   { key: 'interview', title: 'Interview', status: 'Interview', icon: Calendar, tone: 'bg-[#6658dd] text-white' },
-  { key: 'onHold', title: 'Hold', status: 'OnHold', icon: Clock, tone: 'bg-orange-400 text-white' },
+  { key: 'onHold', title: 'Hold for Interview', status: 'OnHold', icon: Clock, tone: 'bg-orange-400 text-white' },
   { key: 'offered', title: 'Selected', status: 'Offered', icon: MailCheck, tone: 'bg-blue-500 text-white' },
   { key: 'rejected', title: 'Rejected', status: 'Rejected', icon: X, tone: 'bg-rose-500 text-white' }
 ];
