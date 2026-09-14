@@ -662,6 +662,14 @@ const EmployerApplicationDetails = () => {
       })
     };
 
+    const acceptAction = {
+      key: 'OfferAccept',
+      label: 'Accept Offer',
+      tone: 'bg-cyan-500 text-white hover:bg-cyan-600',
+      icon: Check,
+      onClick: () => updateOfferStatus('Offer Accepted')
+    };
+
     const hireAction = {
       key: 'Hire',
       label: 'Hire',
@@ -678,39 +686,41 @@ const EmployerApplicationDetails = () => {
       onClick: () => updateStatus('Rejected')
     };
 
-    // Full sequential pipeline actions for Bottom-Right Quick Actions sidebar
+    // Stage-specific progressive quick actions for Bottom-Right Quick Actions sidebar
     if (status === 'Applied' || status === 'Reviewed') {
       list.push(shortlistAction);
       list.push(scheduleInterviewAction);
       list.push(holdAction);
       list.push(selectAction);
-      list.push(sendOfferAction);
-      list.push(hireAction);
       list.push(rejectAction);
     } else if (status === 'Shortlisted') {
-      list.push(shortlistAction);
+      // Shortlist is completed -> removed!
       list.push(scheduleInterviewAction);
       list.push(holdAction);
       list.push(selectAction);
-      list.push(sendOfferAction);
-      list.push(hireAction);
       list.push(rejectAction);
     } else if (status === 'Interview') {
-      list.push(shortlistAction);
-      list.push(rescheduleInterviewAction);
-      list.push(holdAction);
-      list.push(selectAction);
-      list.push(sendOfferAction);
-      list.push(hireAction);
-      list.push(rejectAction);
+      // Shortlist is completed -> removed!
+      if (onHold) {
+        list.push(rescheduleInterviewAction);
+        list.push(selectAction);
+        list.push(rejectAction);
+      } else {
+        list.push(selectAction);
+        list.push(rescheduleInterviewAction);
+        list.push(holdAction);
+        list.push(rejectAction);
+      }
     } else if (status === 'Offered' || status === 'Selected') {
+      // Shortlist, Interview, Select completed -> removed!
+      // "hire ka button select k bad or offer accsept k bad aay ok"
       const offerStatus = application.selectionDetails?.offerStatus || 'Selected';
       if (offerStatus === 'Selected') {
-        list.push(shortlistAction);
-        list.push(scheduleInterviewAction);
-        list.push(holdAction);
-        list.push(selectAction);
         list.push(sendOfferAction);
+        list.push(hireAction);
+        list.push(rejectAction);
+      } else if (offerStatus === 'Offer Sent') {
+        list.push(acceptAction);
         list.push(hireAction);
         list.push(rejectAction);
       } else if (offerStatus === 'Offer Accepted') {
