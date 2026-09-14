@@ -692,36 +692,38 @@ const EmployerApplicationDetails = () => {
       list.push(scheduleInterviewAction);
       list.push(holdAction);
       list.push(selectAction);
+      list.push(sendOfferAction);
       list.push(rejectAction);
     } else if (status === 'Shortlisted') {
       // Shortlist is completed -> removed!
       list.push(scheduleInterviewAction);
       list.push(holdAction);
       list.push(selectAction);
+      list.push(sendOfferAction);
       list.push(rejectAction);
     } else if (status === 'Interview') {
       // Shortlist is completed -> removed!
       if (onHold) {
         list.push(rescheduleInterviewAction);
         list.push(selectAction);
+        list.push(sendOfferAction);
         list.push(rejectAction);
       } else {
         list.push(selectAction);
         list.push(rescheduleInterviewAction);
         list.push(holdAction);
+        list.push(sendOfferAction);
         list.push(rejectAction);
       }
     } else if (status === 'Offered' || status === 'Selected') {
       // Shortlist, Interview, Select completed -> removed!
-      // "hire ka button select k bad or offer accsept k bad aay ok"
+      // "hire ka button bs jbhi dhikhe jb hm offer sent krne k bad offer acsept ho jay vha hi ho"
       const offerStatus = application.selectionDetails?.offerStatus || 'Selected';
       if (offerStatus === 'Selected') {
         list.push(sendOfferAction);
-        list.push(hireAction);
         list.push(rejectAction);
       } else if (offerStatus === 'Offer Sent') {
         list.push(acceptAction);
-        list.push(hireAction);
         list.push(rejectAction);
       } else if (offerStatus === 'Offer Accepted') {
         list.push(hireAction);
