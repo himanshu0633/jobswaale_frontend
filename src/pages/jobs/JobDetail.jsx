@@ -740,40 +740,39 @@ export const JobDetail = () => {
                    </div>
                  ) : categoryJobs.length > 0 ? (
                    <div className="grid gap-4 sm:grid-cols-2">
-                     {categoryJobs.map((jobItem) => (
-                       <div
-                         key={jobItem.id}
-                         className="rounded-[12px] border border-[rgba(6,18,36,0.1)] bg-white p-[1.8rem] flex flex-col h-full transition-all duration-300 ease-in-out hover:shadow-[0_10px_25px_rgba(0,0,0,0.06)] hover:-translate-y-1 hover:border-[rgba(0,102,255,0.2)]"
-                       >
-                         <div className="flex items-start">
-                           <div className="flex-shrink-0">
-                             <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg text-white ${jobItem.logoBg}`}>
-                               {jobItem.logoLetter}
-                             </div>
-                           </div>
-                           <div className="flex-grow-1 ms-4 min-w-0">
-                             <h3 className="job-title font-bold text-[#1f2938] text-base leading-snug truncate">
-                               <Link to={`/jobs/${jobItem.id}`} className="text-dark hover:text-[#0047C7]">
-                                 {jobItem.title}
-                               </Link>
-                             </h3>
-                             <p className="company-name text-xs font-bold text-[black] truncate mb-2 mt-2">
-                               {jobItem.company}
-                             </p>
-                             <div className="job-meta-list flex items-center gap-1 text-xs text-[#88929b]">
-                               <MapPin className="h-3.5 w-3.5 text-[#88929b] shrink-0" />
-                               <span>{jobItem.location}</span>
-                             </div>
-                           </div>
-                         </div>
-                         <div className="job-footer mt-auto pt-4 flex items-center justify-between" style={{ borderTop: '1px solid #d8d2d2', marginTop:'7%' }}>
-                           <span className="job-salary text-sm font-bold text-[black]">{jobItem.salary}</span>
-                           <span className="job-badge px-3 py-1 rounded-[6px] bg-[rgba(0,71,199,0.12)] text-blue-500 text-xs font-medium">
-                             {jobItem.type}
-                           </span>
-                         </div>
-                       </div>
-                     ))}
+                      {categoryJobs.map((jobItem) => (
+                        <Link
+                          key={jobItem.id}
+                          to={`/jobs/${jobItem.id}`}
+                          className="rounded-[12px] border border-[rgba(6,18,36,0.1)] bg-white p-[1.8rem] flex flex-col h-full transition-all duration-300 ease-in-out hover:shadow-[0_10px_25px_rgba(0,0,0,0.06)] hover:-translate-y-1 hover:border-[rgba(0,102,255,0.2)] group text-inherit no-underline cursor-pointer"
+                        >
+                          <div className="flex items-start">
+                            <div className="flex-shrink-0">
+                              <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg text-white ${jobItem.logoBg}`}>
+                                {jobItem.logoLetter}
+                              </div>
+                            </div>
+                            <div className="flex-grow-1 ms-4 min-w-0">
+                              <h3 className="job-title font-bold text-[#1f2938] text-base leading-snug truncate group-hover:text-[#0047C7] transition-colors">
+                                {jobItem.title}
+                              </h3>
+                              <p className="company-name text-xs font-bold text-[black] truncate mb-2 mt-2">
+                                {jobItem.company}
+                              </p>
+                              <div className="job-meta-list flex items-center gap-1 text-xs text-[#88929b]">
+                                <MapPin className="h-3.5 w-3.5 text-[#88929b] shrink-0" />
+                                <span>{jobItem.location}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="job-footer mt-auto pt-4 flex items-center justify-between" style={{ borderTop: '1px solid #d8d2d2', marginTop:'7%' }}>
+                            <span className="job-salary text-sm font-bold text-[black]">{jobItem.salary}</span>
+                            <span className="job-badge px-3 py-1 rounded-[6px] bg-[rgba(0,71,199,0.12)] text-blue-500 text-xs font-medium">
+                              {jobItem.type}
+                            </span>
+                          </div>
+                        </Link>
+                      ))}
                    </div>
                  ) : (
                    <p className="text-sm font-semibold text-slate-400">No other jobs found in this category.</p>

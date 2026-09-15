@@ -629,7 +629,11 @@ export const Jobs = () => {
             ) : (
               <div className="grid gap-4 sm:grid-cols-2">
                 {paginatedJobs.map((job) => (
-                  <div key={job.id} className="job-card">
+                  <Link
+                    key={job.id}
+                    to={`/jobs/${job.id}`}
+                    className="job-card group block text-inherit no-underline"
+                  >
                     <div className="flex items-start">
                       <div className="flex-shrink-0">
                         <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg text-white ${job.logoBg}`}>
@@ -638,10 +642,8 @@ export const Jobs = () => {
                       </div>
                       <div className="flex-grow-1 ms-4 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <h3 className="job-title font-bold text-[#1f2938] text-base leading-snug truncate flex-1">
-                            <Link to={`/jobs/${job.id}`} className="text-dark hover:text-[#0047C7] truncate">
-                              {job.title}
-                            </Link>
+                          <h3 className="job-title font-bold text-[#1f2938] text-base leading-snug truncate flex-1 group-hover:text-[#0047C7] transition-colors">
+                            {job.title}
                           </h3>
                           <div className="flex flex-wrap items-center gap-1 shrink-0">
                             {job.hasApplied && (
@@ -676,7 +678,7 @@ export const Jobs = () => {
                         {job.type}
                       </span>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
@@ -964,12 +966,19 @@ export const Jobs = () => {
           display: flex;
           flex-direction: column;
           height: 100%;
+          cursor: pointer;
+          text-decoration: none;
+          color: inherit;
         }
 
         .job-card:hover {
           box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
           transform: translateY(-4px);
           border-color: rgba(0, 102, 255, 0.2);
+        }
+
+        .job-card:hover .job-title {
+          color: #0047C7;
         }
       `}} />
     </div>

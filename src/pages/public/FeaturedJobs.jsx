@@ -92,9 +92,10 @@ export const FeaturedJobs = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {jobs.map((job) => (
-              <div
+              <Link
                 key={job.id}
-                className="group bg-white rounded-2xl border border-slate-200 p-6 flex flex-col h-full transition-all duration-300 hover:shadow-xl hover:border-[#0047C7]/20"
+                to={`/jobs/${job.id}`}
+                className="group bg-white rounded-2xl border border-slate-200 p-6 flex flex-col h-full transition-all duration-300 hover:shadow-xl hover:border-[#0047C7]/20 cursor-pointer text-inherit no-underline"
               >
                 {/* Top Content */}
                 <div className="flex items-start gap-4">
@@ -109,13 +110,8 @@ export const FeaturedJobs = () => {
                       Featured
                     </span>
 
-                    <h3 className="text-lg font-semibold text-slate-900 leading-snug">
-                      <Link
-                        to={`/jobs/${job.id}`}
-                        className="hover:text-[#0047C7] transition-colors"
-                      >
-                        {job.title}
-                      </Link>
+                    <h3 className="text-lg font-semibold text-slate-900 leading-snug group-hover:text-[#0047C7] transition-colors">
+                      {job.title}
                     </h3>
 
                     <p className="text-sm font-medium text-slate-600 mt-1">
@@ -140,7 +136,7 @@ export const FeaturedJobs = () => {
                     {job.type}
                   </span>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
