@@ -275,12 +275,6 @@ export const EmployerDashboard = () => {
     });
   }, [dashboard.activeJobs, searchTerm, statusFilter]);
 
-  if (loading) {
-    return <PageSkeleton variant="dashboard" />;
-  }
-
-  const subscription = dashboard.subscription || {};
-  const upcomingInterviews = dashboard.upcomingInterviews || [];
   const pipeline = useMemo(() => {
     const raw = dashboard.pipeline || {};
     const stats = dashboard.stats || {};
@@ -293,6 +287,13 @@ export const EmployerDashboard = () => {
       rejected: finalRejected
     };
   }, [dashboard.pipeline, dashboard.stats]);
+
+  if (loading) {
+    return <PageSkeleton variant="dashboard" />;
+  }
+
+  const subscription = dashboard.subscription || {};
+  const upcomingInterviews = dashboard.upcomingInterviews || [];
 
   return (
     <div className="space-y-6 px-3 sm:px-0" style={{ fontFamily: "'Inter', sans-serif" }}>
