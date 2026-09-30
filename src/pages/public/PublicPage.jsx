@@ -67,7 +67,7 @@ export const PublicPage = () => {
 
     switch (slug) {
       case 'home':
-        return <Home />;
+        return <Home settings={settings} />;
       case 'jobs':
         return <Jobs />;
       case 'employer':

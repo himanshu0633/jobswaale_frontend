@@ -12,7 +12,10 @@ import {
   Send, 
   CheckCircle2, 
   AlertCircle, 
-  X 
+  X,
+  LayoutDashboard,
+  BarChart3,
+  Layers
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import { clearPublicSettingsCache } from '../../../utils/publicSettings';
@@ -55,7 +58,25 @@ const defaultSettings = {
   mailUsername: 'noreply@jobswaale.com',
   mailPassword: '',
   mailFromName: 'JobsWaale',
-  mailFromEmail: 'noreply@jobswaale.com'
+  mailFromEmail: 'noreply@jobswaale.com',
+
+  // Home Dashboard
+  heroTitle: 'Find Your Dream Job & Build Your Future',
+  heroSubtitle: 'Connect with thousands of employers and find the right job for your career growth.',
+  showHeroSearch: true,
+  showTrendingSearches: true,
+  showAccountTypeCards: true,
+  showStatsBar: true,
+  showPopularCategories: true,
+  showFeaturedJobs: true,
+  showTopCompanies: true,
+  showDoubleCTA: true,
+  statOpenJobs: '2,000+',
+  statCompanies: '500+',
+  statJobseekers: '15,000+',
+  statCities: '50+',
+  maxFeaturedJobs: 6,
+  maxPopularCategories: 8
 };
 
 export const Settings = () => {
@@ -157,7 +178,8 @@ export const Settings = () => {
     { key: 'general', label: 'General', icon: <SettingsIcon className="w-4 h-4 sm:w-4.5 sm:h-4.5" /> },
     { key: 'notification', label: 'Notifications', icon: <BellRing className="w-4 h-4 sm:w-4.5 sm:h-4.5" /> },
     { key: 'security', label: 'Security', icon: <ShieldCheck className="w-4 h-4 sm:w-4.5 sm:h-4.5" /> },
-    { key: 'email', label: 'Email', icon: <Mail className="w-4 h-4 sm:w-4.5 sm:h-4.5" /> }
+    { key: 'email', label: 'Email', icon: <Mail className="w-4 h-4 sm:w-4.5 sm:h-4.5" /> },
+    { key: 'homeDashboard', label: 'Home dashboard', icon: <LayoutDashboard className="w-4 h-4 sm:w-4.5 sm:h-4.5" /> }
   ];
 
   return (
@@ -197,7 +219,7 @@ export const Settings = () => {
         <div className="px-4 py-4 border-b border-slate-100 sm:px-5">
           <h4 className="text-base font-bold text-slate-800">System Settings</h4>
           <p className="text-xs text-slate-400 mt-0.5">
-            Configure global system settings, notifications, security preferences, and email configuration for the platform.
+            Configure global system settings, notifications, security preferences, email configuration, and home dashboard for the platform.
           </p>
         </div>
 
@@ -634,6 +656,199 @@ export const Settings = () => {
                 >
                   <Save className="w-4 h-4" />
                   {saving ? 'Saving...' : 'Save Email Configuration'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 5: Home Dashboard Settings */}
+          {!loading && activeTab === 'homeDashboard' && (
+            <div className="space-y-6">
+              {/* Hero Banner Section */}
+              <div className="space-y-4">
+                <h5 className="flex items-center gap-2 bg-slate-50 text-slate-700 text-sm font-semibold px-3 py-2 rounded-lg">
+                  <Globe className="w-4 h-4 text-slate-500" />
+                  Hero Banner & Search Configuration
+                </h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <label className={labelCls}>Hero Headline Title</label>
+                    <input 
+                      type="text" 
+                      value={form.heroTitle || ''}
+                      onChange={(e) => setForm({ ...form, heroTitle: e.target.value })}
+                      className={inputCls} 
+                      placeholder="Find Your Dream Job & Build Your Future"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className={labelCls}>Hero Subtitle / Description</label>
+                    <textarea 
+                      rows={2}
+                      value={form.heroSubtitle || ''}
+                      onChange={(e) => setForm({ ...form, heroSubtitle: e.target.value })}
+                      className={inputCls} 
+                      placeholder="Connect with thousands of employers and find the right job for your career growth."
+                    />
+                  </div>
+                </div>
+
+                <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100 mt-3">
+                  <ToggleSwitch 
+                    label="Hero Search Bar" 
+                    subtext="Display the interactive job & candidate search form on the homepage hero."
+                    checked={form.showHeroSearch ?? true} 
+                    onChange={() => handleToggle('showHeroSearch')} 
+                  />
+                  <ToggleSwitch 
+                    label="Trending Searches" 
+                    subtext="Display popular trending job categories below the search form."
+                    checked={form.showTrendingSearches ?? true} 
+                    onChange={() => handleToggle('showTrendingSearches')} 
+                  />
+                  <ToggleSwitch 
+                    label="Account Type Selection Cards" 
+                    subtext="Display Job Seeker and Employer choice cards on the homepage hero."
+                    checked={form.showAccountTypeCards ?? true} 
+                    onChange={() => handleToggle('showAccountTypeCards')} 
+                  />
+                </div>
+              </div>
+
+              {/* Homepage Sections Visibility */}
+              <div className="space-y-4">
+                <h5 className="flex items-center gap-2 bg-slate-50 text-slate-700 text-sm font-semibold px-3 py-2 rounded-lg">
+                  <Layers className="w-4 h-4 text-slate-500" />
+                  Homepage Sections Visibility
+                </h5>
+                <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+                  <ToggleSwitch 
+                    label="Stats Overview Bar" 
+                    subtext="Display the floating metrics banner (Jobs, Companies, Seekers, Cities) on the homepage."
+                    checked={form.showStatsBar ?? true} 
+                    onChange={() => handleToggle('showStatsBar')} 
+                  />
+                  <ToggleSwitch 
+                    label="Popular Job Categories Section" 
+                    subtext="Show top categories with job counts and direct navigation."
+                    checked={form.showPopularCategories ?? true} 
+                    onChange={() => handleToggle('showPopularCategories')} 
+                  />
+                  <ToggleSwitch 
+                    label="Featured Jobs Section" 
+                    subtext="Show verified and featured open job opportunities."
+                    checked={form.showFeaturedJobs ?? true} 
+                    onChange={() => handleToggle('showFeaturedJobs')} 
+                  />
+                  <ToggleSwitch 
+                    label="Top Employers & Companies Section" 
+                    subtext="Display prominent hiring companies and corporate logos."
+                    checked={form.showTopCompanies ?? true} 
+                    onChange={() => handleToggle('showTopCompanies')} 
+                  />
+                  <ToggleSwitch 
+                    label="Dual Call-to-Action (CTA) Banner" 
+                    subtext="Display the employer and candidate promotional banners with action buttons."
+                    checked={form.showDoubleCTA ?? true} 
+                    onChange={() => handleToggle('showDoubleCTA')} 
+                  />
+                </div>
+              </div>
+
+              {/* Homepage Statistics Counters */}
+              <div className="space-y-4">
+                <h5 className="flex items-center gap-2 bg-slate-50 text-slate-700 text-sm font-semibold px-3 py-2 rounded-lg">
+                  <BarChart3 className="w-4 h-4 text-slate-500" />
+                  Stats Bar Counters
+                </h5>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <label className={labelCls}>Open Jobs Count</label>
+                    <input 
+                      type="text" 
+                      value={form.statOpenJobs || ''}
+                      onChange={(e) => setForm({ ...form, statOpenJobs: e.target.value })}
+                      className={inputCls} 
+                      placeholder="2,000+"
+                    />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Top Companies Count</label>
+                    <input 
+                      type="text" 
+                      value={form.statCompanies || ''}
+                      onChange={(e) => setForm({ ...form, statCompanies: e.target.value })}
+                      className={inputCls} 
+                      placeholder="500+"
+                    />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Job Seekers Count</label>
+                    <input 
+                      type="text" 
+                      value={form.statJobseekers || ''}
+                      onChange={(e) => setForm({ ...form, statJobseekers: e.target.value })}
+                      className={inputCls} 
+                      placeholder="15,000+"
+                    />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Cities Covered Count</label>
+                    <input 
+                      type="text" 
+                      value={form.statCities || ''}
+                      onChange={(e) => setForm({ ...form, statCities: e.target.value })}
+                      className={inputCls} 
+                      placeholder="50+"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Display Limits */}
+              <div className="space-y-4">
+                <h5 className="flex items-center gap-2 bg-slate-50 text-slate-700 text-sm font-semibold px-3 py-2 rounded-lg">
+                  <Sliders className="w-4 h-4 text-slate-500" />
+                  Section Display Limits
+                </h5>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelCls}>Max Featured Jobs Displayed</label>
+                    <input 
+                      type="number" 
+                      min="1" 
+                      max="24"
+                      value={form.maxFeaturedJobs || 6}
+                      onChange={(e) => setForm({ ...form, maxFeaturedJobs: parseInt(e.target.value) || 6 })}
+                      className={inputCls} 
+                    />
+                    <small className="text-xs text-slate-400 mt-1 block">Number of job cards shown in the featured jobs grid.</small>
+                  </div>
+                  <div>
+                    <label className={labelCls}>Max Popular Categories Displayed</label>
+                    <input 
+                      type="number" 
+                      min="1" 
+                      max="24"
+                      value={form.maxPopularCategories || 8}
+                      onChange={(e) => setForm({ ...form, maxPopularCategories: parseInt(e.target.value) || 8 })}
+                      className={inputCls} 
+                    />
+                    <small className="text-xs text-slate-400 mt-1 block">Number of category cards shown on the homepage.</small>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Button */}
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => handleSave('home dashboard')}
+                  disabled={saving}
+                  className="inline-flex w-full items-center justify-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-60 sm:w-auto"
+                >
+                  <Save className="w-4 h-4" />
+                  {saving ? 'Saving...' : 'Save Home Dashboard Settings'}
                 </button>
               </div>
             </div>

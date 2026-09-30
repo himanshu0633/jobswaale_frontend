@@ -18,6 +18,7 @@ import DoubleCTA from './DoubleCTA';
 import PopularCategories from './PopularCategories';
 import FeaturedJobs from './FeaturedJobs';
 import TrustedCompanies from './TrustedCompanies';
+import { getPublicSettings } from '../../utils/publicSettings';
 
 const getJobLocationLabels = (job) => {
   const labels = [];
@@ -32,12 +33,23 @@ const getJobLocationLabels = (job) => {
   return labels;
 };
 
-export const Home = () => {
+export const Home = ({ settings: propSettings }) => {
   const navigate = useNavigate();
+  const [settings, setSettings] = useState(propSettings || null);
   const [searchTitle, setSearchTitle] = useState('');
   const [searchLoc, setSearchLoc] = useState('');
   const [categories, setCategories] = useState([]);
   const [locations, setLocations] = useState([]);
+
+  useEffect(() => {
+    if (propSettings) {
+      setSettings(propSettings);
+    } else {
+      getPublicSettings().then(data => {
+        if (data) setSettings(data);
+      });
+    }
+  }, [propSettings]);
 
   useEffect(() => {
     const fetchHeroFilters = async () => {
@@ -134,12 +146,29 @@ export const Home = () => {
               </span>
 
               <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold leading-[1.2] text-slate-900">
-                {isEmployer ? 'Find the Right' : 'Find Your'}{' '}
-                <span className="bg-gradient-to-r from-[#f3761e] to-[#c40c0c] bg-clip-text text-transparent">
-                  {isEmployer ? 'Candidates' : 'Dream Job'}
-                </span>
-                <br />
-                <strong>{isEmployer ? 'Build Your Team' : 'Build Your Future'}</strong>
+                {isEmployer ? (
+                  <>
+                    Find the Right{' '}
+                    <span className="bg-gradient-to-r from-[#f3761e] to-[#c40c0c] bg-clip-text text-transparent">
+                      Candidates
+                    </span>
+                    <br />
+                    <strong>Build Your Team</strong>
+                  </>
+                ) : (
+                  settings?.heroTitle ? (
+                    <span>{settings.heroTitle}</span>
+                  ) : (
+                    <>
+                      Find Your{' '}
+                      <span className="bg-gradient-to-r from-[#f3761e] to-[#c40c0c] bg-clip-text text-transparent">
+                        Dream Job
+                      </span>
+                      <br />
+                      <strong>Build Your Future</strong>
+                    </>
+                  )
+                )}
               </h1>
 
               <p className="text-base sm:text-[1.05rem] text-slate-500 leading-relaxed max-w-xl">
@@ -148,50 +177,56 @@ export const Home = () => {
                     <strong className="text-slate-700">Search relevant candidates faster and manage hiring in one place.</strong> Review talent, shortlist profiles, and move applicants through your recruitment pipeline.
                   </>
                 ) : (
-                  <>
-                    <strong className="text-slate-700">Find local jobs faster and easier.</strong> We connect job seekers with nearby opportunities and help employers hire quickly.
-                  </>
+                  settings?.heroSubtitle ? (
+                    <span>{settings.heroSubtitle}</span>
+                  ) : (
+                    <>
+                      <strong className="text-slate-700">Find local jobs faster and easier.</strong> We connect job seekers with nearby opportunities and help employers hire quickly.
+                    </>
+                  )
                 )}
               </p>
 
               {/* Search Form */}
-              <form
-                onSubmit={handleSearchSubmit}
-                className="p-2 rounded-xl bg-white border border-slate-200 shadow-[0_10px_30px_rgba(0,0,0,0.08)] flex flex-col md:flex-row gap-2 max-w-2xl"
-              >
-                <div className="flex-1 relative flex items-center">
-                  <input
-                    type="text"
-                    placeholder={isEmployer ? 'Candidate skill, title, or name' : 'Job title'}
-                    value={searchTitle}
-                    onChange={(e) => setSearchTitle(e.target.value)}
-                    className="w-full bg-transparent border-0 px-4 py-3 text-slate-800 placeholder-slate-400 text-[0.95rem] focus:outline-none focus:ring-0"
-                  />
-                </div>
-                <div className="hidden md:block w-px bg-slate-200 my-2" />
-                <div className="flex-1 relative flex items-center">
-                  <select
-                    value={searchLoc}
-                    onChange={(e) => setSearchLoc(e.target.value)}
-                    className="w-full bg-transparent border-0 px-4 py-3 text-slate-800 text-[0.95rem] focus:outline-none focus:ring-0 appearance-none cursor-pointer"
-                  >
-                    <option value="">Location</option>
-                    {locations.map((location) => (
-                      <option key={location} value={location}>{location}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-4 h-4 w-4 text-slate-400 pointer-events-none" />
-                </div>
-                <button
-                  type="submit"
-                  className="bg-gradient-to-br from-[#FF6B00] to-[#ff7043] text-white font-semibold text-sm px-7 py-3 rounded-lg transition duration-150 hover:opacity-95 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+              {settings?.showHeroSearch !== false && (
+                <form
+                  onSubmit={handleSearchSubmit}
+                  className="p-2 rounded-xl bg-white border border-slate-200 shadow-[0_10px_30px_rgba(0,0,0,0.08)] flex flex-col md:flex-row gap-2 max-w-2xl"
                 >
-                  {isEmployer ? 'Search Candidates' : 'Search Jobs'}
-                </button>
-              </form>
+                  <div className="flex-1 relative flex items-center">
+                    <input
+                      type="text"
+                      placeholder={isEmployer ? 'Candidate skill, title, or name' : 'Job title'}
+                      value={searchTitle}
+                      onChange={(e) => setSearchTitle(e.target.value)}
+                      className="w-full bg-transparent border-0 px-4 py-3 text-slate-800 placeholder-slate-400 text-[0.95rem] focus:outline-none focus:ring-0"
+                    />
+                  </div>
+                  <div className="hidden md:block w-px bg-slate-200 my-2" />
+                  <div className="flex-1 relative flex items-center">
+                    <select
+                      value={searchLoc}
+                      onChange={(e) => setSearchLoc(e.target.value)}
+                      className="w-full bg-transparent border-0 px-4 py-3 text-slate-800 text-[0.95rem] focus:outline-none focus:ring-0 appearance-none cursor-pointer"
+                    >
+                      <option value="">Location</option>
+                      {locations.map((location) => (
+                        <option key={location} value={location}>{location}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-4 h-4 w-4 text-slate-400 pointer-events-none" />
+                  </div>
+                  <button
+                    type="submit"
+                    className="bg-gradient-to-br from-[#FF6B00] to-[#ff7043] text-white font-semibold text-sm px-7 py-3 rounded-lg transition duration-150 hover:opacity-95 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+                  >
+                    {isEmployer ? 'Search Candidates' : 'Search Jobs'}
+                  </button>
+                </form>
+              )}
 
               {/* Trending Searches */}
-              {!isEmployer && <div className="flex flex-wrap items-center gap-1.5 pt-2 text-sm text-slate-500">
+              {!isEmployer && settings?.showTrendingSearches !== false && <div className="flex flex-wrap items-center gap-1.5 pt-2 text-sm text-slate-500">
                 <span className="mr-1">Trending Searches:</span>
                 {categories.map((category) => (
                   <Link
@@ -206,7 +241,7 @@ export const Home = () => {
             </div>
 
             {/* Right Block: Choice Cards */}
-            {!isLoggedIn && (
+            {!isLoggedIn && settings?.showAccountTypeCards !== false && (
             <div className="lg:col-span-5">
               <div className="bg-white rounded-2xl p-8 shadow-[0_10px_40px_rgba(0,0,0,0.04)] border border-black/[0.03] space-y-5 w-full">
                 <h3 className="text-lg font-semibold text-slate-900 text-center mb-2">Choose Your Account Type</h3>
@@ -259,60 +294,62 @@ export const Home = () => {
       </section>
 
       {/* Floating Stats Bar */}
-      <section className="relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-[0_10px_35px_rgba(0,0,0,0.05)]">
-            <div className="grid gap-6 grid-cols-2 lg:grid-cols-4">
+      {settings?.showStatsBar !== false && (
+        <section className="relative z-10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-[0_10px_35px_rgba(0,0,0,0.05)]">
+              <div className="grid gap-6 grid-cols-2 lg:grid-cols-4">
 
-              <div className="flex items-center gap-4">
-                <div className="w-[54px] h-[54px] rounded-full bg-[#F2F6FF] text-[#0047C7] flex items-center justify-center shrink-0">
-                  <Briefcase className="h-6 w-6" />
+                <div className="flex items-center gap-4">
+                  <div className="w-[54px] h-[54px] rounded-full bg-[#F2F6FF] text-[#0047C7] flex items-center justify-center shrink-0">
+                    <Briefcase className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <div className="text-xl font-bold text-[#0047C7]">{settings?.statOpenJobs || '2,000+'}</div>
+                    <div className="text-sm text-slate-500">Open Jobs</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-xl font-bold text-[#0047C7]">2,000+</div>
-                  <div className="text-sm text-slate-500">Open Jobs</div>
+
+                <div className="flex items-center gap-4 md:border-l md:border-slate-100 md:pl-6">
+                  <div className="w-[54px] h-[54px] rounded-full bg-[#e8f5e9] text-[#2e7d32] flex items-center justify-center shrink-0">
+                    <Building2 className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <div className="text-xl font-bold text-[#0047C7]">{settings?.statCompanies || '500+'}</div>
+                    <div className="text-sm text-slate-500">Top Companies</div>
+                  </div>
                 </div>
+
+                <div className="flex items-center gap-4 md:border-l md:border-slate-100 md:pl-6">
+                  <div className="w-[54px] h-[54px] rounded-full bg-[#f3e5f5] text-[#7b1fa2] flex items-center justify-center shrink-0">
+                    <Users className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <div className="text-xl font-bold text-[#0047C7]">{settings?.statJobseekers || '15,000+'}</div>
+                    <div className="text-sm text-slate-500">Job Seekers</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 md:border-l md:border-slate-100 md:pl-6">
+                  <div className="w-[54px] h-[54px] rounded-full bg-[#FFF4EB] text-[#FF6B00] flex items-center justify-center shrink-0">
+                    <MapPin className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <div className="text-xl font-bold text-[#0047C7]">{settings?.statCities || '50+'}</div>
+                    <div className="text-sm text-slate-500">Cities Covered</div>
+                  </div>
+                </div>
+
               </div>
-
-              <div className="flex items-center gap-4 md:border-l md:border-slate-100 md:pl-6">
-                <div className="w-[54px] h-[54px] rounded-full bg-[#e8f5e9] text-[#2e7d32] flex items-center justify-center shrink-0">
-                  <Building2 className="h-6 w-6" />
-                </div>
-                <div>
-                  <div className="text-xl font-bold text-[#0047C7]">500+</div>
-                  <div className="text-sm text-slate-500">Top Companies</div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4 md:border-l md:border-slate-100 md:pl-6">
-                <div className="w-[54px] h-[54px] rounded-full bg-[#f3e5f5] text-[#7b1fa2] flex items-center justify-center shrink-0">
-                  <Users className="h-6 w-6" />
-                </div>
-                <div>
-                  <div className="text-xl font-bold text-[#0047C7]">15,000+</div>
-                  <div className="text-sm text-slate-500">Job Seekers</div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4 md:border-l md:border-slate-100 md:pl-6">
-                <div className="w-[54px] h-[54px] rounded-full bg-[#FFF4EB] text-[#FF6B00] flex items-center justify-center shrink-0">
-                  <MapPin className="h-6 w-6" />
-                </div>
-                <div>
-                  <div className="text-xl font-bold text-[#0047C7]">50+</div>
-                  <div className="text-sm text-slate-500">Cities Covered</div>
-                </div>
-              </div>
-
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      <DoubleCTA />
-      <PopularCategories />
-      <FeaturedJobs />
-      <TrustedCompanies />
+      {settings?.showDoubleCTA !== false && <DoubleCTA />}
+      {settings?.showPopularCategories !== false && <PopularCategories />}
+      {settings?.showFeaturedJobs !== false && <FeaturedJobs />}
+      {settings?.showTopCompanies !== false && <TrustedCompanies />}
     </div>
   );
 };
