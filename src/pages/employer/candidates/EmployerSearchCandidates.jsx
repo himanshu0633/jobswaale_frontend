@@ -144,7 +144,7 @@ const viewCandidateResume = async (candidate) => {
 };
 
 const filterLabelClass = 'mb-2 block text-xs font-extrabold text-slate-500';
-const filterControlClass = 'candidate-filter-control h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100';
+const filterControlClass = 'candidate-filter-control h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 outline-none placeholder:font-bold placeholder:text-slate-400 focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100';
 
 const SelectField = ({ label, value, onChange, children, uppercase = false }) => (
   <div>
@@ -426,7 +426,7 @@ export const EmployerSearchCandidates = () => {
 
           <div className="mb-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-600"><select value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setCurrentPage(1); }} className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold"><option value={10}>10</option><option value={25}>25</option><option value={50}>50</option></select>entries per page</div>
-            <label className="flex items-center gap-2 text-sm font-semibold text-slate-600">Search:<input value={tableSearch} onChange={(event) => { setTableSearch(event.target.value); setCurrentPage(1); }} className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold outline-none focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100 sm:w-48" /></label>
+            <label className="flex items-center gap-2 text-sm font-bold text-slate-600">Search:<input value={tableSearch} onChange={(event) => { setTableSearch(event.target.value); setCurrentPage(1); }} className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-bold placeholder:font-bold outline-none focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100 sm:w-48" placeholder="Search..." /></label>
           </div>
 
           {/* Card list — mobile only */}

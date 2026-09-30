@@ -140,108 +140,76 @@ export const Home = ({ settings: propSettings }) => {
           <div className="grid gap-12 lg:grid-cols-12 items-center">
 
             {/* Left Block: Search & Text */}
-            <div className={`${isLoggedIn ? 'lg:col-span-12' : 'lg:col-span-7 lg:pr-4'} space-y-6`}>
+            <div className="lg:col-span-7 lg:pr-4 space-y-6">
               <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-[#0047C7]/[0.08] text-[#0047C7]">
-                <CheckCircle2 className="h-4 w-4 text-[#0047C7]" /> {isEmployer ? 'Candidate Search. Faster Hiring.' : 'Smart Hiring. Better Recruitment.'}
+                <CheckCircle2 className="h-4 w-4 text-[#0047C7]" /> Smart Hiring. Better Recruitment.
               </span>
 
               <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold leading-[1.2] text-slate-900">
-                {isEmployer ? (
-                  <>
-                    Find the Right{' '}
-                    <span className="bg-gradient-to-r from-[#f3761e] to-[#c40c0c] bg-clip-text text-transparent">
-                      Candidates
-                    </span>
-                    <br />
-                    <strong>Build Your Team</strong>
-                  </>
-                ) : (
-                  settings?.heroTitle ? (
-                    <span>{settings.heroTitle}</span>
-                  ) : (
-                    <>
-                      Find Your{' '}
-                      <span className="bg-gradient-to-r from-[#f3761e] to-[#c40c0c] bg-clip-text text-transparent">
-                        Dream Job
-                      </span>
-                      <br />
-                      <strong>Build Your Future</strong>
-                    </>
-                  )
-                )}
+                Find Your{' '}
+                <span className="bg-gradient-to-r from-[#f3761e] to-[#c40c0c] bg-clip-text text-transparent">
+                  Dream Job
+                </span>
+                <br />
+                <strong className="font-extrabold text-slate-900">Build Your Future</strong>
               </h1>
 
               <p className="text-base sm:text-[1.05rem] text-slate-500 leading-relaxed max-w-xl">
-                {isEmployer ? (
-                  <>
-                    <strong className="text-slate-700">Search relevant candidates faster and manage hiring in one place.</strong> Review talent, shortlist profiles, and move applicants through your recruitment pipeline.
-                  </>
-                ) : (
-                  settings?.heroSubtitle ? (
-                    <span>{settings.heroSubtitle}</span>
-                  ) : (
-                    <>
-                      <strong className="text-slate-700">Find the jobs faster and easier.</strong> We connect job seekers with nearby opportunities and help employers hire quickly.
-                    </>
-                  )
-                )}
+                <strong className="font-bold text-slate-900">Find the jobs faster and easier.</strong> We connect job seekers with nearby opportunities and help employers hire quickly.
               </p>
 
               {/* Search Form */}
-              {settings?.showHeroSearch !== false && (
-                <form
-                  onSubmit={handleSearchSubmit}
-                  className="p-2.5 rounded-xl bg-white border-2 border-slate-300 shadow-[0_10px_30px_rgba(0,0,0,0.1)] flex flex-col md:flex-row gap-2 max-w-2xl"
-                >
-                  <div className="flex-1 relative flex items-center">
-                    <input
-                      type="text"
-                      placeholder={isEmployer ? 'Candidate skill, title, or name' : 'Job title'}
-                      value={searchTitle}
-                      onChange={(e) => setSearchTitle(e.target.value)}
-                      className="w-full bg-transparent border-0 px-4 py-3 text-slate-900 font-bold placeholder:font-bold placeholder:text-slate-500 text-[0.95rem] focus:outline-none focus:ring-0"
-                    />
-                  </div>
-                  <div className="hidden md:block w-0.5 bg-slate-300 my-2" />
-                  <div className="flex-1 relative flex items-center">
-                    <select
-                      value={searchLoc}
-                      onChange={(e) => setSearchLoc(e.target.value)}
-                      className="w-full bg-transparent border-0 px-4 py-3 text-slate-900 font-bold text-[0.95rem] focus:outline-none focus:ring-0 appearance-none cursor-pointer"
-                    >
-                      <option value="" className="font-bold text-slate-500">Location</option>
-                      {locations.map((location) => (
-                        <option key={location} value={location} className="font-bold text-slate-900">{location}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-4 h-4 w-4 text-slate-600 pointer-events-none" />
-                  </div>
-                  <button
-                    type="submit"
-                    className="bg-gradient-to-br from-[#FF6B00] to-[#ff7043] text-white font-semibold text-sm px-7 py-3 rounded-lg transition duration-150 hover:opacity-95 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+              <form
+                onSubmit={handleSearchSubmit}
+                className="p-2.5 rounded-xl bg-white border-2 border-slate-300 shadow-[0_10px_30px_rgba(0,0,0,0.08)] flex flex-col md:flex-row gap-2 max-w-2xl"
+              >
+                <div className="flex-1 relative flex items-center">
+                  <input
+                    type="text"
+                    placeholder="Job title"
+                    value={searchTitle}
+                    onChange={(e) => setSearchTitle(e.target.value)}
+                    className="w-full bg-transparent border-0 px-4 py-3 text-slate-900 font-bold placeholder:font-bold placeholder:text-slate-500 text-[0.95rem] focus:outline-none focus:ring-0"
+                  />
+                </div>
+                <div className="hidden md:block w-0.5 bg-slate-300 my-2" />
+                <div className="flex-1 relative flex items-center">
+                  <select
+                    value={searchLoc}
+                    onChange={(e) => setSearchLoc(e.target.value)}
+                    className="w-full bg-transparent border-0 px-4 py-3 text-slate-900 font-bold text-[0.95rem] focus:outline-none focus:ring-0 appearance-none cursor-pointer"
                   >
-                    {isEmployer ? 'Search Candidates' : 'Search Jobs'}
-                  </button>
-                </form>
-              )}
+                    <option value="" className="font-bold text-slate-500">Location</option>
+                    {locations.map((location) => (
+                      <option key={location} value={location} className="font-bold text-slate-900">{location}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-4 h-4 w-4 text-slate-600 pointer-events-none" />
+                </div>
+                <button
+                  type="submit"
+                  className="bg-gradient-to-br from-[#FF6B00] to-[#ff7043] text-white font-bold text-sm px-7 py-3 rounded-lg transition duration-150 hover:opacity-95 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shadow-sm"
+                >
+                  Search Jobs
+                </button>
+              </form>
 
               {/* Trending Searches */}
-              {!isEmployer && settings?.showTrendingSearches !== false && <div className="flex flex-wrap items-center gap-1.5 pt-2 text-sm text-slate-500">
-                <span className="mr-1">Trending Searches:</span>
+              <div className="flex flex-wrap items-center gap-1.5 pt-2 text-sm text-slate-500">
+                <span className="mr-1 font-semibold text-slate-600">Trending Searches:</span>
                 {categories.map((category) => (
                   <Link
                     key={category._id || category.id || category.categoryName}
                     to={`/jobs?category=${encodeURIComponent(category.categoryName)}`}
-                    className="px-3 py-1.5 rounded-md bg-[#F2F6FF] text-[#0047C7] hover:bg-[#0047C7] hover:text-white transition"
+                    className="px-3 py-1.5 rounded-md bg-[#F2F6FF] font-semibold text-[#0047C7] hover:bg-[#0047C7] hover:text-white transition"
                   >
                     #{category.categoryName}
                   </Link>
                 ))}
-              </div>}
+              </div>
             </div>
 
             {/* Right Block: Choice Cards */}
-            {!isLoggedIn && settings?.showAccountTypeCards !== false && (
             <div className="lg:col-span-5">
               <div className="bg-white rounded-2xl p-8 shadow-[0_10px_40px_rgba(0,0,0,0.04)] border border-black/[0.03] space-y-5 w-full">
                 <h3 className="text-lg font-semibold text-slate-900 text-center mb-2">Choose Your Account Type</h3>
@@ -287,7 +255,6 @@ export const Home = ({ settings: propSettings }) => {
                 </button>
               </div>
             </div>
-            )}
 
           </div>
         </div>

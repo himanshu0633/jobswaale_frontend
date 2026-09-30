@@ -133,7 +133,7 @@ export const Header = ({ toggleSidebar, isCollapsed, title = '' }) => {
             <input
               type="text"
               placeholder="Quick Search..."
-              className={`w-full rounded-lg border pl-9 pr-4 py-1.5 text-xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all ${
+              className={`w-full rounded-lg border pl-9 pr-4 py-1.5 text-xs font-bold placeholder:font-bold focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all ${
                 theme === 'dark'
                   ? 'bg-slate-800/50 border-slate-700 text-slate-100 placeholder-slate-400'
                   : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'
@@ -257,7 +257,7 @@ export const Header = ({ toggleSidebar, isCollapsed, title = '' }) => {
               <input
                 type="text"
                 placeholder="Search..."
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-9 pr-4 py-2 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-9 pr-4 py-2 text-sm font-bold text-slate-100 placeholder:font-bold placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
                 autoFocus
               />
               <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />

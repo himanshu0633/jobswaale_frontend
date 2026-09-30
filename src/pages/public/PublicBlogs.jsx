@@ -204,7 +204,7 @@ export const PublicBlogs = () => {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search…"
-                    className="border border-[#ececec] rounded-[10px] h-14 sm:h-16 w-full pl-5 pr-14 text-base text-[#37404e] placeholder-[#88929b] outline-none focus:border-[#0047C7] transition-colors"
+                    className="border border-[#ececec] rounded-[10px] h-14 sm:h-16 w-full pl-5 pr-14 text-base font-bold text-slate-800 placeholder:font-bold placeholder:text-slate-500 outline-none focus:border-[#0047C7] transition-colors"
                   />
                   <button
                     type="submit"

@@ -435,7 +435,7 @@ export const Jobs = () => {
                       placeholder="e.g UI Designer"
                       value={searchKeyword}
                       onChange={(e) => setSearchKeyword(e.target.value)}
-                      className="w-full border-0 pl-9 pr-2 py-3 text-[#37404e] placeholder-[#88929b] text-sm focus:outline-none bg-transparent"
+                      className="w-full border-0 pl-9 pr-2 py-3 text-slate-900 font-bold placeholder:font-bold placeholder:text-slate-500 text-sm focus:outline-none bg-transparent"
                     />
                   </div>
                 </form>
@@ -467,7 +467,7 @@ export const Jobs = () => {
                       className="flex items-center gap-2 text-sm text-[#37404e] px-1 py-2 cursor-pointer focus:outline-none"
                     >
                       <Briefcase className="h-4 w-4 text-[#88929b]" />
-                      <span>{searchType || 'Full time'}</span>
+                      <span className="font-bold text-slate-800">{searchType || 'Full time'}</span>
                       <ChevronDown className="h-3.5 w-3.5 text-[#88929b]" />
                     </button>
                     {typeDropdownOpen && (
@@ -500,7 +500,7 @@ export const Jobs = () => {
                       className="flex items-center gap-2 text-sm text-[#37404e] px-1 py-2 cursor-pointer focus:outline-none"
                     >
                       <MapPin className="h-4 w-4 text-[#88929b]" />
-                      <span>{searchLoc || 'Location'}</span>
+                      <span className="font-bold text-slate-800">{searchLoc || 'Location'}</span>
                       <ChevronDown className="h-3.5 w-3.5 text-[#88929b]" />
                     </button>
                     {locDropdownOpen && (
@@ -789,7 +789,7 @@ export const Jobs = () => {
                     placeholder="Location"
                     value={sidebarLoc}
                     onChange={(e) => setSidebarLoc(e.target.value)}
-                    className="w-full border border-[rgba(6,18,36,0.1)] rounded-[10px] pl-11 pr-4 py-3 text-sm text-[#37404e] placeholder-[#88929b] focus:outline-none focus:border-[#0047C7] transition"
+                    className="w-full border border-[rgba(6,18,36,0.1)] rounded-[10px] pl-11 pr-4 py-3 text-sm text-slate-800 font-bold placeholder:font-bold placeholder:text-slate-500 focus:outline-none focus:border-[#0047C7] transition"
                   />
                 </div>
               </div>

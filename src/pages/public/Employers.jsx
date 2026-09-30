@@ -363,7 +363,8 @@ export const Employers = () => {
     paddingLeft:42,
     fontSize:14,
     width:'100%',
-    color:'#37404e',
+    color:'#1f2938',
+    fontWeight:'bold',
     outline:'none',
     background:'#fff',
   };
@@ -407,6 +408,7 @@ export const Employers = () => {
                     placeholder="e.g microsoft"
                     value={searchKeyword}
                     onChange={e => setSearchKeyword(e.target.value)}
+                    className="font-bold placeholder:font-bold placeholder:text-slate-500"
                     style={{ ...inputStyle, paddingLeft:42 }}
                   />
                 </div>
@@ -420,11 +422,12 @@ export const Employers = () => {
                   <select
                     value={searchInd}
                     onChange={e => setSearchInd(e.target.value)}
+                    className="font-bold text-slate-800"
                     style={{ ...inputStyle, paddingLeft:42, paddingRight:28, appearance:'none', cursor:'pointer', height:50 }}
                   >
-                    <option value="">Industry</option>
+                    <option value="" className="font-bold text-slate-500">Industry</option>
                     {industries.map(i=>(
-                      <option key={i} value={i}>{i}</option>
+                      <option key={i} value={i} className="font-bold text-slate-800">{i}</option>
                     ))}
                   </select>
                   <svg width="12" height="12" fill="none" stroke="#88929b" strokeWidth="2" viewBox="0 0 24 24"
@@ -442,11 +445,12 @@ export const Employers = () => {
                   <select
                     value={searchLoc}
                     onChange={e => setSearchLoc(e.target.value)}
+                    className="font-bold text-slate-800"
                     style={{ ...inputStyle, paddingLeft:42, paddingRight:28, appearance:'none', cursor:'pointer', height:50 }}
                   >
-                    <option value="">Location</option>
+                    <option value="" className="font-bold text-slate-500">Location</option>
                     {locations.map(location => (
-                      <option key={location} value={location}>{location}</option>
+                      <option key={location} value={location} className="font-bold text-slate-800">{location}</option>
                     ))}
                   </select>
                   <svg width="12" height="12" fill="none" stroke="#88929b" strokeWidth="2" viewBox="0 0 24 24"
