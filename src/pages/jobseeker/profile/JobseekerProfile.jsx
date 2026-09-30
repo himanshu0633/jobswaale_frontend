@@ -475,9 +475,9 @@ export const JobseekerProfile = () => {
   };
 
   const addSkill = (e) => {
-    if (e.key !== 'Enter') return;
-    e.preventDefault();
-    const value = skillInput.trim();
+    if (e && e.key && e.key !== 'Enter' && e.key !== ',') return;
+    if (e && e.preventDefault) e.preventDefault();
+    const value = skillInput.replace(/,/g, '').trim();
     if (!value) return;
     if (/^\d+$/.test(value)) {
       setError('Skill name cannot consist solely of digits.');
@@ -533,15 +533,35 @@ export const JobseekerProfile = () => {
         return;
       }
     }
-    if (studyField && /^\d+$/.test(studyField.trim())) {
-      setError('Field of Study cannot consist solely of digits.');
+    if (studyField && (studyField.trim().length < 2 || !/[a-zA-Z]/.test(studyField.trim()))) {
+      setError('Please enter a valid Field of Study containing letters (e.g. Computer Science).');
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
-    if (university && /^\d+$/.test(university.trim())) {
-      setError('College / University name cannot consist solely of digits.');
+    if (university && (university.trim().length < 2 || !/[a-zA-Z]/.test(university.trim()))) {
+      setError('Please enter a valid College / University name containing letters.');
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
+    }
+
+    let finalSkills = [...skills];
+    if (skillInput.trim()) {
+      const raw = skillInput.replace(/,/g, '').trim();
+      if (/^\d+$/.test(raw)) {
+        setError('Skill name cannot consist solely of digits.');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      if (!/^[a-zA-Z0-9+#.\s/-]{2,40}$/.test(raw)) {
+        setError('Please enter a valid skill name.');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      if (!finalSkills.some(s => s.toLowerCase() === raw.toLowerCase())) {
+        finalSkills.push(raw);
+        setSkills(finalSkills);
+      }
+      setSkillInput('');
     }
 
     try {
@@ -591,7 +611,7 @@ export const JobseekerProfile = () => {
         jobCategory: selectedJobCategory?._id || jobCategory,
         jobType: selectedJobType?._id || jobType,
         bio: computedBio,
-        skills,
+        skills: finalSkills,
         linkedin,
         portfolio,
         github,
