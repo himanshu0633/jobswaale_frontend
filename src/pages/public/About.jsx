@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import bannerImg from './aboutImages/banner-img.png'
 import bannerSm1 from './aboutImages/banner-sm-1.png'
@@ -20,8 +20,61 @@ import profile1 from './aboutImages/profile.png';
 import profile2 from './aboutImages/profile2.png';
 import profile3 from './aboutImages/profile3.png';
 import star from './aboutImages/star.svg'
+import { getPublicSettings } from '../../utils/publicSettings';
 
-const About = () => {
+const defaultTeamList = [
+  { name: 'Elon Musk', role: 'Marketing Crew', photo: Marc },
+  { name: 'Bernard Arnault', role: 'Marketing Crew', photo: marc2 },
+  { name: 'Jeff Bezos', role: 'Marketing Crew', photo: marc3 },
+  { name: 'Bill Gates', role: 'Marketing Crew', photo: marc4 }
+];
+
+const defaultCustomerList = [
+  {
+    name: 'Sarah Harding',
+    role: 'Visual Designer',
+    photo: profile1,
+    rating: 5,
+    review: 'We are on the hunt for a designer who is exceptional in both making incredible product interfaces as well as'
+  },
+  {
+    name: 'Sarah Harding',
+    role: 'Visual Designer',
+    photo: profile2,
+    rating: 5,
+    review: 'We are on the hunt for a designer who is exceptional in both making incredible product interfaces as well as'
+  },
+  {
+    name: 'Sarah Harding',
+    role: 'Visual Designer',
+    photo: profile3,
+    rating: 5,
+    review: 'We are on the hunt for a designer who is exceptional in both making incredible product interfaces as well as'
+  }
+];
+
+const About = ({ settings: propSettings }) => {
+  const [settings, setSettings] = useState(propSettings || null);
+
+  useEffect(() => {
+    if (propSettings) {
+      setSettings(propSettings);
+      return;
+    }
+    let isMounted = true;
+    getPublicSettings().then((data) => {
+      if (isMounted && data) setSettings(data);
+    });
+    return () => { isMounted = false; };
+  }, [propSettings]);
+
+  const teamList = (Array.isArray(settings?.teamMembers) && settings.teamMembers.length > 0)
+    ? settings.teamMembers
+    : defaultTeamList;
+
+  const customerList = (Array.isArray(settings?.happyCustomers) && settings.happyCustomers.length > 0)
+    ? settings.happyCustomers
+    : defaultCustomerList;
   return (
     <div className="w-full bg-white overflow-x-hidden ">
       {/* Hero Banner Section */}
@@ -241,149 +294,99 @@ const About = () => {
       </section>
 
       {/* Meet Our Team Section */}
-      <section className="pt-12 sm:pt-16 lg:pt-[90px] pb-14 sm:pb-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="text-[28px] leading-[36px] sm:text-[36px] sm:leading-[44px] lg:text-[44px] lg:leading-[54px] font-bold text-[#1f2938] mb-4">Meet our team</h2>
-            <p className="text-[#88929b] text-base leading-relaxed max-w-full sm:max-w-[75%] lg:max-w-[60%] mx-auto">
-              Find the type of work you need, clearly defined and ready to start. Work begins as soon as you purchase and provide requirements.
-            </p>
-          </div>
-
-          <div className="grid gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4 mt-10 sm:mt-[60px]">
-            {/* Team Member 1 */}
-            <div className="border border-[#ececec] rounded-xl p-6 bg-white hover:shadow-[0_9px_26px_0_rgba(31,31,51,0.06)] hover:border-[#0047C7] transition duration-200 text-center">
-              <div className="mb-4">
-                <img src={Marc} alt="Elon Musk" className="w-full rounded-lg" />
-              </div>
-              <h5 className="font-bold text-[#1f2938] text-lg mb-1">Elon Musk</h5>
-              <p className="text-[#88929b] text-sm">Marketing Crew</p>
-              <div className="flex items-center justify-center gap-3 mt-4">
-                <a href="#" className="w-[25px] h-[25px] inline-block bg-[url(assets/imgs/theme/icons/fb-sym.svg)] bg-no-repeat bg-center hover:bg-[url(assets/imgs/theme/icons/fb-sym-hover.svg)] transition"></a>
-                <a href="#" className="w-[25px] h-[25px] inline-block bg-[url(assets/imgs/theme/icons/tw-sym.svg)] bg-no-repeat bg-center hover:bg-[url(assets/imgs/theme/icons/tw-sym-hover.svg)] transition"></a>
-                <a href="#" className="w-[25px] h-[25px] inline-block bg-[url(assets/imgs/theme/icons/inst-sym.svg)] bg-no-repeat bg-center hover:bg-[url(assets/imgs/theme/icons/inst-sym-hover.svg)] transition"></a>
-                <a href="#" className="w-[25px] h-[25px] inline-block bg-[url(assets/imgs/theme/icons/linkedin-sym.svg)] bg-no-repeat bg-center hover:bg-[url(assets/imgs/theme/icons/linkedin-sym-hover.svg)] transition"></a>
-              </div>
+      {settings?.showMeetOurTeam !== false && (
+        <section className="pt-12 sm:pt-16 lg:pt-[90px] pb-14 sm:pb-20 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <h2 className="text-[28px] leading-[36px] sm:text-[36px] sm:leading-[44px] lg:text-[44px] lg:leading-[54px] font-bold text-[#1f2938] mb-4">Meet our team</h2>
+              <p className="text-[#88929b] text-base leading-relaxed max-w-full sm:max-w-[75%] lg:max-w-[60%] mx-auto">
+                Find the type of work you need, clearly defined and ready to start. Work begins as soon as you purchase and provide requirements.
+              </p>
             </div>
 
-            {/* Team Member 2 */}
-            <div className="border border-[#ececec] rounded-xl p-6 bg-white hover:shadow-[0_9px_26px_0_rgba(31,31,51,0.06)] hover:border-[#0047C7] transition duration-200 text-center">
-              <div className="mb-4">
-                <img src={marc2} alt="Bernard Arnault" className="w-full rounded-lg" />
-              </div>
-              <h5 className="font-bold text-[#1f2938] text-lg mb-1">Bernard Arnault</h5>
-              <p className="text-[#88929b] text-sm">Marketing Crew</p>
-              <div className="flex items-center justify-center gap-3 mt-4">
-                <a href="#" className="w-[25px] h-[25px] inline-block bg-[url(assets/imgs/theme/icons/fb-sym.svg)] bg-no-repeat bg-center hover:bg-[url(assets/imgs/theme/icons/fb-sym-hover.svg)] transition"></a>
-                <a href="#" className="w-[25px] h-[25px] inline-block bg-[url(assets/imgs/theme/icons/tw-sym.svg)] bg-no-repeat bg-center hover:bg-[url(assets/imgs/theme/icons/tw-sym-hover.svg)] transition"></a>
-                <a href="#" className="w-[25px] h-[25px] inline-block bg-[url(assets/imgs/theme/icons/inst-sym.svg)] bg-no-repeat bg-center hover:bg-[url(assets/imgs/theme/icons/inst-sym-hover.svg)] transition"></a>
-                <a href="#" className="w-[25px] h-[25px] inline-block bg-[url(assets/imgs/theme/icons/linkedin-sym.svg)] bg-no-repeat bg-center hover:bg-[url(assets/imgs/theme/icons/linkedin-sym-hover.svg)] transition"></a>
-              </div>
-            </div>
+            <div className="grid gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4 mt-10 sm:mt-[60px]">
+              {teamList.map((member, index) => {
+                const defaultPhotos = [Marc, marc2, marc3, marc4];
+                const fallbackPhoto = defaultPhotos[index % defaultPhotos.length];
+                const photoSrc = member.photo || fallbackPhoto;
 
-            {/* Team Member 3 */}
-            <div className="border border-[#ececec] rounded-xl p-6 bg-white hover:shadow-[0_9px_26px_0_rgba(31,31,51,0.06)] hover:border-[#0047C7] transition duration-200 text-center">
-              <div className="mb-4">
-                <img src={marc3} alt="Jeff Bezos" className="w-full rounded-lg" />
-              </div>
-              <h5 className="font-bold text-[#1f2938] text-lg mb-1">Jeff Bezos</h5>
-              <p className="text-[#88929b] text-sm">Marketing Crew</p>
-              <div className="flex items-center justify-center gap-3 mt-4">
-                <a href="#" className="w-[25px] h-[25px] inline-block bg-[url(assets/imgs/theme/icons/fb-sym.svg)] bg-no-repeat bg-center hover:bg-[url(assets/imgs/theme/icons/fb-sym-hover.svg)] transition"></a>
-                <a href="#" className="w-[25px] h-[25px] inline-block bg-[url(assets/imgs/theme/icons/tw-sym.svg)] bg-no-repeat bg-center hover:bg-[url(assets/imgs/theme/icons/tw-sym-hover.svg)] transition"></a>
-                <a href="#" className="w-[25px] h-[25px] inline-block bg-[url(assets/imgs/theme/icons/inst-sym.svg)] bg-no-repeat bg-center hover:bg-[url(assets/imgs/theme/icons/inst-sym-hover.svg)] transition"></a>
-                <a href="#" className="w-[25px] h-[25px] inline-block bg-[url(assets/imgs/theme/icons/linkedin-sym.svg)] bg-no-repeat bg-center hover:bg-[url(assets/imgs/theme/icons/linkedin-sym-hover.svg)] transition"></a>
-              </div>
-            </div>
-
-            {/* Team Member 4 */}
-            <div className="border border-[#ececec] rounded-xl p-6 bg-white hover:shadow-[0_9px_26px_0_rgba(31,31,51,0.06)] hover:border-[#0047C7] transition duration-200 text-center">
-              <div className="mb-4">
-                <img src={marc4} alt="Bill Gates" className="w-full rounded-lg" />
-              </div>
-              <h5 className="font-bold text-[#1f2938] text-lg mb-1">Bill Gates</h5>
-              <p className="text-[#88929b] text-sm">Marketing Crew</p>
-              <div className="flex items-center justify-center gap-3 mt-4">
-                <a href="#" className="w-[25px] h-[25px] inline-block bg-[url(assets/imgs/theme/icons/fb-sym.svg)] bg-no-repeat bg-center hover:bg-[url(assets/imgs/theme/icons/fb-sym-hover.svg)] transition"></a>
-                <a href="#" className="w-[25px] h-[25px] inline-block bg-[url(assets/imgs/theme/icons/tw-sym.svg)] bg-no-repeat bg-center hover:bg-[url(assets/imgs/theme/icons/tw-sym-hover.svg)] transition"></a>
-                <a href="#" className="w-[25px] h-[25px] inline-block bg-[url(assets/imgs/theme/icons/inst-sym.svg)] bg-no-repeat bg-center hover:bg-[url(assets/imgs/theme/icons/inst-sym-hover.svg)] transition"></a>
-                <a href="#" className="w-[25px] h-[25px] inline-block bg-[url(assets/imgs/theme/icons/linkedin-sym.svg)] bg-no-repeat bg-center hover:bg-[url(assets/imgs/theme/icons/linkedin-sym-hover.svg)] transition"></a>
-              </div>
+                return (
+                  <div key={index} className="border border-[#ececec] rounded-xl p-6 bg-white hover:shadow-[0_9px_26px_0_rgba(31,31,51,0.06)] hover:border-[#0047C7] transition duration-200 text-center flex flex-col items-center">
+                    <div className="mb-4 w-full h-[230px] sm:h-[250px] rounded-lg overflow-hidden bg-slate-50 flex items-center justify-center">
+                      <img 
+                        src={photoSrc} 
+                        alt={member.name || 'Team Member'} 
+                        className="w-full h-full object-cover object-top hover:scale-105 transition duration-300"
+                        onError={(e) => { e.currentTarget.src = fallbackPhoto; }}
+                      />
+                    </div>
+                    <h5 className="font-bold text-[#1f2938] text-lg mb-1">{member.name || 'Team Member'}</h5>
+                    <p className="text-[#88929b] text-sm">{member.role || 'Marketing Crew'}</p>
+                    <div className="flex items-center justify-center gap-3 mt-4">
+                      <a href="#" className="w-[25px] h-[25px] inline-block bg-[url(assets/imgs/theme/icons/fb-sym.svg)] bg-no-repeat bg-center hover:bg-[url(assets/imgs/theme/icons/fb-sym-hover.svg)] transition"></a>
+                      <a href="#" className="w-[25px] h-[25px] inline-block bg-[url(assets/imgs/theme/icons/tw-sym.svg)] bg-no-repeat bg-center hover:bg-[url(assets/imgs/theme/icons/tw-sym-hover.svg)] transition"></a>
+                      <a href="#" className="w-[25px] h-[25px] inline-block bg-[url(assets/imgs/theme/icons/inst-sym.svg)] bg-no-repeat bg-center hover:bg-[url(assets/imgs/theme/icons/inst-sym-hover.svg)] transition"></a>
+                      <a href="#" className="w-[25px] h-[25px] inline-block bg-[url(assets/imgs/theme/icons/linkedin-sym.svg)] bg-no-repeat bg-center hover:bg-[url(assets/imgs/theme/icons/linkedin-sym-hover.svg)] transition"></a>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Happy Customers Section */}
-      <section className="pt-14 sm:pt-16 lg:pt-20 pb-14 sm:pb-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="text-[28px] leading-[36px] sm:text-[36px] sm:leading-[44px] lg:text-[44px] lg:leading-[54px] font-bold text-[#1f2938] mb-4">Our Happy Customer</h2>
-            <p className="text-[#88929b] text-base leading-relaxed max-w-full sm:max-w-[75%] lg:max-w-[60%] mx-auto">
-              When it comes to choosing the right web hosting provider, we know how easy it is to get overwhelmed with the number.
-            </p>
-          </div>
-
-          <div className="grid gap-6 sm:gap-8 md:grid-cols-3 mt-10 sm:mt-[70px]">
-            {/* Testimonial 1 */}
-            <div className="border border-[#ececec] rounded-xl p-6 sm:p-8 bg-white hover:shadow-[0_9px_26px_0_rgba(31,31,51,0.06)] hover:border-[#0047C7] transition duration-200 text-center">
-              <div className="mb-4">
-                <img src={profile1} alt="profile" className="w-[100px] h-[100px] rounded-full mx-auto" />
-              </div>
-              <p className="text-[#37404e] text-base sm:text-lg leading-relaxed text-center">We are on the hunt for a designer who is exceptional in both making incredible product interfaces as well as</p>
-              <div className="flex items-center justify-center gap-1 mt-5 mb-6">
-                <img src={star} alt="star" />
-                <img src={star} alt="star" />
-                <img src={star} alt="star" />
-                <img src={star} alt="star" />
-                <img src={star} alt="star" />
-              </div>
-              <div>
-                <strong className="text-[#1f2938] text-lg font-bold block">Sarah Harding</strong>
-                <span className="text-[#727272] text-base">Visual Designer</span>
-              </div>
+      {settings?.showHappyCustomers !== false && (
+        <section className="pt-14 sm:pt-16 lg:pt-20 pb-14 sm:pb-20 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <h2 className="text-[28px] leading-[36px] sm:text-[36px] sm:leading-[44px] lg:text-[44px] lg:leading-[54px] font-bold text-[#1f2938] mb-4">Our Happy Customer</h2>
+              <p className="text-[#88929b] text-base leading-relaxed max-w-full sm:max-w-[75%] lg:max-w-[60%] mx-auto">
+                When it comes to choosing the right web hosting provider, we know how easy it is to get overwhelmed with the number.
+              </p>
             </div>
 
-            {/* Testimonial 2 */}
-            <div className="border border-[#ececec] rounded-xl p-6 sm:p-8 bg-white hover:shadow-[0_9px_26px_0_rgba(31,31,51,0.06)] hover:border-[#0047C7] transition duration-200 text-center">
-              <div className="mb-4">
-                <img src={profile2} alt="profile" className="w-[100px] h-[100px] rounded-full mx-auto" />
-              </div>
-              <p className="text-[#37404e] text-base sm:text-lg leading-relaxed text-center">We are on the hunt for a designer who is exceptional in both making incredible product interfaces as well as</p>
-              <div className="flex items-center justify-center gap-1 mt-5 mb-6">
-                <img src={star} alt="star" />
-                <img src={star} alt="star" />
-                <img src={star} alt="star" />
-                <img src={star} alt="star" />
-                <img src={star} alt="star" />
-              </div>
-              <div>
-                <strong className="text-[#1f2938] text-lg font-bold block">Sarah Harding</strong>
-                <span className="text-[#727272] text-base">Visual Designer</span>
-              </div>
-            </div>
+            <div className="grid gap-6 sm:gap-8 md:grid-cols-3 mt-10 sm:mt-[70px]">
+              {customerList.map((customer, index) => {
+                const defaultPhotos = [profile1, profile2, profile3];
+                const fallbackPhoto = defaultPhotos[index % defaultPhotos.length];
+                const photoSrc = customer.photo || fallbackPhoto;
+                const ratingCount = Math.max(1, Math.min(5, Number(customer.rating) || 5));
 
-            {/* Testimonial 3 */}
-            <div className="border border-[#ececec] rounded-xl p-6 sm:p-8 bg-white hover:shadow-[0_9px_26px_0_rgba(31,31,51,0.06)] hover:border-[#0047C7] transition duration-200 text-center">
-              <div className="mb-4">
-                <img src={profile3} alt="profile" className="w-[100px] h-[100px] rounded-full mx-auto" />
-              </div>
-              <p className="text-[#37404e] text-base sm:text-lg leading-relaxed text-center">We are on the hunt for a designer who is exceptional in both making incredible product interfaces as well as</p>
-              <div className="flex items-center justify-center gap-1 mt-5 mb-6">
-                <img src={star} alt="star" />
-                <img src={star} alt="star" />
-                <img src={star} alt="star" />
-                <img src={star} alt="star" />
-                <img src={star} alt="star" />
-              </div>
-              <div>
-                <strong className="text-[#1f2938] text-lg font-bold block">Sarah Harding</strong>
-                <span className="text-[#727272] text-base">Visual Designer</span>
-              </div>
+                return (
+                  <div key={index} className="border border-[#ececec] rounded-xl p-6 sm:p-8 bg-white hover:shadow-[0_9px_26px_0_rgba(31,31,51,0.06)] hover:border-[#0047C7] transition duration-200 text-center flex flex-col justify-between">
+                    <div>
+                      <div className="mb-4">
+                        <img 
+                          src={photoSrc} 
+                          alt={customer.name || 'Customer'} 
+                          className="w-[100px] h-[100px] rounded-full mx-auto object-cover object-top border-2 border-slate-100 shadow-sm"
+                          onError={(e) => { e.currentTarget.src = fallbackPhoto; }}
+                        />
+                      </div>
+                      <p className="text-[#37404e] text-base sm:text-lg leading-relaxed text-center">
+                        {customer.review || 'We are on the hunt for a designer who is exceptional in both making incredible product interfaces as well as'}
+                      </p>
+                    </div>
+                    <div className="mt-5">
+                      <div className="flex items-center justify-center gap-1 mb-6">
+                        {[...Array(ratingCount)].map((_, i) => (
+                          <img key={i} src={star} alt="star" />
+                        ))}
+                      </div>
+                      <div>
+                        <strong className="text-[#1f2938] text-lg font-bold block">{customer.name || 'Sarah Harding'}</strong>
+                        <span className="text-[#727272] text-base">{customer.role || 'Visual Designer'}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Add Keyframe Animations */}
       <style>{`

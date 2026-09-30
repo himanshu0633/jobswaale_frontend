@@ -18,10 +18,17 @@ import {
   Layers,
   Plus,
   Trash2,
-  Building2
+  Building2,
+  Users,
+  Star,
+  Upload,
+  Crop,
+  Camera,
+  UserCheck
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import { clearPublicSettingsCache } from '../../../utils/publicSettings';
+import PassportPhotoCropperModal from '../../../components/PassportPhotoCropperModal';
 
 const defaultSettings = {
   // General
@@ -75,6 +82,8 @@ const defaultSettings = {
   showFeaturedJobs: true,
   showTopCompanies: true,
   showDoubleCTA: true,
+  showMeetOurTeam: true,
+  showHappyCustomers: true,
   statOpenJobs: '2,000+',
   statCompanies: '500+',
   statJobseekers: '15,000+',
@@ -88,6 +97,51 @@ const defaultSettings = {
     { name: 'FedEx', logo: 'https://upload.wikimedia.org/wikipedia/commons/9/9d/FedEx_Express.svg' },
     { name: 'Walmart', logo: 'https://upload.wikimedia.org/wikipedia/commons/5/5b/Walmart_logo_%282025%29.svg' },
     { name: 'HubSpot', logo: 'https://upload.wikimedia.org/wikipedia/commons/3/3f/HubSpot_Logo.svg' }
+  ],
+  teamMembers: [
+    {
+      name: 'Elon Musk',
+      role: 'Marketing Crew',
+      photo: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=400&q=80'
+    },
+    {
+      name: 'Bernard Arnault',
+      role: 'Marketing Crew',
+      photo: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80'
+    },
+    {
+      name: 'Jeff Bezos',
+      role: 'Marketing Crew',
+      photo: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80'
+    },
+    {
+      name: 'Bill Gates',
+      role: 'Marketing Crew',
+      photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80'
+    }
+  ],
+  happyCustomers: [
+    {
+      name: 'Sarah Harding',
+      role: 'Visual Designer',
+      photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+      rating: 5,
+      review: 'We are on the hunt for a designer who is exceptional in both making incredible product interfaces as well as'
+    },
+    {
+      name: 'Sarah Harding',
+      role: 'Visual Designer',
+      photo: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&q=80',
+      rating: 5,
+      review: 'We are on the hunt for a designer who is exceptional in both making incredible product interfaces as well as'
+    },
+    {
+      name: 'Sarah Harding',
+      role: 'Visual Designer',
+      photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+      rating: 5,
+      review: 'We are on the hunt for a designer who is exceptional in both making incredible product interfaces as well as'
+    }
   ]
 };
 
@@ -99,6 +153,14 @@ export const Settings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [newCompany, setNewCompany] = useState({ name: '', logo: '' });
+  const [newTeamMember, setNewTeamMember] = useState({ name: '', role: '', photo: '' });
+  const [newCustomer, setNewCustomer] = useState({ name: '', role: '', photo: '', rating: 5, review: '' });
+  const [cropperModal, setCropperModal] = useState({
+    isOpen: false,
+    initialImage: null,
+    targetType: null,
+    targetIndex: null
+  });
 
   const handleAddCompany = () => {
     if (!newCompany.name.trim()) {
@@ -122,6 +184,98 @@ export const Settings = () => {
     const currentList = Array.isArray(form.trustedCompanies) ? [...form.trustedCompanies] : [...(defaultSettings.trustedCompanies || [])];
     currentList[index] = { ...currentList[index], [field]: value };
     setForm(prev => ({ ...prev, trustedCompanies: currentList }));
+  };
+
+  // Team Member handlers
+  const handleAddTeamMember = () => {
+    if (!newTeamMember.name.trim()) {
+      showMessage('error', 'Team member name is required.');
+      return;
+    }
+    const currentList = Array.isArray(form.teamMembers) ? form.teamMembers : (defaultSettings.teamMembers || []);
+    const updated = [...currentList, { 
+      name: newTeamMember.name.trim(), 
+      role: newTeamMember.role.trim() || 'Marketing Crew', 
+      photo: newTeamMember.photo.trim() 
+    }];
+    setForm(prev => ({ ...prev, teamMembers: updated }));
+    setNewTeamMember({ name: '', role: '', photo: '' });
+    showMessage('success', 'Team member added to list. Click "Save Home Dashboard Settings" to persist.');
+  };
+
+  const handleRemoveTeamMember = (index) => {
+    const currentList = Array.isArray(form.teamMembers) ? form.teamMembers : (defaultSettings.teamMembers || []);
+    const updated = currentList.filter((_, i) => i !== index);
+    setForm(prev => ({ ...prev, teamMembers: updated }));
+  };
+
+  const handleTeamMemberChange = (index, field, value) => {
+    const currentList = Array.isArray(form.teamMembers) ? [...form.teamMembers] : [...(defaultSettings.teamMembers || [])];
+    currentList[index] = { ...currentList[index], [field]: value };
+    setForm(prev => ({ ...prev, teamMembers: currentList }));
+  };
+
+  // Customer testimonial handlers
+  const handleAddCustomer = () => {
+    if (!newCustomer.name.trim()) {
+      showMessage('error', 'Customer name is required.');
+      return;
+    }
+    const currentList = Array.isArray(form.happyCustomers) ? form.happyCustomers : (defaultSettings.happyCustomers || []);
+    const updated = [...currentList, { 
+      name: newCustomer.name.trim(), 
+      role: newCustomer.role.trim() || 'Visual Designer', 
+      photo: newCustomer.photo.trim(),
+      rating: Number(newCustomer.rating) || 5,
+      review: newCustomer.review.trim() || 'We are on the hunt for a designer who is exceptional in both making incredible product interfaces as well as'
+    }];
+    setForm(prev => ({ ...prev, happyCustomers: updated }));
+    setNewCustomer({ name: '', role: '', photo: '', rating: 5, review: '' });
+    showMessage('success', 'Customer testimonial added to list. Click "Save Home Dashboard Settings" to persist.');
+  };
+
+  const handleRemoveCustomer = (index) => {
+    const currentList = Array.isArray(form.happyCustomers) ? form.happyCustomers : (defaultSettings.happyCustomers || []);
+    const updated = currentList.filter((_, i) => i !== index);
+    setForm(prev => ({ ...prev, happyCustomers: updated }));
+  };
+
+  const handleCustomerChange = (index, field, value) => {
+    const currentList = Array.isArray(form.happyCustomers) ? [...form.happyCustomers] : [...(defaultSettings.happyCustomers || [])];
+    currentList[index] = { ...currentList[index], [field]: value };
+    setForm(prev => ({ ...prev, happyCustomers: currentList }));
+  };
+
+  // Passport Cropper triggers
+  const handleFileSelectForCrop = (e, targetType, targetIndex = null) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setCropperModal({
+        isOpen: true,
+        initialImage: event.target.result,
+        targetType,
+        targetIndex
+      });
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const handleCropComplete = (finalImageUrl) => {
+    const { targetType, targetIndex } = cropperModal;
+    if (targetType === 'newTeamMember') {
+      setNewTeamMember(prev => ({ ...prev, photo: finalImageUrl }));
+    } else if (targetType === 'teamMember' && targetIndex !== null) {
+      handleTeamMemberChange(targetIndex, 'photo', finalImageUrl);
+    } else if (targetType === 'newCustomer') {
+      setNewCustomer(prev => ({ ...prev, photo: finalImageUrl }));
+    } else if (targetType === 'customer' && targetIndex !== null) {
+      handleCustomerChange(targetIndex, 'photo', finalImageUrl);
+    }
+    setCropperModal({ isOpen: false, initialImage: null, targetType: null, targetIndex: null });
+    showMessage('success', 'Photo cropped & updated. Click "Save Home Dashboard Settings" to persist.');
   };
 
   const getAdminHeaders = () => {
@@ -800,6 +954,18 @@ export const Settings = () => {
                     checked={form.showDoubleCTA ?? true} 
                     onChange={() => handleToggle('showDoubleCTA')} 
                   />
+                  <ToggleSwitch 
+                    label="Meet Our Team Section" 
+                    subtext="Display the 'Meet our team' section with executive/team members on the About page."
+                    checked={form.showMeetOurTeam ?? true} 
+                    onChange={() => handleToggle('showMeetOurTeam')} 
+                  />
+                  <ToggleSwitch 
+                    label="Our Happy Customer (Testimonials) Section" 
+                    subtext="Display customer feedback, ratings, and reviews on the About page."
+                    checked={form.showHappyCustomers ?? true} 
+                    onChange={() => handleToggle('showHappyCustomers')} 
+                  />
                 </div>
               </div>
 
@@ -976,6 +1142,426 @@ export const Settings = () => {
                 </div>
               </div>
 
+              {/* Meet Our Team Configuration */}
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <h5 className="flex items-center gap-2 bg-slate-50 text-slate-700 text-sm font-semibold px-3 py-2 rounded-lg">
+                    <Users className="w-4 h-4 text-slate-500" />
+                    Meet Our Team Configuration
+                  </h5>
+                  <span className="text-xs text-slate-400">Passport-size photo framing with interactive cropper</span>
+                </div>
+                <p className="text-xs text-slate-500">
+                  Manage executive and leadership team members. Photos are framed in passport format so faces remain clearly centered and visible. You can upload large photos and crop them to passport size.
+                </p>
+
+                {/* Team Members List */}
+                <div className="space-y-3">
+                  {(Array.isArray(form.teamMembers) ? form.teamMembers : defaultSettings.teamMembers).map((member, index) => (
+                    <div key={index} className="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 bg-slate-50/70 border border-slate-200 rounded-xl">
+                      {/* Passport Photo Preview + Quick Crop Overlay */}
+                      <div className="relative group w-16 h-20 rounded-xl border border-slate-200 overflow-hidden bg-white flex items-center justify-center shrink-0 shadow-sm">
+                        {member.photo ? (
+                          <img 
+                            src={member.photo} 
+                            alt={member.name} 
+                            className="w-full h-full object-cover object-top" 
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }} 
+                          />
+                        ) : (
+                          <Users className="w-7 h-7 text-slate-300" />
+                        )}
+                        <label 
+                          title="Click to change & crop photo"
+                          className="absolute inset-0 bg-slate-900/60 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer text-[10px] font-bold"
+                        >
+                          <Crop className="w-4 h-4 mb-0.5" />
+                          <span>Crop</span>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            onChange={(e) => handleFileSelectForCrop(e, 'teamMember', index)} 
+                          />
+                        </label>
+                      </div>
+
+                      {/* Fields */}
+                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 w-full">
+                        <div>
+                          <label className="text-[11px] font-semibold text-slate-500 block mb-1">Member Name</label>
+                          <input
+                            type="text"
+                            value={member.name || ''}
+                            onChange={(e) => handleTeamMemberChange(index, 'name', e.target.value)}
+                            placeholder="e.g. Elon Musk"
+                            className={inputCls}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-semibold text-slate-500 block mb-1">Job Title / Role</label>
+                          <input
+                            type="text"
+                            value={member.role || ''}
+                            onChange={(e) => handleTeamMemberChange(index, 'role', e.target.value)}
+                            placeholder="e.g. Marketing Crew"
+                            className={inputCls}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-semibold text-slate-500 block mb-1">Photo URL / Path</label>
+                          <input
+                            type="text"
+                            value={member.photo || ''}
+                            onChange={(e) => handleTeamMemberChange(index, 'photo', e.target.value)}
+                            placeholder="https://... or uploaded path"
+                            className={inputCls}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-2 shrink-0 self-end md:self-center mt-2 md:mt-0">
+                        <label className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-lg transition cursor-pointer">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Upload & Crop</span>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            onChange={(e) => handleFileSelectForCrop(e, 'teamMember', index)} 
+                          />
+                        </label>
+                        {member.photo && (
+                          <button
+                            type="button"
+                            onClick={() => setCropperModal({ isOpen: true, initialImage: member.photo, targetType: 'teamMember', targetIndex: index })}
+                            className="inline-flex items-center gap-1 px-2.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition cursor-pointer"
+                            title="Adjust crop of current photo"
+                          >
+                            <Crop className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveTeamMember(index)}
+                          className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                          title="Delete Member"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add New Team Member Card */}
+                <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-4">
+                  <h6 className="text-xs font-bold text-indigo-900 mb-2 flex items-center gap-1.5">
+                    <Plus className="w-3.5 h-3.5" />
+                    Add New Team Member
+                  </h6>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+                    <div>
+                      <label className="text-[11px] font-semibold text-indigo-950 block mb-1">Full Name <span className="text-rose-500">*</span></label>
+                      <input
+                        type="text"
+                        value={newTeamMember.name}
+                        onChange={(e) => setNewTeamMember({ ...newTeamMember, name: e.target.value })}
+                        placeholder="e.g. Satya Nadella"
+                        className={inputCls}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-indigo-950 block mb-1">Job Title / Role</label>
+                      <input
+                        type="text"
+                        value={newTeamMember.role}
+                        onChange={(e) => setNewTeamMember({ ...newTeamMember, role: e.target.value })}
+                        placeholder="e.g. Technical Director"
+                        className={inputCls}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-indigo-950 block mb-1">Photo (Upload or URL)</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={newTeamMember.photo}
+                          onChange={(e) => setNewTeamMember({ ...newTeamMember, photo: e.target.value })}
+                          placeholder="Photo URL"
+                          className={inputCls}
+                        />
+                        <label className="inline-flex items-center gap-1 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition cursor-pointer shrink-0">
+                          <Crop className="w-3.5 h-3.5" />
+                          <span>Crop</span>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            onChange={(e) => handleFileSelectForCrop(e, 'newTeamMember')} 
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  {newTeamMember.photo && (
+                    <div className="mt-2.5 flex items-center gap-3">
+                      <div className="w-10 h-12 rounded-lg border border-indigo-200 overflow-hidden bg-white">
+                        <img src={newTeamMember.photo} alt="Preview" className="w-full h-full object-cover object-top" />
+                      </div>
+                      <span className="text-xs text-indigo-700">Photo ready for addition</span>
+                    </div>
+                  )}
+                  <div className="mt-3 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleAddTeamMember}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Add Team Member
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Our Happy Customer Configuration */}
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <h5 className="flex items-center gap-2 bg-slate-50 text-slate-700 text-sm font-semibold px-3 py-2 rounded-lg">
+                    <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                    Our Happy Customer (Testimonials) Configuration
+                  </h5>
+                  <span className="text-xs text-slate-400">Customer feedback and star ratings</span>
+                </div>
+                <p className="text-xs text-slate-500">
+                  Manage real customer reviews and testimonials shown on the About page. Supports uploading and cropping customer avatar photos, star ratings, and custom testimonials.
+                </p>
+
+                {/* Customers Testimonials List */}
+                <div className="space-y-3">
+                  {(Array.isArray(form.happyCustomers) ? form.happyCustomers : defaultSettings.happyCustomers).map((customer, index) => (
+                    <div key={index} className="flex flex-col gap-3 p-4 bg-slate-50/70 border border-slate-200 rounded-xl">
+                      <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+                        {/* Customer Avatar Preview + Crop Overlay */}
+                        <div className="relative group w-14 h-14 rounded-full border-2 border-slate-200 overflow-hidden bg-white flex items-center justify-center shrink-0 shadow-sm">
+                          {customer.photo ? (
+                            <img 
+                              src={customer.photo} 
+                              alt={customer.name} 
+                              className="w-full h-full object-cover object-top" 
+                              onError={(e) => { e.currentTarget.style.display = 'none'; }} 
+                            />
+                          ) : (
+                            <Users className="w-6 h-6 text-slate-300" />
+                          )}
+                          <label 
+                            title="Click to change & crop photo"
+                            className="absolute inset-0 bg-slate-900/60 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer text-[10px] font-bold"
+                          >
+                            <Crop className="w-3.5 h-3.5 mb-0.5" />
+                            <span>Crop</span>
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              className="hidden" 
+                              onChange={(e) => handleFileSelectForCrop(e, 'customer', index)} 
+                            />
+                          </label>
+                        </div>
+
+                        {/* Top row fields: Name, Role, Rating, Photo URL */}
+                        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 w-full">
+                          <div>
+                            <label className="text-[11px] font-semibold text-slate-500 block mb-1">Customer Name</label>
+                            <input
+                              type="text"
+                              value={customer.name || ''}
+                              onChange={(e) => handleCustomerChange(index, 'name', e.target.value)}
+                              placeholder="e.g. Sarah Harding"
+                              className={inputCls}
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-semibold text-slate-500 block mb-1">Designation / Role</label>
+                            <input
+                              type="text"
+                              value={customer.role || ''}
+                              onChange={(e) => handleCustomerChange(index, 'role', e.target.value)}
+                              placeholder="e.g. Visual Designer"
+                              className={inputCls}
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-semibold text-slate-500 block mb-1">Star Rating (1-5)</label>
+                            <select
+                              value={customer.rating || 5}
+                              onChange={(e) => handleCustomerChange(index, 'rating', Number(e.target.value))}
+                              className={inputCls}
+                            >
+                              <option value={5}>⭐⭐⭐⭐⭐ (5 Stars)</option>
+                              <option value={4}>⭐⭐⭐⭐ (4 Stars)</option>
+                              <option value={3}>⭐⭐⭐ (3 Stars)</option>
+                              <option value={2}>⭐⭐ (2 Stars)</option>
+                              <option value={1}>⭐ (1 Star)</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-semibold text-slate-500 block mb-1">Photo URL</label>
+                            <input
+                              type="text"
+                              value={customer.photo || ''}
+                              onChange={(e) => handleCustomerChange(index, 'photo', e.target.value)}
+                              placeholder="https://... or path"
+                              className={inputCls}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+                          <label className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-lg transition cursor-pointer">
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>Upload & Crop</span>
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              className="hidden" 
+                              onChange={(e) => handleFileSelectForCrop(e, 'customer', index)} 
+                            />
+                          </label>
+                          {customer.photo && (
+                            <button
+                              type="button"
+                              onClick={() => setCropperModal({ isOpen: true, initialImage: customer.photo, targetType: 'customer', targetIndex: index })}
+                              className="inline-flex items-center gap-1 px-2.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition cursor-pointer"
+                              title="Adjust crop of customer avatar"
+                            >
+                              <Crop className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveCustomer(index)}
+                            className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                            title="Delete Customer"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Review Text */}
+                      <div>
+                        <label className="text-[11px] font-semibold text-slate-500 block mb-1">Customer Review / Feedback</label>
+                        <textarea
+                          rows={2}
+                          value={customer.review || ''}
+                          onChange={(e) => handleCustomerChange(index, 'review', e.target.value)}
+                          placeholder="Write customer feedback here..."
+                          className={inputCls}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add New Customer Card */}
+                <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-4">
+                  <h6 className="text-xs font-bold text-indigo-900 mb-2 flex items-center gap-1.5">
+                    <Plus className="w-3.5 h-3.5" />
+                    Add New Customer Testimonial
+                  </h6>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
+                    <div>
+                      <label className="text-[11px] font-semibold text-indigo-950 block mb-1">Customer Name <span className="text-rose-500">*</span></label>
+                      <input
+                        type="text"
+                        value={newCustomer.name}
+                        onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
+                        placeholder="e.g. Jessica Alba"
+                        className={inputCls}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-indigo-950 block mb-1">Designation / Role</label>
+                      <input
+                        type="text"
+                        value={newCustomer.role}
+                        onChange={(e) => setNewCustomer({ ...newCustomer, role: e.target.value })}
+                        placeholder="e.g. Product Lead"
+                        className={inputCls}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-indigo-950 block mb-1">Rating</label>
+                      <select
+                        value={newCustomer.rating}
+                        onChange={(e) => setNewCustomer({ ...newCustomer, rating: Number(e.target.value) })}
+                        className={inputCls}
+                      >
+                        <option value={5}>⭐⭐⭐⭐⭐ (5 Stars)</option>
+                        <option value={4}>⭐⭐⭐⭐ (4 Stars)</option>
+                        <option value={3}>⭐⭐⭐ (3 Stars)</option>
+                        <option value={2}>⭐⭐ (2 Stars)</option>
+                        <option value={1}>⭐ (1 Star)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-indigo-950 block mb-1">Photo (Upload or URL)</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={newCustomer.photo}
+                          onChange={(e) => setNewCustomer({ ...newCustomer, photo: e.target.value })}
+                          placeholder="Photo URL"
+                          className={inputCls}
+                        />
+                        <label className="inline-flex items-center gap-1 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition cursor-pointer shrink-0">
+                          <Crop className="w-3.5 h-3.5" />
+                          <span>Crop</span>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            onChange={(e) => handleFileSelectForCrop(e, 'newCustomer')} 
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <label className="text-[11px] font-semibold text-indigo-950 block mb-1">Customer Review / Feedback</label>
+                    <textarea
+                      rows={2}
+                      value={newCustomer.review}
+                      onChange={(e) => setNewCustomer({ ...newCustomer, review: e.target.value })}
+                      placeholder="Write customer feedback here..."
+                      className={inputCls}
+                    />
+                  </div>
+                  {newCustomer.photo && (
+                    <div className="mt-2.5 flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full border border-indigo-200 overflow-hidden bg-white">
+                        <img src={newCustomer.photo} alt="Preview" className="w-full h-full object-cover object-top" />
+                      </div>
+                      <span className="text-xs text-indigo-700">Avatar ready for addition</span>
+                    </div>
+                  )}
+                  <div className="mt-3 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleAddCustomer}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Add Testimonial
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               {/* Action Button */}
               <div className="pt-2">
                 <button
@@ -992,6 +1578,16 @@ export const Settings = () => {
           )}
         </div>
       </div>
+
+      {/* Passport Photo Cropper Modal */}
+      <PassportPhotoCropperModal
+        isOpen={cropperModal.isOpen}
+        onClose={() => setCropperModal({ isOpen: false, initialImage: null, targetType: null, targetIndex: null })}
+        imageSrc={cropperModal.initialImage}
+        onCropComplete={handleCropComplete}
+        title={cropperModal.targetType?.includes('Customer') ? 'Adjust & Crop Customer Photo' : 'Adjust & Crop Team Member Photo'}
+        shape={cropperModal.targetType?.includes('Customer') ? 'circle' : 'square'}
+      />
     </div>
   );
 };

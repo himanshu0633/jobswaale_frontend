@@ -80,7 +80,7 @@ export const PublicPage = () => {
       case 'jobseeker-plan':
         return <JobseekerPlan />;
       case 'about':
-        return <About />;
+        return <About settings={settings} />;
       case 'contact':
         return <Contact />;
       case 'faq':
