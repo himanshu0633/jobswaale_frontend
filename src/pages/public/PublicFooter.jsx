@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Mail, Phone, MapPin } from 'lucide-react';
 import logoAsset from '../../assets/logo.png';
+import { getPublicSettings } from '../../utils/publicSettings';
 
 // Custom social SVG components
 const TwitterIcon = ({ className }) => (
@@ -26,6 +27,20 @@ const GithubIcon = ({ className }) => (
 );
 
 export const PublicFooter = () => {
+  const [settings, setSettings] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    getPublicSettings().then((data) => {
+      if (isMounted && data) {
+        setSettings(data);
+      }
+    }).catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const authUser = (() => {
     try {
       return JSON.parse(localStorage.getItem('publicUser') || 'null');
@@ -42,6 +57,10 @@ export const PublicFooter = () => {
   const isJobseeker = isLoggedIn && (accountType === 'jobseeker');
   const isEmployer = isLoggedIn && (accountType === 'employer');
 
+  const siteEmail = settings?.siteEmail || 'Jobswaale.india@gmail.com';
+  const sitePhone = settings?.sitePhone || '+91 99998 84424';
+  const siteAddress = settings?.siteAddress || 'Hamirpur, Himachal Pradesh, India';
+
   const gridClass = `grid gap-8 grid-cols-2 ${
     isEmployer || isJobseeker 
       ? 'md:grid-cols-3 lg:grid-cols-4' 
@@ -52,7 +71,6 @@ export const PublicFooter = () => {
     <footer className="bg-[#001c3d] text-white/75">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 pb-8">
         <div className={gridClass}>
-          {/* Logo & Info */}
           {/* Logo & Info */}
         <div className="col-span-2 lg:col-span-1 space-y-4">
           <Link to="/" className="inline-flex items-center mb-2">
@@ -84,10 +102,17 @@ export const PublicFooter = () => {
             <div>
               <h4 className="font-semibold text-white text-[1.1rem] mb-7">For Job Seekers</h4>
               <ul className="space-y-3 text-sm text-white/70">
-                <li><Link to="/login" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Browse Jobs</Link></li>
-                <li><Link to="/jobseeker-plan" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Candidate Plans</Link></li>
-                <li><Link to="/login" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Upload Resume</Link></li>
-                <li><Link to="/login?role=employer" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Browse Employer</Link></li>
+                <li><Link to="/jobs" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Browse Jobs</Link></li>
+                <li>
+                  <Link 
+                    to={isLoggedIn ? '/jobseeker-plan' : '/login?role=jobseeker&redirect=/jobseeker-plan'} 
+                    className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block"
+                  >
+                    Candidate Plans
+                  </Link>
+                </li>
+                <li><Link to={isLoggedIn ? '/jobseeker/profile' : '/login?role=jobseeker'} className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Upload Resume</Link></li>
+                <li><Link to="/employers" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Browse Employer</Link></li>
               </ul>
             </div>
           )}
@@ -97,9 +122,16 @@ export const PublicFooter = () => {
             <div>
               <h4 className="font-semibold text-white text-[1.1rem] mb-7">For Employers</h4>
               <ul className="space-y-3 text-sm text-white/70">
-                <li><Link to="/employer-plan" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Employer Plans</Link></li>
-                <li><Link to="/employer/jobs/create" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Post a Job</Link></li>
-                <li><Link to="/login?role=employer" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Browse Candidates</Link></li>
+                <li>
+                  <Link 
+                    to={isLoggedIn ? '/employer-plan' : '/login?role=employer&redirect=/employer-plan'} 
+                    className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block"
+                  >
+                    Employer Plans
+                  </Link>
+                </li>
+                <li><Link to={isLoggedIn ? '/employer/jobs/create' : '/login?role=employer&redirect=/employer/jobs/create'} className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Post a Job</Link></li>
+                <li><Link to={isLoggedIn ? '/employer/candidates' : '/login?role=employer&redirect=/employer/candidates'} className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Browse Candidates</Link></li>
                 <li><Link to="/contact" className="hover:text-[#FF6B00] hover:pl-1 transition-all inline-block">Hiring Solutions</Link></li>
               </ul>
             </div>
@@ -121,15 +153,15 @@ export const PublicFooter = () => {
             <h4 className="font-semibold text-white text-[1.1rem] mb-7">Contact Us</h4>
             <div className="flex gap-3 items-start text-sm text-white/70 mb-4">
               <Mail className="h-4 w-4 text-[#FF6B00] shrink-0 mt-0.5" />
-              <span className="break-all">Jobswaale.india@gmail.com</span>
+              <span className="break-all">{siteEmail}</span>
             </div>
             <div className="flex gap-3 items-start text-sm text-white/70 mb-4">
               <Phone className="h-4 w-4 text-[#FF6B00] shrink-0 mt-0.5" />
-              <span>+91 99998 84424</span>
+              <span>{sitePhone}</span>
             </div>
             <div className="flex gap-3 items-start text-sm text-white/70 mb-4">
               <MapPin className="h-4 w-4 text-[#FF6B00] shrink-0 mt-0.5" />
-              <span>Hamirpur, Himachal Pradesh, India</span>
+              <span>{siteAddress}</span>
             </div>
           </div>
         </div>

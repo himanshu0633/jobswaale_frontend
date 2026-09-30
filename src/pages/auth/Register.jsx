@@ -174,6 +174,22 @@ export const Register = () => {
       return;
     }
 
+    const trimmedName = String(form.fullName || '').trim();
+    if (!trimmedName || trimmedName.length < 2) {
+      setError('Please enter your full name (minimum 2 characters).');
+      return;
+    }
+    if (/^\d+$/.test(trimmedName)) {
+      setError('Name cannot consist solely of digits.');
+      return;
+    }
+
+    const cleanedMobile = String(form.mobile || '').replace(/\D/g, '');
+    if (!/^[6-9]\d{9}$/.test(cleanedMobile)) {
+      setError('Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.');
+      return;
+    }
+
     if (!form.termsAccepted) {
       setError('Please accept the Terms of Service and Privacy Policy.');
       return;
@@ -363,10 +379,11 @@ export const Register = () => {
               label="Mobile Number"
               required
               type="tel"
+              maxLength={10}
               value={form.mobile}
-              onChange={(event) => setField('mobile', event.target.value.replace(/[^0-9+\s-]/g, ''))}
-              placeholder="e.g. +91 99999 88888"
-              helper="Recruiters may contact you on this number."
+              onChange={(event) => setField('mobile', event.target.value.replace(/\D/g, '').slice(0, 10))}
+              placeholder="10-digit mobile number (e.g. 9876543210)"
+              helper="10-digit mobile number. Recruiters may contact you on this number."
             />
 
             <div>

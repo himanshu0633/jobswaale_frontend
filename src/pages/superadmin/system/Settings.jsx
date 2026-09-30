@@ -15,7 +15,10 @@ import {
   X,
   LayoutDashboard,
   BarChart3,
-  Layers
+  Layers,
+  Plus,
+  Trash2,
+  Building2
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import { clearPublicSettingsCache } from '../../../utils/publicSettings';
@@ -24,8 +27,9 @@ const defaultSettings = {
   // General
   siteName: 'JobsWaale',
   siteUrl: 'https://jobswaale.com',
-  siteEmail: 'support@jobswaale.com',
-  sitePhone: '+91 8628821441',
+  siteEmail: 'Jobswaale.india@gmail.com',
+  sitePhone: '+91 99998 84424',
+  siteAddress: 'Hamirpur, Himachal Pradesh, India',
   defaultLang: 'en',
   timezone: 'Asia/Kolkata',
   currency: 'INR',
@@ -62,7 +66,7 @@ const defaultSettings = {
 
   // Home Dashboard
   heroTitle: 'Find Your Dream Job & Build Your Future',
-  heroSubtitle: 'Connect with thousands of employers and find the right job for your career growth.',
+  heroSubtitle: 'Find the jobs faster and easier. We connect job seekers with nearby opportunities and help employers hire quickly.',
   showHeroSearch: true,
   showTrendingSearches: true,
   showAccountTypeCards: true,
@@ -76,7 +80,15 @@ const defaultSettings = {
   statJobseekers: '15,000+',
   statCities: '50+',
   maxFeaturedJobs: 6,
-  maxPopularCategories: 8
+  maxPopularCategories: 8,
+  trustedCompanies: [
+    { name: 'Google', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg' },
+    { name: 'Airbnb', logo: 'https://upload.wikimedia.org/wikipedia/commons/6/69/Airbnb_Logo_B%C3%A9lo.svg' },
+    { name: 'Dropbox', logo: 'https://upload.wikimedia.org/wikipedia/commons/7/78/Dropbox_Icon.svg' },
+    { name: 'FedEx', logo: 'https://upload.wikimedia.org/wikipedia/commons/9/9d/FedEx_Express.svg' },
+    { name: 'Walmart', logo: 'https://upload.wikimedia.org/wikipedia/commons/5/5b/Walmart_logo_%282025%29.svg' },
+    { name: 'HubSpot', logo: 'https://upload.wikimedia.org/wikipedia/commons/3/3f/HubSpot_Logo.svg' }
+  ]
 };
 
 export const Settings = () => {
@@ -86,6 +98,31 @@ export const Settings = () => {
   const [testingEmail, setTestingEmail] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [newCompany, setNewCompany] = useState({ name: '', logo: '' });
+
+  const handleAddCompany = () => {
+    if (!newCompany.name.trim()) {
+      showMessage('error', 'Company name is required.');
+      return;
+    }
+    const currentList = Array.isArray(form.trustedCompanies) ? form.trustedCompanies : (defaultSettings.trustedCompanies || []);
+    const updated = [...currentList, { name: newCompany.name.trim(), logo: newCompany.logo.trim() }];
+    setForm(prev => ({ ...prev, trustedCompanies: updated }));
+    setNewCompany({ name: '', logo: '' });
+    showMessage('success', 'Company added to list. Click "Save Home Dashboard Settings" to persist.');
+  };
+
+  const handleRemoveCompany = (index) => {
+    const currentList = Array.isArray(form.trustedCompanies) ? form.trustedCompanies : (defaultSettings.trustedCompanies || []);
+    const updated = currentList.filter((_, i) => i !== index);
+    setForm(prev => ({ ...prev, trustedCompanies: updated }));
+  };
+
+  const handleCompanyChange = (index, field, value) => {
+    const currentList = Array.isArray(form.trustedCompanies) ? [...form.trustedCompanies] : [...(defaultSettings.trustedCompanies || [])];
+    currentList[index] = { ...currentList[index], [field]: value };
+    setForm(prev => ({ ...prev, trustedCompanies: currentList }));
+  };
 
   const getAdminHeaders = () => {
     const token = localStorage.getItem('token');
@@ -293,8 +330,19 @@ export const Settings = () => {
                       value={form.sitePhone}
                       onChange={(e) => setForm({ ...form, sitePhone: e.target.value })}
                       className={inputCls} 
-                      placeholder="+91 8628821441"
+                      placeholder="+91 99998 84424"
                     />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className={labelCls}>Site Address / Office Location <span className="text-rose-500">*</span></label>
+                    <input 
+                      type="text" 
+                      value={form.siteAddress || ''}
+                      onChange={(e) => setForm({ ...form, siteAddress: e.target.value })}
+                      className={inputCls} 
+                      placeholder="Hamirpur, Himachal Pradesh, India"
+                    />
+                    <small className="text-xs text-slate-400 mt-1 block">Displayed in the public footer Contact Us section.</small>
                   </div>
                   <div>
                     <label className={labelCls}>Default Language <span className="text-rose-500">*</span></label>
@@ -835,6 +883,95 @@ export const Settings = () => {
                       className={inputCls} 
                     />
                     <small className="text-xs text-slate-400 mt-1 block">Number of category cards shown on the homepage.</small>
+                  </div>
+                </div>
+              </div>
+
+              {/* Trusted Leading Companies Configuration */}
+              <div className="space-y-4">
+                <h5 className="flex items-center gap-2 bg-slate-50 text-slate-700 text-sm font-semibold px-3 py-2 rounded-lg">
+                  <Building2 className="w-4 h-4 text-slate-500" />
+                  Trusted Leading Companies (Homepage Carousel)
+                </h5>
+                <p className="text-xs text-slate-500">
+                  Manage the companies and logos featured in the "Trusted by 500+ Leading Companies" section of the homepage.
+                </p>
+
+                {/* Company Items List */}
+                <div className="space-y-3">
+                  {(Array.isArray(form.trustedCompanies) ? form.trustedCompanies : defaultSettings.trustedCompanies).map((company, index) => (
+                    <div key={index} className="flex flex-col sm:flex-row items-center gap-3 p-3 bg-slate-50/70 border border-slate-200 rounded-xl">
+                      {/* Logo Preview */}
+                      <div className="w-16 h-10 bg-white border border-slate-200 rounded-lg flex items-center justify-center p-1 shrink-0 overflow-hidden">
+                        {company.logo ? (
+                          <img 
+                            src={company.logo} 
+                            alt={company.name} 
+                            className="max-h-full max-w-full object-contain" 
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }} 
+                          />
+                        ) : (
+                          <Building2 className="w-5 h-5 text-slate-400" />
+                        )}
+                      </div>
+
+                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
+                        <input
+                          type="text"
+                          value={company.name}
+                          onChange={(e) => handleCompanyChange(index, 'name', e.target.value)}
+                          placeholder="Company Name"
+                          className={inputCls}
+                        />
+                        <input
+                          type="text"
+                          value={company.logo}
+                          onChange={(e) => handleCompanyChange(index, 'logo', e.target.value)}
+                          placeholder="Logo URL (SVG/PNG)"
+                          className={inputCls}
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveCompany(index)}
+                        className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition shrink-0 cursor-pointer"
+                        title="Delete Company"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add Company Row */}
+                <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-4">
+                  <h6 className="text-xs font-bold text-indigo-900 mb-2">Add New Company</h6>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      value={newCompany.name}
+                      onChange={(e) => setNewCompany({ ...newCompany, name: e.target.value })}
+                      placeholder="Company Name (e.g. Microsoft)"
+                      className={inputCls}
+                    />
+                    <input
+                      type="text"
+                      value={newCompany.logo}
+                      onChange={(e) => setNewCompany({ ...newCompany, logo: e.target.value })}
+                      placeholder="Logo URL (e.g. https://.../logo.svg)"
+                      className={inputCls}
+                    />
+                  </div>
+                  <div className="mt-2.5 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleAddCompany}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Add Company
+                    </button>
                   </div>
                 </div>
               </div>

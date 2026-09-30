@@ -8,14 +8,16 @@ const EmployerPlan = () => {
         try {
             const user = JSON.parse(localStorage.getItem('publicUser') || 'null');
             const token = localStorage.getItem('publicToken');
-            if (user && token) {
-                const normalize = (value) => String(value || '').trim().toLowerCase().replace(/\s+/g, '');
-                const accountType = normalize(user.accountType);
-                const role = normalize(user.role);
-                const roleName = normalize(user.roleName);
-                if (accountType === 'jobseeker' || role === 'jobseeker' || roleName === 'jobseeker') {
-                    navigate('/jobseeker-plan', { replace: true });
-                }
+            if (!user || !token) {
+                navigate('/login?role=employer&redirect=/employer-plan', { replace: true });
+                return;
+            }
+            const normalize = (value) => String(value || '').trim().toLowerCase().replace(/\s+/g, '');
+            const accountType = normalize(user.accountType);
+            const role = normalize(user.role);
+            const roleName = normalize(user.roleName);
+            if (accountType === 'jobseeker' || role === 'jobseeker' || roleName === 'jobseeker') {
+                navigate('/jobseeker-plan', { replace: true });
             }
         } catch (e) {
             console.error(e);

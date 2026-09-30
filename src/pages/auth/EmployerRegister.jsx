@@ -291,6 +291,28 @@ export const EmployerRegister = () => {
       return;
     }
 
+    const trimmedName = String(form.fullName || '').trim();
+    if (!trimmedName || trimmedName.length < 2) {
+      setError('Please enter your full name (minimum 2 characters).');
+      return;
+    }
+    if (/^\d+$/.test(trimmedName)) {
+      setError('Name cannot consist solely of digits.');
+      return;
+    }
+
+    const trimmedCompany = String(form.companyName || '').trim();
+    if (!trimmedCompany || trimmedCompany.length < 2) {
+      setError('Please enter company / organization name.');
+      return;
+    }
+
+    const cleanedPhone = String(form.phone || '').replace(/\D/g, '');
+    if (!/^[6-9]\d{9}$/.test(cleanedPhone)) {
+      setError('Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.');
+      return;
+    }
+
     if (!form.companySize) {
       setError('Please select company size.');
       return;
@@ -477,10 +499,11 @@ export const EmployerRegister = () => {
                 label="Phone Number"
                 required
                 type="tel"
+                maxLength={10}
                 value={form.phone}
-                onChange={(event) => setField('phone', event.target.value.replace(/[^0-9+\s-]/g, ''))}
-                placeholder="e.g. +91 99999 88888"
-                helper="Candidates and our team may contact you on this number."
+                onChange={(event) => setField('phone', event.target.value.replace(/\D/g, '').slice(0, 10))}
+                placeholder="10-digit phone number (e.g. 9876543210)"
+                helper="10-digit mobile number. Candidates and our team may contact you on this number."
               />
             </div>
 

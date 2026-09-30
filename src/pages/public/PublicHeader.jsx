@@ -327,10 +327,10 @@ export const PublicHeader = () => {
               </button>
               {pricingDesktopOpen && (
                 <div className="absolute top-full left-0 mt-1 block bg-white border border-slate-200 rounded-lg shadow-lg py-2 w-48 z-50">
-                  <Link to="/jobseeker-plan" className={`block px-4 py-2 text-xs font-bold hover:bg-slate-50 transition ${isActive('/jobseeker-plan') ? 'text-blue-600' : 'text-slate-700'}`}>
+                  <Link to="/login?role=jobseeker&redirect=/jobseeker-plan" className={`block px-4 py-2 text-xs font-bold hover:bg-slate-50 transition ${isActive('/jobseeker-plan') ? 'text-blue-600' : 'text-slate-700'}`}>
                     Jobseeker Plan
                   </Link>
-                  <Link to="/employer-plan" className={`block px-4 py-2 text-xs font-bold hover:bg-slate-50 transition ${isActive('/employer-plan') ? 'text-blue-600' : 'text-slate-700'}`}>
+                  <Link to="/login?role=employer&redirect=/employer-plan" className={`block px-4 py-2 text-xs font-bold hover:bg-slate-50 transition ${isActive('/employer-plan') ? 'text-blue-600' : 'text-slate-700'}`}>
                     Employer Plan
                   </Link>
                 </div>
@@ -566,7 +566,7 @@ export const PublicHeader = () => {
             <Link to="/jobs" className={`text-sm font-bold py-1 ${isActive('/jobs') ? 'text-blue-600' : 'text-slate-655'}`}>
               Jobs
             </Link>
-            <Link to="/employer" className={`text-sm font-bold py-1 ${isActive('/employer') ? 'text-blue-600' : 'text-slate-655'}`}>
+            <Link to="/employers" className={`text-sm font-bold py-1 ${isActive('/employers') ? 'text-blue-600' : 'text-slate-655'}`}>
               Employers
             </Link>
 
@@ -610,8 +610,8 @@ export const PublicHeader = () => {
                 </button>
                 {pricingMobileOpen && (
                   <div className="pl-4 mt-2 flex flex-col gap-2.5 border-l border-slate-100">
-                    <Link to="/jobseeker-plan" className={`text-xs font-bold py-1 ${isActive('/jobseeker-plan') ? 'text-blue-600' : 'text-slate-550'}`}>Jobseeker Plan</Link>
-                    <Link to="/employer-plan" className={`text-xs font-bold py-1 ${isActive('/employer-plan') ? 'text-blue-600' : 'text-slate-550'}`}>Employer Plan</Link>
+                    <Link to="/login?role=jobseeker&redirect=/jobseeker-plan" className={`text-xs font-bold py-1 ${isActive('/jobseeker-plan') ? 'text-blue-600' : 'text-slate-550'}`}>Jobseeker Plan</Link>
+                    <Link to="/login?role=employer&redirect=/employer-plan" className={`text-xs font-bold py-1 ${isActive('/employer-plan') ? 'text-blue-600' : 'text-slate-550'}`}>Employer Plan</Link>
                   </div>
                 )}
               </div>

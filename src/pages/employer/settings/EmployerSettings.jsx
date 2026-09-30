@@ -138,6 +138,20 @@ export const EmployerSettings = () => {
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
+
+    if (profileForm.phone) {
+      const cleaned = String(profileForm.phone).replace(/\D/g, '');
+      if (!/^[6-9]\d{9}$/.test(cleaned)) {
+        setErrorMsg('Phone number must be a valid 10-digit number starting with 6, 7, 8, or 9.');
+        return;
+      }
+    }
+
+    if (profileForm.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profileForm.email)) {
+      setErrorMsg('Please enter a valid email address.');
+      return;
+    }
+
     try {
       const response = await axios.put(`${BASE_API_URL}/employer/settings`, {
         type: 'profile',

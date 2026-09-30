@@ -1,11 +1,12 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, FreeMode } from "swiper/modules";
+import { getPublicSettings } from "../../utils/publicSettings";
 
 import "swiper/css";
 import "swiper/css/navigation";
 
-const companies = [
+const defaultCompanies = [
   {
     name: "Google",
     logo: "https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg",
@@ -32,8 +33,27 @@ const companies = [
   },
 ];
 
-const TrustedCompanies = () => {
+const TrustedCompanies = ({ companies: propCompanies }) => {
   const swiperRef = useRef(null);
+  const [companies, setCompanies] = useState(() => {
+    return Array.isArray(propCompanies) && propCompanies.length > 0 ? propCompanies : defaultCompanies;
+  });
+
+  useEffect(() => {
+    if (Array.isArray(propCompanies) && propCompanies.length > 0) {
+      setCompanies(propCompanies);
+      return;
+    }
+    let isMounted = true;
+    getPublicSettings().then((data) => {
+      if (isMounted && Array.isArray(data?.trustedCompanies) && data.trustedCompanies.length > 0) {
+        setCompanies(data.trustedCompanies);
+      }
+    }).catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, [propCompanies]);
 
   return (
     <div className="section-box mt-0 py-[30px] bg-white overflow-hidden">

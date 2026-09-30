@@ -10,14 +10,16 @@ const JobseekerPlan = () => {
         try {
             const user = JSON.parse(localStorage.getItem('publicUser') || 'null');
             const token = localStorage.getItem('publicToken');
-            if (user && token) {
-                const normalize = (value) => String(value || '').trim().toLowerCase().replace(/\s+/g, '');
-                const accountType = normalize(user.accountType);
-                const role = normalize(user.role);
-                const roleName = normalize(user.roleName);
-                if (accountType === 'employer' || role === 'employer' || roleName === 'employer') {
-                    navigate('/employer-plan', { replace: true });
-                }
+            if (!user || !token) {
+                navigate('/login?role=jobseeker&redirect=/jobseeker-plan', { replace: true });
+                return;
+            }
+            const normalize = (value) => String(value || '').trim().toLowerCase().replace(/\s+/g, '');
+            const accountType = normalize(user.accountType);
+            const role = normalize(user.role);
+            const roleName = normalize(user.roleName);
+            if (accountType === 'employer' || role === 'employer' || roleName === 'employer') {
+                navigate('/employer-plan', { replace: true });
             }
         } catch (e) {
             console.error(e);

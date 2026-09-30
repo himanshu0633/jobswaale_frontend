@@ -454,17 +454,19 @@ export const EmployerPostJob = () => {
       } else if (Number(form.vacancies) < 1) {
         errors.vacancies = 'Number of openings must be at least 1';
       }
+      const numMinSalary = Number(form.minSalary);
+      const numMaxSalary = Number(form.maxSalary);
       if (form.minSalary === '' || form.minSalary === null || form.minSalary === undefined) {
         errors.minSalary = 'Minimum salary is required';
+      } else if (isNaN(numMinSalary) || numMinSalary <= 0) {
+        errors.minSalary = 'Minimum salary must be greater than 0';
       }
       if (form.maxSalary === '' || form.maxSalary === null || form.maxSalary === undefined) {
         errors.maxSalary = 'Maximum salary is required';
-      } else if (
-        form.minSalary !== '' &&
-        form.minSalary !== null &&
-        Number(form.maxSalary) < Number(form.minSalary)
-      ) {
-        errors.maxSalary = 'Maximum salary must be greater than or equal to minimum salary';
+      } else if (isNaN(numMaxSalary) || numMaxSalary <= 0) {
+        errors.maxSalary = 'Maximum salary must be greater than 0';
+      } else if (!isNaN(numMinSalary) && numMinSalary > 0 && numMaxSalary <= numMinSalary) {
+        errors.maxSalary = 'Maximum salary must be greater than minimum salary';
       }
       if (maxJobExpiry && form.jobExpiry && form.jobExpiry > maxJobExpiry) {
         errors.jobExpiry = `Job expiry date cannot be after your plan expiry date (${maxJobExpiry})`;
@@ -477,8 +479,19 @@ export const EmployerPostJob = () => {
         errors.description = 'Detailed Job Description is required';
       }
     } else if (targetStep === 2) {
-      if (!String(form.skills || '').trim()) {
+      const rawSkills = String(form.skills || '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (rawSkills.length === 0) {
         errors.skills = 'Key Skills are required';
+      } else {
+        const invalidSkills = rawSkills.filter(
+          (s) => /^\d+$/.test(s) || !/^[a-zA-Z0-9+#.\s/-]{2,40}$/.test(s)
+        );
+        if (invalidSkills.length > 0) {
+          errors.skills = `Invalid skill name(s): "${invalidSkills.join(', ')}". Skills must contain valid words or technologies.`;
+        }
       }
     }
 

@@ -181,7 +181,7 @@ export const Home = ({ settings: propSettings }) => {
                     <span>{settings.heroSubtitle}</span>
                   ) : (
                     <>
-                      <strong className="text-slate-700">Find local jobs faster and easier.</strong> We connect job seekers with nearby opportunities and help employers hire quickly.
+                      <strong className="text-slate-700">Find the jobs faster and easier.</strong> We connect job seekers with nearby opportunities and help employers hire quickly.
                     </>
                   )
                 )}
@@ -191,7 +191,7 @@ export const Home = ({ settings: propSettings }) => {
               {settings?.showHeroSearch !== false && (
                 <form
                   onSubmit={handleSearchSubmit}
-                  className="p-2 rounded-xl bg-white border border-slate-200 shadow-[0_10px_30px_rgba(0,0,0,0.08)] flex flex-col md:flex-row gap-2 max-w-2xl"
+                  className="p-2.5 rounded-xl bg-white border-2 border-slate-300 shadow-[0_10px_30px_rgba(0,0,0,0.1)] flex flex-col md:flex-row gap-2 max-w-2xl"
                 >
                   <div className="flex-1 relative flex items-center">
                     <input
@@ -199,22 +199,22 @@ export const Home = ({ settings: propSettings }) => {
                       placeholder={isEmployer ? 'Candidate skill, title, or name' : 'Job title'}
                       value={searchTitle}
                       onChange={(e) => setSearchTitle(e.target.value)}
-                      className="w-full bg-transparent border-0 px-4 py-3 text-slate-800 placeholder-slate-400 text-[0.95rem] focus:outline-none focus:ring-0"
+                      className="w-full bg-transparent border-0 px-4 py-3 text-slate-900 font-bold placeholder:font-bold placeholder:text-slate-500 text-[0.95rem] focus:outline-none focus:ring-0"
                     />
                   </div>
-                  <div className="hidden md:block w-px bg-slate-200 my-2" />
+                  <div className="hidden md:block w-0.5 bg-slate-300 my-2" />
                   <div className="flex-1 relative flex items-center">
                     <select
                       value={searchLoc}
                       onChange={(e) => setSearchLoc(e.target.value)}
-                      className="w-full bg-transparent border-0 px-4 py-3 text-slate-800 text-[0.95rem] focus:outline-none focus:ring-0 appearance-none cursor-pointer"
+                      className="w-full bg-transparent border-0 px-4 py-3 text-slate-900 font-bold text-[0.95rem] focus:outline-none focus:ring-0 appearance-none cursor-pointer"
                     >
-                      <option value="">Location</option>
+                      <option value="" className="font-bold text-slate-500">Location</option>
                       {locations.map((location) => (
-                        <option key={location} value={location}>{location}</option>
+                        <option key={location} value={location} className="font-bold text-slate-900">{location}</option>
                       ))}
                     </select>
-                    <ChevronDown className="absolute right-4 h-4 w-4 text-slate-400 pointer-events-none" />
+                    <ChevronDown className="absolute right-4 h-4 w-4 text-slate-600 pointer-events-none" />
                   </div>
                   <button
                     type="submit"
@@ -349,7 +349,7 @@ export const Home = ({ settings: propSettings }) => {
       {settings?.showDoubleCTA !== false && <DoubleCTA />}
       {settings?.showPopularCategories !== false && <PopularCategories />}
       {settings?.showFeaturedJobs !== false && <FeaturedJobs />}
-      {settings?.showTopCompanies !== false && <TrustedCompanies />}
+      {settings?.showTopCompanies !== false && <TrustedCompanies companies={settings?.trustedCompanies} />}
     </div>
   );
 };

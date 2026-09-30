@@ -50,6 +50,11 @@ const getJobTypeLabel = (type) => type?.jobType || type?.name || type?.id || '';
 const getQualificationValue = (qualification) => qualification?._id || qualification?.id || '';
 const getQualificationLabel = (qualification) => qualification?.name || '';
 const experienceOptions = ['Fresher', ...Array.from({ length: 10 }, (_, index) => `${index + 1}+ Years`)];
+const currentYear = new Date().getFullYear();
+const passingYearOptions = Array.from(
+  { length: (currentYear + 4) - 1970 + 1 },
+  (_, index) => String((currentYear + 4) - index)
+);
 
 const emptyExperience = {
   position: '',
@@ -473,7 +478,20 @@ export const JobseekerProfile = () => {
     if (e.key !== 'Enter') return;
     e.preventDefault();
     const value = skillInput.trim();
-    if (!value || skills.includes(value)) return;
+    if (!value) return;
+    if (/^\d+$/.test(value)) {
+      setError('Skill name cannot consist solely of digits.');
+      return;
+    }
+    if (!/^[a-zA-Z0-9+#.\s/-]{2,40}$/.test(value)) {
+      setError('Please enter a valid skill name.');
+      return;
+    }
+    if (skills.some((s) => s.toLowerCase() === value.toLowerCase())) {
+      setError('Skill has already been added.');
+      return;
+    }
+    setError('');
     setSkills([...skills, value]);
     setSkillInput('');
   };
@@ -506,6 +524,26 @@ export const JobseekerProfile = () => {
   const handleSave = async () => {
     setError('');
     setSaved(false);
+
+    if (phone) {
+      const cleaned = String(phone).replace(/\D/g, '');
+      if (!/^[6-9]\d{9}$/.test(cleaned)) {
+        setError('Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+    }
+    if (studyField && /^\d+$/.test(studyField.trim())) {
+      setError('Field of Study cannot consist solely of digits.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    if (university && /^\d+$/.test(university.trim())) {
+      setError('College / University name cannot consist solely of digits.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     try {
       const cleanExperiences = experiences
         .map(item => ({
@@ -1098,13 +1136,9 @@ export const JobseekerProfile = () => {
                   className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
                 >
                   <option value="">Select year</option>
-                  <option>2020</option>
-                  <option>2021</option>
-                  <option>2022</option>
-                  <option>2023</option>
-                  <option>2024</option>
-                  <option>2025</option>
-                  <option>2026</option>
+                  {passingYearOptions.map((year) => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
                 </select>
               </div>
 

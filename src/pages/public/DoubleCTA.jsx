@@ -135,11 +135,11 @@ export const DoubleCTA = () => {
               </p>
 
               <Link
-                to="/jobseeker-plan"
+                to={isLoggedInAsJobseeker ? "/jobseeker-plan" : "/login?role=jobseeker&redirect=/jobseeker-plan"}
                 onClick={handleNavigation}
                 className="inline-flex items-center justify-center gap-3 w-full sm:w-auto sm:min-w-[260px] h-14 rounded-[10px] bg-[#0047C7] hover:bg-[#0039A3] text-white text-base font-semibold transition-all hover:-translate-y-0.5"
               >
-                Explore Job Seeker Plans <ArrowRight className="h-4 w-4" />
+                {isLoggedInAsJobseeker ? 'Explore Job Seeker Plans' : 'Login to View Plans'} <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
           </div>
@@ -162,11 +162,11 @@ export const DoubleCTA = () => {
               </p>
 
               <Link
-                to="/employer-plan"
+                to={isLoggedInAsEmployer ? "/employer-plan" : "/login?role=employer&redirect=/employer-plan"}
                 onClick={handleNavigation}
                 className="inline-flex items-center justify-center gap-3 w-full sm:w-auto sm:min-w-[260px] h-14 rounded-[10px] bg-[#FF6B00] hover:bg-[#E85F00] text-white text-base font-semibold transition-all hover:-translate-y-0.5"
               >
-                Explore Employer Plans <ArrowRight className="h-4 w-4" />
+                {isLoggedInAsEmployer ? 'Explore Employer Plans' : 'Login to View Plans'} <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
           </div>

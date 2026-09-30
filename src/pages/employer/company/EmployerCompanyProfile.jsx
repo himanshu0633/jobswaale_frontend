@@ -87,6 +87,7 @@ export const EmployerCompanyProfile = () => {
 
   // Modals visibility
   const [showEditModal, setShowEditModal] = useState(false);
+  const [modalError, setModalError] = useState('');
   const [showMemberModal, setShowMemberModal] = useState(false);
 
   // Editing form states
@@ -115,15 +116,37 @@ export const EmployerCompanyProfile = () => {
 
   const handleEditProfileSubmit = async (e) => {
     e.preventDefault();
+    setModalError('');
     setError('');
     setSuccessMessage('');
+
+    if (!editForm.companyName?.trim()) {
+      setModalError('Company name is required.');
+      return;
+    }
+
+    if (editForm.phone) {
+      const cleaned = String(editForm.phone).replace(/\D/g, '');
+      if (!/^[6-9]\d{9}$/.test(cleaned)) {
+        setModalError('Phone number must be a valid 10-digit number starting with 6, 7, 8, or 9.');
+        return;
+      }
+    }
+
+    if (editForm.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editForm.email)) {
+      setModalError('Please enter a valid email address.');
+      return;
+    }
+
     try {
       await axios.put(`${BASE_API_URL}/employer/profile`, editForm, { headers: getTokenHeaders() });
       setSuccessMessage('Company profile updated successfully!');
       setShowEditModal(false);
       await loadProfile();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update profile.');
+      const msg = err.response?.data?.message || 'Failed to update profile.';
+      setModalError(msg);
+      setError(msg);
     }
   };
 
@@ -364,6 +387,7 @@ export const EmployerCompanyProfile = () => {
             <button
               onClick={() => {
                 setEditForm({ ...profile });
+                setModalError('');
                 setShowEditModal(true);
               }}
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-extrabold text-slate-600 transition hover:bg-slate-50"
@@ -681,6 +705,12 @@ export const EmployerCompanyProfile = () => {
               </button>
             </div>
             <form onSubmit={handleEditProfileSubmit} className="p-6 max-h-[70vh] overflow-y-auto space-y-4 text-xs font-bold text-slate-500">
+              {modalError && (
+                <div className="flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs font-bold text-rose-700">
+                  <BadgeAlert className="h-4 w-4 shrink-0" />
+                  <span>{modalError}</span>
+                </div>
+              )}
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="block text-xs font-black text-slate-500 mb-1">Company Name *</label>
