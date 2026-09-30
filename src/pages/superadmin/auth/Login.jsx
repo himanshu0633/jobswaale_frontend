@@ -129,7 +129,7 @@ export const Login = () => {
                 <input type="checkbox" defaultChecked className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
                 <span>Keep me signed in</span>
               </label>
-              <Link to="/forgot-password" className="underline hover:text-slate-700">Forgot Password?</Link>
+              <Link to="/forgot-password?role=admin" className="underline hover:text-slate-700">Forgot Password?</Link>
             </div>
 
             <button

@@ -40,7 +40,7 @@ const defaultSettings = {
 
   // Security
   minPassLen: 8,
-  passExpiry: 90,
+  passExpiry: 0,
   maxLoginAttempts: 5,
   lockoutDuration: 30,
   twoFactor: true,

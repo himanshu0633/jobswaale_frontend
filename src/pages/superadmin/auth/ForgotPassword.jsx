@@ -1,22 +1,28 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { BASE_API_URL } from '../../../context/AuthContext';
-import { AlertOctagon, CheckCircle2, Loader, X } from 'lucide-react';
+import { AlertOctagon, CheckCircle2, Loader, X, ArrowRight } from 'lucide-react';
 import axios from 'axios';
 import logoBlack from '../../../assets/logo-black.png';
 
 export const ForgotPassword = () => {
   const [email, setEmail] = useState('');
-  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [resetUrl, setResetUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isAdmin = location.pathname.toLowerCase().includes('superadmin') || 
+    new URLSearchParams(location.search).get('role') === 'admin';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
+    setResetUrl('');
 
     if (!agreeTerms) {
       setError('You must agree to the Terms & Policy before sending request.');
@@ -28,6 +34,9 @@ export const ForgotPassword = () => {
     try {
       const res = await axios.post(`${BASE_API_URL}/auth/forgot-password`, { email });
       setSuccess(res.data.message || 'Reset password link sent successfully! Check your email.');
+      if (res.data.resetUrl) {
+        setResetUrl(res.data.resetUrl);
+      }
       setEmail('');
     } catch (err) {
       setError(err.response?.data?.message || 'Oops! Email is not in our database. Please try again.');
@@ -156,6 +165,22 @@ export const ForgotPassword = () => {
               </label>
             </div>
 
+            {/* Direct Reset Link Notification (e.g. when email delivery is not configured) */}
+            {resetUrl && (
+              <div className="p-3.5 bg-indigo-50 border border-indigo-200 rounded-xl space-y-2 animate-in fade-in duration-200">
+                <p className="text-xs text-indigo-900 font-semibold">
+                  Direct Password Reset Link:
+                </p>
+                <a
+                  href={resetUrl}
+                  className="inline-flex items-center justify-center w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg text-xs transition-colors shadow-sm gap-1.5"
+                >
+                  <span>Reset Password Now</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            )}
+
             {/* Submit Button */}
             <div className="pt-2">
               <button
@@ -170,9 +195,32 @@ export const ForgotPassword = () => {
           </form>
 
           {/* Footer Back to Login link */}
-          <p className="text-slate-500 text-center text-xs mt-6 font-semibold">
-            Return to <Link to="/superadmin-login" className="underline hover:text-slate-800 font-bold text-indigo-600">Sign in</Link>
-          </p>
+          <div className="text-slate-500 text-center text-xs mt-6 font-semibold space-y-1">
+            <p>
+              Return to{' '}
+              <Link
+                to={isAdmin ? '/superadmin-login' : '/login'}
+                className="underline hover:text-slate-800 font-bold text-indigo-600"
+              >
+                {isAdmin ? 'Super Admin Sign In' : 'Sign In'}
+              </Link>
+            </p>
+            {isAdmin ? (
+              <p className="text-[11px] text-slate-400">
+                Jobseeker or Employer?{' '}
+                <Link to="/login" className="hover:underline text-slate-500">
+                  User Sign In
+                </Link>
+              </p>
+            ) : (
+              <p className="text-[11px] text-slate-400">
+                Super Admin?{' '}
+                <Link to="/superadmin-login" className="hover:underline text-slate-500">
+                  Super Admin Portal
+                </Link>
+              </p>
+            )}
+          </div>
 
         </div>
 

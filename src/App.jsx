@@ -16,6 +16,7 @@ import SuperAdminLogin from './pages/superadmin/auth/Login';
 import JobSeekerRegister from './pages/auth/Register';
 import EmployerRegister from './pages/auth/EmployerRegister';
 import ForgotPassword from './pages/superadmin/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
 
 // Public Portal Pages (Visitor Pages)
 import PublicPage from './pages/public/PublicPage';
@@ -232,7 +233,9 @@ const isSuperAdminRoute = (pathname) => {
   return (
     pathname.startsWith('/admin') ||
     pathname.startsWith('/superadmin-login') ||
-    pathname.startsWith('/forgot-password-SuperAdmin')
+    pathname.startsWith('/forgot-password') ||
+    pathname.startsWith('/forgot-password-SuperAdmin') ||
+    pathname.startsWith('/reset-password')
   );
 };
 
@@ -541,7 +544,9 @@ function App() {
             <Route path="/superadmin-login" element={<SuperAdminLogin />} />      
             <Route path="/jobseeker-register" element={<JobSeekerRegister />} />
             <Route path="/employer-register" element={<EmployerRegister />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/forgot-password-SuperAdmin" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
             {/* B. Secure SuperAdmin Console Route Block */}
             <Route element={<ProtectedRoute />}>
