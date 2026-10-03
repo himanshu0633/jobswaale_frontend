@@ -18,8 +18,10 @@ import {
   ShieldAlert,
   ShieldCheck,
   Trophy,
+  UploadCloud,
   User,
-  UserPlus
+  UserPlus,
+  X
 } from 'lucide-react';
 import { BASE_API_URL } from '../../context/AuthContext';
 import logoAsset from '../../assets/logo-black.png';
@@ -132,6 +134,8 @@ export const Register = () => {
     updatesConsent: true,
     termsAccepted: true
   });
+  const [cvFile, setCvFile] = useState(null);
+  const [isDraggingCv, setIsDraggingCv] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -157,6 +161,54 @@ export const Register = () => {
 
   const setField = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleCvChange = (event) => {
+    setError('');
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('CV file size exceeds the 5 MB limit. Please select a smaller file.');
+      event.target.value = '';
+      return;
+    }
+
+    const allowedExtensions = ['.pdf', '.doc', '.docx'];
+    const fileNameLower = file.name.toLowerCase();
+    const isAllowed = allowedExtensions.some(ext => fileNameLower.endsWith(ext));
+    if (!isAllowed) {
+      setError('Only PDF, DOC, and DOCX files are allowed for CV / Resume.');
+      event.target.value = '';
+      return;
+    }
+
+    setCvFile(file);
+    event.target.value = '';
+  };
+
+  const handleCvDrop = (event) => {
+    event.preventDefault();
+    setIsDraggingCv(false);
+    setError('');
+
+    const file = event.dataTransfer.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('CV file size exceeds the 5 MB limit. Please select a smaller file.');
+      return;
+    }
+
+    const allowedExtensions = ['.pdf', '.doc', '.docx'];
+    const fileNameLower = file.name.toLowerCase();
+    const isAllowed = allowedExtensions.some(ext => fileNameLower.endsWith(ext));
+    if (!isAllowed) {
+      setError('Only PDF, DOC, and DOCX files are allowed for CV / Resume.');
+      return;
+    }
+
+    setCvFile(file);
   };
 
   const handleSubmit = async (event) => {
@@ -197,15 +249,19 @@ export const Register = () => {
 
     setLoading(true);
     try {
-      await axios.post(`${BASE_API_URL}/auth/register`, {
-        role: 'Jobseeker',
-        fullName: form.fullName,
-        phone: form.mobile,
-        workStatus: form.workStatus,
-        updatesConsent: form.updatesConsent,
-        email: form.email,
-        password: form.password
-      });
+      const formData = new FormData();
+      formData.append('role', 'Jobseeker');
+      formData.append('fullName', form.fullName);
+      formData.append('phone', form.mobile);
+      formData.append('workStatus', form.workStatus);
+      formData.append('updatesConsent', form.updatesConsent);
+      formData.append('email', form.email);
+      formData.append('password', form.password);
+      if (cvFile) {
+        formData.append('resume', cvFile);
+      }
+
+      await axios.post(`${BASE_API_URL}/auth/register`, formData);
 
       setSuccess('Account created successfully. Redirecting to login...');
       setForm({
@@ -217,6 +273,7 @@ export const Register = () => {
         updatesConsent: true,
         termsAccepted: true
       });
+      setCvFile(null);
       setTimeout(() => {
         navigate('/login?role=jobseeker', { state: { message: 'Account created successfully. You can now sign in.' } });
       }, 1500);
@@ -408,6 +465,84 @@ export const Register = () => {
                   iconClass="bg-orange-100 text-orange-500"
                 />
               </div>
+            </div>
+
+            {/* Optional CV / Resume Upload */}
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <label className="block text-sm font-bold text-slate-800">
+                  Upload CV / Resume <span className="text-xs font-normal text-slate-400">(Optional)</span>
+                </label>
+                <span className="text-xs font-medium text-slate-400">PDF, DOC, DOCX (Max 5 MB)</span>
+              </div>
+
+              {!cvFile ? (
+                <label
+                  htmlFor="cvUploadInput"
+                  onDragOver={(e) => { e.preventDefault(); setIsDraggingCv(true); }}
+                  onDragLeave={() => setIsDraggingCv(false)}
+                  onDrop={handleCvDrop}
+                  className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 text-center transition ${
+                    isDraggingCv
+                      ? 'border-[#0058d6] bg-blue-50/70'
+                      : 'border-slate-300 bg-slate-50/50 hover:border-[#0058d6] hover:bg-blue-50/30'
+                  }`}
+                >
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-100/70 text-[#0058d6]">
+                    <UploadCloud className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <span className="text-sm font-bold text-slate-800">
+                      Click to upload CV <span className="text-[#0058d6]">or drag and drop</span>
+                    </span>
+                    <p className="mt-1 text-xs text-slate-400">
+                      You can also upload or update your CV later from your profile
+                    </p>
+                  </div>
+                  <input
+                    type="file"
+                    id="cvUploadInput"
+                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    className="hidden"
+                    onChange={handleCvChange}
+                  />
+                </label>
+              ) : (
+                <div className="flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50/60 p-4 transition">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-600">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold text-slate-900">{cvFile.name}</p>
+                      <p className="text-xs text-slate-500">{(cvFile.size / 1024 / 1024).toFixed(2)} MB • Ready to attach</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <label
+                      htmlFor="cvUploadInput"
+                      className="cursor-pointer rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition"
+                    >
+                      Change
+                      <input
+                        type="file"
+                        id="cvUploadInput"
+                        accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        className="hidden"
+                        onChange={handleCvChange}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setCvFile(null)}
+                      className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition cursor-pointer"
+                      title="Remove CV"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="space-y-3 pt-2">
