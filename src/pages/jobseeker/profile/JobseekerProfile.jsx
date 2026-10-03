@@ -6,6 +6,8 @@ import {
   Camera,
   Check,
   CheckCircle,
+  Download,
+  Eye,
   FileText,
   GraduationCap,
   Link2,
@@ -55,6 +57,17 @@ const passingYearOptions = Array.from(
   { length: (currentYear + 4) - 1970 + 1 },
   (_, index) => String((currentYear + 4) - index)
 );
+
+const getFormattedResumeName = (candidateName, version = 1, filenameOrExt = '.pdf') => {
+  const nameSlug = (candidateName || 'candidate')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '') || 'candidate';
+  const extMatch = String(filenameOrExt || '').match(/\.[a-zA-Z0-9]+$/);
+  const ext = extMatch ? extMatch[0] : (filenameOrExt && filenameOrExt.includes('.') ? `.${filenameOrExt.split('.').pop().split(/[?#]/)[0]}` : '.pdf');
+  const ver = Number(version) || 1;
+  return ver <= 1 ? `${nameSlug}_resume${ext}` : `${nameSlug}_resume_${ver}${ext}`;
+};
 
 const emptyExperience = {
   position: '',
@@ -320,6 +333,20 @@ export const JobseekerProfile = () => {
   const [relocate, setRelocate] = useState('yes');
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [resumeFile, setResumeFile] = useState(null);
+  const [resumeVersion, setResumeVersion] = useState(0);
+  const [viewResumeModal, setViewResumeModal] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setViewResumeModal(false);
+      }
+    };
+    if (viewResumeModal) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [viewResumeModal]);
 
   useEffect(() => {
     const fetchMasters = async () => {
@@ -401,10 +428,18 @@ export const JobseekerProfile = () => {
         }
 
         if (seeker.resume) {
+          const candidateName = seeker.name || (seeker.userId ? `${seeker.userId.firstName || ''} ${seeker.userId.lastName || ''}`.trim() : '') || 'candidate';
+          const defaultFormattedName = getFormattedResumeName(candidateName, seeker.resumeVersion || 1, seeker.resume);
+          const resumeDisplayName = seeker.resumeName || defaultFormattedName;
+          setResumeVersion(seeker.resumeVersion || 1);
           setResumeFile({
-            name: seeker.resume.split('/').pop() || 'Uploaded_Resume.pdf',
-            size: seeker.resume
+            name: resumeDisplayName,
+            url: seeker.resume,
+            size: 'Uploaded Document'
           });
+        } else {
+          setResumeFile(null);
+          setResumeVersion(seeker.resumeVersion || 0);
         }
       } catch (err) {
         console.error('Fetch profile error:', err);
@@ -429,8 +464,15 @@ export const JobseekerProfile = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Reset input so re-selecting same file triggers onChange
+    e.target.value = '';
+
+    const candidateName = name || 'candidate';
+    const nextVer = (resumeVersion || 0) + 1;
+    const tempDisplayName = getFormattedResumeName(candidateName, nextVer, file.name);
+
     setResumeFile({
-      name: file.name,
+      name: tempDisplayName,
       size: 'Uploading...'
     });
 
@@ -447,9 +489,13 @@ export const JobseekerProfile = () => {
       });
 
       if (response.data?.resume) {
+        const ver = response.data.resumeVersion || nextVer;
+        setResumeVersion(ver);
+        const resumeDisplayName = response.data.resumeName || getFormattedResumeName(candidateName, ver, file.name);
         setResumeFile({
-          name: response.data.resume.split('/').pop() || file.name,
-          size: `${(file.size / 1024 / 1024).toFixed(1)} MB · Uploaded`
+          name: resumeDisplayName,
+          url: response.data.resume,
+          size: `${(file.size / 1024 / 1024).toFixed(2)} MB · Uploaded Document`
         });
       }
     } catch (err) {
@@ -467,6 +513,7 @@ export const JobseekerProfile = () => {
           headers: token ? { Authorization: `Bearer ${token}` } : {}
         });
         setResumeFile(null);
+        setViewResumeModal(false);
       } catch (err) {
         console.error('Failed to delete resume:', err);
         setError(err.response?.data?.message || 'Failed to delete resume.');
@@ -1200,7 +1247,7 @@ export const JobseekerProfile = () => {
             >
               <UploadCloud className="h-8 w-8 text-[#0047C7]" />
               <h6 className="text-sm font-bold text-[#0f172a]">
-                Upload your resume
+                {resumeFile ? 'Upload New Resume (Replaces Current)' : 'Upload your resume'}
               </h6>
               <p className="text-xs text-slate-400">
                 PDF, DOC, or DOCX format. Max 5 MB.
@@ -1215,24 +1262,40 @@ export const JobseekerProfile = () => {
             </label>
 
             {resumeFile && (
-              <div className="mt-4 flex items-center gap-3 rounded-md border border-slate-100 p-4">
-                <FileText className="h-8 w-8 shrink-0 text-rose-500" />
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-bold text-slate-800">
-                    {resumeFile.name}
+              <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-slate-200/80 bg-slate-50/60 p-4 transition">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-500 border border-rose-100">
+                    <FileText className="h-5 w-5" />
                   </div>
-                  <div className="text-xs text-slate-400">
-                    {resumeFile.size}
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-bold text-slate-800" title={resumeFile.name}>
+                      {resumeFile.name}
+                    </div>
+                    <div className="text-xs font-medium text-slate-400">
+                      {resumeFile.size}
+                    </div>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={deleteResume}
-                  title="Remove resume"
-                  className="shrink-0 text-slate-400 hover:text-rose-500"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {resumeFile.url && (
+                    <button
+                      type="button"
+                      onClick={() => setViewResumeModal(true)}
+                      title="View Resume"
+                      className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition hover:bg-blue-50 hover:text-[#0047C7] hover:border-blue-200"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={deleteResume}
+                    title="Remove resume"
+                    className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-400 transition hover:bg-rose-50 hover:text-rose-500 hover:border-rose-200"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -1348,6 +1411,80 @@ export const JobseekerProfile = () => {
           </div>
         </div>
       </div>
+
+      {/* In-App Resume Preview Modal */}
+      {viewResumeModal && resumeFile && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 p-3 sm:p-4 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setViewResumeModal(false)}
+        >
+          <div
+            className="relative flex h-[85vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50/90 px-4 py-3 sm:px-6">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-500 border border-rose-100">
+                  <FileText className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="truncate text-sm font-extrabold text-slate-800 sm:text-base" title={resumeFile.name}>
+                    {resumeFile.name}
+                  </h3>
+                  <p className="text-xs text-slate-400 font-medium">{resumeFile.size || 'Document Preview'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {resumeFile.url && (
+                  <a
+                    href={resumeFile.url}
+                    download={resumeFile.name}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-xs transition hover:bg-slate-100 hover:text-[#0047C7]"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Download</span>
+                  </a>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setViewResumeModal(false)}
+                  className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition"
+                  title="Close preview"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body / Document Preview */}
+            <div className="relative flex-1 bg-slate-100/70 overflow-hidden">
+              {resumeFile.url ? (
+                resumeFile.name.toLowerCase().endsWith('.doc') || resumeFile.name.toLowerCase().endsWith('.docx') ? (
+                  <iframe
+                    src={`https://docs.google.com/viewer?url=${encodeURIComponent(resumeFile.url)}&embedded=true`}
+                    title={resumeFile.name}
+                    className="h-full w-full border-0"
+                  />
+                ) : (
+                  <iframe
+                    src={`${resumeFile.url}#toolbar=1`}
+                    title={resumeFile.name}
+                    className="h-full w-full border-0"
+                  />
+                )
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center p-6 text-center text-slate-500">
+                  <FileText className="h-12 w-12 text-slate-300 mb-2" />
+                  <p className="text-sm font-semibold">Preview not available for this document.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
