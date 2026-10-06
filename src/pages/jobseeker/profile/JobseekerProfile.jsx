@@ -307,6 +307,8 @@ export const JobseekerProfile = () => {
   const [designation, setDesignation] = useState('');
   const [experience, setExperience] = useState('Fresher');
   const [expectedSalary, setExpectedSalary] = useState('');
+  const [monthlySalary, setMonthlySalary] = useState('');
+  const [annualSalary, setAnnualSalary] = useState('');
   const [industryType, setIndustryType] = useState('');
   const [jobCategory, setJobCategory] = useState('');
   const [jobType, setJobType] = useState('');
@@ -400,8 +402,36 @@ export const JobseekerProfile = () => {
         setAddress(seeker.address || '');
         setPinCode(seeker.pinCode || '');
         setDesignation(seeker.designation || '');
-        setExperience(seeker.experience || '');
-        setExpectedSalary(seeker.expectedSalary || '');
+        const storedMonthly = Number(seeker.monthlySalary) || 0;
+        const storedAnnual = Number(seeker.annualSalary) || 0;
+        const existingExpected = seeker.expectedSalary || '';
+
+        if (storedMonthly > 0 || storedAnnual > 0) {
+          const mVal = storedMonthly > 0 ? storedMonthly : Math.round(storedAnnual / 12);
+          const aVal = storedAnnual > 0 ? storedAnnual : (storedMonthly * 12);
+          setMonthlySalary(String(mVal));
+          setAnnualSalary(String(aVal));
+          setExpectedSalary(existingExpected || `₹${mVal.toLocaleString('en-IN')} / Month (₹${aVal.toLocaleString('en-IN')} / Year)`);
+        } else if (existingExpected) {
+          const numbers = existingExpected.match(/\d[\d,]*/g);
+          if (numbers && numbers.length > 0) {
+            const num = Number(numbers[0].replace(/,/g, ''));
+            if (num > 0) {
+              if (/ann|year|lpa|p\.?a/i.test(existingExpected) && !/month/i.test(existingExpected)) {
+                setAnnualSalary(String(num));
+                setMonthlySalary(String(Math.round(num / 12)));
+              } else {
+                setMonthlySalary(String(num));
+                setAnnualSalary(String(num * 12));
+              }
+            }
+          }
+          setExpectedSalary(existingExpected);
+        } else {
+          setMonthlySalary('');
+          setAnnualSalary('');
+          setExpectedSalary('');
+        }
         setIndustryType(seeker.industryType?._id || getRefLabel(seeker.industryType, ['industryType', 'industryName', 'name']));
         setJobCategory(seeker.jobCategory?._id || getRefLabel(seeker.jobCategory, ['categoryName', 'name']));
         setJobType(seeker.jobType?._id || getRefLabel(seeker.jobType, ['jobType', 'name']));
@@ -519,6 +549,36 @@ export const JobseekerProfile = () => {
         setError(err.response?.data?.message || 'Failed to delete resume.');
       }
     }
+  };
+
+  const handleMonthlySalaryChange = (value) => {
+    const cleanNum = value.replace(/[^0-9]/g, '');
+    setMonthlySalary(cleanNum);
+    if (!cleanNum) {
+      setAnnualSalary('');
+      setExpectedSalary('');
+      return;
+    }
+    const m = Number(cleanNum);
+    const a = m * 12;
+    setAnnualSalary(String(a));
+    const lpa = (a / 100000).toFixed(1).replace(/\.0$/, '');
+    setExpectedSalary(`₹${m.toLocaleString('en-IN')} / Month (₹${a.toLocaleString('en-IN')} / Year · ${lpa} LPA)`);
+  };
+
+  const handleAnnualSalaryChange = (value) => {
+    const cleanNum = value.replace(/[^0-9]/g, '');
+    setAnnualSalary(cleanNum);
+    if (!cleanNum) {
+      setMonthlySalary('');
+      setExpectedSalary('');
+      return;
+    }
+    const a = Number(cleanNum);
+    const m = Math.round(a / 12);
+    setMonthlySalary(String(m));
+    const lpa = (a / 100000).toFixed(1).replace(/\.0$/, '');
+    setExpectedSalary(`₹${m.toLocaleString('en-IN')} / Month (₹${a.toLocaleString('en-IN')} / Year · ${lpa} LPA)`);
   };
 
   const addSkill = (e) => {
@@ -654,6 +714,8 @@ export const JobseekerProfile = () => {
         experience: computedExperience,
         experiences: cleanExperiences,
         expectedSalary,
+        monthlySalary: Number(monthlySalary) || 0,
+        annualSalary: Number(annualSalary) || 0,
         industryType: selectedIndustry?._id || industryType,
         jobCategory: selectedJobCategory?._id || jobCategory,
         jobType: selectedJobType?._id || jobType,
@@ -977,17 +1039,73 @@ export const JobseekerProfile = () => {
             </h5>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="sm:col-span-2">
-                <label className="mb-1.5 block text-sm font-bold text-slate-600">
-                  Expected Salary
-                </label>
-                <input
-                  type="text"
-                  value={expectedSalary}
-                  onChange={(e) => setExpectedSalary(e.target.value)}
-                  placeholder="e.g. 30000 / Month"
-                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
-                />
+              {/* Expected Salary with Auto-Calculation */}
+              <div className="sm:col-span-2 rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50/40 to-slate-50/50 p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <label className="block text-sm font-bold text-slate-800">
+                    Expected Salary <span className="text-xs font-semibold text-blue-600">(Auto-calculates Monthly & Annual)</span>
+                  </label>
+                  {annualSalary && Number(annualSalary) > 0 ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-[#0047C7]">
+                      {(Number(annualSalary) / 100000).toFixed(1).replace(/\.0$/, '')} LPA
+                    </span>
+                  ) : null}
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {/* Monthly Salary Input */}
+                  <div>
+                    <label className="mb-1 block text-xs font-bold text-slate-600">
+                      Monthly Salary (₹ / Month)
+                    </label>
+                    <div className="relative flex items-center">
+                      <span className="absolute left-3 text-sm font-bold text-slate-400">₹</span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={monthlySalary}
+                        onChange={(e) => handleMonthlySalaryChange(e.target.value)}
+                        placeholder="e.g. 25000"
+                        className="w-full rounded-lg border border-slate-200 bg-white pl-8 pr-3 py-2.5 text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:border-[#0047C7] focus:outline-none focus:ring-1 focus:ring-[#0047C7]"
+                      />
+                    </div>
+                    {monthlySalary && Number(monthlySalary) > 0 ? (
+                      <p className="mt-1 text-[11px] font-semibold text-emerald-600">
+                        ₹{Number(monthlySalary).toLocaleString('en-IN')} per month
+                      </p>
+                    ) : null}
+                  </div>
+
+                  {/* Annual Salary Input */}
+                  <div>
+                    <label className="mb-1 block text-xs font-bold text-slate-600">
+                      Annual Salary (₹ / Year)
+                    </label>
+                    <div className="relative flex items-center">
+                      <span className="absolute left-3 text-sm font-bold text-slate-400">₹</span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={annualSalary}
+                        onChange={(e) => handleAnnualSalaryChange(e.target.value)}
+                        placeholder="e.g. 300000"
+                        className="w-full rounded-lg border border-slate-200 bg-white pl-8 pr-3 py-2.5 text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:border-[#0047C7] focus:outline-none focus:ring-1 focus:ring-[#0047C7]"
+                      />
+                    </div>
+                    {annualSalary && Number(annualSalary) > 0 ? (
+                      <p className="mt-1 text-[11px] font-semibold text-emerald-600">
+                        ₹{Number(annualSalary).toLocaleString('en-IN')} per year
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+
+                {expectedSalary ? (
+                  <div className="mt-3 flex items-center gap-2 rounded-md bg-white px-3 py-2 text-xs font-semibold text-slate-700 border border-slate-200/80">
+                    <span className="text-slate-400">Profile Summary:</span>
+                    <span className="font-bold text-[#0047C7]">{expectedSalary}</span>
+                  </div>
+                ) : null}
               </div>
 
               <div>

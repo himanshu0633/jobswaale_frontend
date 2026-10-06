@@ -161,9 +161,9 @@ export const Home = ({ settings: propSettings }) => {
               {/* Search Form */}
               <form
                 onSubmit={handleSearchSubmit}
-                className="p-2.5 rounded-xl bg-white border-2 border-slate-300 shadow-[0_10px_30px_rgba(0,0,0,0.08)] flex flex-col md:flex-row gap-2 max-w-2xl"
+                className="p-3 sm:p-2.5 rounded-2xl bg-white border-2 border-slate-300 shadow-[0_10px_30px_rgba(0,0,0,0.08)] flex flex-col md:flex-row gap-2.5 md:gap-2 max-w-2xl"
               >
-                <div className="flex-1 relative flex items-center">
+                <div className="flex-1 relative flex items-center rounded-xl border-2 border-slate-300 bg-slate-50/50 md:border-0 md:bg-transparent focus-within:border-[#0047C7] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#0047C7]/20 transition-all">
                   <input
                     type="text"
                     placeholder="Job title"
@@ -173,7 +173,7 @@ export const Home = ({ settings: propSettings }) => {
                   />
                 </div>
                 <div className="hidden md:block w-0.5 bg-slate-300 my-2" />
-                <div className="flex-1 relative flex items-center">
+                <div className="flex-1 relative flex items-center rounded-xl border-2 border-slate-300 bg-slate-50/50 md:border-0 md:bg-transparent focus-within:border-[#0047C7] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#0047C7]/20 transition-all">
                   <select
                     value={searchLoc}
                     onChange={(e) => setSearchLoc(e.target.value)}
@@ -188,7 +188,7 @@ export const Home = ({ settings: propSettings }) => {
                 </div>
                 <button
                   type="submit"
-                  className="bg-gradient-to-br from-[#FF6B00] to-[#ff7043] text-white font-bold text-sm px-7 py-3 rounded-lg transition duration-150 hover:opacity-95 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shadow-sm"
+                  className="bg-gradient-to-br from-[#FF6B00] to-[#ff7043] text-white font-bold text-sm px-7 py-3 rounded-xl transition duration-150 hover:opacity-95 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shadow-sm"
                 >
                   Search Jobs
                 </button>
