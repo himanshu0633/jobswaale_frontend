@@ -875,8 +875,8 @@ const EmployerApplicationDetails = () => {
                 <Field label="Ready to Relocate?">{candidate.relocate}</Field>
               </div>
               <div>
-                <Field label="Current Salary">{candidate.currentSalary}</Field>
-                <Field label="Expected Salary"><span className="text-base font-extrabold">{candidate.expectedSalary}</span></Field>
+                <Field label="Current Salary / CTC"><span className="text-sm font-bold text-emerald-700">{candidate.currentSalary || 'Not specified'}</span></Field>
+                <Field label="Expected Salary / CTC"><span className="text-base font-extrabold text-[#0047C7]">{candidate.expectedSalary || 'Not specified'}</span></Field>
                 <Field label="Notice Period"><span className="rounded bg-emerald-50 px-2 py-1 text-xs font-black text-emerald-600">{candidate.noticePeriod}</span></Field>
                 <Field label="Location"><span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4 text-slate-400" />{candidate.location}</span></Field>
               </div>

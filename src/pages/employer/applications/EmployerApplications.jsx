@@ -691,6 +691,12 @@ export const EmployerApplications = () => {
                   <p className="truncate"><span className="text-slate-400">Type:</span> {application.jobType}</p>
                   <p><span className="text-slate-400">Experience:</span> {application.experience}</p>
                   <p><span className="text-slate-400">Applied:</span> {application.displayDate}</p>
+                  {application.currentSalary && (
+                    <p className="truncate"><span className="text-slate-400">Current CTC:</span> {application.currentSalary}</p>
+                  )}
+                  {application.expectedSalary && (
+                    <p className="truncate"><span className="text-slate-400">Expected CTC:</span> <span className="font-extrabold text-[#0047C7]">{application.expectedSalary}</span></p>
+                  )}
                   {application.status === 'Rejected' && (
                     <p className="col-span-2"><span className="text-slate-400">Rejected after:</span> {application.rejectedFromStatus || 'Not available'}</p>
                   )}
@@ -745,7 +751,7 @@ export const EmployerApplications = () => {
 
           <div className="hidden overflow-x-auto sm:block pb-24">
             <table className="w-full min-w-[1080px] text-left">
-              <thead className="bg-[#dbe6f6] text-[11px] uppercase text-slate-600"><tr><th className="px-5 py-3">Candidate</th><th className="px-5 py-3">Job Applied</th><th className="px-5 py-3">Experience</th><th className="px-5 py-3"><span className="inline-flex items-center gap-1">Applied Date <ChevronUp className="h-3 w-3 text-slate-400" /></span></th><th className="px-5 py-3">Match Score</th><th className="px-5 py-3">Status</th><th className="px-5 py-3 text-center">Action</th></tr></thead>
+              <thead className="bg-[#dbe6f6] text-[11px] uppercase text-slate-600"><tr><th className="px-5 py-3">Candidate</th><th className="px-5 py-3">Job Applied</th><th className="px-5 py-3">Experience & CTC</th><th className="px-5 py-3"><span className="inline-flex items-center gap-1">Applied Date <ChevronUp className="h-3 w-3 text-slate-400" /></span></th><th className="px-5 py-3">Match Score</th><th className="px-5 py-3">Status</th><th className="px-5 py-3 text-center">Action</th></tr></thead>
               <tbody className="divide-y divide-slate-100">
                 {loading ? <tr><td colSpan="7" className="px-5 py-12 text-center"><Loader className="mx-auto h-7 w-7 animate-spin text-[#6658dd]" /></td></tr> : data.applications.length ? data.applications.map((application) => (
                   <tr key={application.id} className="transition hover:bg-slate-50">
@@ -760,7 +766,15 @@ export const EmployerApplications = () => {
                         <p className="mt-1 text-xs font-black text-rose-500">Offer Declined by Candidate</p>
                       )}
                     </td>
-                    <td className="px-5 py-4 text-sm font-semibold text-slate-600">{application.experience}</td>
+                    <td className="px-5 py-4">
+                      <p className="text-sm font-semibold text-slate-700">{application.experience}</p>
+                      {(application.currentSalary || application.expectedSalary) && (
+                        <div className="mt-1 text-xs space-y-0.5">
+                          {application.currentSalary && <p className="text-slate-500"><span className="text-slate-400">Current:</span> {application.currentSalary}</p>}
+                          {application.expectedSalary && <p className="font-extrabold text-[#0047C7]"><span className="text-slate-400 font-normal">Expected:</span> {application.expectedSalary}</p>}
+                        </div>
+                      )}
+                    </td>
                     <td className="px-5 py-4 text-sm font-semibold text-slate-600">{application.displayDate}</td>
                     <td className="px-5 py-4"><span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${scoreTone(application.matchScore)}`}>{application.matchScore}%</span></td>
                     <td className="px-5 py-4">

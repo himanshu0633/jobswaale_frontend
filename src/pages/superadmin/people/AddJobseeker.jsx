@@ -47,6 +47,7 @@ export const AddJobseeker = () => {
     jobCategory: '',
     jobType: '',
     experience: 'Fresher',
+    currentSalary: '',
     expectedSalary: '',
     preferredLocation: '',
     country: '',
@@ -112,6 +113,7 @@ export const AddJobseeker = () => {
           jobCategory: js.jobCategory?._id || js.jobCategory || '',
           jobType: js.jobType?._id || js.jobType || '',
           experience: js.experience || 'Fresher',
+          currentSalary: js.currentSalary || '',
           expectedSalary: js.expectedSalary || '',
           preferredLocation: js.preferredLocation || '',
           country: js.country || '',
@@ -366,6 +368,13 @@ export const AddJobseeker = () => {
                       <option value="2-3 Years">2-3 Years</option>
                       <option value="3+ Years">3+ Years</option>
                     </select>
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>Current Salary (Rs. / Month)</label>
+                    <input type="text" placeholder="e.g. 25,000"
+                      value={form.currentSalary} onChange={(e) => setForm({ ...form, currentSalary: e.target.value })}
+                      className={inputCls} />
                   </div>
 
                   <div>

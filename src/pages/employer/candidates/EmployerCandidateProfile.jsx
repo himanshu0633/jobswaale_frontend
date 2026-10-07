@@ -847,11 +847,23 @@ const EmployerCandidateProfile = () => {
           </div>
         </div>
         <div className="my-5 border-t border-slate-100" />
-        <div className="grid gap-4 text-center sm:grid-cols-2 xl:grid-cols-4">
-          <div><h3 className="text-lg font-black text-[#3f4254]">{candidate.experience}</h3><span className="text-sm font-semibold text-slate-400">Total Experience</span></div>
-          <div><h3 className="text-lg font-black text-[#3f4254]">{candidate.currentSalary}</h3><span className="text-sm font-semibold text-slate-400">Current CTC</span></div>
-          <div><h3 className="text-lg font-black text-[#3f4254]">{candidate.expectedSalary}</h3><span className="text-sm font-semibold text-slate-400">Expected CTC</span></div>
-          <div><h3 className="text-lg font-black text-[#3f4254]">{candidate.noticePeriod}</h3><span className="text-sm font-semibold text-slate-400">Notice Period</span></div>
+        <div className="grid gap-3 text-center sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3.5 transition hover:bg-slate-50">
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Total Experience</span>
+            <h3 className="mt-1 text-base sm:text-lg font-black text-[#3f4254]">{candidate.experience || 'Fresher'}</h3>
+          </div>
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-3.5 transition hover:bg-emerald-50/70">
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700">Current CTC</span>
+            <h3 className="mt-1 text-base sm:text-lg font-black text-emerald-800">{candidate.currentSalary || 'Not specified'}</h3>
+          </div>
+          <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-3.5 transition hover:bg-blue-50/70">
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#0047C7]">Expected CTC</span>
+            <h3 className="mt-1 text-base sm:text-lg font-black text-[#0047C7]">{candidate.expectedSalary || 'Not specified'}</h3>
+          </div>
+          <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3.5 transition hover:bg-slate-50">
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Notice Period</span>
+            <h3 className="mt-1 text-base sm:text-lg font-black text-[#3f4254]">{candidate.noticePeriod || 'Immediate'}</h3>
+          </div>
         </div>
       </section>
 

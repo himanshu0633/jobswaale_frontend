@@ -6,6 +6,7 @@ import {
   Camera,
   Check,
   CheckCircle,
+  Coins,
   Download,
   Edit3,
   Eye,
@@ -18,6 +19,7 @@ import {
   Search,
   Sparkles,
   Trash2,
+  TrendingUp,
   UploadCloud,
   User,
   X,
@@ -314,6 +316,9 @@ export const JobseekerProfile = () => {
   const [pinCode, setPinCode] = useState('');
   const [designation, setDesignation] = useState('');
   const [experience, setExperience] = useState('Fresher');
+  const [currentSalary, setCurrentSalary] = useState('');
+  const [currentMonthlySalary, setCurrentMonthlySalary] = useState('');
+  const [currentAnnualSalary, setCurrentAnnualSalary] = useState('');
   const [expectedSalary, setExpectedSalary] = useState('');
   const [monthlySalary, setMonthlySalary] = useState('');
   const [annualSalary, setAnnualSalary] = useState('');
@@ -364,6 +369,9 @@ export const JobseekerProfile = () => {
     district: data.district ?? '',
     address: data.address ?? '',
     pinCode: data.pinCode ?? '',
+    currentSalary: data.currentSalary ?? '',
+    currentMonthlySalary: String(data.currentMonthlySalary ?? ''),
+    currentAnnualSalary: String(data.currentAnnualSalary ?? ''),
     expectedSalary: data.expectedSalary ?? '',
     monthlySalary: String(data.monthlySalary ?? ''),
     annualSalary: String(data.annualSalary ?? ''),
@@ -402,6 +410,7 @@ export const JobseekerProfile = () => {
     if (!isEditing || !initialSnapshotRef.current) return false;
     const currentObj = getSnapshotObj({
       name, phone, gender, dob, city, state, country, district, address, pinCode,
+      currentSalary, currentMonthlySalary, currentAnnualSalary,
       expectedSalary, monthlySalary, annualSalary,
       industryType, jobCategory, jobType, jobSearchStatus,
       qualification, passingYear, studyField, university,
@@ -411,6 +420,7 @@ export const JobseekerProfile = () => {
     return JSON.stringify(currentObj) !== initialSnapshotRef.current;
   }, [
     isEditing, name, phone, gender, dob, city, state, country, district, address, pinCode,
+    currentSalary, currentMonthlySalary, currentAnnualSalary,
     expectedSalary, monthlySalary, annualSalary,
     industryType, jobCategory, jobType, jobSearchStatus,
     qualification, passingYear, studyField, university,
@@ -434,6 +444,9 @@ export const JobseekerProfile = () => {
     setDistrict(init.district);
     setAddress(init.address);
     setPinCode(init.pinCode);
+    setCurrentSalary(init.currentSalary);
+    setCurrentMonthlySalary(init.currentMonthlySalary);
+    setCurrentAnnualSalary(init.currentAnnualSalary);
     setExpectedSalary(init.expectedSalary);
     setMonthlySalary(init.monthlySalary);
     setAnnualSalary(init.annualSalary);
@@ -520,6 +533,39 @@ export const JobseekerProfile = () => {
         setAddress(seeker.address || '');
         setPinCode(seeker.pinCode || '');
         setDesignation(seeker.designation || '');
+        const storedCurMonthly = Number(seeker.currentMonthlySalary) || 0;
+        const storedCurAnnual = Number(seeker.currentAnnualSalary) || 0;
+        const existingCurrent = seeker.currentSalary || '';
+        let initCurMonthly = '';
+        let initCurAnnual = '';
+        let initCurrentSalary = existingCurrent;
+
+        if (storedCurMonthly > 0 || storedCurAnnual > 0) {
+          const cmVal = storedCurMonthly > 0 ? storedCurMonthly : Math.round(storedCurAnnual / 12);
+          const caVal = storedCurAnnual > 0 ? storedCurAnnual : (storedCurMonthly * 12);
+          initCurMonthly = String(cmVal);
+          initCurAnnual = String(caVal);
+          const cLpa = (caVal / 100000).toFixed(1).replace(/\.0$/, '');
+          initCurrentSalary = existingCurrent || `₹${cmVal.toLocaleString('en-IN')} / Month (₹${caVal.toLocaleString('en-IN')} / Year · ${cLpa} LPA)`;
+        } else if (existingCurrent) {
+          const numbers = existingCurrent.match(/\d[\d,]*/g);
+          if (numbers && numbers.length > 0) {
+            const num = Number(numbers[0].replace(/,/g, ''));
+            if (num > 0) {
+              if (/ann|year|lpa|p\.?a/i.test(existingCurrent) && !/month/i.test(existingCurrent)) {
+                initCurAnnual = String(num);
+                initCurMonthly = String(Math.round(num / 12));
+              } else {
+                initCurMonthly = String(num);
+                initCurAnnual = String(num * 12);
+              }
+            }
+          }
+        }
+        setCurrentMonthlySalary(initCurMonthly);
+        setCurrentAnnualSalary(initCurAnnual);
+        setCurrentSalary(initCurrentSalary);
+
         const storedMonthly = Number(seeker.monthlySalary) || 0;
         const storedAnnual = Number(seeker.annualSalary) || 0;
         const existingExpected = seeker.expectedSalary || '';
@@ -605,6 +651,9 @@ export const JobseekerProfile = () => {
           district: seeker.district || '',
           address: seeker.address || '',
           pinCode: seeker.pinCode || '',
+          currentSalary: initCurrentSalary,
+          currentMonthlySalary: initCurMonthly,
+          currentAnnualSalary: initCurAnnual,
           expectedSalary: (storedMonthly > 0 || storedAnnual > 0) ? (existingExpected || `₹${(storedMonthly > 0 ? storedMonthly : Math.round(storedAnnual / 12)).toLocaleString('en-IN')} / Month (₹${(storedAnnual > 0 ? storedAnnual : (storedMonthly * 12)).toLocaleString('en-IN')} / Year)`) : existingExpected,
           monthlySalary: String(storedMonthly > 0 ? storedMonthly : (storedAnnual > 0 ? Math.round(storedAnnual / 12) : '')),
           annualSalary: String(storedAnnual > 0 ? storedAnnual : (storedMonthly > 0 ? (storedMonthly * 12) : '')),
@@ -702,6 +751,42 @@ export const JobseekerProfile = () => {
         setError(err.response?.data?.message || 'Failed to delete resume.');
       }
     }
+  };
+
+  const handleCurrentMonthlySalaryChange = (value) => {
+    const cleanNum = value.replace(/[^0-9]/g, '');
+    setCurrentMonthlySalary(cleanNum);
+    if (!cleanNum) {
+      setCurrentAnnualSalary('');
+      setCurrentSalary('');
+      return;
+    }
+    const m = Number(cleanNum);
+    const a = m * 12;
+    setCurrentAnnualSalary(String(a));
+    const lpa = (a / 100000).toFixed(1).replace(/\.0$/, '');
+    setCurrentSalary(`₹${m.toLocaleString('en-IN')} / Month (₹${a.toLocaleString('en-IN')} / Year · ${lpa} LPA)`);
+  };
+
+  const handleCurrentAnnualSalaryChange = (value) => {
+    const cleanNum = value.replace(/[^0-9]/g, '');
+    setCurrentAnnualSalary(cleanNum);
+    if (!cleanNum) {
+      setCurrentMonthlySalary('');
+      setCurrentSalary('');
+      return;
+    }
+    const a = Number(cleanNum);
+    const m = Math.round(a / 12);
+    setCurrentMonthlySalary(String(m));
+    const lpa = (a / 100000).toFixed(1).replace(/\.0$/, '');
+    setCurrentSalary(`₹${m.toLocaleString('en-IN')} / Month (₹${a.toLocaleString('en-IN')} / Year · ${lpa} LPA)`);
+  };
+
+  const handleSetCurrentSalaryFresher = () => {
+    setCurrentMonthlySalary('0');
+    setCurrentAnnualSalary('0');
+    setCurrentSalary('₹0 (Fresher / Unemployed)');
   };
 
   const handleMonthlySalaryChange = (value) => {
@@ -875,6 +960,9 @@ export const JobseekerProfile = () => {
         relocate,
         experience: computedExperience,
         experiences: cleanExperiences,
+        currentSalary,
+        currentMonthlySalary: Number(currentMonthlySalary) || 0,
+        currentAnnualSalary: Number(currentAnnualSalary) || 0,
         expectedSalary,
         monthlySalary: Number(monthlySalary) || 0,
         annualSalary: Number(annualSalary) || 0,
@@ -910,6 +998,9 @@ export const JobseekerProfile = () => {
         district,
         address,
         pinCode,
+        currentSalary,
+        currentMonthlySalary: String(currentMonthlySalary),
+        currentAnnualSalary: String(currentAnnualSalary),
         expectedSalary,
         monthlySalary: String(monthlySalary),
         annualSalary: String(annualSalary),
@@ -1327,14 +1418,116 @@ export const JobseekerProfile = () => {
             </h5>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {/* Current Salary with Auto-Calculation (Added before Expected Salary) */}
+              <div className="sm:col-span-2 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50/50 via-teal-50/30 to-slate-50/60 p-4 shadow-sm">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+                      <Coins className="h-4 w-4" />
+                    </span>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-800">
+                        Current Salary (वर्तमान वेतन)
+                      </label>
+                      <span className="text-xs font-semibold text-slate-500">
+                        Last drawn or current monthly & annual compensation
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {currentAnnualSalary && Number(currentAnnualSalary) > 0 ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-extrabold text-emerald-700">
+                        {(Number(currentAnnualSalary) / 100000).toFixed(1).replace(/\.0$/, '')} LPA
+                      </span>
+                    ) : null}
+                    {isEditing && (
+                      <button
+                        type="button"
+                        onClick={handleSetCurrentSalaryFresher}
+                        className="rounded-md border border-emerald-300 bg-white px-2.5 py-1 text-[11px] font-bold text-emerald-700 transition hover:bg-emerald-50"
+                      >
+                        Fresher / ₹0
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {/* Current Monthly Salary Input */}
+                  <div>
+                    <label className="mb-1 block text-xs font-bold text-slate-600">
+                      Current Monthly Salary (₹ / Month)
+                    </label>
+                    <div className="relative flex items-center">
+                      <span className="absolute left-3 text-sm font-bold text-slate-400">₹</span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={currentMonthlySalary}
+                        disabled={!isEditing}
+                        onChange={(e) => handleCurrentMonthlySalaryChange(e.target.value)}
+                        placeholder="e.g. 25000"
+                        className="w-full rounded-lg border border-slate-200 bg-white pl-8 pr-3 py-2.5 text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600 disabled:bg-slate-50/70 disabled:text-slate-600 disabled:cursor-not-allowed"
+                      />
+                    </div>
+                    {currentMonthlySalary && Number(currentMonthlySalary) > 0 ? (
+                      <p className="mt-1 text-[11px] font-semibold text-emerald-600">
+                        ₹{Number(currentMonthlySalary).toLocaleString('en-IN')} per month
+                      </p>
+                    ) : null}
+                  </div>
+
+                  {/* Current Annual Salary Input */}
+                  <div>
+                    <label className="mb-1 block text-xs font-bold text-slate-600">
+                      Current Annual Salary (₹ / Year)
+                    </label>
+                    <div className="relative flex items-center">
+                      <span className="absolute left-3 text-sm font-bold text-slate-400">₹</span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={currentAnnualSalary}
+                        disabled={!isEditing}
+                        onChange={(e) => handleCurrentAnnualSalaryChange(e.target.value)}
+                        placeholder="e.g. 300000"
+                        className="w-full rounded-lg border border-slate-200 bg-white pl-8 pr-3 py-2.5 text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600 disabled:bg-slate-50/70 disabled:text-slate-600 disabled:cursor-not-allowed"
+                      />
+                    </div>
+                    {currentAnnualSalary && Number(currentAnnualSalary) > 0 ? (
+                      <p className="mt-1 text-[11px] font-semibold text-emerald-600">
+                        ₹{Number(currentAnnualSalary).toLocaleString('en-IN')} per year
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+
+                {currentSalary ? (
+                  <div className="mt-3 flex items-center gap-2 rounded-md bg-white px-3 py-2 text-xs font-semibold text-slate-700 border border-emerald-200/80">
+                    <span className="text-slate-400">Current Salary Summary:</span>
+                    <span className="font-bold text-emerald-700">{currentSalary}</span>
+                  </div>
+                ) : null}
+              </div>
+
               {/* Expected Salary with Auto-Calculation */}
-              <div className="sm:col-span-2 rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50/40 to-slate-50/50 p-4">
-                <div className="mb-3 flex items-center justify-between">
-                  <label className="block text-sm font-bold text-slate-800">
-                    Expected Salary <span className="text-xs font-semibold text-blue-600">(Auto-calculates Monthly & Annual)</span>
-                  </label>
+              <div className="sm:col-span-2 rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50/50 via-indigo-50/30 to-slate-50/60 p-4 shadow-sm">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100 text-[#0047C7]">
+                      <TrendingUp className="h-4 w-4" />
+                    </span>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-800">
+                        Expected Salary (अपेक्षित वेतन)
+                      </label>
+                      <span className="text-xs font-semibold text-blue-600">
+                        Target compensation for future opportunities
+                      </span>
+                    </div>
+                  </div>
                   {annualSalary && Number(annualSalary) > 0 ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-[#0047C7]">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-extrabold text-[#0047C7]">
                       {(Number(annualSalary) / 100000).toFixed(1).replace(/\.0$/, '')} LPA
                     </span>
                   ) : null}
@@ -1344,7 +1537,7 @@ export const JobseekerProfile = () => {
                   {/* Monthly Salary Input */}
                   <div>
                     <label className="mb-1 block text-xs font-bold text-slate-600">
-                      Monthly Salary (₹ / Month)
+                      Expected Monthly Salary (₹ / Month)
                     </label>
                     <div className="relative flex items-center">
                       <span className="absolute left-3 text-sm font-bold text-slate-400">₹</span>
@@ -1359,7 +1552,7 @@ export const JobseekerProfile = () => {
                       />
                     </div>
                     {monthlySalary && Number(monthlySalary) > 0 ? (
-                      <p className="mt-1 text-[11px] font-semibold text-emerald-600">
+                      <p className="mt-1 text-[11px] font-semibold text-[#0047C7]">
                         ₹{Number(monthlySalary).toLocaleString('en-IN')} per month
                       </p>
                     ) : null}
@@ -1368,7 +1561,7 @@ export const JobseekerProfile = () => {
                   {/* Annual Salary Input */}
                   <div>
                     <label className="mb-1 block text-xs font-bold text-slate-600">
-                      Annual Salary (₹ / Year)
+                      Expected Annual Salary (₹ / Year)
                     </label>
                     <div className="relative flex items-center">
                       <span className="absolute left-3 text-sm font-bold text-slate-400">₹</span>
@@ -1383,7 +1576,7 @@ export const JobseekerProfile = () => {
                       />
                     </div>
                     {annualSalary && Number(annualSalary) > 0 ? (
-                      <p className="mt-1 text-[11px] font-semibold text-emerald-600">
+                      <p className="mt-1 text-[11px] font-semibold text-[#0047C7]">
                         ₹{Number(annualSalary).toLocaleString('en-IN')} per year
                       </p>
                     ) : null}
@@ -1391,8 +1584,8 @@ export const JobseekerProfile = () => {
                 </div>
 
                 {expectedSalary ? (
-                  <div className="mt-3 flex items-center gap-2 rounded-md bg-white px-3 py-2 text-xs font-semibold text-slate-700 border border-slate-200/80">
-                    <span className="text-slate-400">Profile Summary:</span>
+                  <div className="mt-3 flex items-center gap-2 rounded-md bg-white px-3 py-2 text-xs font-semibold text-slate-700 border border-blue-200/80">
+                    <span className="text-slate-400">Expected Salary Summary:</span>
                     <span className="font-bold text-[#0047C7]">{expectedSalary}</span>
                   </div>
                 ) : null}

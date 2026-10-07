@@ -465,7 +465,8 @@ export const EmployerSearchCandidates = () => {
                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs font-semibold text-slate-500">
                   <p className="truncate"><span className="text-slate-400">Experience:</span> {candidate.experience}</p>
                   <p className="truncate"><span className="text-slate-400">Qualification:</span> {candidate.qualification || '-'}</p>
-                  <p className="col-span-2"><span className="text-slate-400">Expected Salary:</span> {candidate.expectedSalary || 'Not specified'}</p>
+                  <p className="truncate"><span className="text-slate-400">Current CTC:</span> {candidate.currentSalary || 'Not specified'}</p>
+                  <p className="truncate"><span className="text-slate-400">Expected CTC:</span> <span className="font-extrabold text-[#0047C7]">{candidate.expectedSalary || 'Not specified'}</span></p>
                 </div>
 
                 <div className="mt-3 flex items-center justify-end border-t border-slate-100 pt-3">
@@ -487,10 +488,10 @@ export const EmployerSearchCandidates = () => {
 
           {/* Table — sm and up */}
           <div className="hidden overflow-x-auto sm:block">
-            <table className="w-full min-w-[980px] text-left">
-              <thead className="bg-[#dbe6f6] text-[11px] uppercase text-slate-600"><tr><th className="px-5 py-3">Candidate</th><th className="px-5 py-3">Experience</th><th className="px-5 py-3"><span className="inline-flex items-center gap-1">Qualification <ChevronUp className="h-3 w-3 text-slate-400" /></span></th><th className="px-5 py-3">Expected Salary</th><th className="px-5 py-3">Availability</th><th className="px-5 py-3 text-center">Action</th></tr></thead>
+            <table className="w-full min-w-[1080px] text-left">
+              <thead className="bg-[#dbe6f6] text-[11px] uppercase text-slate-600"><tr><th className="px-5 py-3">Candidate</th><th className="px-5 py-3">Experience</th><th className="px-5 py-3"><span className="inline-flex items-center gap-1">Qualification <ChevronUp className="h-3 w-3 text-slate-400" /></span></th><th className="px-5 py-3">Current CTC</th><th className="px-5 py-3">Expected CTC</th><th className="px-5 py-3">Availability</th><th className="px-5 py-3 text-center">Action</th></tr></thead>
               <tbody className="divide-y divide-slate-100">
-                {loading ? <tr><td colSpan="6" className="px-5 py-12 text-center"><Loader className="mx-auto h-7 w-7 animate-spin text-[#6658dd]" /></td></tr> : visibleRows.length ? visibleRows.map((candidate) => (
+                {loading ? <tr><td colSpan="7" className="px-5 py-12 text-center"><Loader className="mx-auto h-7 w-7 animate-spin text-[#6658dd]" /></td></tr> : visibleRows.length ? visibleRows.map((candidate) => (
                   <tr key={candidate.id} className="transition hover:bg-slate-50">
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
@@ -521,7 +522,8 @@ export const EmployerSearchCandidates = () => {
                     </td>
                     <td className="px-5 py-4 text-sm font-semibold text-slate-600">{candidate.experience}</td>
                     <td className="px-5 py-4 text-sm font-semibold text-slate-600">{candidate.qualification || '-'}</td>
-                    <td className="px-5 py-4 text-sm font-extrabold text-slate-700">{candidate.expectedSalary || 'Not specified'}</td>
+                    <td className="px-5 py-4 text-sm font-semibold text-slate-700">{candidate.currentSalary || 'Not specified'}</td>
+                    <td className="px-5 py-4 text-sm font-extrabold text-[#0047C7]">{candidate.expectedSalary || 'Not specified'}</td>
                     <td className="px-5 py-4"><span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${availabilityTone[candidate.availability] || availabilityTone.Immediate}`}>{candidate.availability}</span></td>
                     <td className="relative px-5 py-4 text-center">
                       <CandidateActions
