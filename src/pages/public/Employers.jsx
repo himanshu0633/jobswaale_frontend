@@ -356,7 +356,6 @@ export const Employers = () => {
 
   /* shared input style */
   const inputStyle = {
-    border:'1px solid rgba(6,18,36,0.1)',
     borderRadius:10,
     height:50,
     boxShadow:'none',
@@ -397,7 +396,7 @@ export const Employers = () => {
           </div>
 
           {/* ── FILTER BAR — .box-shadow-bdrd-15.box-filters ── */}
-          <div className="rounded-[15px] shadow-[0px_20px_60px_-6px_rgba(0,0,0,0.04)] bg-white p-[15px] border border-[#ececec]">
+          <div className="rounded-[15px] shadow-[0px_20px_60px_-6px_rgba(0,0,0,0.04)] bg-white p-[15px] border-2 border-[#ececec] focus-within:border-[#FF6B00] focus-within:ring-2 focus-within:ring-[#FF6B00]/20 transition-all duration-200">
             <form onSubmit={handleFind}>
               <div className="flex flex-wrap gap-3 items-center">
                 {/* keyword search */}
@@ -408,7 +407,7 @@ export const Employers = () => {
                     placeholder="e.g microsoft"
                     value={searchKeyword}
                     onChange={e => setSearchKeyword(e.target.value)}
-                    className="font-bold placeholder:font-bold placeholder:text-slate-500"
+                    className="font-bold placeholder:font-bold placeholder:text-slate-500 border border-[rgba(6,18,36,0.1)] focus:border-[#FF6B00] focus:ring-2 focus:ring-[#FF6B00]/20 transition-all"
                     style={{ ...inputStyle, paddingLeft:42 }}
                   />
                 </div>
@@ -422,7 +421,7 @@ export const Employers = () => {
                   <select
                     value={searchInd}
                     onChange={e => setSearchInd(e.target.value)}
-                    className="font-bold text-slate-800"
+                    className="font-bold text-slate-800 border border-[rgba(6,18,36,0.1)] focus:border-[#FF6B00] focus:ring-2 focus:ring-[#FF6B00]/20 transition-all"
                     style={{ ...inputStyle, paddingLeft:42, paddingRight:28, appearance:'none', cursor:'pointer', height:50 }}
                   >
                     <option value="" className="font-bold text-slate-500">Industry</option>
@@ -445,7 +444,7 @@ export const Employers = () => {
                   <select
                     value={searchLoc}
                     onChange={e => setSearchLoc(e.target.value)}
-                    className="font-bold text-slate-800"
+                    className="font-bold text-slate-800 border border-[rgba(6,18,36,0.1)] focus:border-[#FF6B00] focus:ring-2 focus:ring-[#FF6B00]/20 transition-all"
                     style={{ ...inputStyle, paddingLeft:42, paddingRight:28, appearance:'none', cursor:'pointer', height:50 }}
                   >
                     <option value="" className="font-bold text-slate-500">Location</option>
@@ -513,6 +512,7 @@ export const Employers = () => {
                     placeholder="Enter email address"
                     value={reminderEmail}
                     onChange={e => setReminderEmail(e.target.value)}
+                    className="border border-[rgba(6,18,36,0.1)] focus:border-[#FF6B00] focus:ring-2 focus:ring-[#FF6B00]/20 transition-all"
                     style={{ ...inputStyle, paddingLeft:42 }}
                   />
                 </div>
@@ -550,6 +550,7 @@ export const Employers = () => {
                     placeholder="Location"
                     value={sidebarLoc}
                     onChange={e => setSidebarLoc(e.target.value)}
+                    className="border border-[rgba(6,18,36,0.1)] focus:border-[#FF6B00] focus:ring-2 focus:ring-[#FF6B00]/20 transition-all"
                     style={{ ...inputStyle }}
                   />
                 </div>
@@ -566,6 +567,7 @@ export const Employers = () => {
                   <select
                     value={sidebarInd}
                     onChange={e => setSidebarInd(e.target.value)}
+                    className="border border-[rgba(6,18,36,0.1)] focus:border-[#FF6B00] focus:ring-2 focus:ring-[#FF6B00]/20 transition-all"
                     style={{ ...inputStyle, paddingLeft:42, paddingRight:28, appearance:'none', cursor:'pointer', height:50 }}
                   >
                     <option value="">IT &amp; Consulting</option>

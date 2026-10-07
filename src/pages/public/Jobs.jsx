@@ -414,8 +414,8 @@ export const Jobs = () => {
               left = keyword search + removable tag pill, right = dropdowns + Find Now button */}
           <div
             ref={filterBarRef}
-            className="bg-white rounded-[15px] p-[15px]"
-            style={{ boxShadow: '0px 20px 60px -6px rgba(0,0,0,0.04)', border: 'thin solid #ececec' }}
+            className="bg-white rounded-[15px] p-[15px] border-2 border-[#ececec] focus-within:border-[#FF6B00] focus-within:ring-2 focus-within:ring-[#FF6B00]/20 transition-all duration-200"
+            style={{ boxShadow: '0px 20px 60px -6px rgba(0,0,0,0.04)' }}
           >
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-center">
 
@@ -428,7 +428,7 @@ export const Jobs = () => {
                   }}
                   className="flex-1 min-w-[200px]"
                 >
-                  <div className="relative">
+                  <div className="relative rounded-xl border border-slate-200 lg:border-transparent focus-within:border-[#FF6B00] focus-within:ring-2 focus-within:ring-[#FF6B00]/20 lg:focus-within:border-transparent lg:focus-within:ring-0 transition-all">
                     <Search className="absolute left-[10px] top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-[#88929b] pointer-events-none" />
                     <input
                       type="text"
