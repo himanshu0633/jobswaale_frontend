@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import {
   Briefcase,
@@ -7,6 +7,7 @@ import {
   Check,
   CheckCircle,
   Download,
+  Edit3,
   Eye,
   FileText,
   GraduationCap,
@@ -217,7 +218,7 @@ const SearchableSelect = ({
   );
 };
 
-const SearchableMultiCitySelect = ({ label, values, onChange, options, required = false }) => {
+const SearchableMultiCitySelect = ({ label, values, onChange, options, required = false, disabled = false }) => {
   const [query, setQuery] = useState('');
   const selectedValues = values.map(value => normalizeText(value));
   const filtered = options
@@ -226,7 +227,7 @@ const SearchableMultiCitySelect = ({ label, values, onChange, options, required 
     .slice(0, 80);
 
   const addCity = (cityName) => {
-    if (!cityName || selectedValues.includes(normalizeText(cityName))) return;
+    if (disabled || !cityName || selectedValues.includes(normalizeText(cityName))) return;
     onChange([...values, cityName]);
     setQuery('');
   };
@@ -236,7 +237,7 @@ const SearchableMultiCitySelect = ({ label, values, onChange, options, required 
       <label className="mb-1.5 block text-sm font-bold text-slate-600">
         {label} {required && <span className="text-rose-500">*</span>}
       </label>
-      <div className="rounded-md border border-slate-200 p-3">
+      <div className={`rounded-md border border-slate-200 p-3 transition ${disabled ? 'bg-slate-50/70' : 'bg-white'}`}>
         <div className="flex flex-wrap items-center gap-2">
           {values.map(city => (
             <span
@@ -244,36 +245,43 @@ const SearchableMultiCitySelect = ({ label, values, onChange, options, required 
               className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-[#0047C7]"
             >
               {city}
-              <button type="button" onClick={() => onChange(values.filter(item => item !== city))} aria-label={`Remove ${city}`}>
-                <X className="h-3 w-3" />
-              </button>
+              {!disabled && (
+                <button type="button" onClick={() => onChange(values.filter(item => item !== city))} aria-label={`Remove ${city}`} className="cursor-pointer">
+                  <X className="h-3 w-3" />
+                </button>
+              )}
             </span>
           ))}
-          <div className="relative min-w-[180px] flex-1">
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search city..."
-              className="w-full border-none px-1 py-1 text-xs text-slate-700 focus:outline-none"
-            />
-            {query && (
-              <div className="absolute left-0 right-0 top-8 z-30 max-h-56 overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg">
-                {filtered.length > 0 ? filtered.map(city => (
-                  <button
-                    key={city.ctid || city.cityName}
-                    type="button"
-                    onClick={() => addCity(getCityValue(city))}
-                    className="block w-full px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-blue-50"
-                  >
-                    {getCityLabel(city)}
-                  </button>
-                )) : (
-                  <div className="px-3 py-3 text-sm font-semibold text-slate-400">No cities found</div>
-                )}
-              </div>
-            )}
-          </div>
+          {values.length === 0 && disabled && (
+            <span className="text-xs font-medium text-slate-400">None selected</span>
+          )}
+          {!disabled && (
+            <div className="relative min-w-[180px] flex-1">
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search city..."
+                className="w-full border-none px-1 py-1 text-xs text-slate-700 focus:outline-none"
+              />
+              {query && (
+                <div className="absolute left-0 right-0 top-8 z-30 max-h-56 overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg">
+                  {filtered.length > 0 ? filtered.map(city => (
+                    <button
+                      key={city.ctid || city.cityName}
+                      type="button"
+                      onClick={() => addCity(getCityValue(city))}
+                      className="block w-full px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-blue-50"
+                    >
+                      {getCityLabel(city)}
+                    </button>
+                  )) : (
+                    <div className="px-3 py-3 text-sm font-semibold text-slate-400">No cities found</div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -337,6 +345,116 @@ export const JobseekerProfile = () => {
   const [resumeFile, setResumeFile] = useState(null);
   const [resumeVersion, setResumeVersion] = useState(0);
   const [viewResumeModal, setViewResumeModal] = useState(false);
+
+  // Edit mode & Change tracking
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const initialSnapshotRef = useRef('');
+  const initialValuesRef = useRef(null);
+
+  const getSnapshotObj = (data) => ({
+    name: data.name ?? '',
+    phone: data.phone ?? '',
+    gender: data.gender ?? '',
+    dob: data.dob ?? '',
+    city: data.city ?? '',
+    state: data.state ?? '',
+    country: data.country ?? 'India',
+    district: data.district ?? '',
+    address: data.address ?? '',
+    pinCode: data.pinCode ?? '',
+    expectedSalary: data.expectedSalary ?? '',
+    monthlySalary: String(data.monthlySalary ?? ''),
+    annualSalary: String(data.annualSalary ?? ''),
+    industryType: data.industryType ?? '',
+    jobCategory: data.jobCategory ?? '',
+    jobType: data.jobType ?? '',
+    jobSearchStatus: data.jobSearchStatus ?? 'looking',
+    qualification: data.qualification ?? '',
+    passingYear: String(data.passingYear ?? ''),
+    studyField: data.studyField ?? '',
+    university: data.university ?? '',
+    linkedin: data.linkedin ?? '',
+    portfolio: data.portfolio ?? '',
+    github: data.github ?? '',
+    skills: Array.isArray(data.skills) ? [...data.skills] : [],
+    relocate: data.relocate ?? 'yes',
+    experiences: Array.isArray(data.experiences) ? data.experiences.map(e => ({
+      position: e.position || '',
+      company: e.company || '',
+      employmentType: e.employmentType || 'Full-time',
+      startDate: e.startDate || '',
+      endDate: e.endDate || '',
+      currentlyWorking: Boolean(e.currentlyWorking),
+      description: e.description || ''
+    })) : [],
+    locations: Array.isArray(data.locations) ? [...data.locations] : []
+  });
+
+  const captureInitialState = (data) => {
+    const snapObj = getSnapshotObj(data);
+    initialSnapshotRef.current = JSON.stringify(snapObj);
+    initialValuesRef.current = snapObj;
+  };
+
+  const hasChanges = useMemo(() => {
+    if (!isEditing || !initialSnapshotRef.current) return false;
+    const currentObj = getSnapshotObj({
+      name, phone, gender, dob, city, state, country, district, address, pinCode,
+      expectedSalary, monthlySalary, annualSalary,
+      industryType, jobCategory, jobType, jobSearchStatus,
+      qualification, passingYear, studyField, university,
+      linkedin, portfolio, github,
+      skills, relocate, experiences, locations
+    });
+    return JSON.stringify(currentObj) !== initialSnapshotRef.current;
+  }, [
+    isEditing, name, phone, gender, dob, city, state, country, district, address, pinCode,
+    expectedSalary, monthlySalary, annualSalary,
+    industryType, jobCategory, jobType, jobSearchStatus,
+    qualification, passingYear, studyField, university,
+    linkedin, portfolio, github,
+    skills, relocate, experiences, locations
+  ]);
+
+  const handleCancelEdit = () => {
+    if (!initialValuesRef.current) {
+      setIsEditing(false);
+      return;
+    }
+    const init = initialValuesRef.current;
+    setName(init.name);
+    setPhone(init.phone);
+    setGender(init.gender);
+    setDob(init.dob);
+    setCity(init.city);
+    setState(init.state);
+    setCountry(init.country);
+    setDistrict(init.district);
+    setAddress(init.address);
+    setPinCode(init.pinCode);
+    setExpectedSalary(init.expectedSalary);
+    setMonthlySalary(init.monthlySalary);
+    setAnnualSalary(init.annualSalary);
+    setIndustryType(init.industryType);
+    setJobCategory(init.jobCategory);
+    setJobType(init.jobType);
+    setJobSearchStatus(init.jobSearchStatus);
+    setQualification(init.qualification);
+    setPassingYear(init.passingYear);
+    setStudyField(init.studyField);
+    setUniversity(init.university);
+    setLinkedin(init.linkedin);
+    setPortfolio(init.portfolio);
+    setGithub(init.github);
+    setSkills([...init.skills]);
+    setRelocate(init.relocate);
+    setExperiences(init.experiences.length > 0 ? [...init.experiences] : [{ ...emptyExperience }]);
+    setLocations([...init.locations]);
+    setError('');
+    setIsEditing(false);
+  };
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -471,6 +589,41 @@ export const JobseekerProfile = () => {
           setResumeFile(null);
           setResumeVersion(seeker.resumeVersion || 0);
         }
+
+        const initialLocs = seeker.preferredLocation
+          ? seeker.preferredLocation.split(',').map(l => l.trim()).filter(Boolean)
+          : [];
+
+        captureInitialState({
+          name: seeker.name || '',
+          phone: seeker.phone || '',
+          gender: seeker.gender || '',
+          dob: seeker.dob || '',
+          city: seeker.city || '',
+          state: seeker.state || '',
+          country: seeker.country || 'India',
+          district: seeker.district || '',
+          address: seeker.address || '',
+          pinCode: seeker.pinCode || '',
+          expectedSalary: (storedMonthly > 0 || storedAnnual > 0) ? (existingExpected || `₹${(storedMonthly > 0 ? storedMonthly : Math.round(storedAnnual / 12)).toLocaleString('en-IN')} / Month (₹${(storedAnnual > 0 ? storedAnnual : (storedMonthly * 12)).toLocaleString('en-IN')} / Year)`) : existingExpected,
+          monthlySalary: String(storedMonthly > 0 ? storedMonthly : (storedAnnual > 0 ? Math.round(storedAnnual / 12) : '')),
+          annualSalary: String(storedAnnual > 0 ? storedAnnual : (storedMonthly > 0 ? (storedMonthly * 12) : '')),
+          industryType: seeker.industryType?._id || getRefLabel(seeker.industryType, ['industryType', 'industryName', 'name']),
+          jobCategory: seeker.jobCategory?._id || getRefLabel(seeker.jobCategory, ['categoryName', 'name']),
+          jobType: seeker.jobType?._id || getRefLabel(seeker.jobType, ['jobType', 'name']),
+          jobSearchStatus: seeker.jobSearchStatus || 'looking',
+          qualification: getRefLabel(seeker.qualification, ['name']) || seeker.qualification?._id || '',
+          passingYear: seeker.passingYear || '',
+          studyField: seeker.studyField || '',
+          university: seeker.university || '',
+          linkedin: seeker.linkedin || '',
+          portfolio: seeker.portfolio || '',
+          github: seeker.github || '',
+          skills: seeker.skills || [],
+          relocate: seeker.relocate || 'yes',
+          experiences: fetchedExps.length > 0 ? fetchedExps : [{ ...emptyExperience }],
+          locations: initialLocs
+        });
       } catch (err) {
         console.error('Fetch profile error:', err);
         setError('Failed to load profile. Please refresh or login again.');
@@ -629,24 +782,29 @@ export const JobseekerProfile = () => {
   }, [qualification, selectedQualification]);
 
   const handleSave = async () => {
+    if (!hasChanges || saving) return;
     setError('');
     setSaved(false);
+    setSaving(true);
 
     if (phone) {
       const cleaned = String(phone).replace(/\D/g, '');
       if (!/^[6-9]\d{9}$/.test(cleaned)) {
         setError('Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.');
+        setSaving(false);
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
     }
     if (studyField && (studyField.trim().length < 2 || !/[a-zA-Z]/.test(studyField.trim()))) {
       setError('Please enter a valid Field of Study containing letters (e.g. Computer Science).');
+      setSaving(false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
     if (university && (university.trim().length < 2 || !/[a-zA-Z]/.test(university.trim()))) {
       setError('Please enter a valid College / University name containing letters.');
+      setSaving(false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
@@ -656,11 +814,13 @@ export const JobseekerProfile = () => {
       const raw = skillInput.replace(/,/g, '').trim();
       if (/^\d+$/.test(raw)) {
         setError('Skill name cannot consist solely of digits.');
+        setSaving(false);
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
       if (!/^[a-zA-Z0-9+#.\s/-]{2,40}$/.test(raw)) {
         setError('Please enter a valid skill name.');
+        setSaving(false);
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
@@ -686,6 +846,8 @@ export const JobseekerProfile = () => {
       const periodError = validateExperiencePeriods(cleanExperiences);
       if (periodError) {
         setError(periodError);
+        setSaving(false);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
 
@@ -737,12 +899,52 @@ export const JobseekerProfile = () => {
       });
       setProfileCompletionScore(Number(response.data?.seeker?.profileCompletionScore || profileCompletionScore));
 
+      captureInitialState({
+        name,
+        phone,
+        gender,
+        dob,
+        city,
+        state,
+        country,
+        district,
+        address,
+        pinCode,
+        expectedSalary,
+        monthlySalary: String(monthlySalary),
+        annualSalary: String(annualSalary),
+        industryType: selectedIndustry?._id || industryType,
+        jobCategory: selectedJobCategory?._id || jobCategory,
+        jobType: selectedJobType?._id || jobType,
+        jobSearchStatus,
+        qualification: selectedQualification?._id || qualification,
+        passingYear,
+        studyField,
+        university,
+        linkedin,
+        portfolio,
+        github,
+        skills: finalSkills,
+        relocate,
+        experiences: cleanExperiences,
+        locations
+      });
+
+      setIsEditing(false);
       setSaved(true);
+      setToast({ show: true, message: 'Profile updated successfully!', type: 'success' });
       window.scrollTo({ top: 0, behavior: 'smooth' });
       setTimeout(() => setSaved(false), 3000);
+      setTimeout(() => setToast(prev => ({ ...prev, show: false })), 4000);
     } catch (err) {
       console.error('Save profile error:', err);
-      setError(err.response?.data?.message || 'Failed to save changes. Please try again.');
+      const errMsg = err.response?.data?.message || 'Failed to save changes. Please try again.';
+      setError(errMsg);
+      setToast({ show: true, message: errMsg, type: 'error' });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => setToast(prev => ({ ...prev, show: false })), 5000);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -752,6 +954,38 @@ export const JobseekerProfile = () => {
 
   return (
     <div className="space-y-6">
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className={`fixed top-6 right-6 z-[100] flex items-center gap-3 rounded-2xl border px-5 py-4 shadow-2xl transition-all animate-in slide-in-from-top-4 duration-300 ${
+          toast.type === 'error'
+            ? 'border-rose-200 bg-white shadow-rose-500/15'
+            : 'border-emerald-200 bg-white shadow-emerald-500/15'
+        }`}>
+          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+            toast.type === 'error'
+              ? 'bg-rose-100 text-rose-600'
+              : 'bg-emerald-100 text-emerald-600'
+          }`}>
+            {toast.type === 'error' ? <XCircle className="h-5 w-5" /> : <Check className="h-5 w-5" />}
+          </div>
+          <div>
+            <p className="text-sm font-bold text-slate-800">
+              {toast.type === 'error' ? 'Error' : 'Success'}
+            </p>
+            <p className="text-xs font-semibold text-slate-600 max-w-xs sm:max-w-sm">
+              {toast.message}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setToast({ show: false, message: '', type: 'success' })}
+            className="ml-3 text-slate-400 hover:text-slate-600 cursor-pointer"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
       {saved && (
         <div className="rounded-md border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">
           Profile updated successfully!
@@ -779,27 +1013,71 @@ export const JobseekerProfile = () => {
             </div>
           )}
 
-          <label
-            htmlFor="photoUpload"
-            className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-full bg-black/0 text-white opacity-0 transition group-hover:bg-black/40 group-hover:opacity-100"
-          >
-            <Camera className="h-6 w-6" />
-          </label>
-          <input
-            type="file"
-            id="photoUpload"
-            accept="image/*"
-            className="hidden"
-            onChange={handlePhotoUpload}
-          />
+          {isEditing && (
+            <>
+              <label
+                htmlFor="photoUpload"
+                className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-full bg-black/0 text-white opacity-0 transition group-hover:bg-black/40 group-hover:opacity-100"
+              >
+                <Camera className="h-6 w-6" />
+              </label>
+              <input
+                type="file"
+                id="photoUpload"
+                accept="image/*"
+                className="hidden"
+                onChange={handlePhotoUpload}
+              />
+            </>
+          )}
         </div>
 
-        <div className="text-center sm:text-left">
-          <h3 className="text-xl font-bold text-[#0f172a]">
-            {name}
-          </h3>
-          <div className="mt-1 text-sm text-slate-500">
-            <span className="font-bold text-slate-700">{designation || 'Job Seeker'}</span>
+        <div className="text-center sm:text-left flex-1 min-w-0">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h3 className="text-xl font-bold text-[#0f172a]">
+                {name}
+              </h3>
+              <div className="mt-1 text-sm text-slate-500">
+                <span className="font-bold text-slate-700">{designation || 'Job Seeker'}</span>
+              </div>
+            </div>
+
+            {/* Header Action Button */}
+            {!isEditing ? (
+              <button
+                type="button"
+                onClick={() => setIsEditing(true)}
+                className="inline-flex items-center gap-2 self-center sm:self-start rounded-xl bg-[#0047C7] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#00389c] hover:shadow cursor-pointer"
+              >
+                <Edit3 className="h-4 w-4" /> Edit Profile
+              </button>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2 self-center sm:self-start">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-xs font-bold text-amber-700">
+                  <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" /> Editing Mode
+                </span>
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50 cursor-pointer"
+                >
+                  <X className="h-3.5 w-3.5" /> Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={!hasChanges || saving}
+                  className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-1.5 text-xs font-bold text-white shadow-sm transition ${
+                    hasChanges && !saving
+                      ? 'bg-[#FF6B00] hover:bg-[#e05e00] cursor-pointer'
+                      : 'bg-slate-300 text-slate-500 cursor-not-allowed opacity-60'
+                  }`}
+                >
+                  <Check className="h-3.5 w-3.5" /> {saving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-xs text-slate-400 sm:justify-start">
@@ -850,8 +1128,9 @@ export const JobseekerProfile = () => {
                 <input
                   type="text"
                   value={name}
+                  disabled={!isEditing}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none disabled:bg-slate-50/70 disabled:text-slate-600 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -874,8 +1153,9 @@ export const JobseekerProfile = () => {
                 <input
                   type="tel"
                   value={phone}
+                  disabled={!isEditing}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none disabled:bg-slate-50/70 disabled:text-slate-600 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -886,8 +1166,9 @@ export const JobseekerProfile = () => {
                 <input
                   type="date"
                   value={dob}
+                  disabled={!isEditing}
                   onChange={(e) => setDob(e.target.value)}
-                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none disabled:bg-slate-50/70 disabled:text-slate-600 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -897,8 +1178,9 @@ export const JobseekerProfile = () => {
                 </label>
                 <select
                   value={gender}
+                  disabled={!isEditing}
                   onChange={(e) => setGender(e.target.value)}
-                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none disabled:bg-slate-50/70 disabled:text-slate-600 disabled:cursor-not-allowed"
                 >
                   <option value="">Select gender</option>
                   <option value="Male">Male</option>
@@ -910,6 +1192,7 @@ export const JobseekerProfile = () => {
               <SearchableSelect
                 label="Country"
                 value={country}
+                disabled={!isEditing}
                 onChange={(value) => {
                   setCountry(value);
                   setState('');
@@ -934,7 +1217,7 @@ export const JobseekerProfile = () => {
                 getOptionValue={getStateValue}
                 getOptionLabel={getStateLabel}
                 placeholder="Search state..."
-                disabled={!selectedCountryKey}
+                disabled={!isEditing || !selectedCountryKey}
               />
 
               <SearchableSelect
@@ -948,7 +1231,7 @@ export const JobseekerProfile = () => {
                 getOptionValue={getDistrictValue}
                 getOptionLabel={getDistrictLabel}
                 placeholder="Search district..."
-                disabled={!selectedStateKey}
+                disabled={!isEditing || !selectedStateKey}
               />
 
               <SearchableSelect
@@ -959,7 +1242,7 @@ export const JobseekerProfile = () => {
                 getOptionValue={getCityValue}
                 getOptionLabel={getCityLabel}
                 placeholder="Search city..."
-                disabled={!selectedDistrictKey}
+                disabled={!isEditing || !selectedDistrictKey}
               />
 
               <div>
@@ -969,8 +1252,9 @@ export const JobseekerProfile = () => {
                 <input
                   type="text"
                   value={pinCode}
+                  disabled={!isEditing}
                   onChange={(e) => setPinCode(e.target.value)}
-                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none disabled:bg-slate-50/70 disabled:text-slate-600 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -981,8 +1265,9 @@ export const JobseekerProfile = () => {
                 <input
                   type="text"
                   value={address}
+                  disabled={!isEditing}
                   onChange={(e) => setAddress(e.target.value)}
-                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none disabled:bg-slate-50/70 disabled:text-slate-600 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -995,6 +1280,7 @@ export const JobseekerProfile = () => {
                   values={locations}
                   onChange={setLocations}
                   options={cities}
+                  disabled={!isEditing}
                   required
                 />
               </div>
@@ -1007,23 +1293,25 @@ export const JobseekerProfile = () => {
                 <div className="flex gap-3">
                   <button
                     type="button"
+                    disabled={!isEditing}
                     onClick={() => setRelocate('yes')}
                     className={`flex flex-1 items-center justify-center gap-2 rounded-md border px-4 py-2.5 text-sm font-bold transition ${
                       relocate === 'yes'
                         ? 'border-[#0047C7] bg-blue-50 text-[#0047C7]'
                         : 'border-slate-200 text-slate-500'
-                    }`}
+                    } ${!isEditing ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'}`}
                   >
                     <CheckCircle className="h-4 w-4" /> Yes, willing
                   </button>
                   <button
                     type="button"
+                    disabled={!isEditing}
                     onClick={() => setRelocate('no')}
                     className={`flex flex-1 items-center justify-center gap-2 rounded-md border px-4 py-2.5 text-sm font-bold transition ${
                       relocate === 'no'
                         ? 'border-[#0047C7] bg-blue-50 text-[#0047C7]'
                         : 'border-slate-200 text-slate-500'
-                    }`}
+                    } ${!isEditing ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'}`}
                   >
                     <XCircle className="h-4 w-4" /> No, prefer local
                   </button>
@@ -1064,9 +1352,10 @@ export const JobseekerProfile = () => {
                         type="text"
                         inputMode="numeric"
                         value={monthlySalary}
+                        disabled={!isEditing}
                         onChange={(e) => handleMonthlySalaryChange(e.target.value)}
                         placeholder="e.g. 25000"
-                        className="w-full rounded-lg border border-slate-200 bg-white pl-8 pr-3 py-2.5 text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:border-[#0047C7] focus:outline-none focus:ring-1 focus:ring-[#0047C7]"
+                        className="w-full rounded-lg border border-slate-200 bg-white pl-8 pr-3 py-2.5 text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:border-[#0047C7] focus:outline-none focus:ring-1 focus:ring-[#0047C7] disabled:bg-slate-50/70 disabled:text-slate-600 disabled:cursor-not-allowed"
                       />
                     </div>
                     {monthlySalary && Number(monthlySalary) > 0 ? (
@@ -1087,9 +1376,10 @@ export const JobseekerProfile = () => {
                         type="text"
                         inputMode="numeric"
                         value={annualSalary}
+                        disabled={!isEditing}
                         onChange={(e) => handleAnnualSalaryChange(e.target.value)}
                         placeholder="e.g. 300000"
-                        className="w-full rounded-lg border border-slate-200 bg-white pl-8 pr-3 py-2.5 text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:border-[#0047C7] focus:outline-none focus:ring-1 focus:ring-[#0047C7]"
+                        className="w-full rounded-lg border border-slate-200 bg-white pl-8 pr-3 py-2.5 text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:border-[#0047C7] focus:outline-none focus:ring-1 focus:ring-[#0047C7] disabled:bg-slate-50/70 disabled:text-slate-600 disabled:cursor-not-allowed"
                       />
                     </div>
                     {annualSalary && Number(annualSalary) > 0 ? (
@@ -1114,8 +1404,9 @@ export const JobseekerProfile = () => {
                 </label>
                 <select
                   value={jobSearchStatus}
+                  disabled={!isEditing}
                   onChange={(e) => setJobSearchStatus(e.target.value)}
-                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none disabled:bg-slate-50/70 disabled:text-slate-600 disabled:cursor-not-allowed"
                 >
                   <option value="looking">Looking for job</option>
                   <option value="not-looking">Not looking</option>
@@ -1125,6 +1416,7 @@ export const JobseekerProfile = () => {
               <SearchableSelect
                 label="Industry Type"
                 value={industryType}
+                disabled={!isEditing}
                 onChange={setIndustryType}
                 options={industries}
                 getOptionValue={getIndustryValue}
@@ -1135,6 +1427,7 @@ export const JobseekerProfile = () => {
               <SearchableSelect
                 label="Job Category"
                 value={jobCategory}
+                disabled={!isEditing}
                 onChange={setJobCategory}
                 options={jobCategories}
                 getOptionValue={getJobCategoryValue}
@@ -1145,6 +1438,7 @@ export const JobseekerProfile = () => {
               <SearchableSelect
                 label="Job Type"
                 value={jobType}
+                disabled={!isEditing}
                 onChange={setJobType}
                 options={jobTypes}
                 getOptionValue={getJobTypeValue}
@@ -1159,13 +1453,15 @@ export const JobseekerProfile = () => {
                   <label className="block text-sm font-bold text-slate-600">
                     Company Experience
                   </label>
-                  <button
-                    type="button"
-                    onClick={() => setExperiences([...experiences, { ...emptyExperience }])}
-                    className="rounded-md border border-[#0047C7] px-3 py-1.5 text-xs font-extrabold text-[#0047C7] hover:bg-blue-50"
-                  >
-                    + Add Experience
-                  </button>
+                  {isEditing && (
+                    <button
+                      type="button"
+                      onClick={() => setExperiences([...experiences, { ...emptyExperience }])}
+                      className="rounded-md border border-[#0047C7] px-3 py-1.5 text-xs font-extrabold text-[#0047C7] hover:bg-blue-50 cursor-pointer"
+                    >
+                      + Add Experience
+                    </button>
+                  )}
                 </div>
 
                 <div className="space-y-3">
@@ -1173,11 +1469,11 @@ export const JobseekerProfile = () => {
                     <div key={index} className="rounded-md border border-slate-200 bg-slate-50 p-4">
                       <div className="mb-3 flex items-center justify-between">
                         <p className="text-sm font-extrabold text-slate-700">Experience {index + 1}</p>
-                        {index > 0 && (
+                        {isEditing && index > 0 && (
                           <button
                             type="button"
                             onClick={() => setExperiences(experiences.filter((_, itemIndex) => itemIndex !== index))}
-                            className="text-xs font-extrabold text-rose-600"
+                            className="text-xs font-extrabold text-rose-600 cursor-pointer"
                           >
                             Remove
                           </button>
@@ -1188,27 +1484,31 @@ export const JobseekerProfile = () => {
                         <input
                           type="text"
                           value={item.position || ''}
+                          disabled={!isEditing}
                           onChange={(e) => setExperiences(experiences.map((exp, itemIndex) => itemIndex === index ? { ...exp, position: e.target.value } : exp))}
                           placeholder="Position"
-                          className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
+                          className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none disabled:bg-slate-50/70 disabled:text-slate-600 disabled:cursor-not-allowed"
                         />
                         <input
                           type="text"
                           value={item.company || ''}
+                          disabled={!isEditing}
                           onChange={(e) => setExperiences(experiences.map((exp, itemIndex) => itemIndex === index ? { ...exp, company: e.target.value } : exp))}
                           placeholder="Company"
-                          className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
+                          className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none disabled:bg-slate-50/70 disabled:text-slate-600 disabled:cursor-not-allowed"
                         />
                         <input
                           type="text"
                           value={item.employmentType || ''}
+                          disabled={!isEditing}
                           onChange={(e) => setExperiences(experiences.map((exp, itemIndex) => itemIndex === index ? { ...exp, employmentType: e.target.value } : exp))}
                           placeholder="Employment Type"
-                          className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
+                          className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none disabled:bg-slate-50/70 disabled:text-slate-600 disabled:cursor-not-allowed"
                         />
-                        <label className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-600">
+                        <label className={`flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-600 ${!isEditing ? 'opacity-80 cursor-not-allowed' : ''}`}>
                           <input
                             type="checkbox"
+                            disabled={!isEditing}
                             checked={Boolean(item.currentlyWorking)}
                             onChange={(e) => setExperiences(experiences.map((exp, itemIndex) => itemIndex === index ? { ...exp, currentlyWorking: e.target.checked, endDate: e.target.checked ? '' : exp.endDate } : exp))}
                           />
@@ -1219,8 +1519,9 @@ export const JobseekerProfile = () => {
                           <input
                             type="month"
                             value={item.startDate || ''}
+                            disabled={!isEditing}
                             onChange={(e) => setExperiences(experiences.map((exp, itemIndex) => itemIndex === index ? { ...exp, startDate: e.target.value } : exp))}
-                            className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
+                            className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none disabled:bg-slate-50/70 disabled:text-slate-600 disabled:cursor-not-allowed"
                           />
                         </div>
                         <div>
@@ -1228,17 +1529,18 @@ export const JobseekerProfile = () => {
                           <input
                             type="month"
                             value={item.currentlyWorking ? '' : (item.endDate || '')}
-                            disabled={Boolean(item.currentlyWorking)}
+                            disabled={!isEditing || Boolean(item.currentlyWorking)}
                             onChange={(e) => setExperiences(experiences.map((exp, itemIndex) => itemIndex === index ? { ...exp, endDate: e.target.value } : exp))}
-                            className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none disabled:bg-slate-100 disabled:text-slate-400"
+                            className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
                           />
                         </div>
                         <textarea
                           rows={3}
                           value={item.description || ''}
+                          disabled={!isEditing}
                           onChange={(e) => setExperiences(experiences.map((exp, itemIndex) => itemIndex === index ? { ...exp, description: e.target.value } : exp))}
                           placeholder="What did you work on?"
-                          className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none sm:col-span-2"
+                          className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none sm:col-span-2 disabled:bg-slate-50/70 disabled:text-slate-600 disabled:cursor-not-allowed"
                         />
                       </div>
                     </div>
@@ -1257,8 +1559,10 @@ export const JobseekerProfile = () => {
               <Sparkles className="h-5 w-5 text-[#0047C7]" /> Skills <span className="text-rose-500">*</span>
             </h5>
             <div
-              onClick={() => document.getElementById('skillInput')?.focus()}
-              className="flex flex-wrap items-center gap-2 rounded-md border border-slate-200 p-3 cursor-text"
+              onClick={() => { if (isEditing) document.getElementById('skillInput')?.focus(); }}
+              className={`flex flex-wrap items-center gap-2 rounded-md border border-slate-200 p-3 ${
+                isEditing ? 'cursor-text bg-white' : 'cursor-default bg-slate-50/70'
+              }`}
             >
               {skills.map(skill => (
                 <span
@@ -1266,31 +1570,41 @@ export const JobseekerProfile = () => {
                   className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-[#0047C7]"
                 >
                   {skill}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeSkill(skill);
-                    }}
-                    aria-label={`Remove ${skill}`}
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
+                  {isEditing && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeSkill(skill);
+                      }}
+                      aria-label={`Remove ${skill}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
                 </span>
               ))}
-              <input
-                type="text"
-                id="skillInput"
-                value={skillInput}
-                onChange={(e) => setSkillInput(e.target.value)}
-                onKeyDown={addSkill}
-                placeholder="Type skill and press Enter..."
-                className="min-w-[140px] flex-1 border-none px-1 py-1 text-xs text-slate-700 focus:outline-none"
-              />
+              {isEditing && (
+                <input
+                  type="text"
+                  id="skillInput"
+                  value={skillInput}
+                  onChange={(e) => setSkillInput(e.target.value)}
+                  onKeyDown={addSkill}
+                  placeholder="Type skill and press Enter..."
+                  className="min-w-[140px] flex-1 border-none bg-transparent px-1 py-1 text-xs text-slate-700 focus:outline-none"
+                />
+              )}
             </div>
-            <p className="mt-1.5 text-xs text-slate-400">
-              Press Enter to add a skill.
-            </p>
+            {isEditing ? (
+              <p className="mt-1.5 text-xs text-slate-400">
+                Press Enter to add a skill.
+              </p>
+            ) : (
+              <p className="mt-1.5 text-xs text-slate-400">
+                Click &quot;Edit Profile&quot; to add or remove skills.
+              </p>
+            )}
           </div>
 
           {/* Education */}
@@ -1309,6 +1623,7 @@ export const JobseekerProfile = () => {
                 getOptionLabel={getQualificationLabel}
                 placeholder="Search qualification..."
                 required
+                disabled={!isEditing}
               />
 
               <div>
@@ -1317,8 +1632,9 @@ export const JobseekerProfile = () => {
                 </label>
                 <select
                   value={passingYear}
+                  disabled={!isEditing}
                   onChange={(e) => setPassingYear(e.target.value)}
-                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none disabled:bg-slate-50/70 disabled:text-slate-600 disabled:cursor-not-allowed"
                 >
                   <option value="">Select year</option>
                   {passingYearOptions.map((year) => (
@@ -1334,8 +1650,9 @@ export const JobseekerProfile = () => {
                 <input
                   type="text"
                   value={studyField}
+                  disabled={!isEditing}
                   onChange={(e) => setStudyField(e.target.value)}
-                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none disabled:bg-slate-50/70 disabled:text-slate-600 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -1346,8 +1663,9 @@ export const JobseekerProfile = () => {
                 <input
                   type="text"
                   value={university}
+                  disabled={!isEditing}
                   onChange={(e) => setUniversity(e.target.value)}
-                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none disabled:bg-slate-50/70 disabled:text-slate-600 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
@@ -1360,23 +1678,29 @@ export const JobseekerProfile = () => {
             </h5>
 
             <label
-              htmlFor="resumeUpload"
-              className="flex cursor-pointer flex-col items-center gap-2 rounded-md border-2 border-dashed border-slate-200 px-6 py-8 text-center transition hover:border-[#0047C7] hover:bg-blue-50/40"
+              htmlFor={isEditing ? 'resumeUpload' : undefined}
+              className={`flex flex-col items-center gap-2 rounded-md border-2 border-dashed border-slate-200 px-6 py-8 text-center transition ${
+                isEditing
+                  ? 'cursor-pointer hover:border-[#0047C7] hover:bg-blue-50/40'
+                  : 'cursor-not-allowed bg-slate-50/60 opacity-75'
+              }`}
             >
               <UploadCloud className="h-8 w-8 text-[#0047C7]" />
               <h6 className="text-sm font-bold text-[#0f172a]">
                 {resumeFile ? 'Upload New Resume (Replaces Current)' : 'Upload your resume'}
               </h6>
               <p className="text-xs text-slate-400">
-                PDF, DOC, or DOCX format. Max 5 MB.
+                {isEditing ? 'PDF, DOC, or DOCX format. Max 5 MB.' : 'Click "Edit Profile" to change resume.'}
               </p>
-              <input
-                type="file"
-                id="resumeUpload"
-                accept=".pdf,.doc,.docx"
-                className="hidden"
-                onChange={handleResumeUpload}
-              />
+              {isEditing && (
+                <input
+                  type="file"
+                  id="resumeUpload"
+                  accept=".pdf,.doc,.docx"
+                  className="hidden"
+                  onChange={handleResumeUpload}
+                />
+              )}
             </label>
 
             {resumeFile && (
@@ -1405,14 +1729,16 @@ export const JobseekerProfile = () => {
                       <Eye className="h-4 w-4" />
                     </button>
                   )}
-                  <button
-                    type="button"
-                    onClick={deleteResume}
-                    title="Remove resume"
-                    className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-400 transition hover:bg-rose-50 hover:text-rose-500 hover:border-rose-200"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  {isEditing && (
+                    <button
+                      type="button"
+                      onClick={deleteResume}
+                      title="Remove resume"
+                      className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-400 transition hover:bg-rose-50 hover:text-rose-500 hover:border-rose-200"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -1476,9 +1802,10 @@ export const JobseekerProfile = () => {
                 <input
                   type="url"
                   value={linkedin}
+                  disabled={!isEditing}
                   onChange={(e) => setLinkedin(e.target.value)}
                   placeholder="https://linkedin.com/in/yourprofile"
-                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none disabled:bg-slate-50/70 disabled:text-slate-600 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -1489,9 +1816,10 @@ export const JobseekerProfile = () => {
                 <input
                   type="url"
                   value={portfolio}
+                  disabled={!isEditing}
                   onChange={(e) => setPortfolio(e.target.value)}
                   placeholder="https://yourportfolio.com"
-                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none disabled:bg-slate-50/70 disabled:text-slate-600 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -1502,30 +1830,54 @@ export const JobseekerProfile = () => {
                 <input
                   type="url"
                   value={github}
+                  disabled={!isEditing}
                   onChange={(e) => setGithub(e.target.value)}
                   placeholder="https://github.com/yourusername"
-                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none disabled:bg-slate-50/70 disabled:text-slate-600 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
           </div>
 
-          {/* Save / Cancel */}
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={handleSave}
-              className="flex items-center gap-1.5 rounded-md bg-[#0047C7] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#00389c]"
-            >
-              <Check className="h-4 w-4" /> Save Changes
-            </button>
-            <button
-              type="button"
-              onClick={() => window.location.reload()}
-              className="flex items-center gap-1.5 rounded-md border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-500 transition hover:bg-slate-50"
-            >
-              <X className="h-4 w-4" /> Cancel
-            </button>
+          {/* Bottom Action Area */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            {isEditing ? (
+              <>
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={!hasChanges || saving}
+                  className="flex items-center justify-center gap-1.5 rounded-md bg-[#0047C7] px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#00389c] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Check className="h-4 w-4" />
+                  {saving ? 'Saving Changes...' : 'Save Changes'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  disabled={saving}
+                  className="flex items-center justify-center gap-1.5 rounded-md border border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+                >
+                  <X className="h-4 w-4" /> Cancel
+                </button>
+                {!hasChanges && (
+                  <span className="text-xs italic text-slate-400">
+                    (No changes made yet)
+                  </span>
+                )}
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditing(true);
+                  window.scrollTo({ top: 300, behavior: 'smooth' });
+                }}
+                className="flex items-center justify-center gap-2 rounded-md bg-[#0047C7] px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#00389c]"
+              >
+                <Edit3 className="h-4 w-4" /> Edit Profile
+              </button>
+            )}
           </div>
         </div>
       </div>
