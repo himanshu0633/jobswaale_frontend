@@ -1427,7 +1427,7 @@ export const JobseekerProfile = () => {
                     </span>
                     <div>
                       <label className="block text-sm font-bold text-slate-800">
-                        Current Salary (वर्तमान वेतन)
+                        Current Salary
                       </label>
                       <span className="text-xs font-semibold text-slate-500">
                         Last drawn or current monthly & annual compensation
@@ -1519,7 +1519,7 @@ export const JobseekerProfile = () => {
                     </span>
                     <div>
                       <label className="block text-sm font-bold text-slate-800">
-                        Expected Salary (अपेक्षित वेतन)
+                        Expected Salary
                       </label>
                       <span className="text-xs font-semibold text-blue-600">
                         Target compensation for future opportunities
