@@ -29,6 +29,7 @@ import {
 import { BASE_API_URL } from '../../../context/AuthContext';
 import ClearFilterButton from '../../../components/ClearFilterButton';
 import { downloadBlobResponse, viewBlobResponse } from '../../../utils/downloadFile';
+import SkillMultiSelectFilter from '../../../components/SkillMultiSelectFilter';
 
 const initialFilters = {
   search: '',
@@ -37,6 +38,7 @@ const initialFilters = {
   experience: '',
   qualification: '',
   skill: '',
+  skills: [],
   minSalary: '',
   maxSalary: '',
   notice: '',
@@ -227,7 +229,10 @@ export const EmployerSearchCandidates = () => {
   const [filters, setFilters] = useState(() => ({
     ...initialFilters,
     search: searchParams.get('search') || '',
-    location: searchParams.get('location') || ''
+    location: searchParams.get('location') || '',
+    skills: searchParams.get('skills')
+      ? searchParams.get('skills').split(',').map(s => s.trim()).filter(Boolean)
+      : (searchParams.get('skill') ? [searchParams.get('skill').trim()] : [])
   }));
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [pageSize, setPageSize] = useState(10);
@@ -322,9 +327,10 @@ export const EmployerSearchCandidates = () => {
     const search = [filters.search, tableSearch].filter(Boolean).join(' ').trim();
     if (search) params.set('search', search);
     Object.entries(filters).forEach(([key, value]) => {
-      if (key === 'search' || key === 'employmentTypes') return;
+      if (key === 'search' || key === 'employmentTypes' || key === 'skills') return;
       if (value) params.set(key, value);
     });
+    if (filters.skills && filters.skills.length) params.set('skills', filters.skills.join(','));
     if (filters.employmentTypes.length) params.set('employmentTypes', filters.employmentTypes.join(','));
     params.set('page', String(currentPage));
     params.set('limit', String(pageSize));
@@ -400,6 +406,45 @@ export const EmployerSearchCandidates = () => {
             <div className="flex items-end"><ClearFilterButton active={hasActiveFilters} onClick={resetFilters} /></div>
           </div>
 
+          {filters.skills && filters.skills.length > 0 && (
+            <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg bg-indigo-50/70 p-2.5 border border-indigo-100">
+              <span className="text-xs font-black text-[#6658dd] flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5" />
+                Filtered by Skills (All {filters.skills.length} must match):
+              </span>
+              {filters.skills.map(skill => (
+                <span
+                  key={skill}
+                  className="inline-flex items-center gap-1 rounded-md bg-[#6658dd] px-2.5 py-0.5 text-xs font-extrabold text-white shadow-xs"
+                >
+                  <span>{skill}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = filters.skills.filter(s => s !== skill);
+                      setFilter('skills', next);
+                      setFilter('skill', next.join(','));
+                    }}
+                    className="text-indigo-200 hover:text-white cursor-pointer"
+                    aria-label={`Remove ${skill}`}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setFilter('skills', []);
+                  setFilter('skill', '');
+                }}
+                className="text-xs font-bold text-rose-600 hover:text-rose-700 underline cursor-pointer ml-auto"
+              >
+                Clear Skills
+              </button>
+            </div>
+          )}
+
           {advancedOpen && (
             <div className="advanced-filter-panel mb-5 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:p-5">
               <div className="mb-5 flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
@@ -410,7 +455,17 @@ export const EmployerSearchCandidates = () => {
                 <ClearFilterButton active={hasActiveFilters} onClick={resetFilters} className="h-9 text-xs sm:w-auto" label="Clear All Filters" />
               </div>
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <SelectField uppercase label="Skills" value={filters.skill} onChange={(value) => setFilter('skill', value)}><option value="">All Skills</option></SelectField>
+                <div className="sm:col-span-2 xl:col-span-2">
+                  <SkillMultiSelectFilter
+                    label="Search by Skill"
+                    selectedSkills={filters.skills || []}
+                    onChange={(nextSkills) => {
+                      setFilter('skills', nextSkills);
+                      setFilter('skill', nextSkills.join(','));
+                    }}
+                    fallbackSkills={optionFilters.skills || []}
+                  />
+                </div>
                 <SelectField uppercase label="Min Salary (LPA)" value={filters.minSalary} onChange={(value) => setFilter('minSalary', value)}><option value="">No Min</option>{[3, 5, 10, 15, 20, 25, 30, 50].map((value) => <option key={value}>{value}</option>)}</SelectField>
                 <SelectField uppercase label="Max Salary (LPA)" value={filters.maxSalary} onChange={(value) => setFilter('maxSalary', value)}><option value="">No Max</option>{[5, 10, 15, 20, 25, 30, 50, 100].map((value) => <option key={value}>{value}</option>)}</SelectField>
                 <SelectField uppercase label="Notice Period" value={filters.notice} onChange={(value) => setFilter('notice', value)}><option value="">Any</option>{['Immediate', '15 Days', '30 Days', '60 Days', '90 Days'].map((item) => <option key={item}>{item}</option>)}</SelectField>
@@ -469,6 +524,31 @@ export const EmployerSearchCandidates = () => {
                   <p className="truncate"><span className="text-slate-400">Expected CTC:</span> <span className="font-extrabold text-[#0047C7]">{candidate.expectedSalary || 'Not specified'}</span></p>
                 </div>
 
+                {candidate.skills && candidate.skills.length > 0 && (
+                  <div className="mt-2.5 flex flex-wrap gap-1">
+                    {candidate.skills.slice(0, 5).map(skill => {
+                      const isMatched = (filters.skills || []).some(s => s.toLowerCase() === skill.toLowerCase());
+                      return (
+                        <span
+                          key={skill}
+                          className={`rounded px-1.5 py-0.5 text-[10px] font-extrabold ${
+                            isMatched
+                              ? 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-300'
+                              : 'bg-slate-100 text-slate-600'
+                          }`}
+                        >
+                          {isMatched && '✓ '}{skill}
+                        </span>
+                      );
+                    })}
+                    {candidate.skills.length > 5 && (
+                      <span className="rounded bg-slate-100 px-1 py-0.5 text-[10px] font-bold text-slate-500">
+                        +{candidate.skills.length - 5}
+                      </span>
+                    )}
+                  </div>
+                )}
+
                 <div className="mt-3 flex items-center justify-end border-t border-slate-100 pt-3">
                   <CandidateActions
                     candidate={candidate}
@@ -517,6 +597,30 @@ export const EmployerSearchCandidates = () => {
                             </button>
                           )}
                           <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><MapPin className="h-3 w-3" />{candidate.location}</p>
+                          {candidate.skills && candidate.skills.length > 0 && (
+                            <div className="mt-1.5 flex flex-wrap gap-1 max-w-[280px]">
+                              {candidate.skills.slice(0, 4).map(skill => {
+                                const isMatched = (filters.skills || []).some(s => s.toLowerCase() === skill.toLowerCase());
+                                return (
+                                  <span
+                                    key={skill}
+                                    className={`rounded px-1.5 py-0.5 text-[10px] font-extrabold ${
+                                      isMatched
+                                        ? 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-300'
+                                        : 'bg-slate-100 text-slate-600'
+                                    }`}
+                                  >
+                                    {isMatched && '✓ '}{skill}
+                                  </span>
+                                );
+                              })}
+                              {candidate.skills.length > 4 && (
+                                <span className="rounded bg-slate-100 px-1 py-0.5 text-[10px] font-bold text-slate-500">
+                                  +{candidate.skills.length - 4}
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -537,7 +641,7 @@ export const EmployerSearchCandidates = () => {
                       />
                     </td>
                   </tr>
-                )) : <tr><td colSpan="6" className="px-5 py-12 text-center text-sm font-bold text-slate-400">No candidates found.</td></tr>}
+                )) : <tr><td colSpan="7" className="px-5 py-12 text-center text-sm font-bold text-slate-400">No candidates found.</td></tr>}
               </tbody>
             </table>
           </div>

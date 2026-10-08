@@ -28,6 +28,7 @@ import {
 import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
 import { getWithCache } from '../../../utils/apiCache';
+import DynamicSkillInput from '../../../components/DynamicSkillInput';
 
 const getRefLabel = (value, keys = []) => {
   if (!value) return '';
@@ -819,6 +820,17 @@ export const JobseekerProfile = () => {
     setExpectedSalary(`₹${m.toLocaleString('en-IN')} / Month (₹${a.toLocaleString('en-IN')} / Year · ${lpa} LPA)`);
   };
 
+  const handleAddSkillFromInput = (value) => {
+    const trimmed = String(value || '').trim();
+    if (!trimmed) return;
+    if (skills.some((s) => s.toLowerCase() === trimmed.toLowerCase())) {
+      setError('Skill has already been added.');
+      return;
+    }
+    setError('');
+    setSkills(prev => [...prev, trimmed]);
+  };
+
   const addSkill = (e) => {
     if (e && e.key && e.key !== 'Enter' && e.key !== ',') return;
     if (e && e.preventDefault) e.preventDefault();
@@ -837,7 +849,7 @@ export const JobseekerProfile = () => {
       return;
     }
     setError('');
-    setSkills([...skills, value]);
+    setSkills(prev => [...prev, value]);
     setSkillInput('');
   };
 
@@ -1751,50 +1763,19 @@ export const JobseekerProfile = () => {
             <h5 className="mb-5 flex items-center gap-2 border-b border-slate-200 pb-4 text-lg font-bold text-[#0f172a]">
               <Sparkles className="h-5 w-5 text-[#0047C7]" /> Skills <span className="text-rose-500">*</span>
             </h5>
-            <div
-              onClick={() => { if (isEditing) document.getElementById('skillInput')?.focus(); }}
-              className={`flex flex-wrap items-center gap-2 rounded-md border border-slate-200 p-3 ${
-                isEditing ? 'cursor-text bg-white' : 'cursor-default bg-slate-50/70'
-              }`}
-            >
-              {skills.map(skill => (
-                <span
-                  key={skill}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-[#0047C7]"
-                >
-                  {skill}
-                  {isEditing && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeSkill(skill);
-                      }}
-                      aria-label={`Remove ${skill}`}
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  )}
-                </span>
-              ))}
-              {isEditing && (
-                <input
-                  type="text"
-                  id="skillInput"
-                  value={skillInput}
-                  onChange={(e) => setSkillInput(e.target.value)}
-                  onKeyDown={addSkill}
-                  placeholder="Type skill and press Enter..."
-                  className="min-w-[140px] flex-1 border-none bg-transparent px-1 py-1 text-xs text-slate-700 focus:outline-none"
-                />
-              )}
-            </div>
+            <DynamicSkillInput
+              skills={skills}
+              onAddSkill={handleAddSkillFromInput}
+              onRemoveSkill={removeSkill}
+              disabled={!isEditing}
+              placeholder="Type or select skill (e.g. Java, React, Laravel)..."
+            />
             {isEditing ? (
-              <p className="mt-1.5 text-xs text-slate-400">
-                Press Enter to add a skill.
+              <p className="mt-2 text-xs text-slate-400">
+                Type to view database suggestions, or type a new skill name and press Enter to save it to the database.
               </p>
             ) : (
-              <p className="mt-1.5 text-xs text-slate-400">
+              <p className="mt-2 text-xs text-slate-400">
                 Click &quot;Edit Profile&quot; to add or remove skills.
               </p>
             )}
