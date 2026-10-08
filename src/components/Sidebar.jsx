@@ -255,26 +255,12 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
                     active={isPathActive('/privacy-policy')}
                   />
                   <NavLink
-                    to={adminPath('/custom-pages')}
-                    icon={FileText}
-                    label="Custom Pages"
-                    active={isPathActive('/custom-pages') || isPathActive('/cms-pages')}
-                  />
-                  <NavLink
                     to={adminPath('/seo-settings')}
                     icon={Globe}
                     label="SEO & Meta Tags"
                     active={isPathActive('/seo-settings') || isPathActive('/seo')}
                   />
                 </>
-              )}
-              {can('content.blog') && (
-                <NavLink
-                  to={adminPath('/blog')}
-                  icon={BookOpen}
-                  label="Blog"
-                  active={isPathActive('/blog')}
-                />
               )}
             </>
           )}
