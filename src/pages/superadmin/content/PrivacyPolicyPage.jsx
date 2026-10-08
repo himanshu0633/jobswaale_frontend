@@ -1,8 +1,8 @@
 import React from 'react';
-import CorePageCMS from './CorePageCMS';
+import LegalDocumentCMS from './LegalDocumentCMS';
 
 export const PrivacyPolicyPage = () => {
-  return <CorePageCMS pageKey="privacy" />;
+  return <LegalDocumentCMS pageKey="privacy" />;
 };
 
 export default PrivacyPolicyPage;

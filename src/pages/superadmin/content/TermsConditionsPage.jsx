@@ -1,8 +1,8 @@
 import React from 'react';
-import CorePageCMS from './CorePageCMS';
+import LegalDocumentCMS from './LegalDocumentCMS';
 
 export const TermsConditionsPage = () => {
-  return <CorePageCMS pageKey="terms" />;
+  return <LegalDocumentCMS pageKey="terms" />;
 };
 
 export default TermsConditionsPage;
