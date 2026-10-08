@@ -112,7 +112,12 @@ const PostJob = lazy(() => import('./pages/superadmin/people/PostJob'));
 const Payments = lazy(() => import('./pages/superadmin/finance/Payments'));
 const AddPayment = lazy(() => import('./pages/superadmin/finance/AddPayment'));
 const Transactions = lazy(() => import('./pages/superadmin/finance/Transactions'));
+const AboutUsPage = lazy(() => import('./pages/superadmin/content/AboutUsPage'));
+const TermsConditionsPage = lazy(() => import('./pages/superadmin/content/TermsConditionsPage'));
+const PrivacyPolicyPage = lazy(() => import('./pages/superadmin/content/PrivacyPolicyPage'));
+const CustomPages = lazy(() => import('./pages/superadmin/content/CustomPages'));
 const CMSPages = lazy(() => import('./pages/superadmin/content/CMSPages'));
+const SEOSettingsPage = lazy(() => import('./pages/superadmin/content/SEOSettingsPage'));
 const Blog = lazy(() => import('./pages/superadmin/content/Blog'));
 const BlogCategory = lazy(() => import('./pages/superadmin/content/BlogCategory'));
 
@@ -341,6 +346,11 @@ const routePermissions = [
   { permission: 'masters.locations', path: '/admin/countries' },
   { permission: 'finance.payments.view', path: '/admin/payments' },
   { permission: 'finance.transactions.view', path: '/admin/payments/transactions' },
+  { permission: 'content.cms', path: '/admin/about-us' },
+  { permission: 'content.cms', path: '/admin/terms-conditions' },
+  { permission: 'content.cms', path: '/admin/privacy-policy' },
+  { permission: 'content.cms', path: '/admin/custom-pages' },
+  { permission: 'content.cms', path: '/admin/seo-settings' },
   { permission: 'content.cms', path: '/admin/cms-pages' },
   { permission: 'content.blog', path: '/admin/blog' },
   { permission: 'system.reports', path: '/admin/reports' },
@@ -448,7 +458,16 @@ const AdminSubRoutes = () => {
         <Route path="payments/transactions" element={withPermission('finance.transactions.view', <Transactions />)} />
 
         {/* Content Management (CMS & Blogs) */}
+        <Route path="about-us" element={withPermission('content.cms', <AboutUsPage />)} />
+        <Route path="terms-conditions" element={withPermission('content.cms', <TermsConditionsPage />)} />
+        <Route path="privacy-policy" element={withPermission('content.cms', <PrivacyPolicyPage />)} />
+        <Route path="custom-pages" element={withPermission('content.cms', <CustomPages />)} />
+        <Route path="seo-settings" element={withPermission('content.cms', <SEOSettingsPage />)} />
+        <Route path="seo" element={<Navigate to="/admin/seo-settings" replace />} />
         <Route path="cms-pages" element={withPermission('content.cms', <CMSPages />)} />
+        <Route path="pages/about" element={<Navigate to="/admin/about-us" replace />} />
+        <Route path="pages/terms" element={<Navigate to="/admin/terms-conditions" replace />} />
+        <Route path="pages/privacy" element={<Navigate to="/admin/privacy-policy" replace />} />
         <Route path="blog" element={withPermission('content.blog', <Blog />)} />
         <Route path="blog-categories" element={withPermission('content.blog', <BlogCategory />)} />
 

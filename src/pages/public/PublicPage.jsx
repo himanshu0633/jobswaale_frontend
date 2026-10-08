@@ -22,6 +22,7 @@ import DigitalMarketing from './DigitalMarketing';
 import SeoBacklinks from './SeoBacklinks';
 
 import { getPublicSettings } from '../../utils/publicSettings';
+import { usePageSEO } from '../../utils/seoHelper';
 
 import { PublicHeader } from './PublicHeader';
 import { PublicFooter } from './PublicFooter';
@@ -37,6 +38,9 @@ export const PublicPage = () => {
 
   // Normalize slug to match keys
   const slug = location.pathname === '/' ? 'home' : location.pathname.replace(/^\/+|\/+$/g, '');
+
+  // Dynamically load & apply SEO Meta tags (Title, Description, Keywords, OG tags, Canonical)
+  usePageSEO(slug);
 
   // Load public setting configurations (e.g. maintenance mode)
   useEffect(() => {

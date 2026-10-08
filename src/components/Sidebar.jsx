@@ -5,6 +5,7 @@ import {
   BarChart3,
   BookOpen,
   Briefcase,
+  Building,
   Building2,
   ChevronDown,
   ChevronRight,
@@ -13,11 +14,14 @@ import {
   FileText,
   Gauge,
   Gift,
+  Globe,
   GraduationCap,
   Handshake,
   Layers,
   MapPin,
+  Scale,
   Settings,
+  Shield,
   Table2,
   Users,
   UserSearch
@@ -231,12 +235,38 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
             <>
               {!isCollapsed && <div className={`${sectionClass} ${palette.title}`}>Content</div>}
               {can('content.cms') && (
-                <NavLink
-                  to={adminPath('/cms-pages')}
-                  icon={FileText}
-                  label="CMS Pages"
-                  active={isPathActive('/cms-pages')}
-                />
+                <>
+                  <NavLink
+                    to={adminPath('/about-us')}
+                    icon={Building}
+                    label="About Us"
+                    active={isPathActive('/about-us')}
+                  />
+                  <NavLink
+                    to={adminPath('/terms-conditions')}
+                    icon={Scale}
+                    label="Terms & Conditions"
+                    active={isPathActive('/terms-conditions')}
+                  />
+                  <NavLink
+                    to={adminPath('/privacy-policy')}
+                    icon={Shield}
+                    label="Privacy Policy"
+                    active={isPathActive('/privacy-policy')}
+                  />
+                  <NavLink
+                    to={adminPath('/custom-pages')}
+                    icon={FileText}
+                    label="Custom Pages"
+                    active={isPathActive('/custom-pages') || isPathActive('/cms-pages')}
+                  />
+                  <NavLink
+                    to={adminPath('/seo-settings')}
+                    icon={Globe}
+                    label="SEO & Meta Tags"
+                    active={isPathActive('/seo-settings') || isPathActive('/seo')}
+                  />
+                </>
               )}
               {can('content.blog') && (
                 <NavLink

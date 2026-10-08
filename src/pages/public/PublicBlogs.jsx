@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { User, Calendar, Search } from 'lucide-react';
 import { PublicHeader, PublicFooter } from './PublicPage';
+import { usePageSEO } from '../../utils/seoHelper';
 
 import blogThumb1 from './blogImages/blog-thumb-1.png';
 import blogThumb3 from './blogImages/blog-thumb-3.png';
@@ -12,6 +13,7 @@ import blogThumb7 from './blogImages/blog-thumb-7.png';
 import blogThumb8 from './blogImages/blog-thumb-8.png';
 
 export const PublicBlogs = () => {
+  usePageSEO('blogs');
   const [searchQuery, setSearchQuery] = useState('');
 
   const categories = [
