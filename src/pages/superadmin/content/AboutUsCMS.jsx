@@ -45,13 +45,27 @@ export const AboutUsCMS = () => {
     return JSON.parse(JSON.stringify(DEFAULT_ABOUT_SECTIONS_DATA));
   });
 
+  // Track saved snapshot for each section to detect unsaved changes
+  const [savedSectionsSnapshot, setSavedSectionsSnapshot] = useState({});
+  const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const [pendingTargetTab, setPendingTargetTab] = useState(null);
+
   const alertTimerRef = useRef(null);
+  const topRef = useRef(null);
+
   const showAlert = (type, text) => {
     if (alertTimerRef.current) clearTimeout(alertTimerRef.current);
     setAlert({ type, text });
     alertTimerRef.current = setTimeout(() => {
       setAlert({ type: '', text: '' });
     }, 6000);
+  };
+
+  // Check if a specific section has unsaved edits
+  const isSectionDirty = (sectionId) => {
+    const sec = sections.find(s => s.id === sectionId);
+    if (!sec || !savedSectionsSnapshot[sectionId]) return false;
+    return JSON.stringify(sec) !== savedSectionsSnapshot[sectionId];
   };
 
   // Fetch from backend
@@ -64,9 +78,10 @@ export const AboutUsCMS = () => {
 
       if (res.data) {
         const pageSections = res.data.sections || res.data.projectData?.sections;
+        let finalSections = DEFAULT_ABOUT_SECTIONS_DATA;
+
         if (Array.isArray(pageSections) && pageSections.length > 0) {
-          // Merge with default data to guarantee all keys exist
-          const merged = DEFAULT_ABOUT_SECTIONS_DATA.map(def => {
+          finalSections = DEFAULT_ABOUT_SECTIONS_DATA.map(def => {
             const found = pageSections.find(s => s.id === def.id);
             if (!found) return def;
             return {
@@ -80,14 +95,20 @@ export const AboutUsCMS = () => {
               image: { ...def.image, ...found.image }
             };
           });
-          setSections(merged);
-        } else {
-          setSections(JSON.parse(JSON.stringify(DEFAULT_ABOUT_SECTIONS_DATA)));
         }
+
+        setSections(finalSections);
+        const snapshot = {};
+        finalSections.forEach(s => { snapshot[s.id] = JSON.stringify(s); });
+        setSavedSectionsSnapshot(snapshot);
       }
     } catch (err) {
       // If 404 / not saved in DB, smoothly use the complete defaults
-      setSections(JSON.parse(JSON.stringify(DEFAULT_ABOUT_SECTIONS_DATA)));
+      const defaults = JSON.parse(JSON.stringify(DEFAULT_ABOUT_SECTIONS_DATA));
+      setSections(defaults);
+      const snapshot = {};
+      defaults.forEach(s => { snapshot[s.id] = JSON.stringify(s); });
+      setSavedSectionsSnapshot(snapshot);
     } finally {
       setLoading(false);
     }
@@ -96,6 +117,19 @@ export const AboutUsCMS = () => {
   useEffect(() => {
     fetchPage();
   }, []);
+
+  // Warn user on page refresh/close if there are unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      const anyDirty = sections.some(s => isSectionDirty(s.id));
+      if (anyDirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [sections, savedSectionsSnapshot]);
 
   // Section level update
   const updateSectionField = (sectionId, field, value) => {
@@ -168,7 +202,8 @@ export const AboutUsCMS = () => {
   // Reset to default
   const handleResetToDefault = () => {
     if (!window.confirm('Are you sure you want to reset all About Us sections to the original default layout, texts, and images?')) return;
-    setSections(JSON.parse(JSON.stringify(DEFAULT_ABOUT_SECTIONS_DATA)));
+    const defaults = JSON.parse(JSON.stringify(DEFAULT_ABOUT_SECTIONS_DATA));
+    setSections(defaults);
     showAlert('success', 'Reset all sections to default template. Click "Save & Publish" to apply changes live.');
   };
 
@@ -196,7 +231,15 @@ export const AboutUsCMS = () => {
         { headers: getAuthHeaders() }
       );
 
+      // Update snapshots on successful save
+      const snapshot = {};
+      sections.forEach(s => { snapshot[s.id] = JSON.stringify(s); });
+      setSavedSectionsSnapshot(snapshot);
+
       showAlert('success', 'About Us page updated and published successfully! Changes are live on /about.');
+
+      // Smooth scroll to top where the success toast/alert is displayed
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
       console.error('Save About Us error:', err);
       showAlert('error', err.response?.data?.message || 'Failed to save About Us page. Please try again.');
@@ -205,8 +248,83 @@ export const AboutUsCMS = () => {
     }
   };
 
+  // Tab switching with unsaved changes verification
+  const handleTabClick = (targetTabId) => {
+    if (targetTabId === activeTab) return;
+
+    if (isSectionDirty(activeTab)) {
+      setPendingTargetTab(targetTabId);
+      setShowUnsavedModal(true);
+    } else {
+      setActiveTab(targetTabId);
+    }
+  };
+
+  // Modal Action 1: Save & Continue
+  const handleModalSaveAndContinue = async () => {
+    setSaving(true);
+    try {
+      const payload = {
+        title: 'About Us',
+        slug: 'about',
+        sections: sections,
+        published: true,
+        projectData: {
+          editor: 'about-cms',
+          sections: sections
+        }
+      };
+
+      await axios.put(
+        `${BASE_API_URL}/cms/pages/by-slug/about`,
+        payload,
+        { headers: getAuthHeaders() }
+      );
+
+      const snapshot = {};
+      sections.forEach(s => { snapshot[s.id] = JSON.stringify(s); });
+      setSavedSectionsSnapshot(snapshot);
+
+      showAlert('success', `Changes saved successfully!`);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      if (pendingTargetTab) {
+        setActiveTab(pendingTargetTab);
+        setPendingTargetTab(null);
+      }
+      setShowUnsavedModal(false);
+    } catch (err) {
+      console.error('Modal save error:', err);
+      showAlert('error', err.response?.data?.message || 'Failed to save changes.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Modal Action 2: Discard & Continue
+  const handleModalDiscardAndContinue = () => {
+    if (savedSectionsSnapshot[activeTab]) {
+      const originalSec = JSON.parse(savedSectionsSnapshot[activeTab]);
+      setSections(prev => prev.map(s => s.id === activeTab ? originalSec : s));
+    }
+    showAlert('success', `Unsaved edits discarded.`);
+
+    if (pendingTargetTab) {
+      setActiveTab(pendingTargetTab);
+      setPendingTargetTab(null);
+    }
+    setShowUnsavedModal(false);
+  };
+
+  // Modal Action 3: Cancel
+  const handleModalCancel = () => {
+    setPendingTargetTab(null);
+    setShowUnsavedModal(false);
+  };
+
   // Helper for current section
   const currentSection = sections.find(s => s.id === activeTab) || sections[0];
+  const pendingSection = sections.find(s => s.id === pendingTargetTab);
 
   const sectionTabs = [
     { id: 'hero', label: '1. Hero Banner', icon: Sparkles },
@@ -229,7 +347,65 @@ export const AboutUsCMS = () => {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+    <div ref={topRef} className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+      {/* Unsaved Changes Confirmation Modal */}
+      {showUnsavedModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in zoom-in-95 duration-200">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center shrink-0">
+                <AlertCircle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">
+                  Unsaved Changes
+                </h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Aapne <strong>{currentSection?.name}</strong> section me changes kiye hain jo abhi save nahi hue hain.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 rounded-xl p-3.5 border border-slate-200 text-xs text-slate-600 leading-relaxed">
+              {pendingSection ? (
+                <><strong>{pendingSection.name}</strong> par switch karne se pehle kripya chunein:</>
+              ) : (
+                <>Dusre section par switch karne se pehle kripya chunein:</>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={handleModalCancel}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleModalDiscardAndContinue}
+                className="px-4 py-2 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition flex items-center gap-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Discard Changes
+              </button>
+
+              <button
+                type="button"
+                disabled={saving}
+                onClick={handleModalSaveAndContinue}
+                className="px-4 py-2 text-xs font-bold text-white bg-[#0047C7] hover:bg-[#003cb0] rounded-xl transition flex items-center gap-1.5 shadow-xs"
+              >
+                <Save className="w-3.5 h-3.5" />
+                {saving ? 'Saving...' : 'Save & Continue'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top Banner Alert */}
       {alert.text && (
         <div
@@ -313,11 +489,12 @@ export const AboutUsCMS = () => {
         {sectionTabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
+          const isDirty = isSectionDirty(tab.id);
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all ${
+              onClick={() => handleTabClick(tab.id)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all relative ${
                 isActive
                   ? 'bg-white text-[#0047C7] shadow-xs'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
@@ -325,6 +502,12 @@ export const AboutUsCMS = () => {
             >
               <Icon className={`w-4 h-4 ${isActive ? 'text-[#0047C7]' : 'text-slate-400'}`} />
               {tab.label}
+              {isDirty && (
+                <span
+                  title="Unsaved changes in this section"
+                  className="w-2 h-2 rounded-full bg-amber-500 animate-pulse ml-0.5"
+                />
+              )}
             </button>
           );
         })}
