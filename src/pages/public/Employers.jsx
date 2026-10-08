@@ -329,7 +329,7 @@ export const Employers = () => {
         setFilteredCompanies(mapped);
       } catch (err) {
         console.error('Error fetching public employers:', err);
-        setCompanyError('Failed to load employers from database.');
+        setCompanyError('Failed to load employers. Please try again.');
         setCompanies([]);
         setFilteredCompanies([]);
       } finally {

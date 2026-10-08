@@ -136,7 +136,7 @@ export const Jobs = () => {
         setLocations(Array.from(new Set(mappedJobs.map(job => job.location).filter(location => location && location !== 'Location not specified'))).sort((a, b) => a.localeCompare(b)));
       } catch (err) {
         console.error('Fetch jobs error:', err);
-        setError('Failed to fetch jobs from database.');
+        setError('Failed to fetch jobs. Please try again.');
       } finally {
         setLoading(false);
       }

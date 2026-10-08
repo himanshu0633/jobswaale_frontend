@@ -26,6 +26,7 @@ import {
 import { BASE_API_URL } from '../../context/AuthContext';
 import logoAsset from '../../assets/logo-black.png';
 import { getPublicSettings } from '../../utils/publicSettings';
+import { validateEmail } from '../../utils/emailValidator';
 import RegImg from './authImages/register-illustration.png'
 
 const benefits = [
@@ -143,6 +144,10 @@ export const Register = () => {
   const [settings, setSettings] = useState({ userRegistration: true, minPassLen: 8 });
 
   const strength = useMemo(() => getPasswordStrength(form.password), [form.password]);
+  const emailValidation = useMemo(() => {
+    if (!form.email || !form.email.trim()) return { valid: true, hasTypo: false };
+    return validateEmail(form.email);
+  }, [form.email]);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -218,6 +223,12 @@ export const Register = () => {
 
     if (!settings.userRegistration) {
       setError('New registrations are currently disabled.');
+      return;
+    }
+
+    const emailCheck = validateEmail(form.email);
+    if (!emailCheck.valid) {
+      setError(emailCheck.error);
       return;
     }
 
@@ -387,16 +398,33 @@ export const Register = () => {
               placeholder="Enter your full name"
             />
 
-            <TextInput
-              icon={Mail}
-              label="Email Address"
-              required
-              type="email"
-              value={form.email}
-              onChange={(event) => setField('email', event.target.value)}
-              placeholder="name@example.com"
-              helper="We'll send relevant jobs and updates to this email."
-            />
+            <div>
+              <TextInput
+                icon={Mail}
+                label="Email Address"
+                required
+                type="email"
+                value={form.email}
+                onChange={(event) => setField('email', event.target.value)}
+                placeholder="name@example.com"
+                helper={!emailValidation.hasTypo ? "We'll send relevant jobs and updates to this email." : undefined}
+              />
+              {emailValidation.hasTypo && (
+                <div className="mt-2 flex items-center justify-between rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900 shadow-xs">
+                  <div className="flex items-center gap-1.5 flex-1 min-w-0 pr-2">
+                    <span className="font-extrabold text-amber-700">💡 Did you mean:</span>
+                    <span className="font-mono font-bold text-indigo-700 truncate">{emailValidation.suggestion}</span>?
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setField('email', emailValidation.suggestion)}
+                    className="shrink-0 px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs shadow-xs transition cursor-pointer"
+                  >
+                    Yes, fix it
+                  </button>
+                </div>
+              )}
+            </div>
 
             <div>
               <TextInput

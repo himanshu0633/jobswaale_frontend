@@ -6,6 +6,7 @@ import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
 import { permissionGroups } from '../../../utils/permissions';
 import { cleanPhoneInput } from '../../../utils/phone';
+import { validateEmail } from '../../../utils/emailValidator';
 
 const AddUser = () => {
   const { id } = useParams();
@@ -69,11 +70,23 @@ const AddUser = () => {
     })).filter(group => group.selected > 0);
   }, [selectedRole]);
 
+  const emailValidation = useMemo(() => {
+    if (!form.email || !form.email.trim()) return { valid: true, hasTypo: false };
+    return validateEmail(form.email);
+  }, [form.email]);
+
   const update = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
 
   const submit = async (e) => {
     e.preventDefault();
     setGeneratedPassword('');
+
+    const emailCheck = validateEmail(form.email);
+    if (!emailCheck.valid) {
+      setMessage({ type: 'error', text: emailCheck.error });
+      return;
+    }
+
     setSubmitting(true);
     try {
       if (id) {
@@ -142,7 +155,25 @@ const AddUser = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div><label className={labelCls}>First Name <span className="text-rose-500">*</span></label><input value={form.firstName} onChange={(e) => update('firstName', e.target.value)} className={inputCls} required /></div>
                 <div><label className={labelCls}>Last Name <span className="text-rose-500">*</span></label><input value={form.lastName} onChange={(e) => update('lastName', e.target.value)} className={inputCls} required /></div>
-                <div><label className={labelCls}>Email Address <span className="text-rose-500">*</span></label><input type="email" value={form.email} onChange={(e) => update('email', e.target.value)} className={inputCls} disabled={Boolean(id)} required /></div>
+                <div>
+                  <label className={labelCls}>Email Address <span className="text-rose-500">*</span></label>
+                  <input type="email" value={form.email} onChange={(e) => update('email', e.target.value)} className={inputCls} disabled={Boolean(id)} required />
+                  {emailValidation.hasTypo && (
+                    <div className="mt-2 flex items-center justify-between rounded-lg bg-amber-50 border border-amber-200 p-2.5 text-xs text-amber-900">
+                      <div className="flex items-center gap-1.5 flex-1 min-w-0 pr-2">
+                        <span className="font-bold text-amber-700">💡 Did you mean:</span>
+                        <span className="font-mono font-bold text-indigo-700 truncate">{emailValidation.suggestion}</span>?
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => update('email', emailValidation.suggestion)}
+                        className="shrink-0 px-2.5 py-1 rounded bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] shadow-xs cursor-pointer transition"
+                      >
+                        Yes, fix it
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <div><label className={labelCls}>Phone Number <span className="text-rose-500">*</span></label><input value={form.phone} onChange={(e) => update('phone', cleanPhoneInput(e.target.value))} className={inputCls} placeholder="+91 1234567890" required /></div>
               </div>
 

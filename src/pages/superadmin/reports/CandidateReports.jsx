@@ -48,7 +48,7 @@ export const CandidateReports = () => {
       }
     } catch (err) {
       console.error('Failed to fetch candidate reports:', err);
-      setError('Could not retrieve live candidate reports database from backend.');
+      setError('Unable to load candidate reports at this time. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -334,7 +334,7 @@ export const CandidateReports = () => {
             {loading ? (
               <div className="flex items-center justify-center p-8 text-slate-500 text-xs font-semibold gap-2">
                 <Loader className="w-4 h-4 animate-spin text-indigo-600" />
-                Loading candidate reports database...
+                Loading candidate reports...
               </div>
             ) : (
               <div className="overflow-x-auto">

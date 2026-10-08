@@ -17,6 +17,7 @@ import {
 import { BASE_API_URL } from '../../context/AuthContext';
 import logoAsset from '../../assets/logo-black.png';
 import { getPublicSettings } from '../../utils/publicSettings';
+import { validateEmail } from '../../utils/emailValidator';
 
 const makeCaptcha = () => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -101,6 +102,11 @@ export const Login = () => {
     return /^[0-9+() -]{3,}$/.test(identifier.trim()) ? Phone : Mail;
   }, [identifier]);
   const IdentifierIcon = identifierIcon;
+
+  const emailValidation = useMemo(() => {
+    if (!identifier || !identifier.includes('@')) return { valid: true, hasTypo: false };
+    return validateEmail(identifier);
+  }, [identifier]);
 
   useEffect(() => {
     const loadPublicSettings = async () => {
@@ -202,6 +208,14 @@ export const Login = () => {
     if (loginMethod === 'otp') {
       setError('OTP login is not connected yet. Please use password login.');
       return;
+    }
+
+    if (identifier.includes('@')) {
+      const emailCheck = validateEmail(identifier);
+      if (emailCheck.hasTypo) {
+        setError(emailCheck.error);
+        return;
+      }
     }
 
     setLoading(true);
@@ -421,6 +435,21 @@ export const Login = () => {
                     className="w-full rounded-xl border-0 bg-transparent py-4 pl-12 pr-4 text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400"
                   />
                 </div>
+                {emailValidation.hasTypo && (
+                  <div className="mt-2 flex items-center justify-between rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900 shadow-xs">
+                    <div className="flex items-center gap-1.5 flex-1 min-w-0 pr-2">
+                      <span className="font-extrabold text-amber-700">💡 Did you mean:</span>
+                      <span className="font-mono font-bold text-indigo-700 truncate">{emailValidation.suggestion}</span>?
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIdentifier(emailValidation.suggestion)}
+                      className="shrink-0 px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs shadow-xs transition cursor-pointer"
+                    >
+                      Yes, fix it
+                    </button>
+                  </div>
+                )}
               </div>
 
               {loginMethod === 'password' ? (

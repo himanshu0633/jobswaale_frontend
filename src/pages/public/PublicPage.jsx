@@ -80,6 +80,7 @@ export const PublicPage = () => {
       case 'jobseeker-plan':
         return <JobseekerPlan />;
       case 'about':
+      case 'about-us':
         return <About settings={settings} />;
       case 'contact':
         return <Contact />;
@@ -96,8 +97,11 @@ export const PublicPage = () => {
       case 'seo-backlinks':
         return <SeoBacklinks />;
       case 'privacy-policy':
+      case 'privacy':
         return <PrivacyPolicy />;
       case 'terms-conditions':
+      case 'terms':
+      case 'terms-and-conditions':
         return <TermsConditions />;
       default:
         return (

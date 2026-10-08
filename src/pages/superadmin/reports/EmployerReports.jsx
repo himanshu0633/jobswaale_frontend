@@ -47,7 +47,7 @@ export const EmployerReports = () => {
       }
     } catch (err) {
       console.error('Failed to fetch employer reports:', err);
-      setError('Could not retrieve live employer reports database from backend.');
+      setError('Unable to load employer reports at this time. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -302,7 +302,7 @@ export const EmployerReports = () => {
             {loading ? (
               <div className="flex items-center justify-center p-8 text-slate-500 text-xs font-semibold gap-2">
                 <Loader className="w-4 h-4 animate-spin text-indigo-600" />
-                Loading employer reports database...
+                Loading employer reports...
               </div>
             ) : (
               <div className="overflow-x-auto">

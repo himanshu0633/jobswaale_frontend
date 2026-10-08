@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import { AlertOctagon, CheckCircle2, Loader, X, ArrowRight } from 'lucide-react';
 import axios from 'axios';
+import { validateEmail } from '../../../utils/emailValidator';
 import logoBlack from '../../../assets/logo-black.png';
 
 export const ForgotPassword = () => {
@@ -18,6 +19,11 @@ export const ForgotPassword = () => {
   const isAdmin = location.pathname.toLowerCase().includes('superadmin') || 
     new URLSearchParams(location.search).get('role') === 'admin';
 
+  const emailValidation = useMemo(() => {
+    if (!email || !email.trim()) return { valid: true, hasTypo: false };
+    return validateEmail(email);
+  }, [email]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -26,6 +32,12 @@ export const ForgotPassword = () => {
 
     if (!agreeTerms) {
       setError('You must agree to the Terms & Policy before sending request.');
+      return;
+    }
+
+    const emailCheck = validateEmail(email);
+    if (!emailCheck.valid) {
+      setError(emailCheck.error);
       return;
     }
 
@@ -39,7 +51,7 @@ export const ForgotPassword = () => {
       }
       setEmail('');
     } catch (err) {
-      setError(err.response?.data?.message || 'Oops! Email is not in our database. Please try again.');
+      setError(err.response?.data?.message || 'Oops! This email address is not registered with us. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -149,6 +161,21 @@ export const ForgotPassword = () => {
                 placeholder="you@example.com"
                 className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white"
               />
+              {emailValidation.hasTypo && (
+                <div className="mt-2 flex items-center justify-between rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900 shadow-xs">
+                  <div className="flex items-center gap-1.5 flex-1 min-w-0 pr-2">
+                    <span className="font-extrabold text-amber-700">💡 Did you mean:</span>
+                    <span className="font-mono font-bold text-indigo-700 truncate">{emailValidation.suggestion}</span>?
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setEmail(emailValidation.suggestion)}
+                    className="shrink-0 px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs shadow-xs transition cursor-pointer"
+                  >
+                    Yes, fix it
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Terms and Policy check */}

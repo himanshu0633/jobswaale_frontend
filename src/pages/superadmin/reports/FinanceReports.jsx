@@ -47,7 +47,7 @@ export const FinanceReports = () => {
       }
     } catch (err) {
       console.error('Failed to fetch finance reports:', err);
-      setError('Could not retrieve live finance reports database from backend.');
+      setError('Unable to load finance reports at this time. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -336,7 +336,7 @@ export const FinanceReports = () => {
             {loading ? (
               <div className="flex items-center justify-center p-8 text-slate-500 text-xs font-semibold gap-2">
                 <Loader className="w-4 h-4 animate-spin text-indigo-600" />
-                Loading finance reports database...
+                Loading finance reports...
               </div>
             ) : (
               <div className="overflow-x-auto">

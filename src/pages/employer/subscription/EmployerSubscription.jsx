@@ -411,7 +411,7 @@ export const EmployerSubscription = () => {
               Upgrade Plan
             </a>
             <button
-              onClick={() => setSuccess('Cancellation request noted. Admin will review it from backend records.')}
+              onClick={() => setSuccess('Cancellation request noted. Support team will review and process your request.')}
               className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4.5 py-2.5 text-sm font-extrabold text-slate-600 transition hover:bg-slate-50"
             >
               <X className="h-4.5 w-4.5" />

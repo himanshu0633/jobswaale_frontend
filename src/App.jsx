@@ -341,6 +341,8 @@ const routePermissions = [
   { permission: 'masters.locations', path: '/admin/countries' },
   { permission: 'finance.payments.view', path: '/admin/payments' },
   { permission: 'finance.transactions.view', path: '/admin/payments/transactions' },
+  { permission: 'content.cms', path: '/admin/cms-pages' },
+  { permission: 'content.blog', path: '/admin/blog' },
   { permission: 'system.reports', path: '/admin/reports' },
   { permission: 'system.settings', path: '/admin/settings' },
   { permission: 'system.users', path: '/admin/users-roles/users' },

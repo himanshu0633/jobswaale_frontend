@@ -3,12 +3,14 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   ArrowRightLeft,
   BarChart3,
+  BookOpen,
   Briefcase,
   Building2,
   ChevronDown,
   ChevronRight,
   CreditCard,
   Factory,
+  FileText,
   Gauge,
   Gift,
   GraduationCap,
@@ -224,6 +226,28 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
               </>
             )}
           </div>}
+
+          {(can('content.cms') || can('content.blog')) && (
+            <>
+              {!isCollapsed && <div className={`${sectionClass} ${palette.title}`}>Content</div>}
+              {can('content.cms') && (
+                <NavLink
+                  to={adminPath('/cms-pages')}
+                  icon={FileText}
+                  label="CMS Pages"
+                  active={isPathActive('/cms-pages')}
+                />
+              )}
+              {can('content.blog') && (
+                <NavLink
+                  to={adminPath('/blog')}
+                  icon={BookOpen}
+                  label="Blog"
+                  active={isPathActive('/blog')}
+                />
+              )}
+            </>
+          )}
 
           {!isCollapsed && <div className={`${sectionClass} ${palette.title}`}>Finance</div>}
           {can('finance.payments.view') && <NavLink to={adminPath('/payments')} icon={CreditCard} label="Payments" active={isPathActive('/payments')} />}

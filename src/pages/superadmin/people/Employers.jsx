@@ -75,7 +75,7 @@ export const Employers = () => {
       })
       .catch((err) => {
         console.error(err);
-        showMessage('error', 'Failed to retrieve employers database.');
+        showMessage('error', 'Failed to retrieve employers list. Please try again.');
       })
       .finally(() => {
         if (isMounted) {

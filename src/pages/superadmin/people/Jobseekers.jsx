@@ -65,7 +65,7 @@ export const Jobseekers = () => {
       setFilteredList(response.data);
     } catch (err) {
       console.error(err);
-      showMessage('error', 'Failed to retrieve jobseekers database.');
+      showMessage('error', 'Failed to retrieve jobseekers list. Please try again.');
     } finally {
       setLoading(false);
     }

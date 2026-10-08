@@ -87,7 +87,7 @@ export const FeaturedJobs = () => {
           </div>
         ) : jobs.length === 0 ? (
           <div className="rounded-xl border border-slate-200 bg-white p-12 text-center text-slate-500">
-            No active jobs found in the database.
+            No active jobs found at this time.
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

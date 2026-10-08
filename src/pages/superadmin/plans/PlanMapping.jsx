@@ -52,7 +52,7 @@ export const PlanMapping = () => {
       setMappings(mapObj);
     } catch (err) {
       console.error(err);
-      showMessage('error', 'Error loading plan mapping databases.');
+      showMessage('error', 'Error loading plan mapping records.');
     } finally {
       setLoading(false);
     }

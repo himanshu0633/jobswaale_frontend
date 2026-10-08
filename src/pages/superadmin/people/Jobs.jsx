@@ -145,7 +145,7 @@ export const Jobs = () => {
       setList(response.data);
     } catch (err) {
       console.error(err);
-      showMessage('error', 'Failed to retrieve jobs database.');
+      showMessage('error', 'Failed to retrieve jobs list. Please try again.');
     } finally {
       setLoading(false);
     }
