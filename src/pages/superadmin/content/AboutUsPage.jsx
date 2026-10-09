@@ -1,8 +1,8 @@
 import React from 'react';
-import CorePageCMS from './CorePageCMS';
+import AboutUsCMS from './AboutUsCMS';
 
 export const AboutUsPage = () => {
-  return <CorePageCMS pageKey="about" />;
+  return <AboutUsCMS />;
 };
 
 export default AboutUsPage;
