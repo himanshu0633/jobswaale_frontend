@@ -156,6 +156,11 @@ export const EmployerApplications = () => {
     applicationActivity: searchParams.get('applicationActivity') || 'active'
   });
   const [filters, setFilters] = useState(getUrlFilters);
+
+  useEffect(() => {
+    setFilters(getUrlFilters());
+    setCurrentPage(1);
+  }, [searchParams.toString()]);
   const [tableSearch, setTableSearch] = useState('');
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);

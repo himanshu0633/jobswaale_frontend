@@ -24,7 +24,9 @@ import {
   UserCheck,
   UserPlus,
   Users,
-  Check
+  Check,
+  Sparkles,
+  X
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import ClearFilterButton from '../../../components/ClearFilterButton';
@@ -53,7 +55,7 @@ const initialFilters = {
 };
 
 const statCards = [
-  { key: 'total', title: 'Total in Database', icon: Users, tone: 'bg-violet-50 text-[#6658dd]' },
+  { key: 'total', title: 'Total', icon: Users, tone: 'bg-violet-50 text-[#6658dd]' },
   { key: 'availableNow', title: 'Available Now', icon: UserCheck, tone: 'bg-emerald-50 text-emerald-500' },
   { key: 'newThisWeek', title: 'New This Week', icon: UserPlus, tone: 'bg-sky-50 text-sky-500' },
   { key: 'premiumProfiles', title: 'Premium Profiles', icon: Star, tone: 'bg-amber-50 text-amber-500' },
@@ -145,6 +147,75 @@ const viewCandidateResume = async (candidate) => {
   }
 };
 
+const renderCandidateSalaryCell = (val, isExpected = false) => {
+  if (!val || val === 'Not specified' || val === '-' || val === 'N/A') {
+    return <span className="text-xs font-medium text-slate-400">Not specified</span>;
+  }
+  const str = String(val).trim();
+
+  const monthlyMatch = str.match(/^₹?([0-9,]+)\s*\/\s*(?:Month|mo)\s*\((.+)\)$/i);
+  if (monthlyMatch) {
+    const monthlyAmt = `₹${monthlyMatch[1]}/mo`;
+    const details = monthlyMatch[2];
+    const lpaMatch = details.match(/([0-9.]+\s*LPA)/i);
+    const subText = lpaMatch ? lpaMatch[1] : details.replace(/\s*\/\s*Year/i, '/yr');
+    return (
+      <div className="leading-tight">
+        <span className={`text-xs font-bold ${isExpected ? 'text-[#0047C7]' : 'text-slate-700'}`}>
+          {monthlyAmt}
+        </span>
+        <span className={`block text-[10.5px] font-semibold mt-0.5 ${isExpected ? 'text-blue-500/80' : 'text-slate-400'}`}>
+          {subText}
+        </span>
+      </div>
+    );
+  }
+
+  if (/^\d+$/.test(str)) {
+    const num = Number(str);
+    if (num >= 100000) {
+      const lpa = (num / 100000).toFixed(1).replace(/\.0$/, '');
+      return (
+        <div className="leading-tight">
+          <span className={`text-xs font-bold ${isExpected ? 'text-[#0047C7]' : 'text-slate-700'}`}>
+            ₹{lpa} LPA
+          </span>
+          <span className={`block text-[10px] font-semibold mt-0.5 ${isExpected ? 'text-blue-500/80' : 'text-slate-400'}`}>
+            ₹{num.toLocaleString('en-IN')}/yr
+          </span>
+        </div>
+      );
+    }
+    return (
+      <span className={`text-xs font-bold ${isExpected ? 'text-[#0047C7]' : 'text-slate-700'}`}>
+        ₹{num.toLocaleString('en-IN')}
+      </span>
+    );
+  }
+
+  return (
+    <span className={`text-xs font-bold ${isExpected ? 'text-[#0047C7]' : 'text-slate-700'}`}>
+      {str}
+    </span>
+  );
+};
+
+const formatInlineSalary = (val) => {
+  if (!val || val === 'Not specified' || val === '-' || val === 'N/A') return 'Not specified';
+  const str = String(val).trim();
+  const monthlyMatch = str.match(/^₹?([0-9,]+)\s*\/\s*(?:Month|mo)\s*\((.+)\)$/i);
+  if (monthlyMatch) {
+    const lpaMatch = monthlyMatch[2].match(/([0-9.]+\s*LPA)/i);
+    return lpaMatch ? `₹${monthlyMatch[1]}/mo (${lpaMatch[1]})` : `₹${monthlyMatch[1]}/mo`;
+  }
+  if (/^\d+$/.test(str)) {
+    const num = Number(str);
+    if (num >= 100000) return `₹${(num / 100000).toFixed(1).replace(/\.0$/, '')} LPA`;
+    return `₹${num.toLocaleString('en-IN')}`;
+  }
+  return str;
+};
+
 const filterLabelClass = 'mb-2 block text-xs font-extrabold text-slate-500';
 const filterControlClass = 'candidate-filter-control h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 outline-none placeholder:font-bold placeholder:text-slate-400 focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100';
 
@@ -234,6 +305,15 @@ export const EmployerSearchCandidates = () => {
       ? searchParams.get('skills').split(',').map(s => s.trim()).filter(Boolean)
       : (searchParams.get('skill') ? [searchParams.get('skill').trim()] : [])
   }));
+
+  const urlSearch = searchParams.get('search') ?? '';
+  useEffect(() => {
+    setFilters((prev) => {
+      if (prev.search === urlSearch) return prev;
+      return { ...prev, search: urlSearch };
+    });
+    setCurrentPage(1);
+  }, [urlSearch]);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -320,6 +400,10 @@ export const EmployerSearchCandidates = () => {
     setFilters(initialFilters);
     setTableSearch('');
     setCurrentPage(1);
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete('search');
+    const qs = newParams.toString();
+    navigate(qs ? `?${qs}` : window.location.pathname, { replace: true });
   };
 
   const queryParams = useMemo(() => {
@@ -339,6 +423,7 @@ export const EmployerSearchCandidates = () => {
 
   useEffect(() => {
     let alive = true;
+    setLoading(true);
     axios.get(`${BASE_API_URL}/employer/candidates?${queryParams}`, { headers: getTokenHeaders() })
       .then((response) => {
         if (!alive) return;
@@ -367,8 +452,8 @@ export const EmployerSearchCandidates = () => {
   return (
     <div className="space-y-4 px-3 sm:space-y-5 sm:px-0">
       <div className="flex flex-col justify-between gap-2 md:flex-row md:items-center md:gap-3">
-        <h1 className="text-lg font-extrabold text-[#3f4254] sm:text-xl">Search Candidates</h1>
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-400 sm:text-sm"><span className="text-[#3f4254]">JobsWaale</span><ChevronRight className="h-4 w-4" /><span>Search Candidates</span></div>
+        <h1 className="text-lg font-extrabold text-[#3f4254] sm:text-xl">Candidates</h1>
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-400 sm:text-sm"><span className="text-[#3f4254]">JobsWaale</span><ChevronRight className="h-4 w-4" /><span>Candidates</span></div>
       </div>
 
       {error && <div className="rounded-md border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{error}</div>}
@@ -386,7 +471,7 @@ export const EmployerSearchCandidates = () => {
 
       <section className="rounded-md border border-slate-100 bg-white shadow-sm">
         <div className="flex flex-col justify-between gap-4 border-b border-dashed border-slate-200 px-4 py-4 sm:px-5 lg:flex-row lg:items-center">
-          <div><h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Candidate Database</h2><p className="mt-1 text-xs font-semibold text-slate-400 sm:text-sm">Search, filter, and discover candidates from the talent pool. Save profiles for later review.</p></div>
+          <div><h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Search Candidates</h2><p className="mt-1 text-xs font-semibold text-slate-400 sm:text-sm">Search, filter, and discover candidates from the talent pool. Save profiles for later review.</p></div>
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={() => setAdvancedOpen((current) => !current)} className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#6658dd] px-4 text-sm font-extrabold text-white transition hover:bg-[#5848d8]"><SlidersHorizontal className="h-4 w-4" />{advancedOpen ? 'Hide Advanced Filters' : 'Advanced Filters'}</button>
             <button type="button" className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-slate-100 px-4 text-sm font-extrabold text-slate-600 transition hover:bg-slate-200"><Bookmark className="h-4 w-4" />Save Search</button>
@@ -396,8 +481,27 @@ export const EmployerSearchCandidates = () => {
         <div className="p-4 sm:p-5">
           <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.45fr_1fr_1fr_1fr_1fr_auto]">
             <div>
-              <label className={filterLabelClass}>Keywords</label>
-              <div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input className={`${filterControlClass} py-2 pl-9 pr-3`} value={filters.search} onChange={(event) => setFilter('search', event.target.value)} placeholder="Skills, title, name, company" /></div>
+              <label className={filterLabelClass}>Search Candidate</label>
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  className={`${filterControlClass} py-2 pl-9 pr-3`}
+                  value={filters.search}
+                  onChange={(event) => {
+                    const val = event.target.value;
+                    setFilter('search', val);
+                    const newParams = new URLSearchParams(searchParams);
+                    if (val.trim()) {
+                      newParams.set('search', val.trim());
+                    } else {
+                      newParams.delete('search');
+                    }
+                    const qs = newParams.toString();
+                    navigate(qs ? `?${qs}` : window.location.pathname, { replace: true });
+                  }}
+                  placeholder="Skills, title, name, company"
+                />
+              </div>
             </div>
             <SelectField label="Job Role" value={filters.role} onChange={(value) => setFilter('role', value)}><option value="">All Roles</option>{(optionFilters.roles || []).map((item) => <option key={item}>{item}</option>)}</SelectField>
             <div><label className={filterLabelClass}>Location</label><input className={filterControlClass} value={filters.location} onChange={(event) => setFilter('location', event.target.value)} placeholder="City, State" /></div>
@@ -432,6 +536,12 @@ export const EmployerSearchCandidates = () => {
                   </button>
                 </span>
               ))}
+              {loading && (
+                <span className="inline-flex items-center gap-1.5 rounded-md border border-indigo-200 bg-white px-2.5 py-0.5 text-xs font-black text-[#6658dd] shadow-xs animate-pulse">
+                  <Loader className="h-3 w-3 animate-spin text-[#6658dd]" />
+                  <span>Searching...</span>
+                </span>
+              )}
               <button
                 type="button"
                 onClick={() => {
@@ -481,13 +591,19 @@ export const EmployerSearchCandidates = () => {
 
           <div className="mb-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-600"><select value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setCurrentPage(1); }} className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold"><option value={10}>10</option><option value={25}>25</option><option value={50}>50</option></select>entries per page</div>
-            <label className="flex items-center gap-2 text-sm font-bold text-slate-600">Search:<input value={tableSearch} onChange={(event) => { setTableSearch(event.target.value); setCurrentPage(1); }} className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-bold placeholder:font-bold outline-none focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100 sm:w-48" placeholder="Search..." /></label>
+            {/* <label className="flex items-center gap-2 text-sm font-bold text-slate-600">Search:<input value={tableSearch} onChange={(event) => { setTableSearch(event.target.value); setCurrentPage(1); }} className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-bold placeholder:font-bold outline-none focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100 sm:w-48" placeholder="Search..." /></label> */}
           </div>
 
           {/* Card list — mobile only */}
           <div className="divide-y divide-slate-100 rounded-md border border-slate-100 sm:hidden">
             {loading ? (
-              <div className="py-12 text-center"><Loader className="mx-auto h-7 w-7 animate-spin text-[#6658dd]" /></div>
+              <div className="py-16 text-center">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-[#6658dd]">
+                  <Loader className="h-6 w-6 animate-spin text-[#6658dd]" />
+                </div>
+                <p className="mt-3 text-sm font-extrabold text-[#3f4254]">Filtering Candidates...</p>
+                <p className="mt-1 text-xs font-semibold text-slate-400">Loading candidate profiles</p>
+              </div>
             ) : visibleRows.length ? visibleRows.map((candidate) => (
               <div key={candidate.id} className="p-4">
                 <div className="flex items-start gap-3">
@@ -520,14 +636,14 @@ export const EmployerSearchCandidates = () => {
                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs font-semibold text-slate-500">
                   <p className="truncate"><span className="text-slate-400">Experience:</span> {candidate.experience}</p>
                   <p className="truncate"><span className="text-slate-400">Qualification:</span> {candidate.qualification || '-'}</p>
-                  <p className="truncate"><span className="text-slate-400">Current CTC:</span> {candidate.currentSalary || 'Not specified'}</p>
-                  <p className="truncate"><span className="text-slate-400">Expected CTC:</span> <span className="font-extrabold text-[#0047C7]">{candidate.expectedSalary || 'Not specified'}</span></p>
+                  <p className="truncate"><span className="text-slate-400">Current CTC:</span> <span className="font-semibold text-slate-700">{formatInlineSalary(candidate.currentSalary)}</span></p>
+                  <p className="truncate"><span className="text-slate-400">Expected CTC:</span> <span className="font-bold text-[#0047C7]">{formatInlineSalary(candidate.expectedSalary)}</span></p>
                 </div>
 
                 {candidate.skills && candidate.skills.length > 0 && (
                   <div className="mt-2.5 flex flex-wrap gap-1">
                     {candidate.skills.slice(0, 5).map(skill => {
-                      const isMatched = (filters.skills || []).some(s => s.toLowerCase() === skill.toLowerCase());
+                      const isMatched = (filters.skills || []).some(s => String(s || '').toLowerCase() === String(skill || '').toLowerCase());
                       return (
                         <span
                           key={skill}
@@ -571,9 +687,21 @@ export const EmployerSearchCandidates = () => {
             <table className="w-full min-w-[1080px] text-left">
               <thead className="bg-[#dbe6f6] text-[11px] uppercase text-slate-600"><tr><th className="px-5 py-3">Candidate</th><th className="px-5 py-3">Experience</th><th className="px-5 py-3"><span className="inline-flex items-center gap-1">Qualification <ChevronUp className="h-3 w-3 text-slate-400" /></span></th><th className="px-5 py-3">Current CTC</th><th className="px-5 py-3">Expected CTC</th><th className="px-5 py-3">Availability</th><th className="px-5 py-3 text-center">Action</th></tr></thead>
               <tbody className="divide-y divide-slate-100">
-                {loading ? <tr><td colSpan="7" className="px-5 py-12 text-center"><Loader className="mx-auto h-7 w-7 animate-spin text-[#6658dd]" /></td></tr> : visibleRows.length ? visibleRows.map((candidate) => (
+                {loading ? (
+                  <tr>
+                    <td colSpan="7" className="px-5 py-16 text-center">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-[#6658dd]">
+                          <Loader className="h-6 w-6 animate-spin text-[#6658dd]" />
+                        </div>
+                        <p className="text-sm font-extrabold text-[#3f4254]">Filtering Candidates...</p>
+                        <p className="text-xs font-semibold text-slate-400">Loading candidates matching your criteria</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : visibleRows.length ? visibleRows.map((candidate) => (
                   <tr key={candidate.id} className="transition hover:bg-slate-50">
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
                         <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${candidate.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>{candidate.initials}</span>
                         <div>
@@ -600,7 +728,7 @@ export const EmployerSearchCandidates = () => {
                           {candidate.skills && candidate.skills.length > 0 && (
                             <div className="mt-1.5 flex flex-wrap gap-1 max-w-[280px]">
                               {candidate.skills.slice(0, 4).map(skill => {
-                                const isMatched = (filters.skills || []).some(s => s.toLowerCase() === skill.toLowerCase());
+                                const isMatched = (filters.skills || []).some(s => String(s || '').toLowerCase() === String(skill || '').toLowerCase());
                                 return (
                                   <span
                                     key={skill}
@@ -624,12 +752,12 @@ export const EmployerSearchCandidates = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-4 text-sm font-semibold text-slate-600">{candidate.experience}</td>
-                    <td className="px-5 py-4 text-sm font-semibold text-slate-600">{candidate.qualification || '-'}</td>
-                    <td className="px-5 py-4 text-sm font-semibold text-slate-700">{candidate.currentSalary || 'Not specified'}</td>
-                    <td className="px-5 py-4 text-sm font-extrabold text-[#0047C7]">{candidate.expectedSalary || 'Not specified'}</td>
-                    <td className="px-5 py-4"><span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${availabilityTone[candidate.availability] || availabilityTone.Immediate}`}>{candidate.availability}</span></td>
-                    <td className="relative px-5 py-4 text-center">
+                    <td className="px-5 py-3.5 text-xs font-semibold text-slate-600">{candidate.experience}</td>
+                    <td className="px-5 py-3.5 text-xs font-semibold text-slate-600">{candidate.qualification || '-'}</td>
+                    <td className="px-5 py-3.5">{renderCandidateSalaryCell(candidate.currentSalary, false)}</td>
+                    <td className="px-5 py-3.5">{renderCandidateSalaryCell(candidate.expectedSalary, true)}</td>
+                    <td className="px-5 py-3.5"><span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${availabilityTone[candidate.availability] || availabilityTone.Immediate}`}>{candidate.availability}</span></td>
+                    <td className="relative px-5 py-3.5 text-center">
                       <CandidateActions
                         candidate={candidate}
                         isOpen={openMenuId === candidate.id}

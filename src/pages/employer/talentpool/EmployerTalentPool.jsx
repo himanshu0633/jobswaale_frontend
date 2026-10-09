@@ -517,7 +517,7 @@ export const EmployerTalentPool = () => {
               {/* Search candidate input */}
               {!selectedCandidate ? (
                 <div className="space-y-2">
-                  <label className="block text-slate-600">Search Candidate Database</label>
+                  <label className="block text-slate-600">Search Candidates</label>
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <div className="relative flex-grow">
                       <input

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import {
   ChevronDown,
@@ -25,13 +25,23 @@ const getEmployerUser = () => {
 
 export const EmployerHeader = ({ toggleSidebar }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [theme, setTheme] = useState(() => localStorage.getItem('employerTheme') || 'light');
-  const [searchValue, setSearchValue] = useState('');
+  const [searchValue, setSearchValue] = useState(() => searchParams.get('search') || '');
   const searchRef = useRef(null);
+  const debounceTimerRef = useRef(null);
+  const isTypingRef = useRef(false);
   const user = getEmployerUser();
   const displayName = user?.firstName || user?.companyName || 'Employer';
   const [avatar, setAvatar] = useState(user?.profileImage || user?.logo || '');
+
+  useEffect(() => {
+    if (!isTypingRef.current) {
+      setSearchValue(searchParams.get('search') || '');
+    }
+  }, [searchParams, location.pathname]);
 
   useEffect(() => {
     const token = localStorage.getItem('publicToken');
@@ -69,18 +79,87 @@ export const EmployerHeader = ({ toggleSidebar }) => {
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (searchRef.current && !searchRef.current.contains(e.target)) {
-        searchRef.current.blur?.();
+        isTypingRef.current = false;
+        searchRef.current.querySelector('input')?.blur?.();
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
   }, []);
+
+  const getSearchTarget = () => {
+    const path = location.pathname;
+    if (path.startsWith('/employer/candidates')) return '/employer/candidates';
+    if (path.startsWith('/employer/jobs')) return '/employer/jobs';
+    if (path.startsWith('/employer/applications')) return '/employer/applications';
+    if (path.startsWith('/employer/shortlisted')) return '/employer/shortlisted';
+    if (path.startsWith('/employer/interviews')) return '/employer/interviews';
+    if (path.startsWith('/employer/selected')) return '/employer/selected';
+    if (path.startsWith('/employer/offers')) return '/employer/offers';
+    if (path.startsWith('/employer/hired')) return '/employer/hired';
+    if (path.startsWith('/employer/rejected')) return '/employer/rejected';
+    if (path.startsWith('/employer/talent-pool')) return '/employer/talent-pool';
+    return '/employer/candidates';
+  };
+
+  const getSearchPlaceholder = () => {
+    const path = location.pathname;
+    if (path.startsWith('/employer/jobs')) return 'Search jobs...';
+    if (path.startsWith('/employer/applications')) return 'Search applications...';
+    if (path.startsWith('/employer/shortlisted')) return 'Search shortlisted...';
+    if (path.startsWith('/employer/interviews')) return 'Search interviews...';
+    if (path.startsWith('/employer/selected')) return 'Search selected...';
+    if (path.startsWith('/employer/offers')) return 'Search offers...';
+    if (path.startsWith('/employer/hired')) return 'Search hired...';
+    if (path.startsWith('/employer/rejected')) return 'Search rejected...';
+    if (path.startsWith('/employer/talent-pool')) return 'Search talent pool...';
+    return 'Search candidates...';
+  };
+
+  const triggerSearch = (queryText) => {
+    const trimmed = String(queryText || '').trim();
+    const currentPath = location.pathname;
+    const targetPath = getSearchTarget();
+    const isCurrentTarget = currentPath === targetPath;
+
+    const nextParams = isCurrentTarget ? new URLSearchParams(searchParams) : new URLSearchParams();
+    if (trimmed) {
+      nextParams.set('search', trimmed);
+    } else {
+      nextParams.delete('search');
+    }
+
+    const nextQueryString = nextParams.toString();
+    const destination = nextQueryString ? `${targetPath}?${nextQueryString}` : targetPath;
+
+    navigate(destination, { replace: isCurrentTarget });
+  };
+
+  const handleSearchChange = (e) => {
+    const val = e.target.value;
+    setSearchValue(val);
+    isTypingRef.current = true;
+
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      isTypingRef.current = false;
+      triggerSearch(val);
+    }, 250);
+  };
 
   const handleQuickSearch = (event) => {
     event.preventDefault();
-    const query = searchValue.trim();
-    if (!query) return;
-    navigate(`/employer/candidates?search=${encodeURIComponent(query)}`);
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    isTypingRef.current = false;
+    triggerSearch(searchValue);
   };
 
   return (
@@ -122,19 +201,19 @@ export const EmployerHeader = ({ toggleSidebar }) => {
       </div>
 
       <div className="flex h-full min-w-0 items-center gap-1.5 sm:gap-3 lg:gap-[18px]">
-        <form className="relative hidden xl:block xl:w-[270px]" ref={searchRef} onSubmit={handleQuickSearch}>
+        <form className="relative hidden lg:block lg:w-[240px] xl:w-[270px]" ref={searchRef} onSubmit={handleQuickSearch}>
           <button
             type="submit"
             className="absolute left-4 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-slate-400 transition hover:text-[#6658dd]"
-            aria-label="Search candidates"
+            aria-label={getSearchPlaceholder()}
           >
             <Search className="h-4 w-4" />
           </button>
           <input
             type="text"
-            placeholder="Candidates Search..."
+            placeholder={getSearchPlaceholder()}
             value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
+            onChange={handleSearchChange}
             className={`h-9 w-full rounded-full border py-2 pr-4 pl-[42px] text-[13px] font-semibold outline-none placeholder:text-slate-400 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 ${
               theme === 'dark'
                 ? 'border-slate-600/30 bg-slate-600/30 text-slate-100'

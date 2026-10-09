@@ -46,7 +46,7 @@ const mainMenu = [
   { to: '/employer/hired', icon: UserRoundCheck, label: 'Hired' },
   { to: '/employer/rejected', icon: UserX, label: 'Rejected' },
   { to: '/employer/email-templates', icon: MailCheck, label: 'Email Templates' },
-  { to: '/employer/candidates', icon: Search, label: 'Search Candidates' },
+  { to: '/employer/candidates', icon: Search, label: 'Candidates' },
   { to: '/employer/auto-mail', icon: MailCheck, label: 'Auto Mail' },
   { to: '/employer/reports', icon: Grid2X2, label: 'Reports' }
 ];

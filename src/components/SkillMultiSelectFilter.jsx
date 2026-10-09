@@ -93,7 +93,7 @@ const SkillMultiSelectFilter = ({
     }
     onChange(next);
     setSearchTerm('');
-    if (inputRef.current) inputRef.current.focus();
+    setIsOpen(false);
   };
 
   const removeSkill = (skill) => {
@@ -104,6 +104,7 @@ const SkillMultiSelectFilter = ({
   const clearAllSkills = () => {
     onChange([]);
     setSearchTerm('');
+    setIsOpen(false);
   };
 
   const popularQuickPicks = ['Java', 'JavaScript', 'React.js', 'Node.js', 'Python', 'SQL', 'Laravel']
@@ -134,6 +135,7 @@ const SkillMultiSelectFilter = ({
       <div
         onClick={() => {
           setIsOpen(true);
+          fetchSkills(searchTerm);
           if (inputRef.current) inputRef.current.focus();
         }}
         className="min-h-10 w-full rounded-md border border-slate-200 bg-white p-2 transition focus-within:border-[#6658dd] focus-within:ring-2 focus-within:ring-indigo-100 cursor-text"
@@ -168,9 +170,24 @@ const SkillMultiSelectFilter = ({
                 setSearchTerm(e.target.value);
                 setIsOpen(true);
               }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsOpen(true);
+                fetchSkills(searchTerm);
+              }}
               onFocus={() => {
                 setIsOpen(true);
                 fetchSkills(searchTerm);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (searchTerm.trim()) {
+                    toggleSkill(searchTerm.trim());
+                  }
+                } else if (e.key === 'Escape') {
+                  setIsOpen(false);
+                }
               }}
               placeholder={selectedSkills.length === 0 ? 'Search & select skills (e.g. Java, React)...' : 'Add another skill...'}
               className="w-full border-none bg-transparent py-1 text-xs font-semibold text-slate-700 outline-none placeholder:font-bold placeholder:text-slate-400"
@@ -187,7 +204,7 @@ const SkillMultiSelectFilter = ({
               ✓ Showing candidates with ALL {selectedSkills.length} selected skills
             </strong>
           ) : (
-            'Select multiple skills — only candidates matching ALL will be returned'
+            'Select multiple skills'
           )}
         </span>
       </div>
@@ -216,7 +233,7 @@ const SkillMultiSelectFilter = ({
           <div className="flex items-center justify-between border-b border-slate-100 px-2.5 py-1.5 text-[11px] font-bold text-slate-400">
             <span className="flex items-center gap-1.5">
               <Database className="h-3 w-3 text-indigo-500" />
-              <span>Skills in Database</span>
+              <span>Skills</span>
             </span>
             {loading && <Loader className="h-3 w-3 animate-spin text-indigo-600" />}
           </div>
@@ -255,7 +272,7 @@ const SkillMultiSelectFilter = ({
 
             {!loading && suggestions.length === 0 && (
               <p className="px-3 py-3 text-center text-xs font-semibold text-slate-400">
-                No matching skills found in database.
+                No matching skills found.
               </p>
             )}
           </div>

@@ -133,6 +133,10 @@ export const EmployerJobs = () => {
     loadJobs();
   }, []);
 
+  useEffect(() => {
+    setFilters(getUrlFilters());
+  }, [searchParams.toString()]);
+
   const filteredJobs = useMemo(() => {
     const search = filters.search.trim().toLowerCase();
     const postDate = filters.postDate ? new Date(filters.postDate) : null;

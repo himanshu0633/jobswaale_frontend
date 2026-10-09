@@ -136,6 +136,41 @@ const viewCandidateResume = async (candidate) => {
   }
 };
 
+const renderProfileStatSalary = (val, primaryClass, subClass) => {
+  if (!val || val === 'Not specified' || val === '-' || val === 'N/A') {
+    return <p className="mt-0.5 text-xs sm:text-sm font-semibold text-slate-400">Not specified</p>;
+  }
+  const str = String(val).trim();
+
+  const monthlyMatch = str.match(/^₹?([0-9,]+)\s*\/\s*(?:Month|mo)\s*\((.+)\)$/i);
+  if (monthlyMatch) {
+    const monthlyAmt = `₹${monthlyMatch[1]}/mo`;
+    const details = monthlyMatch[2].replace(/[·•]/g, '·').trim();
+    return (
+      <div className="mt-0.5">
+        <p className={`text-xs sm:text-sm font-bold leading-tight ${primaryClass}`}>{monthlyAmt}</p>
+        <p className={`text-[10px] font-medium leading-tight mt-0.5 opacity-80 truncate ${subClass}`}>{details}</p>
+      </div>
+    );
+  }
+
+  if (/^\d+$/.test(str)) {
+    const num = Number(str);
+    if (num >= 100000) {
+      const lpa = (num / 100000).toFixed(1).replace(/\.0$/, '');
+      return (
+        <div className="mt-0.5">
+          <p className={`text-xs sm:text-sm font-bold leading-tight ${primaryClass}`}>₹{lpa} LPA</p>
+          <p className={`text-[10px] font-medium leading-tight mt-0.5 opacity-80 ${subClass}`}>₹{num.toLocaleString('en-IN')}/yr</p>
+        </div>
+      );
+    }
+    return <p className={`mt-0.5 text-xs sm:text-sm font-bold ${primaryClass}`}>₹{num.toLocaleString('en-IN')}</p>;
+  }
+
+  return <p className={`mt-0.5 text-xs sm:text-sm font-bold truncate ${primaryClass}`}>{str}</p>;
+};
+
 const Card = ({ title, children }) => (
   <section className="rounded-md border border-slate-100 bg-white shadow-sm">
     <div className="border-b border-dashed border-slate-200 px-5 py-4">
@@ -846,23 +881,23 @@ const EmployerCandidateProfile = () => {
             </div>
           </div>
         </div>
-        <div className="my-5 border-t border-slate-100" />
-        <div className="grid gap-3 text-center sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3.5 transition hover:bg-slate-50">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Total Experience</span>
-            <h3 className="mt-1 text-base sm:text-lg font-black text-[#3f4254]">{candidate.experience || 'Fresher'}</h3>
+        <div className="my-4 border-t border-slate-100" />
+        <div className="grid gap-2.5 text-center sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-lg border border-slate-100 bg-slate-50/70 px-3 py-2 sm:py-2.5 transition hover:bg-slate-50">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Experience</span>
+            <p className="mt-0.5 text-xs sm:text-sm font-bold text-[#3f4254] truncate">{candidate.experience || 'Fresher'}</p>
           </div>
-          <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-3.5 transition hover:bg-emerald-50/70">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700">Current CTC</span>
-            <h3 className="mt-1 text-base sm:text-lg font-black text-emerald-800">{candidate.currentSalary || 'Not specified'}</h3>
+          <div className="rounded-lg border border-emerald-100 bg-emerald-50/40 px-3 py-2 sm:py-2.5 transition hover:bg-emerald-50/70">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Current CTC</span>
+            {renderProfileStatSalary(candidate.currentSalary, 'text-emerald-800', 'text-emerald-700')}
           </div>
-          <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-3.5 transition hover:bg-blue-50/70">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#0047C7]">Expected CTC</span>
-            <h3 className="mt-1 text-base sm:text-lg font-black text-[#0047C7]">{candidate.expectedSalary || 'Not specified'}</h3>
+          <div className="rounded-lg border border-blue-100 bg-blue-50/40 px-3 py-2 sm:py-2.5 transition hover:bg-blue-50/70">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#0047C7]">Expected CTC</span>
+            {renderProfileStatSalary(candidate.expectedSalary, 'text-[#0047C7]', 'text-blue-600')}
           </div>
-          <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3.5 transition hover:bg-slate-50">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Notice Period</span>
-            <h3 className="mt-1 text-base sm:text-lg font-black text-[#3f4254]">{candidate.noticePeriod || 'Immediate'}</h3>
+          <div className="rounded-lg border border-slate-100 bg-slate-50/70 px-3 py-2 sm:py-2.5 transition hover:bg-slate-50">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Notice Period</span>
+            <p className="mt-0.5 text-xs sm:text-sm font-bold text-[#3f4254] truncate">{candidate.noticePeriod || 'Immediate'}</p>
           </div>
         </div>
       </section>
