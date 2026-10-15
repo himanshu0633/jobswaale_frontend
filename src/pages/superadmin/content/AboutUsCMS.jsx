@@ -25,8 +25,12 @@ import {
   Compass,
   ArrowRight,
   Eye,
-  Check
+  Check,
+  Plus,
+  Crop,
+  Star
 } from 'lucide-react';
+import PassportPhotoCropperModal from '../../../components/PassportPhotoCropperModal';
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
@@ -39,6 +43,19 @@ export const AboutUsCMS = () => {
   const [uploadingImage, setUploadingImage] = useState({});
   const [alert, setAlert] = useState({ type: '', text: '' });
   const [activeTab, setActiveTab] = useState('hero'); // 'hero' | 'features' | 'find_jobs' | 'marketing_story' | 'team' | 'testimonials'
+
+  // Cropper Modal State
+  const [cropperModal, setCropperModal] = useState({
+    isOpen: false,
+    initialImage: null,
+    targetSection: null, // 'team' or 'testimonials'
+    targetIndex: null,   // number or 'new'
+    shape: 'square'      // 'square' for passport 4:5, 'circle' for avatar 1:1
+  });
+
+  // New Item Draft States
+  const [newTeamMember, setNewTeamMember] = useState({ name: '', role: '', photo: '' });
+  const [newTestimonial, setNewTestimonial] = useState({ name: '', role: '', photo: '', rating: 5, review: '' });
 
   // Sections State
   const [sections, setSections] = useState(() => {
@@ -87,9 +104,9 @@ export const AboutUsCMS = () => {
             return {
               ...def,
               ...found,
-              cards: found.cards || def.cards,
-              members: found.members || def.members,
-              testimonials: found.testimonials || def.testimonials,
+              cards: Array.isArray(found.cards) ? found.cards : def.cards,
+              members: Array.isArray(found.members) ? found.members : (found.members || def.members),
+              testimonials: Array.isArray(found.testimonials) ? found.testimonials : (found.testimonials || def.testimonials),
               primaryButton: { ...def.primaryButton, ...found.primaryButton },
               secondaryButton: { ...def.secondaryButton, ...found.secondaryButton },
               image: { ...def.image, ...found.image }
@@ -164,6 +181,105 @@ export const AboutUsCMS = () => {
       }
       return s;
     }));
+  };
+
+  // Passport / Avatar Cropper file trigger
+  const handleFileSelectForCrop = (e, targetSection, targetIndex = null, shape = 'square') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      showAlert('error', 'Image size must be less than 10 MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setCropperModal({
+        isOpen: true,
+        initialImage: event.target.result,
+        targetSection,
+        targetIndex,
+        shape
+      });
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const handleCropComplete = (finalImageUrl) => {
+    const { targetSection, targetIndex } = cropperModal;
+    if (targetSection === 'team') {
+      if (targetIndex === 'new') {
+        setNewTeamMember(prev => ({ ...prev, photo: finalImageUrl }));
+      } else if (typeof targetIndex === 'number') {
+        updateArrayItem('team', 'members', targetIndex, 'photo', finalImageUrl);
+      }
+    } else if (targetSection === 'testimonials') {
+      if (targetIndex === 'new') {
+        setNewTestimonial(prev => ({ ...prev, photo: finalImageUrl }));
+      } else if (typeof targetIndex === 'number') {
+        updateArrayItem('testimonials', 'testimonials', targetIndex, 'photo', finalImageUrl);
+      }
+    }
+    setCropperModal({ isOpen: false, initialImage: null, targetSection: null, targetIndex: null, shape: 'square' });
+    showAlert('success', 'Photo cropped & updated! Click "Save & Publish" to update live.');
+  };
+
+  // Add & Delete Team Members
+  const handleAddTeamMember = () => {
+    if (!newTeamMember.name.trim()) {
+      showAlert('error', 'Team member name is required.');
+      return;
+    }
+    const teamSec = sections.find(s => s.id === 'team');
+    const currentList = Array.isArray(teamSec?.members) ? teamSec.members : [];
+    const updated = [...currentList, {
+      id: 'm_' + Date.now(),
+      name: newTeamMember.name.trim(),
+      role: newTeamMember.role.trim() || 'Marketing Crew',
+      photo: newTeamMember.photo.trim()
+    }];
+    updateSectionField('team', 'members', updated);
+    setNewTeamMember({ name: '', role: '', photo: '' });
+    showAlert('success', 'New team member added! Click "Save & Publish" to persist.');
+  };
+
+  const handleDeleteTeamMember = (index) => {
+    if (!window.confirm('Are you sure you want to remove this team member?')) return;
+    const teamSec = sections.find(s => s.id === 'team');
+    const currentList = Array.isArray(teamSec?.members) ? teamSec.members : [];
+    const updated = currentList.filter((_, i) => i !== index);
+    updateSectionField('team', 'members', updated);
+    showAlert('success', 'Team member removed. Click "Save & Publish" to persist.');
+  };
+
+  // Add & Delete Testimonials
+  const handleAddTestimonial = () => {
+    if (!newTestimonial.name.trim()) {
+      showAlert('error', 'Customer name is required.');
+      return;
+    }
+    const testiSec = sections.find(s => s.id === 'testimonials');
+    const currentList = Array.isArray(testiSec?.testimonials) ? testiSec.testimonials : [];
+    const updated = [...currentList, {
+      id: 't_' + Date.now(),
+      name: newTestimonial.name.trim(),
+      role: newTestimonial.role.trim() || 'Visual Designer',
+      rating: Number(newTestimonial.rating) || 5,
+      review: newTestimonial.review.trim() || 'Great experience working with JobsWaale!',
+      photo: newTestimonial.photo.trim()
+    }];
+    updateSectionField('testimonials', 'testimonials', updated);
+    setNewTestimonial({ name: '', role: '', photo: '', rating: 5, review: '' });
+    showAlert('success', 'New customer testimonial added! Click "Save & Publish" to persist.');
+  };
+
+  const handleDeleteTestimonial = (index) => {
+    if (!window.confirm('Are you sure you want to remove this customer testimonial?')) return;
+    const testiSec = sections.find(s => s.id === 'testimonials');
+    const currentList = Array.isArray(testiSec?.testimonials) ? testiSec.testimonials : [];
+    const updated = currentList.filter((_, i) => i !== index);
+    updateSectionField('testimonials', 'testimonials', updated);
+    showAlert('success', 'Customer testimonial removed. Click "Save & Publish" to persist.');
   };
 
   // Image Upload Handler
@@ -1033,7 +1149,9 @@ export const AboutUsCMS = () => {
                                 src={activeIcon}
                                 alt={`Feature ${cardIdx + 1}`}
                                 className={`w-full h-full ${cardFit === 'cover' ? 'object-cover' : 'object-contain'} ${
-                                  cardAlign === 'left' ? 'object-left' : cardAlign === 'right' ? 'object-right' : 'object-center'
+                                  cardFit === 'cover'
+                                    ? (cardAlign === 'left' ? 'object-left' : cardAlign === 'right' ? 'object-right' : 'object-center')
+                                    : 'object-center'
                                 } transition-all duration-200`}
                                 onError={(e) => {
                                   if (defaultIcon) e.currentTarget.src = defaultIcon;
@@ -1056,37 +1174,47 @@ export const AboutUsCMS = () => {
                               </div>
                             </div>
 
-                            {/* Position Left / Center / Right Controls */}
-                            <div className="flex items-center justify-between gap-1 bg-slate-50 p-1.5 rounded-lg border border-slate-200/80">
-                              <span className="text-[10px] font-bold text-slate-500">Position:</span>
-                              <div className="flex gap-1">
+                            {/* Position Left / Center / Right Controls (Enabled ONLY when Fit Mode is Cover) */}
+                            <div className={`flex items-center justify-between gap-1 bg-slate-50 p-1.5 rounded-lg border border-slate-200/80 transition-opacity ${
+                              cardFit !== 'cover' ? 'opacity-40' : ''
+                            }`}>
+                              <div className="flex items-center gap-1">
+                                <span className="text-[10px] font-bold text-slate-500">Position:</span>
+                                {cardFit !== 'cover' && (
+                                  <span className="text-[9px] text-slate-400 font-medium">(Only in Cover)</span>
+                                )}
+                              </div>
+                              <div className={`flex gap-1 ${cardFit !== 'cover' ? 'pointer-events-none' : ''}`}>
                                 <button
                                   type="button"
+                                  disabled={cardFit !== 'cover'}
                                   onClick={() => updateArrayItem('features', 'cards', cardIdx, 'imageAlign', 'left')}
                                   className={`px-1.5 py-0.5 rounded text-[10px] font-semibold transition ${
                                     cardAlign === 'left' ? 'bg-[#0047C7] text-white shadow-sm' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
                                   }`}
-                                  title="Align Left"
+                                  title="Align Left (Available when Fit Mode is Cover)"
                                 >
                                   Left
                                 </button>
                                 <button
                                   type="button"
+                                  disabled={cardFit !== 'cover'}
                                   onClick={() => updateArrayItem('features', 'cards', cardIdx, 'imageAlign', 'center')}
                                   className={`px-1.5 py-0.5 rounded text-[10px] font-semibold transition ${
                                     cardAlign === 'center' ? 'bg-[#0047C7] text-white shadow-sm' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
                                   }`}
-                                  title="Align Center"
+                                  title="Align Center (Available when Fit Mode is Cover)"
                                 >
                                   Center
                                 </button>
                                 <button
                                   type="button"
+                                  disabled={cardFit !== 'cover'}
                                   onClick={() => updateArrayItem('features', 'cards', cardIdx, 'imageAlign', 'right')}
                                   className={`px-1.5 py-0.5 rounded text-[10px] font-semibold transition ${
                                     cardAlign === 'right' ? 'bg-[#0047C7] text-white shadow-sm' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
                                   }`}
-                                  title="Align Right"
+                                  title="Align Right (Available when Fit Mode is Cover)"
                                 >
                                   Right
                                 </button>
@@ -1471,106 +1599,328 @@ export const AboutUsCMS = () => {
           {/* 5. MEET OUR TEAM */}
           {currentSection.id === 'team' && (
             <div className="space-y-6">
-              {/* Header Title & Subtitle */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+              {/* Header Title & Font Controls */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                <div className="lg:col-span-7">
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Section Heading
+                    Section Heading / Title
                   </label>
                   <input
                     type="text"
                     value={currentSection.title || ''}
                     onChange={(e) => updateSectionField('team', 'title', e.target.value)}
-                    placeholder="Meet our team"
-                    className="w-full px-4 py-2 text-sm font-semibold border border-slate-300 rounded-xl outline-none"
+                    placeholder="e.g. Meet our team"
+                    className="w-full px-4 py-2.5 text-sm font-semibold border border-slate-300 rounded-xl focus:border-[#0047C7] outline-none"
                   />
                 </div>
 
-                <div>
+                <div className="lg:col-span-3">
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Subtitle Description
+                    Title Font Size (px)
                   </label>
                   <input
-                    type="text"
-                    value={currentSection.subtitle || ''}
-                    onChange={(e) => updateSectionField('team', 'subtitle', e.target.value)}
-                    placeholder="Find the type of work you need..."
-                    className="w-full px-4 py-2 text-sm border border-slate-300 rounded-xl outline-none"
+                    type="number"
+                    min="20"
+                    max="60"
+                    value={currentSection.titleFontSize || 44}
+                    onChange={(e) => updateSectionField('team', 'titleFontSize', Number(e.target.value) || 44)}
+                    className="w-24 px-3 py-2 text-sm font-mono font-bold border border-slate-300 rounded-xl outline-none"
                   />
+                </div>
+
+                <div className="lg:col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Title Color
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={currentSection.titleColor || '#1f2938'}
+                      onChange={(e) => updateSectionField('team', 'titleColor', e.target.value)}
+                      className="w-9 h-9 rounded border border-slate-300 cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={currentSection.titleColor || '#1f2938'}
+                      onChange={(e) => updateSectionField('team', 'titleColor', e.target.value)}
+                      className="w-20 px-2 py-1.5 text-xs font-mono font-bold border border-slate-300 rounded-lg outline-none"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* 4 Team Members */}
-              <div className="space-y-3 pt-2">
-                <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                  4 Team Members Cards (Photo, Name, Role)
-                </h3>
+              {/* Subtitle & Controls */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                <div className="lg:col-span-7">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Section Subtitle / Description
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={currentSection.subtitle || ''}
+                    onChange={(e) => updateSectionField('team', 'subtitle', e.target.value)}
+                    placeholder="Find the type of work you need, clearly defined and ready to start..."
+                    className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-xl focus:border-[#0047C7] outline-none resize-y"
+                  />
+                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {(currentSection.members || []).map((member, mIdx) => {
-                    const defaultPhoto = ABOUT_DEFAULT_IMAGES.team[mIdx];
+                <div className="lg:col-span-3">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Subtitle Font Size (px)
+                  </label>
+                  <input
+                    type="number"
+                    min="12"
+                    max="28"
+                    value={currentSection.subtitleFontSize || 16}
+                    onChange={(e) => updateSectionField('team', 'subtitleFontSize', Number(e.target.value) || 16)}
+                    className="w-24 px-3 py-2 text-sm font-mono font-bold border border-slate-300 rounded-xl outline-none"
+                  />
+                </div>
+
+                <div className="lg:col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Subtitle Color
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={currentSection.subtitleColor || '#88929b'}
+                      onChange={(e) => updateSectionField('team', 'subtitleColor', e.target.value)}
+                      className="w-9 h-9 rounded border border-slate-300 cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={currentSection.subtitleColor || '#88929b'}
+                      onChange={(e) => updateSectionField('team', 'subtitleColor', e.target.value)}
+                      className="w-20 px-2 py-1.5 text-xs font-mono font-bold border border-slate-300 rounded-lg outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Team Members List (4 per row, Passport Framed) */}
+              <div className="space-y-4 pt-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                    <Users className="w-4 h-4 text-[#0047C7]" />
+                    Team Members ({Array.isArray(currentSection.members) ? currentSection.members.length : 0}) — 4 Per Row
+                  </h3>
+                  <span className="text-xs text-slate-500">
+                    Passport framing (<strong className="text-slate-700">4:5 Aspect Ratio</strong>) matching public /about page
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {(Array.isArray(currentSection.members) ? currentSection.members : []).map((member, mIdx) => {
+                    const defaultPhoto = ABOUT_DEFAULT_IMAGES.team[mIdx % ABOUT_DEFAULT_IMAGES.team.length];
                     const activePhoto = member.photo ? resolveCmsImageUrl(member.photo) : defaultPhoto;
-                    const uploadKey = `team_${mIdx}`;
+                    const isCustom = Boolean(member.photo);
 
                     return (
                       <div
                         key={member.id || mIdx}
-                        className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-3 text-center"
+                        className="border border-[#ececec] rounded-2xl p-4 sm:p-5 bg-white hover:border-[#0047C7] hover:shadow-[0_12px_30px_0_rgba(0,71,199,0.08)] transition-all duration-300 flex flex-col justify-between shadow-xs group relative text-center"
                       >
-                        <div className="w-full h-36 bg-white border border-slate-200 rounded-lg overflow-hidden flex items-center justify-center p-1">
-                          <img
-                            src={activePhoto}
-                            alt={member.name}
-                            className="w-full h-full object-cover object-top"
-                          />
-                        </div>
+                        <div>
+                          {/* Card Top Bar */}
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-bold text-slate-700">Member #{mIdx + 1}</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                                isCustom ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600 border border-slate-200'
+                              }`}>
+                                {isCustom ? 'Custom' : 'Default'}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteTeamMember(mIdx)}
+                                className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                                title="Delete Member"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
 
-                        <div className="flex items-center justify-center gap-1.5">
-                          <label className="px-2.5 py-1 text-[11px] font-bold text-[#0047C7] bg-white border border-blue-200 hover:bg-blue-50 rounded-lg cursor-pointer transition">
-                            {uploadingImage[uploadKey] ? 'Uploading...' : 'Change Photo'}
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              disabled={uploadingImage[uploadKey]}
-                              onChange={(e) => handleUploadImage(e.target.files?.[0], (url) => updateArrayItem('team', 'members', mIdx, 'photo', url), uploadKey)}
+                          {/* Passport Photo Preview Container (Exact /about page framing) */}
+                          <div className="w-full aspect-[4/5] sm:h-[260px] rounded-xl overflow-hidden bg-slate-50 flex items-center justify-center border border-slate-200 relative group/photo my-2 shadow-inner">
+                            <img
+                              src={activePhoto}
+                              alt={member.name || 'Team Member'}
+                              className="w-full h-full object-cover object-top group-hover/photo:scale-105 transition-transform duration-300"
+                              onError={(e) => { e.currentTarget.src = defaultPhoto; }}
                             />
-                          </label>
 
-                          {member.photo && (
-                            <button
-                              type="button"
-                              onClick={() => updateArrayItem('team', 'members', mIdx, 'photo', '')}
-                              className="p-1 text-rose-500 hover:text-rose-700 rounded"
-                              title="Restore default photo"
+                            {/* Quick Crop Hover Overlay */}
+                            <label
+                              title="Click to Upload & Crop Photo"
+                              className="absolute inset-0 bg-slate-900/60 text-white flex flex-col items-center justify-center opacity-0 group-hover/photo:opacity-100 transition-opacity cursor-pointer text-xs font-bold gap-1"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
+                              <Crop className="w-5 h-5 mb-0.5" />
+                              <span>Upload & Crop</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => handleFileSelectForCrop(e, 'team', mIdx, 'square')}
+                              />
+                            </label>
+                          </div>
+
+                          {/* Recommended Size Badge */}
+                          <div className="text-[10.5px] font-semibold text-[#0047C7] bg-blue-50/80 py-1 px-2 rounded-lg border border-blue-100 flex items-center justify-center gap-1 my-1.5">
+                            <span>📐 Recommended: <strong>400 × 500 px</strong> (Passport / 4:5)</span>
+                          </div>
+
+                          {/* Action Buttons: Upload & Crop / Adjust Crop / Reset */}
+                          <div className="flex items-center justify-center gap-1.5 py-1 flex-wrap">
+                            <label className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-white bg-[#0047C7] hover:bg-[#003cb0] rounded-lg cursor-pointer transition shadow-xs">
+                              <Upload className="w-3 h-3" />
+                              <span>Upload & Crop</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => handleFileSelectForCrop(e, 'team', mIdx, 'square')}
+                              />
+                            </label>
+
+                            {member.photo && (
+                              <button
+                                type="button"
+                                onClick={() => setCropperModal({ isOpen: true, initialImage: activePhoto, targetSection: 'team', targetIndex: mIdx, shape: 'square' })}
+                                className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition"
+                                title="Adjust crop"
+                              >
+                                <Crop className="w-3 h-3" />
+                                <span>Adjust</span>
+                              </button>
+                            )}
+
+                            {isCustom && (
+                              <button
+                                type="button"
+                                onClick={() => updateArrayItem('team', 'members', mIdx, 'photo', '')}
+                                className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded"
+                                title="Restore default template photo"
+                              >
+                                <RotateCcw className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
                         </div>
 
-                        <div>
-                          <label className="block text-[10px] font-bold text-slate-500 mb-0.5 text-left">Name</label>
-                          <input
-                            type="text"
-                            value={member.name || ''}
-                            onChange={(e) => updateArrayItem('team', 'members', mIdx, 'name', e.target.value)}
-                            className="w-full px-2.5 py-1 text-xs font-semibold border border-slate-300 rounded-lg outline-none"
-                          />
-                        </div>
+                        {/* Name & Role Inputs */}
+                        <div className="space-y-2 pt-3 border-t border-slate-100 text-left mt-2">
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Full Name</label>
+                            <input
+                              type="text"
+                              value={member.name || ''}
+                              onChange={(e) => updateArrayItem('team', 'members', mIdx, 'name', e.target.value)}
+                              placeholder="e.g. Peter Grant"
+                              className="w-full px-2.5 py-1.5 text-xs font-semibold border border-slate-300 rounded-lg outline-none focus:border-[#0047C7]"
+                            />
+                          </div>
 
-                        <div>
-                          <label className="block text-[10px] font-bold text-slate-500 mb-0.5 text-left">Role / Designation</label>
-                          <input
-                            type="text"
-                            value={member.role || ''}
-                            onChange={(e) => updateArrayItem('team', 'members', mIdx, 'role', e.target.value)}
-                            className="w-full px-2.5 py-1 text-xs border border-slate-300 rounded-lg outline-none"
-                          />
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Job Title / Role</label>
+                            <input
+                              type="text"
+                              value={member.role || ''}
+                              onChange={(e) => updateArrayItem('team', 'members', mIdx, 'role', e.target.value)}
+                              placeholder="e.g. Marketing Director"
+                              className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg outline-none focus:border-[#0047C7]"
+                            />
+                          </div>
                         </div>
                       </div>
                     );
                   })}
+                </div>
+
+                {/* Add New Team Member Form Card */}
+                <div className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-5 space-y-3.5 mt-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <h6 className="text-xs font-bold text-indigo-950 flex items-center gap-1.5 uppercase tracking-wider">
+                      <Plus className="w-4 h-4 text-indigo-600" />
+                      Add New Team Member
+                    </h6>
+                    <span className="text-[11px] text-indigo-600 font-medium">
+                      Automatically appends to grid in 4-per-row passport layout
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 items-end">
+                    <div>
+                      <label className="text-[11px] font-semibold text-indigo-950 block mb-1">
+                        Full Name <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={newTeamMember.name}
+                        onChange={(e) => setNewTeamMember({ ...newTeamMember, name: e.target.value })}
+                        placeholder="e.g. Satya Nadella"
+                        className="w-full px-3 py-2 text-xs border border-indigo-200 bg-white rounded-xl outline-none focus:border-indigo-600 font-medium"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-semibold text-indigo-950 block mb-1">
+                        Job Title / Designation
+                      </label>
+                      <input
+                        type="text"
+                        value={newTeamMember.role}
+                        onChange={(e) => setNewTeamMember({ ...newTeamMember, role: e.target.value })}
+                        placeholder="e.g. Chief Executive Officer"
+                        className="w-full px-3 py-2 text-xs border border-indigo-200 bg-white rounded-xl outline-none focus:border-indigo-600"
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-[11px] font-semibold text-indigo-950">Photo Upload &amp; Crop</label>
+                        <span className="text-[10px] text-indigo-600 font-semibold">📐 400 × 500 px (4:5)</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <label className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-sm">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>{newTeamMember.photo ? 'Change Cropped Photo' : 'Upload & Crop Photo'}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleFileSelectForCrop(e, 'team', 'new', 'square')}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {newTeamMember.photo && (
+                    <div className="flex items-center gap-3 p-2.5 bg-white border border-indigo-200 rounded-xl">
+                      <div className="w-10 h-12 rounded-lg border border-indigo-200 overflow-hidden bg-white shrink-0">
+                        <img src={newTeamMember.photo} alt="Preview" className="w-full h-full object-cover object-top" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-indigo-900 truncate">Passport photo cropped successfully!</p>
+                        <p className="text-[10px] text-indigo-500">Ready to be added to the team list.</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end pt-1">
+                    <button
+                      type="button"
+                      onClick={handleAddTeamMember}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-sm"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Add Team Member
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1579,127 +1929,261 @@ export const AboutUsCMS = () => {
           {/* 6. OUR HAPPY CUSTOMERS / TESTIMONIALS */}
           {currentSection.id === 'testimonials' && (
             <div className="space-y-6">
-              {/* Header Title & Subtitle */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+              {/* Header Title & Font Controls */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                <div className="lg:col-span-7">
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Section Heading
+                    Section Heading / Title
                   </label>
                   <input
                     type="text"
                     value={currentSection.title || ''}
                     onChange={(e) => updateSectionField('testimonials', 'title', e.target.value)}
-                    placeholder="Our Happy Customer"
-                    className="w-full px-4 py-2 text-sm font-semibold border border-slate-300 rounded-xl outline-none"
+                    placeholder="e.g. Our Happy Customer"
+                    className="w-full px-4 py-2.5 text-sm font-semibold border border-slate-300 rounded-xl focus:border-[#0047C7] outline-none"
                   />
                 </div>
 
-                <div>
+                <div className="lg:col-span-3">
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Subtitle Description
+                    Title Font Size (px)
                   </label>
                   <input
-                    type="text"
-                    value={currentSection.subtitle || ''}
-                    onChange={(e) => updateSectionField('testimonials', 'subtitle', e.target.value)}
-                    placeholder="What our candidates and employers have to say..."
-                    className="w-full px-4 py-2 text-sm border border-slate-300 rounded-xl outline-none"
+                    type="number"
+                    min="20"
+                    max="60"
+                    value={currentSection.titleFontSize || 44}
+                    onChange={(e) => updateSectionField('testimonials', 'titleFontSize', Number(e.target.value) || 44)}
+                    className="w-24 px-3 py-2 text-sm font-mono font-bold border border-slate-300 rounded-xl outline-none"
                   />
+                </div>
+
+                <div className="lg:col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Title Color
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={currentSection.titleColor || '#1f2938'}
+                      onChange={(e) => updateSectionField('testimonials', 'titleColor', e.target.value)}
+                      className="w-9 h-9 rounded border border-slate-300 cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={currentSection.titleColor || '#1f2938'}
+                      onChange={(e) => updateSectionField('testimonials', 'titleColor', e.target.value)}
+                      className="w-20 px-2 py-1.5 text-xs font-mono font-bold border border-slate-300 rounded-lg outline-none"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* 3 Testimonials Cards */}
-              <div className="space-y-3 pt-2">
-                <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                  3 Customer Testimonial Cards
-                </h3>
+              {/* Subtitle & Controls */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                <div className="lg:col-span-7">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Section Subtitle / Description
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={currentSection.subtitle || ''}
+                    onChange={(e) => updateSectionField('testimonials', 'subtitle', e.target.value)}
+                    placeholder="When it comes to choosing the right talent platform, hear what our verified customers have to say..."
+                    className="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-xl focus:border-[#0047C7] outline-none resize-y"
+                  />
+                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {(currentSection.testimonials || []).map((t, tIdx) => {
-                    const defaultAvatar = ABOUT_DEFAULT_IMAGES.testimonials[tIdx];
+                <div className="lg:col-span-3">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Subtitle Font Size (px)
+                  </label>
+                  <input
+                    type="number"
+                    min="12"
+                    max="28"
+                    value={currentSection.subtitleFontSize || 16}
+                    onChange={(e) => updateSectionField('testimonials', 'subtitleFontSize', Number(e.target.value) || 16)}
+                    className="w-24 px-3 py-2 text-sm font-mono font-bold border border-slate-300 rounded-xl outline-none"
+                  />
+                </div>
+
+                <div className="lg:col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Subtitle Color
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={currentSection.subtitleColor || '#88929b'}
+                      onChange={(e) => updateSectionField('testimonials', 'subtitleColor', e.target.value)}
+                      className="w-9 h-9 rounded border border-slate-300 cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={currentSection.subtitleColor || '#88929b'}
+                      onChange={(e) => updateSectionField('testimonials', 'subtitleColor', e.target.value)}
+                      className="w-20 px-2 py-1.5 text-xs font-mono font-bold border border-slate-300 rounded-lg outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Testimonials List (4 per row, Avatar Framed) */}
+              <div className="space-y-4 pt-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-[#0047C7]" />
+                    Customer Reviews ({Array.isArray(currentSection.testimonials) ? currentSection.testimonials.length : 0}) — 4 Per Row
+                  </h3>
+                  <span className="text-xs text-slate-500">
+                    Circular avatar (<strong className="text-slate-700">1:1 Square Cropper</strong>) with star ratings
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {(Array.isArray(currentSection.testimonials) ? currentSection.testimonials : []).map((t, tIdx) => {
+                    const defaultAvatar = ABOUT_DEFAULT_IMAGES.testimonials[tIdx % ABOUT_DEFAULT_IMAGES.testimonials.length];
                     const activeAvatar = t.photo ? resolveCmsImageUrl(t.photo) : defaultAvatar;
-                    const uploadKey = `testi_${tIdx}`;
+                    const isCustom = Boolean(t.photo);
 
                     return (
                       <div
                         key={t.id || tIdx}
-                        className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 text-center flex flex-col justify-between"
+                        className="border border-[#ececec] rounded-2xl p-4 sm:p-5 bg-white hover:border-[#0047C7] hover:shadow-[0_12px_30px_0_rgba(0,71,199,0.08)] transition-all duration-300 flex flex-col justify-between shadow-xs group relative text-center"
                       >
-                        <div className="space-y-3">
-                          {/* Avatar Photo */}
-                          <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-slate-200 mx-auto bg-white flex items-center justify-center">
-                            <img
-                              src={activeAvatar}
-                              alt={t.name}
-                              className="w-full h-full object-cover object-top"
-                            />
+                        <div className="space-y-2">
+                          {/* Card Top Bar */}
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-700">Review #{tIdx + 1}</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                                isCustom ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600 border border-slate-200'
+                              }`}>
+                                {isCustom ? 'Custom' : 'Default'}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteTestimonial(tIdx)}
+                                className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                                title="Delete Testimonial"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
 
-                          <div className="flex items-center justify-center gap-1.5">
-                            <label className="px-2.5 py-1 text-[11px] font-bold text-[#0047C7] bg-white border border-blue-200 hover:bg-blue-50 rounded-lg cursor-pointer transition">
-                              {uploadingImage[uploadKey] ? 'Uploading...' : 'Change Avatar'}
+                          {/* Avatar Photo (Exact /about page circular framing) */}
+                          <div className="w-20 h-20 rounded-full mx-auto overflow-hidden border-2 border-slate-200 shadow-sm bg-slate-50 flex items-center justify-center relative group/avatar my-1.5">
+                            <img
+                              src={activeAvatar}
+                              alt={t.name || 'Customer'}
+                              className="w-full h-full object-cover object-top group-hover/avatar:scale-105 transition-transform duration-300"
+                              onError={(e) => { e.currentTarget.src = defaultAvatar; }}
+                            />
+
+                            {/* Quick Crop Hover Overlay */}
+                            <label
+                              title="Click to Upload & Crop Avatar"
+                              className="absolute inset-0 bg-slate-900/60 text-white flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity cursor-pointer text-[10px] font-bold"
+                            >
+                              <Crop className="w-4 h-4 mb-0.5" />
+                              <span>Crop</span>
                               <input
                                 type="file"
                                 accept="image/*"
                                 className="hidden"
-                                disabled={uploadingImage[uploadKey]}
-                                onChange={(e) => handleUploadImage(e.target.files?.[0], (url) => updateArrayItem('testimonials', 'testimonials', tIdx, 'photo', url), uploadKey)}
+                                onChange={(e) => handleFileSelectForCrop(e, 'testimonials', tIdx, 'circle')}
+                              />
+                            </label>
+                          </div>
+
+                          {/* Recommended Size Badge */}
+                          <div className="text-[10.5px] font-semibold text-amber-700 bg-amber-50 py-1 px-2 rounded-lg border border-amber-100 flex items-center justify-center gap-1">
+                            <span>📐 Recommended: <strong>300 × 300 px</strong> (Square 1:1)</span>
+                          </div>
+
+                          {/* Action Buttons: Upload & Crop / Adjust Crop / Reset */}
+                          <div className="flex items-center justify-center gap-1.5 py-1 flex-wrap">
+                            <label className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-white bg-[#0047C7] hover:bg-[#003cb0] rounded-lg cursor-pointer transition shadow-xs">
+                              <Upload className="w-3 h-3" />
+                              <span>Upload & Crop</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => handleFileSelectForCrop(e, 'testimonials', tIdx, 'circle')}
                               />
                             </label>
 
                             {t.photo && (
                               <button
                                 type="button"
-                                onClick={() => updateArrayItem('testimonials', 'testimonials', tIdx, 'photo', '')}
-                                className="p-1 text-rose-500 hover:text-rose-700 rounded"
-                                title="Restore default avatar"
+                                onClick={() => setCropperModal({ isOpen: true, initialImage: activeAvatar, targetSection: 'testimonials', targetIndex: tIdx, shape: 'circle' })}
+                                className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition"
+                                title="Adjust crop"
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
+                                <Crop className="w-3 h-3" />
+                                <span>Adjust</span>
+                              </button>
+                            )}
+
+                            {isCustom && (
+                              <button
+                                type="button"
+                                onClick={() => updateArrayItem('testimonials', 'testimonials', tIdx, 'photo', '')}
+                                className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded"
+                                title="Restore default template avatar"
+                              >
+                                <RotateCcw className="w-3.5 h-3.5" />
                               </button>
                             )}
                           </div>
 
-                          {/* Review */}
-                          <div>
-                            <label className="block text-[10px] font-bold text-slate-500 mb-0.5 text-left">Review Text</label>
+                          {/* Review Text */}
+                          <div className="text-left pt-1">
+                            <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Review Feedback</label>
                             <textarea
                               rows={3}
                               value={t.review || ''}
                               onChange={(e) => updateArrayItem('testimonials', 'testimonials', tIdx, 'review', e.target.value)}
-                              className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg outline-none resize-none"
+                              placeholder="Customer review or feedback..."
+                              className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg outline-none focus:border-[#0047C7] resize-none"
                             />
                           </div>
                         </div>
 
-                        {/* Name & Role & Rating */}
-                        <div className="space-y-2 pt-2 border-t border-slate-200">
+                        {/* Name, Role & Star Rating */}
+                        <div className="space-y-2 pt-3 border-t border-slate-100 text-left mt-2">
                           <div className="grid grid-cols-2 gap-2">
                             <div>
-                              <label className="block text-[10px] font-bold text-slate-500 mb-0.5 text-left">Customer Name</label>
+                              <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Customer Name</label>
                               <input
                                 type="text"
                                 value={t.name || ''}
                                 onChange={(e) => updateArrayItem('testimonials', 'testimonials', tIdx, 'name', e.target.value)}
-                                className="w-full px-2 py-1 text-xs font-semibold border border-slate-300 rounded-lg outline-none"
+                                placeholder="e.g. Sarah Harding"
+                                className="w-full px-2 py-1 text-xs font-semibold border border-slate-300 rounded-lg outline-none focus:border-[#0047C7]"
                               />
                             </div>
                             <div>
-                              <label className="block text-[10px] font-bold text-slate-500 mb-0.5 text-left">Role / Title</label>
+                              <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Role / Title</label>
                               <input
                                 type="text"
                                 value={t.role || ''}
                                 onChange={(e) => updateArrayItem('testimonials', 'testimonials', tIdx, 'role', e.target.value)}
-                                className="w-full px-2 py-1 text-xs border border-slate-300 rounded-lg outline-none"
+                                placeholder="e.g. Visual Designer"
+                                className="w-full px-2 py-1 text-xs border border-slate-300 rounded-lg outline-none focus:border-[#0047C7]"
                               />
                             </div>
                           </div>
 
                           <div>
-                            <label className="block text-[10px] font-bold text-slate-500 mb-0.5 text-left">Star Rating (1-5)</label>
+                            <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Rating (1 - 5 Stars)</label>
                             <select
                               value={t.rating || 5}
                               onChange={(e) => updateArrayItem('testimonials', 'testimonials', tIdx, 'rating', Number(e.target.value) || 5)}
-                              className="w-full px-2 py-1 text-xs border border-slate-300 rounded-lg outline-none bg-white"
+                              className="w-full px-2.5 py-1 text-xs font-semibold border border-slate-300 rounded-lg outline-none bg-white focus:border-[#0047C7]"
                             >
                               <option value="5">⭐⭐⭐⭐⭐ (5 Stars)</option>
                               <option value="4">⭐⭐⭐⭐ (4 Stars)</option>
@@ -1713,6 +2197,117 @@ export const AboutUsCMS = () => {
                     );
                   })}
                 </div>
+
+                {/* Add New Customer Testimonial Form Card */}
+                <div className="bg-amber-50/50 border border-amber-100 rounded-2xl p-5 space-y-3.5 mt-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <h6 className="text-xs font-bold text-amber-950 flex items-center gap-1.5 uppercase tracking-wider">
+                      <Plus className="w-4 h-4 text-amber-600" />
+                      Add New Customer Testimonial
+                    </h6>
+                    <span className="text-[11px] text-amber-700 font-medium">
+                      Automatically appends to grid in 4-per-row layout
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 items-end">
+                    <div>
+                      <label className="text-[11px] font-semibold text-amber-950 block mb-1">
+                        Customer Name <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={newTestimonial.name}
+                        onChange={(e) => setNewTestimonial({ ...newTestimonial, name: e.target.value })}
+                        placeholder="e.g. Sarah Harding"
+                        className="w-full px-3 py-2 text-xs border border-amber-200 bg-white rounded-xl outline-none focus:border-amber-600 font-medium"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-semibold text-amber-950 block mb-1">
+                        Designation / Role
+                      </label>
+                      <input
+                        type="text"
+                        value={newTestimonial.role}
+                        onChange={(e) => setNewTestimonial({ ...newTestimonial, role: e.target.value })}
+                        placeholder="e.g. Visual Designer"
+                        className="w-full px-3 py-2 text-xs border border-amber-200 bg-white rounded-xl outline-none focus:border-amber-600"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-semibold text-amber-950 block mb-1">
+                        Star Rating
+                      </label>
+                      <select
+                        value={newTestimonial.rating}
+                        onChange={(e) => setNewTestimonial({ ...newTestimonial, rating: Number(e.target.value) || 5 })}
+                        className="w-full px-3 py-2 text-xs border border-amber-200 bg-white rounded-xl outline-none focus:border-amber-600"
+                      >
+                        <option value="5">⭐⭐⭐⭐⭐ (5 Stars)</option>
+                        <option value="4">⭐⭐⭐⭐ (4 Stars)</option>
+                        <option value="3">⭐⭐⭐ (3 Stars)</option>
+                        <option value="2">⭐⭐ (2 Stars)</option>
+                        <option value="1">⭐ (1 Star)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-[11px] font-semibold text-amber-950">Avatar Photo</label>
+                        <span className="text-[10px] text-amber-700 font-semibold">📐 300 × 300 px</span>
+                      </div>
+                      <label className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-sm">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>{newTestimonial.photo ? 'Change Avatar' : 'Upload & Crop Avatar'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleFileSelectForCrop(e, 'testimonials', 'new', 'circle')}
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-semibold text-amber-950 block mb-1">
+                      Customer Review / Feedback
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={newTestimonial.review}
+                      onChange={(e) => setNewTestimonial({ ...newTestimonial, review: e.target.value })}
+                      placeholder="Write feedback statement..."
+                      className="w-full px-3 py-2 text-xs border border-amber-200 bg-white rounded-xl outline-none focus:border-amber-600"
+                    />
+                  </div>
+
+                  {newTestimonial.photo && (
+                    <div className="flex items-center gap-3 p-2.5 bg-white border border-amber-200 rounded-xl">
+                      <div className="w-10 h-10 rounded-full border border-amber-200 overflow-hidden bg-white shrink-0">
+                        <img src={newTestimonial.photo} alt="Preview" className="w-full h-full object-cover object-top" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-amber-900 truncate">Customer avatar cropped successfully!</p>
+                        <p className="text-[10px] text-amber-600">Ready to be added to reviews.</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end pt-1">
+                    <button
+                      type="button"
+                      onClick={handleAddTestimonial}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-sm"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Add Testimonial
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -1723,7 +2318,7 @@ export const AboutUsCMS = () => {
       <div className="sticky bottom-4 z-20 bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl p-4 shadow-lg flex items-center justify-between gap-4">
         <div className="flex items-center gap-2 text-xs text-slate-500">
           <Check className="w-4 h-4 text-emerald-500" />
-          <span>All 6 sections ready for live deployment.</span>
+          <span>All sections ready for live deployment.</span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -1747,6 +2342,16 @@ export const AboutUsCMS = () => {
           </button>
         </div>
       </div>
+
+      {/* Passport / Avatar Photo Cropper Modal */}
+      <PassportPhotoCropperModal
+        isOpen={cropperModal.isOpen}
+        onClose={() => setCropperModal({ isOpen: false, initialImage: null, targetSection: null, targetIndex: null, shape: 'square' })}
+        imageSrc={cropperModal.initialImage}
+        onCropComplete={handleCropComplete}
+        title={cropperModal.targetSection === 'testimonials' ? 'Adjust & Crop Customer Photo (Square 1:1)' : 'Adjust & Crop Team Member Photo (Passport 4:5)'}
+        shape={cropperModal.shape || 'square'}
+      />
     </div>
   );
 };

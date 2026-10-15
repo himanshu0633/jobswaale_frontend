@@ -275,7 +275,9 @@ export const About = () => {
 
                     // Fit & Align classes
                     const fitCls = cardFit === 'cover' ? 'object-cover' : 'object-contain';
-                    const alignCls = cardAlign === 'left' ? 'object-left' : cardAlign === 'right' ? 'object-right' : 'object-center';
+                    const alignCls = cardFit === 'cover'
+                      ? (cardAlign === 'left' ? 'object-left' : cardAlign === 'right' ? 'object-right' : 'object-center')
+                      : 'object-center';
 
                     return (
                       <div
@@ -523,11 +525,13 @@ export const About = () => {
             color: section.subtitleColor || '#88929b'
           };
 
-          const membersList = (Array.isArray(publicSettings?.teamMembers) && publicSettings.teamMembers.length > 0)
-            ? publicSettings.teamMembers
-            : (section.members || DEFAULT_ABOUT_SECTIONS_DATA[4].members);
+          const membersList = (Array.isArray(section.members) && section.members.length > 0)
+            ? section.members
+            : (Array.isArray(publicSettings?.teamMembers) && publicSettings.teamMembers.length > 0)
+              ? publicSettings.teamMembers
+              : (DEFAULT_ABOUT_SECTIONS_DATA[4].members || []);
 
-          if (publicSettings?.showMeetOurTeam === false) return null;
+          if (section.active === false) return null;
 
           return (
             <section
@@ -593,11 +597,13 @@ export const About = () => {
             color: section.subtitleColor || '#88929b'
           };
 
-          const testimonialsList = (Array.isArray(publicSettings?.happyCustomers) && publicSettings.happyCustomers.length > 0)
-            ? publicSettings.happyCustomers
-            : (section.testimonials || DEFAULT_ABOUT_SECTIONS_DATA[5].testimonials);
+          const testimonialsList = (Array.isArray(section.testimonials) && section.testimonials.length > 0)
+            ? section.testimonials
+            : (Array.isArray(publicSettings?.happyCustomers) && publicSettings.happyCustomers.length > 0)
+              ? publicSettings.happyCustomers
+              : (DEFAULT_ABOUT_SECTIONS_DATA[5].testimonials || []);
 
-          if (publicSettings?.showHappyCustomers === false) return null;
+          if (section.active === false) return null;
 
           return (
             <section
