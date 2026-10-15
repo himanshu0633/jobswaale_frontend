@@ -53,6 +53,7 @@ export const DEFAULT_ABOUT_SECTIONS_DATA = [
     subtitle: 'Explore the key capabilities and benefits offered by JobsWaale.',
     subtitleFontSize: 16,
     subtitleColor: '#88929b',
+    imageOrientation: 'landscape',
     cards: [
       {
         id: 'feat_1',

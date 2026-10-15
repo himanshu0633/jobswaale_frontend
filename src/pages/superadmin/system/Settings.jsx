@@ -1283,18 +1283,21 @@ export const Settings = () => {
                       />
                     </div>
                     <div>
-                      <label className="text-[11px] font-semibold text-indigo-950 block mb-1">Photo (Upload or URL)</label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-[11px] font-semibold text-indigo-950">Photo (Upload or URL)</label>
+                        <span className="text-[10px] text-indigo-600 font-semibold">📐 400 × 500 px (Passport)</span>
+                      </div>
                       <div className="flex gap-2">
                         <input
                           type="text"
                           value={newTeamMember.photo}
                           onChange={(e) => setNewTeamMember({ ...newTeamMember, photo: e.target.value })}
-                          placeholder="Photo URL"
+                          placeholder="Photo URL or click Upload"
                           className={inputCls}
                         />
-                        <label className="inline-flex items-center gap-1 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition cursor-pointer shrink-0">
-                          <Crop className="w-3.5 h-3.5" />
-                          <span>Crop</span>
+                        <label className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition cursor-pointer shrink-0 shadow-sm">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Upload &amp; Crop</span>
                           <input 
                             type="file" 
                             accept="image/*" 
@@ -1303,6 +1306,9 @@ export const Settings = () => {
                           />
                         </label>
                       </div>
+                      <p className="text-[10px] text-slate-500 mt-1">
+                        Select directly from gallery/device to crop &amp; frame in passport size, or paste image URL.
+                      </p>
                     </div>
                   </div>
                   {newTeamMember.photo && (
@@ -1509,18 +1515,21 @@ export const Settings = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="text-[11px] font-semibold text-indigo-950 block mb-1">Photo (Upload or URL)</label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-[11px] font-semibold text-indigo-950">Photo (Upload or URL)</label>
+                        <span className="text-[10px] text-indigo-600 font-semibold">📐 300 × 300 px (Square 1:1)</span>
+                      </div>
                       <div className="flex gap-2">
                         <input
                           type="text"
                           value={newCustomer.photo}
                           onChange={(e) => setNewCustomer({ ...newCustomer, photo: e.target.value })}
-                          placeholder="Photo URL"
+                          placeholder="Photo URL or click Upload"
                           className={inputCls}
                         />
-                        <label className="inline-flex items-center gap-1 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition cursor-pointer shrink-0">
-                          <Crop className="w-3.5 h-3.5" />
-                          <span>Crop</span>
+                        <label className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition cursor-pointer shrink-0 shadow-sm">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Upload &amp; Crop</span>
                           <input 
                             type="file" 
                             accept="image/*" 
@@ -1529,6 +1538,9 @@ export const Settings = () => {
                           />
                         </label>
                       </div>
+                      <p className="text-[10px] text-slate-500 mt-1">
+                        Select directly from gallery/device to crop &amp; frame in circular avatar, or paste image URL.
+                      </p>
                     </div>
                   </div>
                   <div className="mt-3">

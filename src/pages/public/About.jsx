@@ -9,6 +9,7 @@ import {
   ABOUT_DEFAULT_IMAGES,
   DEFAULT_ABOUT_SECTIONS_DATA
 } from '../../utils/aboutPageDefaults';
+import { getPublicSettings } from '../../utils/publicSettings';
 import CmsBannerSlot from '../../components/CmsBannerSlot';
 import bannerSm1 from './aboutImages/banner-sm-1.png';
 import bannerSm2 from './aboutImages/banner-sm-2.png';
@@ -19,6 +20,7 @@ import star from './aboutImages/star.svg';
 
 export const About = () => {
   const [dynamicPage, setDynamicPage] = useState(null);
+  const [publicSettings, setPublicSettings] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Hook for dynamic SEO Title and Meta tags
@@ -27,18 +29,22 @@ export const About = () => {
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
-    axios.get(`${BASE_API_URL}/cms/public/pages/about`)
-      .then(res => {
-        if (isMounted && res.data) {
-          setDynamicPage(res.data);
-        }
-      })
-      .catch(() => {
-        if (isMounted) setDynamicPage(null);
-      })
-      .finally(() => {
-        if (isMounted) setLoading(false);
-      });
+
+    Promise.allSettled([
+      axios.get(`${BASE_API_URL}/cms/public/pages/about`),
+      getPublicSettings(true)
+    ]).then(([pageRes, settingsRes]) => {
+      if (!isMounted) return;
+      if (pageRes.status === 'fulfilled' && pageRes.value?.data) {
+        setDynamicPage(pageRes.value.data);
+      }
+      if (settingsRes.status === 'fulfilled' && settingsRes.value) {
+        setPublicSettings(settingsRes.value);
+      }
+    }).finally(() => {
+      if (isMounted) setLoading(false);
+    });
+
     return () => { isMounted = false; };
   }, []);
 
@@ -231,6 +237,7 @@ export const About = () => {
           };
 
           const cardsList = section.cards || DEFAULT_ABOUT_SECTIONS_DATA[1].cards;
+          const orientation = section.imageOrientation || 'landscape';
 
           return (
             <section
@@ -257,46 +264,55 @@ export const About = () => {
                   )}
                 </div>
 
-                {/* 4 Feature Cards */}
+                {/* 4 Feature Cards (Full-Width Image Box + Read More Only) */}
                 <div className="grid gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4">
                   {cardsList.map((card, idx) => {
                     const defaultIcon = ABOUT_DEFAULT_IMAGES.features[idx];
                     const iconSrc = card.image ? resolveCmsImageUrl(card.image) : defaultIcon;
-                    const cardTitleStyle = { color: card.titleColor || '#1f2938' };
-                    const cardDescStyle = { color: card.descriptionColor || '#37404e' };
+                    const cardOrientation = card.imageOrientation || orientation;
+                    const cardFit = card.imageFit || section.imageFit || 'contain';
+                    const cardAlign = card.imageAlign || 'center';
+
+                    // Fit & Align classes
+                    const fitCls = cardFit === 'cover' ? 'object-cover' : 'object-contain';
+                    const alignCls = cardAlign === 'left' ? 'object-left' : cardAlign === 'right' ? 'object-right' : 'object-center';
 
                     return (
                       <div
                         key={card.id || idx}
-                        className="group bg-white border border-[#ececec] rounded-xl p-6 sm:p-8 lg:p-10 hover:border-[#0047C7] hover:shadow-[0_9px_26px_0_rgba(31,31,51,0.06)] transition-all duration-200 h-auto flex flex-col justify-between"
+                        className="group bg-white border border-[#ececec] rounded-2xl p-4 sm:p-5 hover:border-[#0047C7] hover:shadow-[0_12px_30px_0_rgba(0,71,199,0.08)] transition-all duration-300 flex flex-col justify-between h-full"
                       >
-                        <div>
-                          <div className="mb-5 h-[55px] sm:h-[65px] flex items-center">
+                        {/* Pure Image Box (No Cut, Zero Overflow) */}
+                        <Link
+                          to={card.url || '/'}
+                          className="block w-full overflow-hidden rounded-xl bg-slate-50/90 border border-slate-100 group-hover:border-blue-100 transition-colors"
+                        >
+                          <div
+                            className={`relative w-full overflow-hidden flex items-center justify-center p-1.5 transition-all ${
+                              cardOrientation === 'portrait'
+                                ? 'aspect-[3/4] sm:h-[300px]'
+                                : 'aspect-[16/10] sm:h-[185px]'
+                            }`}
+                          >
                             <img
                               src={iconSrc}
-                              alt={card.title}
-                              className="h-full object-contain"
+                              alt={card.linkText || 'Core Feature'}
+                              className={`w-full h-full ${fitCls} ${alignCls} group-hover:scale-105 transition-transform duration-300`}
+                              onError={(e) => {
+                                if (defaultIcon) e.currentTarget.src = defaultIcon;
+                              }}
                             />
                           </div>
-                          <h5
-                            style={cardTitleStyle}
-                            className="font-bold text-xl mt-4 mb-3"
-                          >
-                            {card.title}
-                          </h5>
-                          <p
-                            style={cardDescStyle}
-                            className="text-base leading-relaxed mb-5"
-                          >
-                            {card.description}
-                          </p>
-                        </div>
-                        <div>
+                        </Link>
+
+                        {/* Read More Link with proper spacing from the image */}
+                        <div className="pt-4 sm:pt-5 mt-auto flex items-center justify-between">
                           <Link
                             to={card.url || '/'}
-                            className="text-[#0047C7] text-lg font-normal hover:text-[#0052cc] transition inline-flex items-center gap-1"
+                            className="text-[#0047C7] text-base sm:text-lg font-medium hover:text-[#003cb0] transition-colors inline-flex items-center gap-1.5 group-hover:translate-x-0.5 duration-200"
                           >
-                            {card.linkText || 'Read more'} &rarr;
+                            <span>{card.linkText || 'Read more'}</span>
+                            <span className="transition-transform duration-200 group-hover:translate-x-1">&rarr;</span>
                           </Link>
                         </div>
                       </div>
@@ -507,7 +523,11 @@ export const About = () => {
             color: section.subtitleColor || '#88929b'
           };
 
-          const membersList = section.members || DEFAULT_ABOUT_SECTIONS_DATA[4].members;
+          const membersList = (Array.isArray(publicSettings?.teamMembers) && publicSettings.teamMembers.length > 0)
+            ? publicSettings.teamMembers
+            : (section.members || DEFAULT_ABOUT_SECTIONS_DATA[4].members);
+
+          if (publicSettings?.showMeetOurTeam === false) return null;
 
           return (
             <section
@@ -531,21 +551,22 @@ export const About = () => {
                   </p>
                 </div>
 
-                <div className="grid gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4 mt-10 sm:mt-[60px]">
+                {/* 4 Cards per row grid, unlimited members wrap naturally to next row */}
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 mt-10 sm:mt-[60px]">
                   {membersList.map((member, index) => {
                     const defaultPhoto = ABOUT_DEFAULT_IMAGES.team[index % ABOUT_DEFAULT_IMAGES.team.length];
                     const photoSrc = member.photo ? resolveCmsImageUrl(member.photo) : defaultPhoto;
 
                     return (
                       <div
-                        key={member.id || index}
-                        className="border border-[#ececec] rounded-xl p-6 bg-white hover:shadow-[0_9px_26px_0_rgba(31,31,51,0.06)] hover:border-[#0047C7] transition duration-200 text-center flex flex-col items-center h-auto"
+                        key={member.id || member._id || index}
+                        className="border border-[#ececec] rounded-2xl p-5 bg-white hover:shadow-[0_12px_30px_0_rgba(0,71,199,0.08)] hover:border-[#0047C7] transition-all duration-300 text-center flex flex-col items-center h-auto group"
                       >
-                        <div className="mb-4 w-full h-[230px] sm:h-[250px] rounded-lg overflow-hidden bg-slate-50 flex items-center justify-center">
+                        <div className="mb-4 w-full aspect-[4/5] sm:h-[260px] rounded-xl overflow-hidden bg-slate-50 flex items-center justify-center border border-slate-100">
                           <img
                             src={photoSrc}
                             alt={member.name || 'Team Member'}
-                            className="w-full h-full object-cover object-top hover:scale-105 transition duration-300"
+                            className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
                             onError={(e) => { e.currentTarget.src = defaultPhoto; }}
                           />
                         </div>
@@ -572,7 +593,11 @@ export const About = () => {
             color: section.subtitleColor || '#88929b'
           };
 
-          const testimonialsList = section.testimonials || DEFAULT_ABOUT_SECTIONS_DATA[5].testimonials;
+          const testimonialsList = (Array.isArray(publicSettings?.happyCustomers) && publicSettings.happyCustomers.length > 0)
+            ? publicSettings.happyCustomers
+            : (section.testimonials || DEFAULT_ABOUT_SECTIONS_DATA[5].testimonials);
+
+          if (publicSettings?.showHappyCustomers === false) return null;
 
           return (
             <section
@@ -596,7 +621,8 @@ export const About = () => {
                   </p>
                 </div>
 
-                <div className="grid gap-6 sm:gap-8 md:grid-cols-3 mt-10 sm:mt-[70px]">
+                {/* 4 Cards per row grid, unlimited customer reviews wrap naturally to next row */}
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 mt-10 sm:mt-[70px]">
                   {testimonialsList.map((customer, index) => {
                     const defaultAvatar = ABOUT_DEFAULT_IMAGES.testimonials[index % ABOUT_DEFAULT_IMAGES.testimonials.length];
                     const photoSrc = customer.photo ? resolveCmsImageUrl(customer.photo) : defaultAvatar;
@@ -604,31 +630,33 @@ export const About = () => {
 
                     return (
                       <div
-                        key={customer.id || index}
-                        className="border border-[#ececec] rounded-xl p-6 sm:p-8 bg-white hover:shadow-[0_9px_26px_0_rgba(31,31,51,0.06)] hover:border-[#0047C7] transition duration-200 text-center flex flex-col justify-between h-auto"
+                        key={customer.id || customer._id || index}
+                        className="border border-[#ececec] rounded-2xl p-5 bg-white hover:shadow-[0_12px_30px_0_rgba(0,71,199,0.08)] hover:border-[#0047C7] transition duration-300 text-center flex flex-col justify-between h-auto"
                       >
                         <div>
                           <div className="mb-4">
-                            <img
-                              src={photoSrc}
-                              alt={customer.name || 'Customer'}
-                              className="w-[100px] h-[100px] rounded-full mx-auto object-cover object-top border-2 border-slate-100 shadow-sm"
-                              onError={(e) => { e.currentTarget.src = defaultAvatar; }}
-                            />
+                            <div className="w-20 h-20 rounded-full mx-auto overflow-hidden border-2 border-slate-100 shadow-sm bg-slate-50 flex items-center justify-center">
+                              <img
+                                src={photoSrc}
+                                alt={customer.name || 'Customer'}
+                                className="w-full h-full object-cover object-center"
+                                onError={(e) => { e.currentTarget.src = defaultAvatar; }}
+                              />
+                            </div>
                           </div>
-                          <p className="text-[#37404e] text-base sm:text-lg leading-relaxed text-center">
-                            {customer.review || 'We are on the hunt for a designer who is exceptional in both making incredible product interfaces as well as'}
+                          <p className="text-[#37404e] text-sm leading-relaxed text-center line-clamp-4">
+                            "{customer.review || 'We are on the hunt for a designer who is exceptional in both making incredible product interfaces as well as'}"
                           </p>
                         </div>
-                        <div className="mt-5">
-                          <div className="flex items-center justify-center gap-1 mb-6">
+                        <div className="mt-5 pt-4 border-t border-slate-100">
+                          <div className="flex items-center justify-center gap-1 mb-2.5">
                             {[...Array(ratingCount)].map((_, i) => (
-                              <img key={i} src={star} alt="star" />
+                              <img key={i} src={star} alt="star" className="w-4 h-4" />
                             ))}
                           </div>
                           <div>
-                            <strong className="text-[#1f2938] text-lg font-bold block">{customer.name || 'Sarah Harding'}</strong>
-                            <span className="text-[#727272] text-base">{customer.role || 'Visual Designer'}</span>
+                            <strong className="text-[#1f2938] text-base font-bold block">{customer.name || 'Sarah Harding'}</strong>
+                            <span className="text-[#727272] text-xs">{customer.role || 'Visual Designer'}</span>
                           </div>
                         </div>
                       </div>
