@@ -7,10 +7,26 @@ export const resolveCmsImageUrl = (pathOrUrl) => {
   if (!pathOrUrl) return '';
   const trimmed = String(pathOrUrl).trim();
   if (!trimmed) return '';
-  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:')) {
+
+  if (trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
     return trimmed;
   }
-  const backendBase = (BASE_API_URL || '').replace(/\/api\/?$/, '');
+
+  const backendBase = (BASE_API_URL || '').replace(/\/api\/?$/, '').replace(/\/+$/, '');
+
+  const uploadIndex = trimmed.indexOf('/uploads/');
+  if (uploadIndex !== -1) {
+    const relativePath = trimmed.substring(uploadIndex);
+    return `${backendBase}${relativePath}`;
+  }
+
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    if (trimmed.startsWith('http://') && !trimmed.includes('localhost')) {
+      return trimmed.replace(/^http:\/\//, 'https://');
+    }
+    return trimmed;
+  }
+
   return `${backendBase}${trimmed.startsWith('/') ? '' : '/'}${trimmed}`;
 };
 

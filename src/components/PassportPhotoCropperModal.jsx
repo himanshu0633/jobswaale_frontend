@@ -56,10 +56,11 @@ export const PassportPhotoCropperModal = ({
 
     const img = imgRef.current;
     const imgAspect = img.width / img.height;
+    const frameAspect = width / height;
     let renderW, renderH;
 
     // Fill the frame
-    if (imgAspect > 1) {
+    if (imgAspect > frameAspect) {
       renderH = height * zoom;
       renderW = renderH * imgAspect;
     } else {
@@ -74,7 +75,7 @@ export const PassportPhotoCropperModal = ({
     const drawY = (height - renderH) / 2 + offsetY * maxShiftY;
 
     ctx.drawImage(img, drawX, drawY, renderW, renderH);
-  }, [imageLoaded, zoom, offsetX, offsetY]);
+  }, [imageLoaded, zoom, offsetX, offsetY, shape]);
 
   const handleMouseDown = (e) => {
     isDragging.current = true;
@@ -105,62 +106,67 @@ export const PassportPhotoCropperModal = ({
     setError('');
 
     try {
-      // Create high-res 400x400 export canvas
+      const isCircle = shape === 'circle';
+      const targetW = 400;
+      const targetH = isCircle ? 400 : 500;
+
       const exportCanvas = document.createElement('canvas');
-      exportCanvas.width = 400;
-      exportCanvas.height = 400;
+      exportCanvas.width = targetW;
+      exportCanvas.height = targetH;
       const expCtx = exportCanvas.getContext('2d');
 
       const img = imgRef.current;
       const imgAspect = img.width / img.height;
+      const frameAspect = targetW / targetH;
       let renderW, renderH;
 
-      if (imgAspect > 1) {
-        renderH = 400 * zoom;
+      if (imgAspect > frameAspect) {
+        renderH = targetH * zoom;
         renderW = renderH * imgAspect;
       } else {
-        renderW = 400 * zoom;
+        renderW = targetW * zoom;
         renderH = renderW / imgAspect;
       }
 
-      const maxShiftX = Math.max((renderW - 400) / 2, 0);
-      const maxShiftY = Math.max((renderH - 400) / 2, 0);
+      const maxShiftX = Math.max((renderW - targetW) / 2, 0);
+      const maxShiftY = Math.max((renderH - targetH) / 2, 0);
 
-      const drawX = (400 - renderW) / 2 + offsetX * maxShiftX;
-      const drawY = (400 - renderH) / 2 + offsetY * maxShiftY;
+      const drawX = (targetW - renderW) / 2 + offsetX * maxShiftX;
+      const drawY = (targetH - renderH) / 2 + offsetY * maxShiftY;
 
       expCtx.drawImage(img, drawX, drawY, renderW, renderH);
 
       exportCanvas.toBlob(async (blob) => {
         if (!blob) {
-          const fallbackDataUrl = exportCanvas.toDataURL('image/jpeg', 0.9);
-          onCropComplete(fallbackDataUrl);
-          onClose();
+          setError('Failed to process image export.');
+          setUploading(false);
           return;
         }
 
         try {
           const token = localStorage.getItem('token');
           const formData = new FormData();
-          formData.append('image', blob, 'passport-photo.jpg');
+          formData.append('image', blob, isCircle ? 'avatar-photo.jpg' : 'passport-photo.jpg');
 
-          const res = await axios.post(`${BASE_API_URL}/settings/upload-image`, formData, {
+          const res = await axios.post(`${BASE_API_URL}/cms/upload-image`, formData, {
             headers: token ? { Authorization: `Bearer ${token}` } : {}
           });
 
-          if (res.data?.imageUrl) {
-            onCropComplete(res.data.imageUrl);
+          const uploadedUrl = res.data?.imageUrl || res.data?.url || res.data?.default || res.data?.relativeUrl;
+          if (uploadedUrl) {
+            onCropComplete(uploadedUrl);
+            setUploading(false);
+            onClose();
           } else {
-            onCropComplete(exportCanvas.toDataURL('image/jpeg', 0.9));
+            throw new Error('Image URL not received from server');
           }
         } catch (uploadErr) {
-          console.warn('Backend upload failed, using high-quality local Data URL:', uploadErr);
-          onCropComplete(exportCanvas.toDataURL('image/jpeg', 0.9));
-        } finally {
+          console.error('Photo upload failed:', uploadErr);
+          const errMsg = uploadErr.response?.data?.message || 'Failed to upload photo to server. Please try again.';
+          setError(errMsg);
           setUploading(false);
-          onClose();
         }
-      }, 'image/jpeg', 0.92);
+      }, 'image/jpeg', 0.85);
     } catch (err) {
       console.error('Export canvas error:', err);
       setError('Could not process photo crop. Please try again.');
@@ -207,32 +213,32 @@ export const PassportPhotoCropperModal = ({
           >
             <canvas
               ref={canvasRef}
-              width={260}
-              height={260}
+              width={shape === 'circle' ? 260 : 240}
+              height={shape === 'circle' ? 260 : 300}
               className="block bg-slate-900"
             />
-            {/* Passport Oval / Framing Outline */}
-            <div className={`absolute inset-0 pointer-events-none border-2 border-white/60 m-4 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)] ${shape === 'circle' ? 'rounded-full' : 'rounded-2xl'}`}></div>
+            {/* Passport Framing Outline */}
+            <div className={`absolute inset-0 pointer-events-none border-2 border-white/60 m-3 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)] ${shape === 'circle' ? 'rounded-full' : 'rounded-xl'}`}></div>
           </div>
 
           {/* Live Passport Previews */}
           <div className="flex flex-col items-center gap-2.5 shrink-0">
             <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Live Preview</span>
-            <div className={`w-24 h-24 border-2 border-indigo-500 shadow-md bg-slate-100 overflow-hidden ${shape === 'circle' ? 'rounded-full' : 'rounded-xl'}`}>
+            <div className={`${shape === 'circle' ? 'w-24 h-24 rounded-full' : 'w-24 h-[120px] rounded-xl'} border-2 border-indigo-500 shadow-md bg-slate-100 overflow-hidden`}>
               <canvas
                 ref={(node) => {
                   if (node && canvasRef.current) {
                     const ctx = node.getContext('2d');
-                    ctx.drawImage(canvasRef.current, 0, 0, 96, 96);
+                    ctx.drawImage(canvasRef.current, 0, 0, node.width, node.height);
                   }
                 }}
-                width={96}
-                height={96}
+                width={shape === 'circle' ? 96 : 96}
+                height={shape === 'circle' ? 96 : 120}
                 className="w-full h-full object-cover"
               />
             </div>
             <span className="text-[10px] text-slate-400 font-semibold text-center max-w-[100px]">
-              Drag image or use sliders below
+              {shape === 'circle' ? '1:1 Avatar' : '4:5 Passport'}
             </span>
           </div>
         </div>

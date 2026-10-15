@@ -1902,7 +1902,7 @@ export const AboutUsCMS = () => {
                   {newTeamMember.photo && (
                     <div className="flex items-center gap-3 p-2.5 bg-white border border-indigo-200 rounded-xl">
                       <div className="w-10 h-12 rounded-lg border border-indigo-200 overflow-hidden bg-white shrink-0">
-                        <img src={newTeamMember.photo} alt="Preview" className="w-full h-full object-cover object-top" />
+                        <img src={resolveCmsImageUrl(newTeamMember.photo)} alt="Preview" className="w-full h-full object-cover object-top" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-bold text-indigo-900 truncate">Passport photo cropped successfully!</p>
@@ -2288,7 +2288,7 @@ export const AboutUsCMS = () => {
                   {newTestimonial.photo && (
                     <div className="flex items-center gap-3 p-2.5 bg-white border border-amber-200 rounded-xl">
                       <div className="w-10 h-10 rounded-full border border-amber-200 overflow-hidden bg-white shrink-0">
-                        <img src={newTestimonial.photo} alt="Preview" className="w-full h-full object-cover object-top" />
+                        <img src={resolveCmsImageUrl(newTestimonial.photo)} alt="Preview" className="w-full h-full object-cover object-top" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-bold text-amber-900 truncate">Customer avatar cropped successfully!</p>
