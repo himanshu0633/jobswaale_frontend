@@ -54,6 +54,9 @@ export const DEFAULT_ABOUT_SECTIONS_DATA = [
     subtitleFontSize: 16,
     subtitleColor: '#88929b',
     imageOrientation: 'landscape',
+    columnsPerRow: 4,
+    imageHeight: 220,
+    imageWidth: 100,
     cards: [
       {
         id: 'feat_1',

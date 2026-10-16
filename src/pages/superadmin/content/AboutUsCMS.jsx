@@ -28,7 +28,11 @@ import {
   Check,
   Plus,
   Crop,
-  Star
+  Star,
+  LayoutGrid,
+  Sliders,
+  MoveVertical,
+  MoveHorizontal
 } from 'lucide-react';
 import PassportPhotoCropperModal from '../../../components/PassportPhotoCropperModal';
 
@@ -280,6 +284,38 @@ export const AboutUsCMS = () => {
     const updated = currentList.filter((_, i) => i !== index);
     updateSectionField('testimonials', 'testimonials', updated);
     showAlert('success', 'Customer testimonial removed. Click "Save & Publish" to persist.');
+  };
+
+  // Add & Delete Feature Cards
+  const handleAddFeatureCard = () => {
+    const featSec = sections.find(s => s.id === 'features');
+    const currentList = Array.isArray(featSec?.cards) ? featSec.cards : [];
+    const newCard = {
+      id: 'feat_' + Date.now(),
+      title: `Feature ${currentList.length + 1}`,
+      description: '',
+      image: '',
+      linkText: 'Read more',
+      url: '',
+      imageFit: 'contain',
+      imageAlign: 'center'
+    };
+    const updated = [...currentList, newCard];
+    updateSectionField('features', 'cards', updated);
+    showAlert('success', 'New feature card added! Click "Save & Publish" to persist.');
+  };
+
+  const handleDeleteFeatureCard = (index) => {
+    const featSec = sections.find(s => s.id === 'features');
+    const currentList = Array.isArray(featSec?.cards) ? featSec.cards : [];
+    if (currentList.length <= 1) {
+      showAlert('error', 'You must have at least 1 feature card.');
+      return;
+    }
+    if (!window.confirm(`Are you sure you want to remove Card #${index + 1}?`)) return;
+    const updated = currentList.filter((_, i) => i !== index);
+    updateSectionField('features', 'cards', updated);
+    showAlert('success', 'Feature card removed. Click "Save & Publish" to persist.');
   };
 
   // Image Upload Handler
@@ -999,7 +1035,219 @@ export const AboutUsCMS = () => {
                 </div>
               </div>
 
-              {/* Card Box Format / Orientation (Landscape vs Portrait) */}
+              {/* 1. Cards Per Row Selector (2 vs 4 per row) */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 sm:p-5 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                      <LayoutGrid className="w-4 h-4 text-[#0047C7]" />
+                      Cards Per Row (Desktop Columns)
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Choose how many cards display per row on desktop (2 for wide or 4 for compact).
+                    </p>
+                  </div>
+                  <span className="text-[11px] font-bold text-[#0047C7] bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200 self-start sm:self-auto">
+                    {Number(currentSection.columnsPerRow || 4) === 2 ? 'Active: 2 Cards Per Row (Wide)' : 'Active: 4 Cards Per Row (Compact)'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  {/* 2 Per Row Option */}
+                  <button
+                    type="button"
+                    onClick={() => updateSectionField('features', 'columnsPerRow', 2)}
+                    className={`p-3.5 rounded-xl border text-left flex items-start gap-3 transition-all cursor-pointer ${
+                      Number(currentSection.columnsPerRow) === 2
+                        ? 'border-[#0047C7] bg-white ring-2 ring-[#0047C7]/20 shadow-sm'
+                        : 'border-slate-200 bg-white/70 hover:bg-white hover:border-slate-300'
+                    }`}
+                  >
+                    <div className={`p-2 rounded-lg shrink-0 ${
+                      Number(currentSection.columnsPerRow) === 2 ? 'bg-[#0047C7] text-white shadow-sm' : 'bg-slate-100 text-slate-500'
+                    }`}>
+                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="3" y="3" width="8" height="18" rx="2" />
+                        <rect x="13" y="3" width="8" height="18" rx="2" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-900">2 Cards Per Row</span>
+                        {Number(currentSection.columnsPerRow) === 2 && (
+                          <span className="text-[10px] font-bold text-[#0047C7] bg-blue-50 px-1.5 py-0.5 rounded">Selected</span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-0.5">Wide 2-column view (extra width &amp; focus on images)</p>
+                      <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-semibold inline-block mt-1">
+                        5th card moves to 3rd line
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* 4 Per Row Option */}
+                  <button
+                    type="button"
+                    onClick={() => updateSectionField('features', 'columnsPerRow', 4)}
+                    className={`p-3.5 rounded-xl border text-left flex items-start gap-3 transition-all cursor-pointer ${
+                      Number(currentSection.columnsPerRow || 4) === 4
+                        ? 'border-[#0047C7] bg-white ring-2 ring-[#0047C7]/20 shadow-sm'
+                        : 'border-slate-200 bg-white/70 hover:bg-white hover:border-slate-300'
+                    }`}
+                  >
+                    <div className={`p-2 rounded-lg shrink-0 ${
+                      Number(currentSection.columnsPerRow || 4) === 4 ? 'bg-[#0047C7] text-white shadow-sm' : 'bg-slate-100 text-slate-500'
+                    }`}>
+                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="2" y="3" width="4" height="18" rx="1" />
+                        <rect x="7.5" y="3" width="4" height="18" rx="1" />
+                        <rect x="13" y="3" width="4" height="18" rx="1" />
+                        <rect x="18.5" y="3" width="4" height="18" rx="1" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-900">4 Cards Per Row</span>
+                        {Number(currentSection.columnsPerRow || 4) === 4 && (
+                          <span className="text-[10px] font-bold text-[#0047C7] bg-blue-50 px-1.5 py-0.5 rounded">Selected</span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-0.5">Standard 4-column grid (compact cards)</p>
+                      <span className="text-[10px] text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded font-semibold inline-block mt-1">
+                        5th card moves to 2nd line
+                      </span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* 2. Global Height & Width Control for All Cards (Single Controller updates all cards together) */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                      <Sliders className="w-4 h-4 text-[#0047C7]" />
+                      All Cards Image Size (Height &amp; Width)
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Adjusting this updates the image height &amp; width of all cards uniformly together.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold text-slate-700 bg-white border border-slate-200 px-2.5 py-1 rounded-lg shadow-2xs">
+                      📐 Height: <strong>{currentSection.imageHeight || (Number(currentSection.columnsPerRow) === 2 ? 260 : 185)}px</strong> | Width: <strong>{currentSection.imageWidth || 100}%</strong>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        updateSectionField('features', 'imageHeight', Number(currentSection.columnsPerRow) === 2 ? 260 : 185);
+                        updateSectionField('features', 'imageWidth', 100);
+                      }}
+                      className="text-[11px] text-[#0047C7] hover:underline font-semibold cursor-pointer"
+                    >
+                      Reset Size
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                  {/* Height Slider */}
+                  <div className="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <MoveVertical className="w-3.5 h-3.5 text-[#0047C7]" />
+                        Image Height (px)
+                      </label>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          min="120"
+                          max="600"
+                          step="5"
+                          value={currentSection.imageHeight || (Number(currentSection.columnsPerRow) === 2 ? 260 : 185)}
+                          onChange={(e) => updateSectionField('features', 'imageHeight', Number(e.target.value) || 185)}
+                          className="w-16 px-2 py-1 text-xs font-bold font-mono text-right border border-slate-300 rounded-md focus:border-[#0047C7] outline-none"
+                        />
+                        <span className="text-xs font-semibold text-slate-500">px</span>
+                      </div>
+                    </div>
+                    <input
+                      type="range"
+                      min="120"
+                      max="500"
+                      step="5"
+                      value={currentSection.imageHeight || (Number(currentSection.columnsPerRow) === 2 ? 260 : 185)}
+                      onChange={(e) => updateSectionField('features', 'imageHeight', Number(e.target.value))}
+                      className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#0047C7]"
+                    />
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 font-medium pt-0.5">
+                      <span>120px</span>
+                      <div className="flex gap-1.5">
+                        {[185, 240, 280, 340].map(h => (
+                          <button
+                            key={h}
+                            type="button"
+                            onClick={() => updateSectionField('features', 'imageHeight', h)}
+                            className="px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 font-mono text-[9.5px] cursor-pointer"
+                          >
+                            {h}px
+                          </button>
+                        ))}
+                      </div>
+                      <span>500px</span>
+                    </div>
+                  </div>
+
+                  {/* Width Slider */}
+                  <div className="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <MoveHorizontal className="w-3.5 h-3.5 text-[#0047C7]" />
+                        Image Max Width (%)
+                      </label>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          min="50"
+                          max="100"
+                          step="5"
+                          value={currentSection.imageWidth || 100}
+                          onChange={(e) => updateSectionField('features', 'imageWidth', Number(e.target.value) || 100)}
+                          className="w-14 px-2 py-1 text-xs font-bold font-mono text-right border border-slate-300 rounded-md focus:border-[#0047C7] outline-none"
+                        />
+                        <span className="text-xs font-semibold text-slate-500">%</span>
+                      </div>
+                    </div>
+                    <input
+                      type="range"
+                      min="50"
+                      max="100"
+                      step="5"
+                      value={currentSection.imageWidth || 100}
+                      onChange={(e) => updateSectionField('features', 'imageWidth', Number(e.target.value))}
+                      className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#0047C7]"
+                    />
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 font-medium pt-0.5">
+                      <span>50% (Narrow)</span>
+                      <div className="flex gap-1.5">
+                        {[75, 85, 95, 100].map(w => (
+                          <button
+                            key={w}
+                            type="button"
+                            onClick={() => updateSectionField('features', 'imageWidth', w)}
+                            className="px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 font-mono text-[9.5px] cursor-pointer"
+                          >
+                            {w}%
+                          </button>
+                        ))}
+                      </div>
+                      <span>100% (Full)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Card Box Format / Orientation (Landscape vs Portrait) */}
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 sm:p-5 space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
@@ -1020,7 +1268,7 @@ export const AboutUsCMS = () => {
                   <button
                     type="button"
                     onClick={() => updateSectionField('features', 'imageOrientation', 'landscape')}
-                    className={`p-3.5 rounded-xl border text-left flex items-start gap-3 transition-all ${
+                    className={`p-3.5 rounded-xl border text-left flex items-start gap-3 transition-all cursor-pointer ${
                       (currentSection.imageOrientation || 'landscape') === 'landscape'
                         ? 'border-[#0047C7] bg-white ring-2 ring-[#0047C7]/20 shadow-sm'
                         : 'border-slate-200 bg-white/70 hover:bg-white hover:border-slate-300'
@@ -1053,7 +1301,7 @@ export const AboutUsCMS = () => {
                   <button
                     type="button"
                     onClick={() => updateSectionField('features', 'imageOrientation', 'portrait')}
-                    className={`p-3.5 rounded-xl border text-left flex items-start gap-3 transition-all ${
+                    className={`p-3.5 rounded-xl border text-left flex items-start gap-3 transition-all cursor-pointer ${
                       (currentSection.imageOrientation || 'landscape') === 'portrait'
                         ? 'border-[#0047C7] bg-white ring-2 ring-[#0047C7]/20 shadow-sm'
                         : 'border-slate-200 bg-white/70 hover:bg-white hover:border-slate-300'
@@ -1084,228 +1332,259 @@ export const AboutUsCMS = () => {
                 </div>
               </div>
 
-              {/* 4 Feature Cards (Image Upload + Read More Only) */}
-              <div className="space-y-4 pt-2">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
-                    4 Feature Cards — Image Upload &amp; Read More
-                  </h3>
-                  <div className="text-xs text-slate-500">
-                    Format: <strong className="text-slate-700">{(currentSection.imageOrientation || 'landscape') === 'portrait' ? 'Portrait (Vertical / 450×600 px)' : 'Landscape (Horizontal / 600×380 px)'}</strong>
-                  </div>
-                </div>
+              {/* 4. Feature Cards Grid with Dynamic Columns, Uniform Size, and Add More Cards */}
+              {(() => {
+                const currentCards = Array.isArray(currentSection.cards) ? currentSection.cards : [];
+                const columnsPerRow = Number(currentSection.columnsPerRow || 4) === 2 ? 2 : 4;
+                const activeHeight = currentSection.imageHeight ? Number(currentSection.imageHeight) : (columnsPerRow === 2 ? 260 : 185);
+                const activeWidth = currentSection.imageWidth ? Number(currentSection.imageWidth) : 100;
+                const orientation = currentSection.imageOrientation || 'landscape';
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {(currentSection.cards || []).map((card, cardIdx) => {
-                    const defaultIcon = ABOUT_DEFAULT_IMAGES.features[cardIdx];
-                    const activeIcon = card.image ? resolveCmsImageUrl(card.image) : defaultIcon;
-                    const uploadKey = `card_${cardIdx}`;
-                    const orientation = currentSection.imageOrientation || 'landscape';
-                    const cardFit = card.imageFit || currentSection.imageFit || 'contain';
-                    const cardAlign = card.imageAlign || 'center';
-
-                    return (
-                      <div
-                        key={card.id || cardIdx}
-                        className="bg-white border border-slate-200 rounded-2xl p-3.5 sm:p-4 space-y-3.5 flex flex-col justify-between shadow-sm hover:border-slate-300 transition-all"
-                      >
-                        <div className="space-y-3">
-                          {/* Card Header */}
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-bold text-slate-700">Card #{cardIdx + 1}</span>
-                              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
-                                card.image
-                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                  : 'bg-slate-100 text-slate-600 border border-slate-200'
-                              }`}>
-                                {card.image ? 'Custom' : 'Default'}
-                              </span>
-                            </div>
-
-                            {card.image && (
-                              <button
-                                type="button"
-                                onClick={() => updateArrayItem('features', 'cards', cardIdx, 'image', '')}
-                                className="text-[11px] text-rose-500 hover:text-rose-700 flex items-center gap-1 font-medium transition"
-                                title="Restore default image"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                                <span>Reset</span>
-                              </button>
-                            )}
-                          </div>
-
-                          {/* Full-width Image Box Preview with Aspect Ratio Matching Frontend */}
-                          <div className="space-y-2">
-                            <div
-                              className={`relative w-full rounded-xl overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center p-1.5 transition-all ${
-                                orientation === 'portrait'
-                                  ? 'aspect-[3/4] h-60 sm:h-64'
-                                  : 'aspect-[16/10] h-36 sm:h-40'
-                              }`}
-                            >
-                              <img
-                                src={activeIcon}
-                                alt={`Feature ${cardIdx + 1}`}
-                                className={`w-full h-full ${cardFit === 'cover' ? 'object-cover' : 'object-contain'} ${
-                                  cardFit === 'cover'
-                                    ? (cardAlign === 'left' ? 'object-left' : cardAlign === 'right' ? 'object-right' : 'object-center')
-                                    : 'object-center'
-                                } transition-all duration-200`}
-                                onError={(e) => {
-                                  if (defaultIcon) e.currentTarget.src = defaultIcon;
-                                }}
-                              />
-
-                              {/* Hover overlay for quick change */}
-                              <div className="absolute inset-0 bg-slate-900/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                <label className="px-2.5 py-1 text-xs font-semibold text-white bg-[#0047C7] hover:bg-[#003cb0] rounded-lg cursor-pointer transition shadow flex items-center gap-1">
-                                  <Upload className="w-3.5 h-3.5" />
-                                  <span>{uploadingImage[uploadKey] ? 'Uploading...' : 'Change'}</span>
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    disabled={uploadingImage[uploadKey]}
-                                    onChange={(e) => handleUploadImage(e.target.files?.[0], (url) => updateArrayItem('features', 'cards', cardIdx, 'image', url), uploadKey)}
-                                  />
-                                </label>
-                              </div>
-                            </div>
-
-                            {/* Position Left / Center / Right Controls (Enabled ONLY when Fit Mode is Cover) */}
-                            <div className={`flex items-center justify-between gap-1 bg-slate-50 p-1.5 rounded-lg border border-slate-200/80 transition-opacity ${
-                              cardFit !== 'cover' ? 'opacity-40' : ''
-                            }`}>
-                              <div className="flex items-center gap-1">
-                                <span className="text-[10px] font-bold text-slate-500">Position:</span>
-                                {cardFit !== 'cover' && (
-                                  <span className="text-[9px] text-slate-400 font-medium">(Only in Cover)</span>
-                                )}
-                              </div>
-                              <div className={`flex gap-1 ${cardFit !== 'cover' ? 'pointer-events-none' : ''}`}>
-                                <button
-                                  type="button"
-                                  disabled={cardFit !== 'cover'}
-                                  onClick={() => updateArrayItem('features', 'cards', cardIdx, 'imageAlign', 'left')}
-                                  className={`px-1.5 py-0.5 rounded text-[10px] font-semibold transition ${
-                                    cardAlign === 'left' ? 'bg-[#0047C7] text-white shadow-sm' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-                                  }`}
-                                  title="Align Left (Available when Fit Mode is Cover)"
-                                >
-                                  Left
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={cardFit !== 'cover'}
-                                  onClick={() => updateArrayItem('features', 'cards', cardIdx, 'imageAlign', 'center')}
-                                  className={`px-1.5 py-0.5 rounded text-[10px] font-semibold transition ${
-                                    cardAlign === 'center' ? 'bg-[#0047C7] text-white shadow-sm' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-                                  }`}
-                                  title="Align Center (Available when Fit Mode is Cover)"
-                                >
-                                  Center
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={cardFit !== 'cover'}
-                                  onClick={() => updateArrayItem('features', 'cards', cardIdx, 'imageAlign', 'right')}
-                                  className={`px-1.5 py-0.5 rounded text-[10px] font-semibold transition ${
-                                    cardAlign === 'right' ? 'bg-[#0047C7] text-white shadow-sm' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-                                  }`}
-                                  title="Align Right (Available when Fit Mode is Cover)"
-                                >
-                                  Right
-                                </button>
-                              </div>
-                            </div>
-
-                            {/* Fit Mode (No Cut vs Fill) */}
-                            <div className="flex items-center justify-between gap-1 bg-slate-50 p-1.5 rounded-lg border border-slate-200/80">
-                              <span className="text-[10px] font-bold text-slate-500">Fit Mode:</span>
-                              <div className="flex gap-1">
-                                <button
-                                  type="button"
-                                  onClick={() => updateArrayItem('features', 'cards', cardIdx, 'imageFit', 'contain')}
-                                  className={`px-2 py-0.5 rounded text-[10px] font-semibold transition ${
-                                    cardFit === 'contain' ? 'bg-[#0047C7] text-white shadow-sm' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-                                  }`}
-                                  title="Fit whole image without any cut"
-                                >
-                                  No Cut
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => updateArrayItem('features', 'cards', cardIdx, 'imageFit', 'cover')}
-                                  className={`px-2 py-0.5 rounded text-[10px] font-semibold transition ${
-                                    cardFit === 'cover' ? 'bg-[#0047C7] text-white shadow-sm' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-                                  }`}
-                                  title="Fill box completely"
-                                >
-                                  Cover
-                                </button>
-                              </div>
-                            </div>
-
-                            {/* Upload Action Button + Explicit Recommended Size Helper */}
-                            <div className="pt-1">
-                              <label className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#0047C7] bg-blue-50 border border-blue-200 hover:bg-blue-100 rounded-lg cursor-pointer transition">
-                                <Upload className="w-3.5 h-3.5" />
-                                <span>{uploadingImage[uploadKey] ? 'Uploading...' : (card.image ? 'Change Image' : 'Upload Image')}</span>
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  className="hidden"
-                                  disabled={uploadingImage[uploadKey]}
-                                  onChange={(e) => handleUploadImage(e.target.files?.[0], (url) => updateArrayItem('features', 'cards', cardIdx, 'image', url), uploadKey)}
-                                />
-                              </label>
-
-                              <div className="text-[10px] text-slate-500 font-medium text-center mt-1">
-                                {orientation === 'portrait' ? (
-                                  <span>📐 Size: <strong>450 × 600 px</strong> (3:4)</span>
-                                ) : (
-                                  <span>📐 Size: <strong>600 × 380 px</strong> (16:10)</span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Read More Link Section (Title & Description Removed Completely) */}
-                        <div className="pt-3 border-t border-slate-100 space-y-2">
-                          <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">
-                            Read More Link Action
-                          </label>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <div>
-                              <span className="block text-[10px] font-semibold text-slate-500 mb-1">Link Text</span>
-                              <input
-                                type="text"
-                                value={card.linkText || 'Read more'}
-                                onChange={(e) => updateArrayItem('features', 'cards', cardIdx, 'linkText', e.target.value)}
-                                placeholder="Read more"
-                                className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg outline-none bg-white focus:border-[#0047C7]"
-                              />
-                            </div>
-                            <div>
-                              <span className="block text-[10px] font-semibold text-slate-500 mb-1">URL Path</span>
-                              <input
-                                type="text"
-                                value={card.url || ''}
-                                onChange={(e) => updateArrayItem('features', 'cards', cardIdx, 'url', e.target.value)}
-                                placeholder="/service-page"
-                                className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg outline-none bg-white focus:border-[#0047C7]"
-                              />
-                            </div>
-                          </div>
-                        </div>
+                return (
+                  <div className="space-y-4 pt-2">
+                    {/* Header Bar with Count & Add More Button */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200">
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-[#0047C7]" />
+                          Feature Cards ({currentCards.length}) — {columnsPerRow === 2 ? '2 Per Row (Wide)' : '4 Per Row (Compact)'}
+                        </h3>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          All cards uniformly share height: <strong className="text-slate-700">{activeHeight}px</strong> &amp; width: <strong className="text-slate-700">{activeWidth}%</strong>
+                        </p>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
+
+                      <button
+                        type="button"
+                        onClick={handleAddFeatureCard}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#0047C7] hover:bg-[#003cb0] text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-sm self-start sm:self-auto"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>Add New Feature Card</span>
+                      </button>
+                    </div>
+
+                    {/* Cards Grid: 2 or 4 Columns with Auto-wrapping to next row */}
+                    <div className={`grid gap-4 ${
+                      columnsPerRow === 2 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
+                    }`}>
+                      {currentCards.map((card, cardIdx) => {
+                        const defaultIcon = ABOUT_DEFAULT_IMAGES.features[cardIdx % ABOUT_DEFAULT_IMAGES.features.length];
+                        const activeIcon = card.image ? resolveCmsImageUrl(card.image) : defaultIcon;
+                        const uploadKey = `card_${cardIdx}`;
+                        const cardFit = card.imageFit || currentSection.imageFit || 'contain';
+                        const cardAlign = card.imageAlign || 'center';
+
+                        return (
+                          <div
+                            key={card.id || cardIdx}
+                            className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3.5 flex flex-col justify-between shadow-sm hover:border-[#0047C7] transition-all"
+                          >
+                            <div className="space-y-3">
+                              {/* Card Header Bar */}
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-xs font-bold text-slate-700">Card #{cardIdx + 1}</span>
+                                  <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                                    card.image
+                                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                      : 'bg-slate-100 text-slate-600 border border-slate-200'
+                                  }`}>
+                                    {card.image ? 'Custom' : 'Default'}
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-1.5">
+                                  {card.image && (
+                                    <button
+                                      type="button"
+                                      onClick={() => updateArrayItem('features', 'cards', cardIdx, 'image', '')}
+                                      className="text-[11px] text-slate-500 hover:text-slate-700 font-medium transition cursor-pointer px-1"
+                                      title="Restore default image"
+                                    >
+                                      Reset Img
+                                    </button>
+                                  )}
+
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteFeatureCard(cardIdx)}
+                                    className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                                    title="Delete this card"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Uniform Image Box Preview (matching exact height & width set by admin) */}
+                              <div className="space-y-2">
+                                <div
+                                  style={{
+                                    height: `${activeHeight}px`,
+                                    ...(activeWidth < 100 ? { width: `${activeWidth}%`, maxWidth: `${activeWidth}%`, margin: '0 auto' } : { width: '100%' })
+                                  }}
+                                  className="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center p-1.5 transition-all shadow-inner"
+                                >
+                                  <img
+                                    src={activeIcon}
+                                    alt={`Feature ${cardIdx + 1}`}
+                                    className={`w-full h-full ${cardFit === 'cover' ? 'object-cover' : 'object-contain'} ${
+                                      cardFit === 'cover'
+                                        ? (cardAlign === 'left' ? 'object-left' : cardAlign === 'right' ? 'object-right' : 'object-center')
+                                        : 'object-center'
+                                    } transition-all duration-200`}
+                                    onError={(e) => {
+                                      if (defaultIcon) e.currentTarget.src = defaultIcon;
+                                    }}
+                                  />
+
+                                  {/* Hover overlay for quick change */}
+                                  <div className="absolute inset-0 bg-slate-900/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                    <label className="px-2.5 py-1 text-xs font-semibold text-white bg-[#0047C7] hover:bg-[#003cb0] rounded-lg cursor-pointer transition shadow flex items-center gap-1">
+                                      <Upload className="w-3.5 h-3.5" />
+                                      <span>{uploadingImage[uploadKey] ? 'Uploading...' : 'Change'}</span>
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        disabled={uploadingImage[uploadKey]}
+                                        onChange={(e) => handleUploadImage(e.target.files?.[0], (url) => updateArrayItem('features', 'cards', cardIdx, 'image', url), uploadKey)}
+                                      />
+                                    </label>
+                                  </div>
+                                </div>
+
+                                {/* Position Left / Center / Right Controls (Enabled ONLY when Fit Mode is Cover) */}
+                                <div className={`flex items-center justify-between gap-1 bg-slate-50 p-1.5 rounded-lg border border-slate-200/80 transition-opacity ${
+                                  cardFit !== 'cover' ? 'opacity-40' : ''
+                                }`}>
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-[10px] font-bold text-slate-500">Position:</span>
+                                    {cardFit !== 'cover' && (
+                                      <span className="text-[9px] text-slate-400 font-medium">(Only in Cover)</span>
+                                    )}
+                                  </div>
+                                  <div className={`flex gap-1 ${cardFit !== 'cover' ? 'pointer-events-none' : ''}`}>
+                                    <button
+                                      type="button"
+                                      disabled={cardFit !== 'cover'}
+                                      onClick={() => updateArrayItem('features', 'cards', cardIdx, 'imageAlign', 'left')}
+                                      className={`px-1.5 py-0.5 rounded text-[10px] font-semibold transition ${
+                                        cardAlign === 'left' ? 'bg-[#0047C7] text-white shadow-sm' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                                      }`}
+                                      title="Align Left (Available when Fit Mode is Cover)"
+                                    >
+                                      Left
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={cardFit !== 'cover'}
+                                      onClick={() => updateArrayItem('features', 'cards', cardIdx, 'imageAlign', 'center')}
+                                      className={`px-1.5 py-0.5 rounded text-[10px] font-semibold transition ${
+                                        cardAlign === 'center' ? 'bg-[#0047C7] text-white shadow-sm' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                                      }`}
+                                      title="Align Center (Available when Fit Mode is Cover)"
+                                    >
+                                      Center
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={cardFit !== 'cover'}
+                                      onClick={() => updateArrayItem('features', 'cards', cardIdx, 'imageAlign', 'right')}
+                                      className={`px-1.5 py-0.5 rounded text-[10px] font-semibold transition ${
+                                        cardAlign === 'right' ? 'bg-[#0047C7] text-white shadow-sm' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                                      }`}
+                                      title="Align Right (Available when Fit Mode is Cover)"
+                                    >
+                                      Right
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Fit Mode (No Cut vs Fill) */}
+                                <div className="flex items-center justify-between gap-1 bg-slate-50 p-1.5 rounded-lg border border-slate-200/80">
+                                  <span className="text-[10px] font-bold text-slate-500">Fit Mode:</span>
+                                  <div className="flex gap-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => updateArrayItem('features', 'cards', cardIdx, 'imageFit', 'contain')}
+                                      className={`px-2 py-0.5 rounded text-[10px] font-semibold transition ${
+                                        cardFit === 'contain' ? 'bg-[#0047C7] text-white shadow-sm' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                                      }`}
+                                      title="Fit whole image without any cut"
+                                    >
+                                      No Cut
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => updateArrayItem('features', 'cards', cardIdx, 'imageFit', 'cover')}
+                                      className={`px-2 py-0.5 rounded text-[10px] font-semibold transition ${
+                                        cardFit === 'cover' ? 'bg-[#0047C7] text-white shadow-sm' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                                      }`}
+                                      title="Fill box completely"
+                                    >
+                                      Cover
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Upload Action Button + Size Helper */}
+                                <div className="pt-1">
+                                  <label className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#0047C7] bg-blue-50 border border-blue-200 hover:bg-blue-100 rounded-lg cursor-pointer transition">
+                                    <Upload className="w-3.5 h-3.5" />
+                                    <span>{uploadingImage[uploadKey] ? 'Uploading...' : (card.image ? 'Change Image' : 'Upload Image')}</span>
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      className="hidden"
+                                      disabled={uploadingImage[uploadKey]}
+                                      onChange={(e) => handleUploadImage(e.target.files?.[0], (url) => updateArrayItem('features', 'cards', cardIdx, 'image', url), uploadKey)}
+                                    />
+                                  </label>
+
+                                  <div className="text-[10px] text-slate-500 font-medium text-center mt-1">
+                                    <span>📐 Box Size: <strong>{activeHeight}px Height</strong> ({columnsPerRow === 2 ? '2-col wide' : '4-col compact'})</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Read More Link Section */}
+                            <div className="pt-3 border-t border-slate-100 space-y-2">
+                              <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                                Read More Link Action
+                              </label>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <div>
+                                  <span className="block text-[10px] font-semibold text-slate-500 mb-1">Link Text</span>
+                                  <input
+                                    type="text"
+                                    value={card.linkText || 'Read more'}
+                                    onChange={(e) => updateArrayItem('features', 'cards', cardIdx, 'linkText', e.target.value)}
+                                    placeholder="Read more"
+                                    className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg outline-none bg-white focus:border-[#0047C7]"
+                                  />
+                                </div>
+                                <div>
+                                  <span className="block text-[10px] font-semibold text-slate-500 mb-1">URL Path</span>
+                                  <input
+                                    type="text"
+                                    value={card.url || ''}
+                                    onChange={(e) => updateArrayItem('features', 'cards', cardIdx, 'url', e.target.value)}
+                                    placeholder="/service-page"
+                                    className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg outline-none bg-white focus:border-[#0047C7]"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
 

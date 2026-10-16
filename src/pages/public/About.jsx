@@ -264,63 +264,74 @@ export const About = () => {
                   )}
                 </div>
 
-                {/* 4 Feature Cards (Full-Width Image Box + Read More Only) */}
-                <div className="grid gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                  {cardsList.map((card, idx) => {
-                    const defaultIcon = ABOUT_DEFAULT_IMAGES.features[idx];
-                    const iconSrc = card.image ? resolveCmsImageUrl(card.image) : defaultIcon;
-                    const cardOrientation = card.imageOrientation || orientation;
-                    const cardFit = card.imageFit || section.imageFit || 'contain';
-                    const cardAlign = card.imageAlign || 'center';
+                {/* Feature Cards Grid (2 or 4 Cards Per Row, Uniform Size) */}
+                {(() => {
+                  const columnsPerRow = Number(section.columnsPerRow) === 2 ? 2 : 4;
+                  const activeHeight = section.imageHeight ? Number(section.imageHeight) : (columnsPerRow === 2 ? 260 : 185);
+                  const activeWidth = section.imageWidth ? Number(section.imageWidth) : 100;
 
-                    // Fit & Align classes
-                    const fitCls = cardFit === 'cover' ? 'object-cover' : 'object-contain';
-                    const alignCls = cardFit === 'cover'
-                      ? (cardAlign === 'left' ? 'object-left' : cardAlign === 'right' ? 'object-right' : 'object-center')
-                      : 'object-center';
+                  return (
+                    <div className={`grid gap-5 sm:gap-6 ${
+                      columnsPerRow === 2
+                        ? 'grid-cols-1 md:grid-cols-2'
+                        : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
+                    }`}>
+                      {cardsList.map((card, idx) => {
+                        const defaultIcon = ABOUT_DEFAULT_IMAGES.features[idx % ABOUT_DEFAULT_IMAGES.features.length];
+                        const iconSrc = card.image ? resolveCmsImageUrl(card.image) : defaultIcon;
+                        const cardFit = card.imageFit || section.imageFit || 'contain';
+                        const cardAlign = card.imageAlign || 'center';
 
-                    return (
-                      <div
-                        key={card.id || idx}
-                        className="group bg-white border border-[#ececec] rounded-2xl p-4 sm:p-5 hover:border-[#0047C7] hover:shadow-[0_12px_30px_0_rgba(0,71,199,0.08)] transition-all duration-300 flex flex-col justify-between h-full"
-                      >
-                        {/* Pure Image Box (No Cut, Zero Overflow) */}
-                        <Link
-                          to={card.url || '/'}
-                          className="block w-full overflow-hidden rounded-xl bg-slate-50/90 border border-slate-100 group-hover:border-blue-100 transition-colors"
-                        >
+                        // Fit & Align classes
+                        const fitCls = cardFit === 'cover' ? 'object-cover' : 'object-contain';
+                        const alignCls = cardFit === 'cover'
+                          ? (cardAlign === 'left' ? 'object-left' : cardAlign === 'right' ? 'object-right' : 'object-center')
+                          : 'object-center';
+
+                        return (
                           <div
-                            className={`relative w-full overflow-hidden flex items-center justify-center p-1.5 transition-all ${
-                              cardOrientation === 'portrait'
-                                ? 'aspect-[3/4] sm:h-[300px]'
-                                : 'aspect-[16/10] sm:h-[185px]'
-                            }`}
+                            key={card.id || idx}
+                            className="group bg-white border border-[#ececec] rounded-2xl p-4 sm:p-5 hover:border-[#0047C7] hover:shadow-[0_12px_30px_0_rgba(0,71,199,0.08)] transition-all duration-300 flex flex-col justify-between h-full"
                           >
-                            <img
-                              src={iconSrc}
-                              alt={card.linkText || 'Core Feature'}
-                              className={`w-full h-full ${fitCls} ${alignCls} group-hover:scale-105 transition-transform duration-300`}
-                              onError={(e) => {
-                                if (defaultIcon) e.currentTarget.src = defaultIcon;
-                              }}
-                            />
-                          </div>
-                        </Link>
+                            {/* Pure Image Box (Matching Exact Uniform Height & Width) */}
+                            <Link
+                              to={card.url || '/'}
+                              className="block w-full overflow-hidden rounded-xl bg-slate-50/90 border border-slate-100 group-hover:border-blue-100 transition-colors"
+                            >
+                              <div
+                                style={{
+                                  height: `${activeHeight}px`,
+                                  ...(activeWidth < 100 ? { width: `${activeWidth}%`, maxWidth: `${activeWidth}%`, margin: '0 auto' } : { width: '100%' })
+                                }}
+                                className="relative overflow-hidden flex items-center justify-center p-1.5 transition-all"
+                              >
+                                <img
+                                  src={iconSrc}
+                                  alt={card.linkText || 'Core Feature'}
+                                  className={`w-full h-full ${fitCls} ${alignCls} group-hover:scale-105 transition-transform duration-300`}
+                                  onError={(e) => {
+                                    if (defaultIcon) e.currentTarget.src = defaultIcon;
+                                  }}
+                                />
+                              </div>
+                            </Link>
 
-                        {/* Read More Link with proper spacing from the image */}
-                        <div className="pt-4 sm:pt-5 mt-auto flex items-center justify-between">
-                          <Link
-                            to={card.url || '/'}
-                            className="text-[#0047C7] text-base sm:text-lg font-medium hover:text-[#003cb0] transition-colors inline-flex items-center gap-1.5 group-hover:translate-x-0.5 duration-200"
-                          >
-                            <span>{card.linkText || 'Read more'}</span>
-                            <span className="transition-transform duration-200 group-hover:translate-x-1">&rarr;</span>
-                          </Link>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                            {/* Read More Link with proper spacing from the image */}
+                            <div className="pt-4 sm:pt-5 mt-auto flex items-center justify-between">
+                              <Link
+                                to={card.url || '/'}
+                                className="text-[#0047C7] text-base sm:text-lg font-medium hover:text-[#003cb0] transition-colors inline-flex items-center gap-1.5 group-hover:translate-x-0.5 duration-200"
+                              >
+                                <span>{card.linkText || 'Read more'}</span>
+                                <span className="transition-transform duration-200 group-hover:translate-x-1">&rarr;</span>
+                              </Link>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
             </section>
           );
