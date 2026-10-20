@@ -40,7 +40,7 @@ const fieldLabels = {
   requiredExperience: 'Required Experience',
   qualification: 'Qualification',
   noticePeriod: 'Notice Period',
-  joiningDate: 'Joining Date',
+  joiningDate: 'Job Post Start',
   shiftTiming: 'Shift Timing',
   jobExpiry: 'Job Expiry Date',
   skills: 'Skills',

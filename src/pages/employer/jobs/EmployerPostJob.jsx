@@ -906,7 +906,7 @@ export const EmployerPostJob = () => {
                 <div className="border-b border-slate-100 px-5 py-4"><h2 className="text-base font-extrabold text-[#3f4254]">Additional Information</h2></div>
                 <div className="grid gap-4 p-5 md:grid-cols-2">
                   <div><label className={labelClass}>Notice Period</label><select className={inputClass} value={form.noticePeriod} onChange={(e) => setValue('noticePeriod', e.target.value)}><option value="">Select Notice Period</option><option>Immediate</option><option>15 Days</option><option>30 Days</option><option>60 Days</option></select></div>
-                  <div><label className={labelClass}>Date of Joining</label><input type="date" className={inputClass} value={form.joiningDate} onChange={(e) => setValue('joiningDate', e.target.value)} /></div>
+                  <div><label className={labelClass}>Job Post Start</label><input type="date" className={inputClass} value={form.joiningDate} onChange={(e) => setValue('joiningDate', e.target.value)} /></div>
                   <div><label className={labelClass}>Shift Timings</label><select className={inputClass} value={form.shiftTiming} onChange={(e) => setValue('shiftTiming', e.target.value)}><option value="">Select Shift Timing</option><option>Day Shift</option><option>Night Shift</option><option>Rotational Shift</option></select></div>
                   <div>
                     <label className={labelClass}>Job Expiry</label>

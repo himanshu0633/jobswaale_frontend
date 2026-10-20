@@ -425,7 +425,7 @@ export const PostJob = () => {
                       <option>60 Days</option>
                     </select>
                   </Field>
-                  <Field label="Date of Joining">
+                  <Field label="Job Post Start">
                     <input type="date" value={form.joiningDate} onChange={(e) => setValue('joiningDate', e.target.value)} className={inputCls} />
                   </Field>
                   <Field label="Shift Timings">
