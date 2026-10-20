@@ -285,6 +285,8 @@ export const Register = () => {
         termsAccepted: true
       });
       setCvFile(null);
+      localStorage.setItem('show_promo_popup_pending', 'true');
+      sessionStorage.removeItem('promo_popup_dismissed');
       setTimeout(() => {
         navigate('/login?role=jobseeker', { state: { message: 'Account created successfully. You can now sign in.' } });
       }, 1500);

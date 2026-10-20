@@ -362,6 +362,8 @@ export const EmployerRegister = () => {
         updatesConsent: true,
         termsAccepted: true
       });
+      localStorage.setItem('show_promo_popup_pending', 'true');
+      sessionStorage.removeItem('promo_popup_dismissed');
       setTimeout(() => {
         navigate('/login?role=employer', { state: { message: 'Employer account created successfully. You can now sign in as Employer.' } });
       }, 1500);

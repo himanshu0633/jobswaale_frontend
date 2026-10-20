@@ -462,9 +462,11 @@ export const EmployerSubscription = () => {
                   <div className="min-w-0">
                     <p className="font-extrabold text-[#3f4254]">{p.planName}</p>
                     {p.showBadge && p.badge && <span className="mt-1 inline-flex rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold text-amber-800">{p.badge}</span>}
-                    {p.planSubtitle && <p className="mt-1 text-xs font-bold text-slate-400">{p.planSubtitle}</p>}
+                    {p.planSubtitle && !p.planSubtitle.toLowerCase().includes('downgraded') && (
+                      <p className="mt-1 text-xs font-bold text-slate-400">{p.planSubtitle}</p>
+                    )}
                   </div>
-                  <span className="shrink-0 font-black text-[#6658dd]">₹{p.cost.toLocaleString('en-IN')}</span>
+                  <span className="shrink-0 font-black text-[#46c9f2]">₹{p.cost.toLocaleString('en-IN')}</span>
                 </div>
 
                 <div className="mt-2 grid grid-cols-2 gap-2 text-xs font-bold text-slate-500">
@@ -487,7 +489,7 @@ export const EmployerSubscription = () => {
                     <button
                       onClick={() => handleChoosePlan(p)}
                       disabled={Boolean(subscribingPlanId)}
-                      className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#6658dd] py-2 text-xs font-extrabold text-white shadow-sm hover:bg-[#5848d8] transition disabled:cursor-not-allowed disabled:opacity-60"
+                      className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#46c9f2] py-2 text-xs font-extrabold text-white shadow-sm hover:bg-[#33b8e1] transition disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {isSubmitting && <Loader className="h-3.5 w-3.5 animate-spin" />}
                       {isSubmitting ? 'Activating' : 'Choose Plan'}
@@ -527,9 +529,11 @@ export const EmployerSubscription = () => {
                     <td className="py-4.5 px-4">
                       <div className="font-extrabold text-[#3f4254]">{p.planName}</div>
                       {p.showBadge && p.badge && <span className="inline-flex rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold text-amber-800 mt-1">{p.badge}</span>}
-                      {p.planSubtitle && <div className="mt-1 text-xs font-bold text-slate-400">{p.planSubtitle}</div>}
+                      {p.planSubtitle && !p.planSubtitle.toLowerCase().includes('downgraded') && (
+                        <div className="mt-1 text-xs font-bold text-slate-400">{p.planSubtitle}</div>
+                      )}
                     </td>
-                    <td className="py-4.5 px-4 font-black text-[#6658dd]">₹{p.cost.toLocaleString('en-IN')}</td>
+                    <td className="py-4.5 px-4 font-black text-[#46c9f2]">₹{p.cost.toLocaleString('en-IN')}</td>
                     <td className="py-4.5 px-4 font-bold">{p.unlockCount || 0} Unlocks</td>
                     <td className="py-4.5 px-4 font-bold">{p.freeJobPosts} Job Posts</td>
                     <td className="py-4.5 px-4 text-xs text-slate-500 whitespace-normal max-w-xs leading-relaxed">
@@ -548,7 +552,7 @@ export const EmployerSubscription = () => {
                         <button
                           onClick={() => handleChoosePlan(p)}
                           disabled={Boolean(subscribingPlanId)}
-                          className="inline-flex w-36 items-center justify-center gap-1.5 rounded-lg bg-[#6658dd] py-2 text-xs font-extrabold text-white shadow-sm hover:bg-[#5848d8] transition disabled:cursor-not-allowed disabled:opacity-60"
+                          className="inline-flex w-36 items-center justify-center gap-1.5 rounded-lg bg-[#46c9f2] py-2 text-xs font-extrabold text-white shadow-sm hover:bg-[#33b8e1] transition disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {isSubmitting && <Loader className="h-3.5 w-3.5 animate-spin" />}
                           {isSubmitting ? 'Activating' : 'Choose Plan'}

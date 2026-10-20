@@ -261,6 +261,11 @@ export const Login = () => {
       localStorage.setItem('publicToken', token);
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
+    // Enable promo popup on dashboard for newly authenticated session
+    sessionStorage.setItem('just_authenticated', 'true');
+    sessionStorage.removeItem('promo_popup_dismissed');
+    localStorage.setItem('show_promo_popup_pending', 'true');
+
     setSuccess('Logged in successfully.');
     setTimeout(() => navigate(safeRedirectPath || getPublicRedirectPath(userData, role), { replace: true }), 700);
     return true;

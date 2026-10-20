@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { 
   Settings as SettingsIcon, 
@@ -21,12 +21,28 @@ import {
   Building2,
   Users,
   Star,
-  Upload
+  Upload,
+  Crop,
+  Megaphone,
+  Eye,
+  Move
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import { clearPublicSettingsCache } from '../../../utils/publicSettings';
+import PromoCropperModal from '../../../components/PromoCropperModal';
+import PromoPopupModal, { resolvePromoImageUrl } from '../../../components/PromoPopupModal';
 
 const defaultSettings = {
+  // Promo / Announcement Popup Modal
+  showPromoPopup: true,
+  promoPopupImage: '/promo-banner.jpg',
+  promoPopupWidth: '550px',
+  promoPopupHeight: 'auto',
+  promoPopupButtonText: 'Upgrade Plan',
+  promoPopupButtonLink: '/employer/subscription',
+  promoPopupButtonEnabled: true,
+  promoPopupTarget: 'all',
+
   // General
   siteName: 'JobsWaale',
   siteUrl: 'https://jobswaale.com',
@@ -141,6 +157,32 @@ const defaultSettings = {
   ]
 };
 
+const inputCls = "w-full px-3.5 py-2 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm disabled:bg-slate-50";
+const labelCls = "block text-sm font-medium text-slate-600 mb-1";
+
+const ToggleSwitch = ({ checked, onChange, label, subtext }) => (
+  <div className="flex items-start justify-between gap-3 py-3 border-b border-slate-100 last:border-0">
+    <div className="flex-grow pr-2 sm:pr-4">
+      <label className="text-sm font-semibold text-slate-700">{label}</label>
+      {subtext && <p className="text-xs text-slate-400 font-normal mt-0.5">{subtext}</p>}
+    </div>
+    <button
+      type="button"
+      onClick={onChange}
+      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+        checked ? 'bg-indigo-600' : 'bg-slate-200'
+      }`}
+    >
+      <span
+        aria-hidden="true"
+        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+          checked ? 'translate-x-5' : 'translate-x-0'
+        }`}
+      />
+    </button>
+  </div>
+);
+
 export const Settings = () => {
   const [activeTab, setActiveTab] = useState('general');
   const [form, setForm] = useState(defaultSettings);
@@ -149,6 +191,53 @@ export const Settings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [newCompany, setNewCompany] = useState({ name: '', logo: '' });
+  const [cropperModal, setCropperModal] = useState({ isOpen: false, imageSrc: null, originalFile: null });
+  const [showLivePreview, setShowLivePreview] = useState(false);
+  const promoFileInputRef = useRef(null);
+
+  const handlePromoFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      showMessage('error', 'Please select a valid image file (PNG, JPG, WebP).');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropperModal({
+        isOpen: true,
+        imageSrc: reader.result,
+        originalFile: file
+      });
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const handlePromoCropComplete = (uploadedUrl) => {
+    setForm(prev => ({
+      ...prev,
+      promoPopupImage: uploadedUrl
+    }));
+    showMessage('success', 'Promo popup image uploaded successfully! Click "Save Home Dashboard Settings" to persist.');
+  };
+
+  const handleAdjustExistingCrop = () => {
+    if (!form.promoPopupImage) return;
+    setCropperModal({
+      isOpen: true,
+      imageSrc: form.promoPopupImage,
+      originalFile: null
+    });
+  };
+
+  const handleRemovePromoImage = () => {
+    setForm(prev => ({
+      ...prev,
+      promoPopupImage: ''
+    }));
+    showMessage('success', 'Promo popup image removed.');
+  };
 
   const handleAddCompany = () => {
     if (!newCompany.name.trim()) {
@@ -234,32 +323,6 @@ export const Settings = () => {
       setTestingEmail(false);
     }
   };
-
-  const inputCls = "w-full px-3.5 py-2 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm disabled:bg-slate-50";
-  const labelCls = "block text-sm font-medium text-slate-600 mb-1";
-  
-  const ToggleSwitch = ({ checked, onChange, label, subtext }) => (
-    <div className="flex items-start justify-between gap-3 py-3 border-b border-slate-100 last:border-0">
-      <div className="flex-grow pr-2 sm:pr-4">
-        <label className="text-sm font-semibold text-slate-700">{label}</label>
-        {subtext && <p className="text-xs text-slate-400 font-normal mt-0.5">{subtext}</p>}
-      </div>
-      <button
-        type="button"
-        onClick={onChange}
-        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
-          checked ? 'bg-indigo-600' : 'bg-slate-200'
-        }`}
-      >
-        <span
-          aria-hidden="true"
-          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-            checked ? 'translate-x-5' : 'translate-x-0'
-          }`}
-        />
-      </button>
-    </div>
-  );
 
   const tabs = [
     { key: 'general', label: 'General', icon: <SettingsIcon className="w-4 h-4 sm:w-4.5 sm:h-4.5" /> },
@@ -865,6 +928,283 @@ export const Settings = () => {
                 </div>
               </div>
 
+              {/* Promo & Announcement Popup Modal Section (Above Stats Bar Counters) */}
+              <div className="space-y-4 rounded-xl border border-indigo-100 bg-gradient-to-br from-white to-indigo-50/25 p-4 sm:p-5 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-indigo-100/70 pb-3">
+                  <div>
+                    <h5 className="flex items-center gap-2 text-indigo-950 text-sm font-bold">
+                      <Megaphone className="w-4 h-4 text-indigo-600" />
+                      Promo & Announcement Popup Modal
+                    </h5>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Display an announcement or promo popup modal to users after login or register on their dashboard.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {form.promoPopupImage && (
+                      <button
+                        type="button"
+                        onClick={() => setShowLivePreview(true)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-200 bg-white hover:bg-indigo-50 text-indigo-700 text-xs font-bold transition shadow-xs cursor-pointer"
+                        title="Preview how the popup modal looks"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        Preview Popup
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* On / Off Toggle Switch */}
+                <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-xs">
+                  <ToggleSwitch
+                    label="Enable Promo Popup Modal"
+                    subtext="When ON, eligible users will see this popup on the dashboard after login or registration with a cut (X) button."
+                    checked={form.showPromoPopup ?? false}
+                    onChange={() => handleToggle('showPromoPopup')}
+                  />
+                </div>
+
+                {/* Image Upload & Adjustments */}
+                <div className="space-y-3 bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                      <Upload className="w-3.5 h-3.5 text-indigo-600" />
+                      Banner Image & Cropper
+                    </label>
+                    <span className="text-[11px] font-medium text-slate-400">
+                      Supports full image & crop adjustments
+                    </span>
+                  </div>
+
+                  <input
+                    type="file"
+                    ref={promoFileInputRef}
+                    accept="image/*"
+                    onChange={handlePromoFileSelect}
+                    className="hidden"
+                  />
+
+                  {form.promoPopupImage ? (
+                    <div className="space-y-3">
+                      {/* Image Preview Box */}
+                      <div className="relative group rounded-xl border border-slate-200 bg-slate-900/5 p-2 flex items-center justify-center overflow-hidden min-h-[160px] max-h-[260px]">
+                        <img
+                          src={resolvePromoImageUrl(form.promoPopupImage)}
+                          alt="Promo banner preview"
+                          className="max-h-[240px] w-auto max-w-full rounded-lg object-contain shadow-sm"
+                        />
+                        <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => promoFileInputRef.current?.click()}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-slate-800 rounded-lg text-xs font-bold shadow hover:bg-slate-100 transition cursor-pointer"
+                          >
+                            <Upload className="w-3.5 h-3.5" />
+                            Replace Image
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleAdjustExistingCrop}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold shadow hover:bg-indigo-700 transition cursor-pointer"
+                          >
+                            <Crop className="w-3.5 h-3.5" />
+                            Adjust Crop
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Image Action Buttons */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => promoFileInputRef.current?.click()}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg transition cursor-pointer shadow-xs"
+                          >
+                            <Upload className="w-3.5 h-3.5 text-slate-500" />
+                            Replace Image
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleAdjustExistingCrop}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg transition cursor-pointer"
+                          >
+                            <Crop className="w-3.5 h-3.5 text-indigo-600" />
+                            Adjust Crop
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleRemovePromoImage}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-rose-600 hover:bg-rose-50 rounded-lg text-xs font-bold transition cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Remove Image
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Empty State: Upload Prompt */
+                    <div
+                      onClick={() => promoFileInputRef.current?.click()}
+                      className="border-2 border-dashed border-indigo-200 hover:border-indigo-400 bg-indigo-50/30 hover:bg-indigo-50/60 rounded-xl p-6 text-center cursor-pointer transition flex flex-col items-center justify-center gap-2"
+                    >
+                      <div className="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                        <Upload className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-800">
+                          Click to upload & crop promo image
+                        </p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                          Upload high-resolution image banner. You can crop, zoom, and adjust, or keep full image.
+                        </p>
+                      </div>
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 bg-white px-3 py-1 rounded-full border border-indigo-100 shadow-xs">
+                        <Crop className="w-3 h-3" /> Select Image
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Width & Height Dimensions */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-100">
+                    <div>
+                      <label className={labelCls}>
+                        Modal Width (e.g. 550px, 600px, 90%)
+                      </label>
+                      <input
+                        type="text"
+                        value={form.promoPopupWidth || '550px'}
+                        onChange={(e) => setForm({ ...form, promoPopupWidth: e.target.value })}
+                        className={inputCls}
+                        placeholder="550px"
+                      />
+                      <div className="flex items-center gap-1 mt-1.5">
+                        <span className="text-[10px] text-slate-400">Presets:</span>
+                        {['460px', '550px', '650px'].map((w) => (
+                          <button
+                            key={w}
+                            type="button"
+                            onClick={() => setForm({ ...form, promoPopupWidth: w })}
+                            className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 cursor-pointer"
+                          >
+                            {w}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className={labelCls}>
+                        Modal Max Height (e.g. auto, 450px)
+                      </label>
+                      <input
+                        type="text"
+                        value={form.promoPopupHeight || 'auto'}
+                        onChange={(e) => setForm({ ...form, promoPopupHeight: e.target.value })}
+                        className={inputCls}
+                        placeholder="auto"
+                      />
+                      <div className="flex items-center gap-1 mt-1.5">
+                        <span className="text-[10px] text-slate-400">Presets:</span>
+                        {['auto', '400px', '500px'].map((h) => (
+                          <button
+                            key={h}
+                            type="button"
+                            onClick={() => setForm({ ...form, promoPopupHeight: h })}
+                            className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 cursor-pointer"
+                          >
+                            {h}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Button & Path Configuration */}
+                <div className="space-y-3 bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                    <div>
+                      <h6 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">
+                        Popup Action Button (Upgrade Plan / Custom Path)
+                      </h6>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        Configure the action button displayed below the image with custom name and destination path.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleToggle('promoPopupButtonEnabled')}
+                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        form.promoPopupButtonEnabled !== false ? 'bg-indigo-600' : 'bg-slate-200'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          form.promoPopupButtonEnabled !== false ? 'translate-x-4' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {form.promoPopupButtonEnabled !== false && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      <div>
+                        <label className={labelCls}>
+                          Button Name / Text <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={form.promoPopupButtonText || ''}
+                          onChange={(e) => setForm({ ...form, promoPopupButtonText: e.target.value })}
+                          className={inputCls}
+                          placeholder="Upgrade Plan"
+                        />
+                        <small className="text-[11px] text-slate-400 mt-1 block">
+                          Example: "Upgrade Plan", "Claim Offer", "Explore Packages"
+                        </small>
+                      </div>
+
+                      <div>
+                        <label className={labelCls}>
+                          Destination Path / URL <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={form.promoPopupButtonLink || ''}
+                          onChange={(e) => setForm({ ...form, promoPopupButtonLink: e.target.value })}
+                          className={inputCls}
+                          placeholder="/employer/subscription"
+                        />
+                        <small className="text-[11px] text-slate-400 mt-1 block">
+                          Example: "/employer/subscription", "/pricing", or external URL
+                        </small>
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <label className={labelCls}>
+                          Target Audience
+                        </label>
+                        <select
+                          value={form.promoPopupTarget || 'all'}
+                          onChange={(e) => setForm({ ...form, promoPopupTarget: e.target.value })}
+                          className={inputCls}
+                        >
+                          <option value="all">All Users (Employers & Jobseekers)</option>
+                          <option value="employer">Employers Only</option>
+                          <option value="jobseeker">Jobseekers Only</option>
+                        </select>
+                        <small className="text-[11px] text-slate-400 mt-1 block">
+                          Choose which users will see this popup on their dashboard after logging in or registering.
+                        </small>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Homepage Statistics Counters */}
               <div className="space-y-4">
                 <h5 className="flex items-center gap-2 bg-slate-50 text-slate-700 text-sm font-semibold px-3 py-2 rounded-lg">
@@ -1054,6 +1394,24 @@ export const Settings = () => {
           )}
         </div>
       </div>
+
+      {/* Promo Image Cropper Modal */}
+      <PromoCropperModal
+        isOpen={cropperModal.isOpen}
+        onClose={() => setCropperModal({ isOpen: false, imageSrc: null, originalFile: null })}
+        imageSrc={cropperModal.imageSrc}
+        originalFile={cropperModal.originalFile}
+        onCropComplete={handlePromoCropComplete}
+      />
+
+      {/* Live Preview Modal for Admin */}
+      {showLivePreview && (
+        <PromoPopupModal
+          forcePreview={true}
+          previewSettings={form}
+          onClosePreview={() => setShowLivePreview(false)}
+        />
+      )}
     </div>
   );
 };

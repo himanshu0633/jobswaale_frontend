@@ -22,6 +22,7 @@ import ResetPassword from './pages/auth/ResetPassword';
 import PublicPage from './pages/public/PublicPage';
 import PublicBlogs from './pages/public/PublicBlogs';
 import MaintenanceScreen from './components/MaintenanceScreen';
+import PromoPopupModal from './components/PromoPopupModal';
 import { getPublicSettings } from './utils/publicSettings';
 
 // Protected Route Guards
@@ -559,6 +560,7 @@ function App() {
           <AssetRefreshGuard />
           <ScrollToTop />
           <MaintenanceGuard>
+            <PromoPopupModal />
             <Routes>
             {/* A. Visitor Authentication Routes */}
             <Route path="/login" element={<PublicLogin />} />
