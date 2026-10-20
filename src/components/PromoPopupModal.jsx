@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { X, ArrowRight, ExternalLink } from 'lucide-react';
+import { X, ArrowRight } from 'lucide-react';
 import { getPublicSettings } from '../utils/publicSettings';
 import { BASE_API_URL } from '../context/AuthContext';
 
@@ -14,6 +14,52 @@ export const resolvePromoImageUrl = (url) => {
     return `${backendBase}${trimmed}`;
   }
   return trimmed;
+};
+
+// Clear all promo banner dismissal keys from sessionStorage (called on login/logout)
+export const clearPromoBannerDismissals = () => {
+  try {
+    const keysToRemove = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      if (key && (key.startsWith('promo_banner_dismissed_') || key.startsWith('promo_dismissed_'))) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach((k) => sessionStorage.removeItem(k));
+  } catch (err) {
+    console.error('Error clearing promo banner dismissals:', err);
+  }
+};
+
+// Generates an auth signature to detect when login or logout occurs
+const getAuthSessionSignature = () => {
+  const publicUser = localStorage.getItem('publicUser');
+  const publicToken = localStorage.getItem('publicToken');
+  const adminUser = localStorage.getItem('user');
+  const adminToken = localStorage.getItem('token');
+
+  if (publicUser && publicToken) {
+    try {
+      const u = JSON.parse(publicUser);
+      const role = (u.accountType || u.role || u.roleName || 'user').toLowerCase().trim();
+      const uid = u._id || u.id || u.email || 'user';
+      return `logged_in_${role}_${uid}`;
+    } catch {
+      return 'logged_in_public';
+    }
+  }
+
+  if (adminUser && adminToken) {
+    try {
+      const u = JSON.parse(adminUser);
+      return `logged_in_admin_${u._id || u.id || 'admin'}`;
+    } catch {
+      return 'logged_in_admin';
+    }
+  }
+
+  return 'logged_out_guest';
 };
 
 export const PromoPopupModal = ({ 
@@ -40,10 +86,20 @@ export const PromoPopupModal = ({
 
     const checkAndShowPopup = async () => {
       try {
+        // Detect login or logout event by comparing auth signature
+        const currentAuthSig = getAuthSessionSignature();
+        const prevAuthSig = sessionStorage.getItem('last_promo_auth_sig');
+
+        if (prevAuthSig !== null && prevAuthSig !== currentAuthSig) {
+          // Auth changed (login, logout, or account switch) -> reset all banner dismissals
+          clearPromoBannerDismissals();
+        }
+        sessionStorage.setItem('last_promo_auth_sig', currentAuthSig);
+
         const data = await getPublicSettings();
         if (!data) return;
 
-        // Current user type
+        // Determine current user type
         const storedUserStr = localStorage.getItem('publicUser') || localStorage.getItem('user');
         let currentUserType = 'public';
         if (storedUserStr) {
@@ -78,6 +134,8 @@ export const PromoPopupModal = ({
         }
 
         // Find first active, undismissed banner matching targetType and page
+        let matchedKeyForBanner = null;
+
         const bannerToShow = banners.find((b) => {
           if (b.enabled === false) return false;
           if (!b.image) return false;
@@ -92,22 +150,54 @@ export const PromoPopupModal = ({
           const pages = Array.isArray(b.pages) ? b.pages.map(p => String(p).toLowerCase().trim()) : [];
           if (pages.length === 0) return false;
 
+          let matchedPage = null;
+
           const matchesPage = pages.some((p) => {
             const cleanP = p.replace(/\/+$/, '') || '/';
-            if (cleanP === currentPath) return true;
-            if (cleanP !== '/' && currentPath.startsWith(cleanP)) return true;
+            if (cleanP === currentPath) {
+              matchedPage = cleanP;
+              return true;
+            }
+            if (cleanP !== '/' && currentPath.startsWith(cleanP)) {
+              matchedPage = cleanP;
+              return true;
+            }
             // Legacy fallbacks
-            if (cleanP === 'employer_login' && currentPath.startsWith('/employer')) return true;
-            if (cleanP === 'jobseeker_login' && currentPath.startsWith('/jobseeker')) return true;
-            if (cleanP === 'home' && currentPath === '/') return true;
-            if (cleanP === 'about_us' && (currentPath === '/about' || currentPath.startsWith('/about'))) return true;
+            if (cleanP === 'employer_login' && currentPath.startsWith('/employer')) {
+              matchedPage = '/employer';
+              return true;
+            }
+            if (cleanP === 'jobseeker_login' && currentPath.startsWith('/jobseeker')) {
+              matchedPage = '/jobseeker';
+              return true;
+            }
+            if (cleanP === 'home' && currentPath === '/') {
+              matchedPage = '/';
+              return true;
+            }
+            if (cleanP === 'about_us' && (currentPath === '/about' || currentPath.startsWith('/about'))) {
+              matchedPage = '/about';
+              return true;
+            }
             return false;
           });
 
-          if (!matchesPage) return false;
+          if (!matchesPage || !matchedPage) return false;
 
-          const isDismissed = sessionStorage.getItem(`promo_banner_dismissed_${b.id}`) === 'true';
-          return !isDismissed;
+          // Check if this banner was already dismissed on this specific page during this session
+          const sanitizedPage = matchedPage.replace(/[^a-zA-Z0-9_-]/g, '_');
+          const pageDismissKey = `promo_banner_dismissed_${b.id || 'banner'}_${sanitizedPage}`;
+          const currentPathDismissKey = `promo_banner_dismissed_${b.id || 'banner'}_${currentPath.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+
+          const isDismissed = sessionStorage.getItem(pageDismissKey) === 'true' || 
+                              sessionStorage.getItem(currentPathDismissKey) === 'true';
+
+          if (!isDismissed) {
+            matchedKeyForBanner = matchedPage;
+            return true;
+          }
+
+          return false;
         });
 
         if (!bannerToShow) {
@@ -115,7 +205,7 @@ export const PromoPopupModal = ({
           return;
         }
 
-        setActiveBanner(bannerToShow);
+        setActiveBanner({ ...bannerToShow, matchedPageKey: matchedKeyForBanner || currentPath });
 
         // Smooth visual entry after route transition
         const timer = setTimeout(() => {
@@ -137,7 +227,13 @@ export const PromoPopupModal = ({
       return;
     }
     if (activeBanner?.id) {
-      sessionStorage.setItem(`promo_banner_dismissed_${activeBanner.id}`, 'true');
+      const pageKey = (activeBanner.matchedPageKey || location.pathname).toLowerCase().replace(/\/+$/, '') || '/';
+      const sanitizedKey = pageKey.replace(/[^a-zA-Z0-9_-]/g, '_');
+      sessionStorage.setItem(`promo_banner_dismissed_${activeBanner.id}_${sanitizedKey}`, 'true');
+
+      // Also record exact current path as safeguard
+      const currentPathKey = (location.pathname.toLowerCase().replace(/\/+$/, '') || '/').replace(/[^a-zA-Z0-9_-]/g, '_');
+      sessionStorage.setItem(`promo_banner_dismissed_${activeBanner.id}_${currentPathKey}`, 'true');
     }
   };
 
@@ -199,7 +295,7 @@ export const PromoPopupModal = ({
           />
         </div>
 
-        {/* Action Button Section (Without title label) */}
+        {/* Action Button Section */}
         {showButton && (
           <div className="p-3.5 sm:p-4 bg-white border-t border-slate-100 flex items-center justify-end">
             <button

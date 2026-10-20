@@ -56,6 +56,15 @@ const clearPublicSession = () => {
   localStorage.removeItem('publicUser');
   localStorage.removeItem('publicToken');
   delete axios.defaults.headers.common['Authorization'];
+  try {
+    const keys = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const k = sessionStorage.key(i);
+      if (k && k.startsWith('promo_banner_dismissed_')) keys.push(k);
+    }
+    keys.forEach(k => sessionStorage.removeItem(k));
+    sessionStorage.removeItem('last_promo_auth_sig');
+  } catch {}
 };
 
 export const AuthProvider = ({ children }) => {
@@ -70,6 +79,15 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     delete axios.defaults.headers.common['Authorization'];
+    try {
+      const keys = [];
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const k = sessionStorage.key(i);
+        if (k && k.startsWith('promo_banner_dismissed_')) keys.push(k);
+      }
+      keys.forEach(k => sessionStorage.removeItem(k));
+      sessionStorage.removeItem('last_promo_auth_sig');
+    } catch {}
   }, []);
 
   const logoutAndRedirect = useCallback(() => {
