@@ -10,19 +10,14 @@ import {
   Clock,
   Eye,
   Search,
-  Filter,
   Building2,
   Briefcase,
   AlertCircle,
   Check,
   X,
   ChevronRight,
-  ArrowRight,
-  ArrowLeft,
-  Calendar,
-  Layers,
-  Sparkles,
-  Info
+  Info,
+  Sparkles
 } from 'lucide-react';
 
 const fieldLabels = {
@@ -93,7 +88,6 @@ export const JobRequests = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
-  const [toastMessage, setToastMessage] = useState(null);
   const [viewTab, setViewTab] = useState('diff'); // 'diff' or 'full'
 
   const getTokenHeaders = () => {
@@ -101,13 +95,7 @@ export const JobRequests = () => {
     return token ? { Authorization: `Bearer ${token}` } : {};
   };
 
-  const showToast = (type, text) => {
-    setToastMessage({ type, text });
-    setTimeout(() => setToastMessage(null), 4000);
-  };
-
   const loadRequests = async (statusFilter = activeTab, search = searchQuery, pageNum = page) => {
-    setLoading(true);
     try {
       const params = new URLSearchParams();
       if (statusFilter && statusFilter !== 'all') {
@@ -117,7 +105,7 @@ export const JobRequests = () => {
         params.append('search', search.trim());
       }
       params.append('page', pageNum);
-      params.append('limit', 15);
+      params.append('limit', 20);
 
       const res = await axios.get(`${BASE_API_URL}/admin/job-requests?${params.toString()}`, {
         headers: getTokenHeaders()
@@ -131,7 +119,6 @@ export const JobRequests = () => {
       }
     } catch (err) {
       console.error('Failed to load job edit requests:', err);
-      showToast('error', err.response?.data?.message || 'Failed to load job edit requests.');
     } finally {
       setLoading(false);
     }
@@ -171,7 +158,6 @@ export const JobRequests = () => {
       }
     } catch (err) {
       console.error('Failed to open request details:', err);
-      showToast('error', 'Failed to fetch complete job request details.');
     } finally {
       setDetailLoading(false);
     }
@@ -190,13 +176,12 @@ export const JobRequests = () => {
         headers: getTokenHeaders()
       });
       if (res.data?.success) {
-        showToast('success', res.data.message || 'Job approved and published successfully!');
         setSelectedRequest(res.data.request || { ...selectedRequest, status: 'approved' });
         loadRequests(activeTab, searchQuery, page);
       }
     } catch (err) {
       console.error('Approval failed:', err);
-      showToast('error', err.response?.data?.message || 'Failed to approve job request.');
+      alert(err.response?.data?.message || 'Failed to approve job request.');
     } finally {
       setActionLoading(false);
     }
@@ -219,14 +204,13 @@ export const JobRequests = () => {
         headers: getTokenHeaders()
       });
       if (res.data?.success) {
-        showToast('success', 'Job edit request has been rejected. Reason sent to employer.');
         setSelectedRequest(res.data.request || { ...selectedRequest, status: 'rejected', rejectionReason: rejectReason.trim() });
         setShowRejectModal(false);
         loadRequests(activeTab, searchQuery, page);
       }
     } catch (err) {
       console.error('Rejection failed:', err);
-      showToast('error', err.response?.data?.message || 'Failed to reject job request.');
+      alert(err.response?.data?.message || 'Failed to reject job request.');
     } finally {
       setActionLoading(false);
     }
@@ -236,31 +220,31 @@ export const JobRequests = () => {
     switch (status) {
       case 'pending':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black bg-amber-50 text-amber-700 border border-amber-200">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[5px] text-xs font-bold bg-[#fef4e4] text-[#f7b84b]">
             <Clock className="w-3 h-3" /> Pending Review
           </span>
         );
       case 'viewed':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black bg-blue-50 text-blue-700 border border-blue-200">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[5px] text-xs font-bold bg-[#e4ecf9] text-[#4a81d4]">
             <Eye className="w-3 h-3" /> Under Review (Viewed)
           </span>
         );
       case 'approved':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[5px] text-xs font-bold bg-[#ddf5f0] text-[#1abc9c]">
             <CheckCircle className="w-3 h-3" /> Approved & Published
           </span>
         );
       case 'rejected':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black bg-rose-50 text-rose-700 border border-rose-200">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[5px] text-xs font-bold bg-[#fde6e9] text-[#f1556c]">
             <XCircle className="w-3 h-3" /> Rejected
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[5px] text-xs font-semibold bg-slate-100 text-slate-700">
             {status}
           </span>
         );
@@ -289,101 +273,187 @@ export const JobRequests = () => {
     });
   }, [selectedRequest]);
 
+  if (loading) {
+    return <PageSkeleton variant="table" />;
+  }
+
   return (
-    <div className="space-y-5 px-3 sm:px-6 py-4">
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className={`fixed top-5 right-5 z-50 flex items-center gap-2 rounded-xl p-4 text-xs font-bold text-white shadow-xl transition-all ${
-          toastMessage.type === 'error' ? 'bg-rose-600' : 'bg-emerald-600'
-        }`}>
-          {toastMessage.type === 'error' ? <AlertCircle className="w-4 h-4" /> : <Check className="w-4 h-4" />}
-          {toastMessage.text}
-        </div>
-      )}
-
-      {/* Header & Breadcrumb */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
+    <div className="space-y-4 px-2 sm:px-4 py-3">
+      {/* Page Title & Breadcrumb (Matches Jobs Management layout) */}
+      <div className="flex flex-wrap items-center justify-between gap-2 py-1">
         <div>
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-400 mb-1">
-            <Link to="/admin/dashboard" className="hover:text-slate-600 transition">Dashboard</Link>
-            <ChevronRight className="w-3.5 h-3.5" />
-            <Link to="/admin/jobs" className="hover:text-slate-600 transition">Jobs</Link>
-            <ChevronRight className="w-3.5 h-3.5" />
-            <span className="text-slate-700">Job Edit Requests</span>
-          </div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-            <FileCheck2 className="w-6 h-6 text-indigo-600" />
-            Job Edit Requests
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Review employer job modifications, check what changed, and approve or reject before publishing live.
-          </p>
+          <h1 className="text-lg font-bold text-[#4c4c5c]">Job Edit Requests</h1>
+          <p className="text-xs text-slate-400 mt-0.5">Manage and review employer job edit requests before publishing</p>
         </div>
-
-        <div className="flex items-center gap-2">
-          <Link
-            to="/admin/jobs"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl transition shadow-xs"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" /> Back to All Jobs
-          </Link>
+        <div className="flex items-center gap-1 text-sm text-[#9ba6b7]">
+          <Link to="/admin/dashboard" className="hover:text-slate-600 transition">Dashboard</Link>
+          <ChevronRight className="h-3.5 w-3.5" />
+          <Link to="/admin/jobs" className="hover:text-slate-600 transition">Jobs</Link>
+          <ChevronRight className="h-3.5 w-3.5" />
+          <span className="text-[#9ba6b7]">Job Requests</span>
         </div>
       </div>
 
-      {/* Status Filter Tabs & Search Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-slate-200/90 shadow-xs">
-        {/* Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 hide-scrollbar">
-          {[
-            { id: 'all', label: 'All Requests', count: stats.all },
-            { id: 'pending', label: 'Pending', count: stats.pending, tone: 'amber' },
-            { id: 'viewed', label: 'Under Review', count: stats.viewed, tone: 'blue' },
-            { id: 'approved', label: 'Approved', count: stats.approved, tone: 'emerald' },
-            { id: 'rejected', label: 'Rejected', count: stats.rejected, tone: 'rose' }
-          ].map(tab => {
-            const isSelected = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => handleTabChange(tab.id)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
-                  isSelected
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'bg-slate-100/80 text-slate-600 hover:bg-slate-200/70'
-                }`}
-              >
-                <span>{tab.label}</span>
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                  isSelected ? 'bg-white/25 text-white' : 'bg-white text-slate-700 shadow-2xs'
-                }`}>
-                  {tab.count}
-                </span>
-              </button>
-            );
-          })}
+      {/* Top KPI Stat Cards (Matches Jobs Management exactly) */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        {/* Pending Card */}
+        <div
+          onClick={() => handleTabChange('pending')}
+          className={`cursor-pointer rounded-[5px] bg-white p-4 border transition-all shadow-sm relative ${
+            activeTab === 'pending'
+              ? 'border-amber-500 ring-2 ring-amber-500/20 shadow-md'
+              : 'border-slate-200 hover:border-amber-300'
+          }`}
+        >
+          {stats.pending > 0 && (
+            <span className="absolute top-2 right-2 inline-flex items-center px-1.5 py-0.2 rounded-full text-[9px] font-extrabold bg-amber-100 text-amber-800 animate-pulse">
+              Needs Review
+            </span>
+          )}
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Pending</span>
+              <p className="mt-1 text-2xl font-black text-amber-600">{stats.pending}</p>
+              <p className="mt-0.5 text-[11px] text-slate-400">Awaiting review</p>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+              <Clock className="h-5 w-5" />
+            </div>
+          </div>
         </div>
 
-        {/* Search Input */}
-        <form onSubmit={handleSearchSubmit} className="relative min-w-[260px]">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search job or employer..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
-          />
-        </form>
+        {/* Under Review (Viewed) Card */}
+        <div
+          onClick={() => handleTabChange('viewed')}
+          className={`cursor-pointer rounded-[5px] bg-white p-4 border transition-all shadow-sm ${
+            activeTab === 'viewed'
+              ? 'border-blue-500 ring-2 ring-blue-500/20 shadow-md'
+              : 'border-slate-200 hover:border-blue-300'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Under Review</span>
+              <p className="mt-1 text-2xl font-black text-blue-600">{stats.viewed}</p>
+              <p className="mt-0.5 text-[11px] text-slate-400">Viewed by admin</p>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+              <Eye className="h-5 w-5" />
+            </div>
+          </div>
+        </div>
+
+        {/* Approved Card */}
+        <div
+          onClick={() => handleTabChange('approved')}
+          className={`cursor-pointer rounded-[5px] bg-white p-4 border transition-all shadow-sm ${
+            activeTab === 'approved'
+              ? 'border-emerald-500 ring-2 ring-emerald-500/20 shadow-md'
+              : 'border-slate-200 hover:border-emerald-300'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Approved</span>
+              <p className="mt-1 text-2xl font-black text-emerald-600">{stats.approved}</p>
+              <p className="mt-0.5 text-[11px] text-slate-400">Published live</p>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+              <CheckCircle className="h-5 w-5" />
+            </div>
+          </div>
+        </div>
+
+        {/* Rejected Card */}
+        <div
+          onClick={() => handleTabChange('rejected')}
+          className={`cursor-pointer rounded-[5px] bg-white p-4 border transition-all shadow-sm ${
+            activeTab === 'rejected'
+              ? 'border-rose-500 ring-2 ring-rose-500/20 shadow-md'
+              : 'border-slate-200 hover:border-rose-300'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Rejected</span>
+              <p className="mt-1 text-2xl font-black text-rose-600">{stats.rejected}</p>
+              <p className="mt-0.5 text-[11px] text-slate-400">Needs employer edit</p>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
+              <XCircle className="h-5 w-5" />
+            </div>
+          </div>
+        </div>
+
+        {/* Total Requests Card */}
+        <div
+          onClick={() => handleTabChange('all')}
+          className={`cursor-pointer rounded-[5px] bg-white p-4 border transition-all shadow-sm ${
+            activeTab === 'all'
+              ? 'border-[#6658dd] ring-2 ring-[#6658dd]/20 shadow-md'
+              : 'border-slate-200 hover:border-indigo-300'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Requests</span>
+              <p className="mt-1 text-2xl font-black text-[#6658dd]">{stats.all}</p>
+              <p className="mt-0.5 text-[11px] text-slate-400">All submissions</p>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#e8e6fa] text-[#6658dd]">
+              <FileCheck2 className="h-5 w-5" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filter and Search Bar */}
+      <div className="rounded-[5px] bg-white p-4 shadow-sm border border-slate-200">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+          {/* Status Tabs */}
+          <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto hide-scrollbar">
+            {[
+              { id: 'all', label: 'All' },
+              { id: 'pending', label: 'Pending' },
+              { id: 'viewed', label: 'Under Review' },
+              { id: 'approved', label: 'Approved' },
+              { id: 'rejected', label: 'Rejected' }
+            ].map(tab => {
+              const isSelected = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => handleTabChange(tab.id)}
+                  className={`px-3 py-1.5 rounded-[5px] text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                    isSelected
+                      ? 'bg-[#6658dd] text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Search Box */}
+          <form onSubmit={handleSearchSubmit} className="relative w-full sm:w-72">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search job, company..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-3 py-1.5 border border-slate-200 rounded-[5px] text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6658dd]/20"
+            />
+          </form>
+        </div>
       </div>
 
       {/* Main Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
-        {loading ? (
-          <div className="p-8">
-            <PageSkeleton variant="list" />
-          </div>
-        ) : requests.length === 0 ? (
+      <div className="rounded-[5px] bg-white border border-slate-200 shadow-sm overflow-hidden">
+        {requests.length === 0 ? (
           <div className="p-12 text-center flex flex-col items-center justify-center space-y-2">
             <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
               <FileCheck2 className="w-6 h-6" />
@@ -391,7 +461,7 @@ export const JobRequests = () => {
             <h4 className="text-sm font-bold text-slate-800">No Job Edit Requests Found</h4>
             <p className="text-xs text-slate-400 max-w-sm">
               {searchQuery
-                ? `No requests matching "${searchQuery}". Try searching for something else.`
+                ? `No requests matching "${searchQuery}".`
                 : activeTab === 'all'
                   ? 'There are currently no job edit requests submitted by employers.'
                   : `There are no requests in the "${activeTab}" status.`}
@@ -401,7 +471,7 @@ export const JobRequests = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[900px]">
               <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-black uppercase tracking-wider text-slate-500">
+                <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-black uppercase tracking-wider text-slate-500">
                   <th className="py-3 px-4">Job Title</th>
                   <th className="py-3 px-4">Employer / Company</th>
                   <th className="py-3 px-4">Plan</th>
@@ -417,11 +487,11 @@ export const JobRequests = () => {
                   const employerName = item.employer?.companyName || item.companyName || `${item.employer?.firstName || ''} ${item.employer?.lastName || ''}`.trim() || 'Employer';
 
                   return (
-                    <tr key={item._id} className="hover:bg-indigo-50/30 transition-colors">
+                    <tr key={item._id} className="hover:bg-slate-50 transition-colors">
                       {/* Job Title */}
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-3">
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 font-black">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-[#6658dd] font-black">
                             <Briefcase className="h-4 w-4" />
                           </span>
                           <div>
@@ -446,7 +516,7 @@ export const JobRequests = () => {
 
                       {/* Plan */}
                       <td className="py-3.5 px-4">
-                        <span className="inline-flex px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-slate-100 text-slate-700">
+                        <span className="inline-flex px-2 py-0.5 rounded-[5px] text-[11px] font-extrabold bg-slate-100 text-slate-700">
                           {item.planName || 'Standard'}
                         </span>
                       </td>
@@ -462,7 +532,7 @@ export const JobRequests = () => {
 
                       {/* Modifications */}
                       <td className="py-3.5 px-4">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[5px] text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
                           <Sparkles className="w-3 h-3 text-indigo-500" />
                           {changedCount} {changedCount === 1 ? 'field' : 'fields'} changed
                         </span>
@@ -478,7 +548,7 @@ export const JobRequests = () => {
                         <button
                           type="button"
                           onClick={() => handleOpenReview(item)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[5px] bg-[#6658dd] hover:bg-[#574bbc] text-white text-xs font-bold transition shadow-xs cursor-pointer"
                         >
                           <Eye className="w-3.5 h-3.5" />
                           <span>Review Changes</span>
@@ -496,11 +566,11 @@ export const JobRequests = () => {
       {/* Review / Comparison Modal */}
       {selectedRequest && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs">
-          <div className="relative w-full max-w-4xl max-h-[92vh] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+          <div className="relative w-full max-w-4xl max-h-[92vh] bg-white rounded-xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             {/* Modal Header */}
-            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between gap-3 bg-slate-50/70">
+            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between gap-3 bg-slate-50">
               <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm font-black">
+                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#6658dd] text-white shadow-sm font-black">
                   <Briefcase className="h-5 w-5" />
                 </span>
                 <div>
@@ -533,7 +603,7 @@ export const JobRequests = () => {
                   onClick={() => setViewTab('diff')}
                   className={`pb-2.5 text-xs font-bold transition border-b-2 cursor-pointer ${
                     viewTab === 'diff'
-                      ? 'border-indigo-600 text-indigo-600'
+                      ? 'border-[#6658dd] text-[#6658dd]'
                       : 'border-transparent text-slate-400 hover:text-slate-600'
                   }`}
                 >
@@ -544,7 +614,7 @@ export const JobRequests = () => {
                   onClick={() => setViewTab('full')}
                   className={`pb-2.5 text-xs font-bold transition border-b-2 cursor-pointer ${
                     viewTab === 'full'
-                      ? 'border-indigo-600 text-indigo-600'
+                      ? 'border-[#6658dd] text-[#6658dd]'
                       : 'border-transparent text-slate-400 hover:text-slate-600'
                   }`}
                 >
@@ -568,7 +638,7 @@ export const JobRequests = () => {
               ) : viewTab === 'diff' ? (
                 <div className="space-y-4">
                   {/* Informational Callout */}
-                  <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-50/80 border border-amber-200/70 text-amber-900 text-xs">
+                  <div className="flex items-start gap-2.5 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs">
                     <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                     <div>
                       <span className="font-bold">Comparing original vs newly edited fields:</span>
@@ -584,8 +654,8 @@ export const JobRequests = () => {
                       <p className="text-center text-xs text-slate-400 py-6">No specific field changes recorded.</p>
                     ) : (
                       diffItems.map(item => (
-                        <div key={item.field} className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
-                          <div className="bg-slate-50/80 px-3.5 py-2 border-b border-slate-100 flex items-center justify-between">
+                        <div key={item.field} className="rounded-lg border border-slate-200 bg-white overflow-hidden shadow-2xs">
+                          <div className="bg-slate-50 px-3.5 py-2 border-b border-slate-100 flex items-center justify-between">
                             <span className="text-xs font-black text-slate-800 uppercase tracking-wide">
                               {item.label}
                             </span>
@@ -623,7 +693,7 @@ export const JobRequests = () => {
               ) : (
                 /* Full Proposed Details Tab */
                 <div className="space-y-4 text-xs">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 p-4 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 p-4 rounded-lg bg-slate-50 border border-slate-200">
                     <div>
                       <span className="text-slate-400 text-[11px] block">Openings:</span>
                       <span className="font-bold text-slate-800">{selectedRequest.proposedData?.vacancies || 1}</span>
@@ -655,7 +725,7 @@ export const JobRequests = () => {
                   </div>
 
                   {selectedRequest.proposedData?.description && (
-                    <div className="p-4 rounded-xl border border-slate-200 bg-white">
+                    <div className="p-4 rounded-lg border border-slate-200 bg-white">
                       <span className="text-xs font-bold text-slate-800 block mb-1">Job Description:</span>
                       <div className="text-slate-600 whitespace-pre-wrap leading-relaxed">
                         {selectedRequest.proposedData.description}
@@ -664,7 +734,7 @@ export const JobRequests = () => {
                   )}
 
                   {selectedRequest.proposedData?.responsibilities && (
-                    <div className="p-4 rounded-xl border border-slate-200 bg-white">
+                    <div className="p-4 rounded-lg border border-slate-200 bg-white">
                       <span className="text-xs font-bold text-slate-800 block mb-1">Responsibilities:</span>
                       <div className="text-slate-600 whitespace-pre-wrap leading-relaxed">
                         {selectedRequest.proposedData.responsibilities}
@@ -676,7 +746,7 @@ export const JobRequests = () => {
 
               {/* Rejection Details if rejected */}
               {selectedRequest.status === 'rejected' && selectedRequest.rejectionReason && (
-                <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs">
+                <div className="p-4 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs">
                   <span className="font-black block uppercase tracking-wider mb-1">Rejection Reason Provided:</span>
                   <p className="font-medium">{selectedRequest.rejectionReason}</p>
                   {selectedRequest.reviewedAt && (
@@ -689,7 +759,7 @@ export const JobRequests = () => {
 
               {/* Approval Details if approved */}
               {selectedRequest.status === 'approved' && (
-                <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
+                <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
                   <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
                   <div>
                     <span className="font-black">This job edit has been approved and published live.</span>
@@ -708,7 +778,7 @@ export const JobRequests = () => {
               <button
                 type="button"
                 onClick={() => setSelectedRequest(null)}
-                className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-100 transition cursor-pointer"
+                className="px-4 py-2 rounded-[5px] border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-100 transition cursor-pointer"
               >
                 Close
               </button>
@@ -720,7 +790,7 @@ export const JobRequests = () => {
                     type="button"
                     onClick={() => setShowRejectModal(true)}
                     disabled={actionLoading}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[5px] bg-[#f1556c] hover:bg-[#cd485c] text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
                   >
                     <XCircle className="w-4 h-4" />
                     <span>Reject</span>
@@ -730,7 +800,7 @@ export const JobRequests = () => {
                     type="button"
                     onClick={handleApprove}
                     disabled={actionLoading}
-                    className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-md shadow-emerald-600/20 cursor-pointer disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 px-5 py-2 rounded-[5px] bg-[#1abc9c] hover:bg-[#16a085] text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
                   >
                     <CheckCircle className="w-4 h-4" />
                     <span>Approve & Publish</span>
@@ -745,9 +815,9 @@ export const JobRequests = () => {
       {/* Reject Reason Sub-Modal */}
       {showRejectModal && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-rose-50/50">
-              <h4 className="text-sm font-black text-rose-900 flex items-center gap-2">
+          <div className="w-full max-w-md bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-rose-50">
+              <h4 className="text-sm font-black text-rose-950 flex items-center gap-2">
                 <XCircle className="w-4 h-4 text-rose-600" />
                 Reject Job Edit Request
               </h4>
@@ -771,7 +841,7 @@ export const JobRequests = () => {
                   placeholder="Explain why this job edit cannot be approved (e.g., Inappropriate salary range, duplicate title, incomplete qualifications). Employer will see this reason to fix their job."
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
-                  className="w-full p-3 rounded-xl border border-slate-300 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition"
+                  className="w-full p-3 rounded-[5px] border border-slate-300 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition"
                 />
               </div>
 
@@ -779,14 +849,14 @@ export const JobRequests = () => {
                 <button
                   type="button"
                   onClick={() => setShowRejectModal(false)}
-                  className="px-3.5 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-[5px] border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading || !rejectReason.trim()}
-                  className="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+                  className="px-4 py-1.5 rounded-[5px] bg-[#f1556c] hover:bg-[#cd485c] text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
                 >
                   {actionLoading ? 'Rejecting...' : 'Confirm Rejection'}
                 </button>

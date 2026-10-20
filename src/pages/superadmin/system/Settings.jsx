@@ -1414,7 +1414,7 @@ export const Settings = () => {
                   </button>
                 </div>
               ) : (
-                <div className="space-y-8">
+                <div className="space-y-6">
                   {form.popupBanners.map((banner, index) => {
                     const currentTargetType = banner.targetType || 'employer';
                     const targetConfig = BANNER_TARGETS[currentTargetType] || BANNER_TARGETS.employer;
@@ -1423,52 +1423,43 @@ export const Settings = () => {
                     const isAllSelected = allTargetPages.length > 0 && allTargetPages.every(p => selectedPages.includes(p));
 
                     const rawWidth = String(banner.width || '850px').trim();
-                    const numWidth = parseInt(rawWidth, 10) || 850;
-                    // Proportional compact width for preview (260px - 440px)
-                    const previewWidth = `${Math.min(Math.max(Math.round(numWidth * 0.44), 260), 440)}px`;
-
                     const rawHeight = String(banner.height || 'auto').trim();
-                    const numHeight = parseInt(rawHeight, 10);
-                    // Proportional compact max-height for preview (90px - 210px)
-                    const previewMaxHeight = rawHeight === 'auto' || !numHeight
-                      ? '150px'
-                      : `${Math.min(Math.max(Math.round(numHeight * 0.44), 90), 210)}px`;
 
                     return (
                       <div
                         key={banner.id || index}
-                        className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-xs space-y-6"
+                        className="rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-4.5 shadow-xs space-y-4"
                       >
                         {/* Banner Top Bar */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
-                          <div className="flex items-center gap-2.5">
-                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-100 text-xs font-black text-indigo-700">
+                        <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-2.5">
+                          <div className="flex items-center gap-2">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-xs font-black text-indigo-700">
                               {index + 1}
                             </span>
                             <div>
-                              <h6 className="text-sm font-bold text-slate-900">
+                              <h6 className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">
                                 {banner.title || `Banner ${index + 1}`}
                               </h6>
-                              <span className="text-[11px] font-semibold text-indigo-600">
+                              <span className="text-[10px] font-semibold text-indigo-600 block leading-none mt-0.5">
                                 {targetConfig.label}
                               </span>
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2.5">
                             {/* Active Toggle */}
-                            <label className="flex items-center gap-2 text-xs font-bold text-slate-600 cursor-pointer select-none">
-                              <span>{banner.enabled !== false ? 'Active' : 'Inactive'}</span>
+                            <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 cursor-pointer select-none">
+                              <span className="text-[11px]">{banner.enabled !== false ? 'Active' : 'Inactive'}</span>
                               <button
                                 type="button"
                                 onClick={() => handleUpdateBanner(index, 'enabled', banner.enabled === false)}
-                                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                                className={`relative inline-flex h-4.5 w-8 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
                                   banner.enabled !== false ? 'bg-indigo-600' : 'bg-slate-200'
                                 }`}
                               >
                                 <span
-                                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                                    banner.enabled !== false ? 'translate-x-4' : 'translate-x-0'
+                                  className={`pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                    banner.enabled !== false ? 'translate-x-3.5' : 'translate-x-0'
                                   }`}
                                 />
                               </button>
@@ -1478,313 +1469,314 @@ export const Settings = () => {
                             <button
                               type="button"
                               onClick={() => handleRemoveBanner(index)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                              className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold rounded-md text-rose-600 hover:bg-rose-50 transition cursor-pointer"
                               title="Delete banner"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
-                              Delete
+                              <span>Delete</span>
                             </button>
                           </div>
                         </div>
 
-                        {/* LIVE MODAL PREVIEW (Compact with White Background) */}
-                        <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 flex flex-col items-center justify-center space-y-3 shadow-xs">
-                          <div className="w-full flex items-center justify-between text-xs font-bold px-1">
-                            <span className="flex items-center gap-1.5 text-indigo-600">
-                              <Eye className="w-4 h-4" />
-                              Live Popup Preview (Compact)
-                            </span>
-                            <span className="text-[11px] text-slate-400 font-medium">
-                              Actual modal on site: {rawWidth} × {rawHeight}
-                            </span>
-                          </div>
-
-                          {/* Realistic Modal Box */}
-                          <div
-                            className="relative bg-white rounded-2xl shadow-xl border border-slate-200 flex flex-col overflow-hidden max-w-full transition-all duration-200"
-                            style={{ width: previewWidth }}
-                          >
-                            {/* Close Cut Button */}
-                            <div className="absolute top-2.5 right-2.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-slate-900/60 text-white shadow backdrop-blur-sm pointer-events-none">
-                              <X className="w-3 h-3 stroke-[2.5]" />
-                            </div>
-
-                            {/* Image Container */}
-                            <div
-                              className="w-full overflow-hidden bg-white flex items-center justify-center min-h-[90px]"
-                              style={{ maxHeight: previewMaxHeight }}
-                            >
-                              {banner.image ? (
-                                <img
-                                  src={resolvePromoImageUrl(banner.image)}
-                                  alt="Live Preview"
-                                  className="w-full h-auto max-h-full object-contain block select-none"
-                                />
-                              ) : (
-                                <div className="p-6 text-center text-slate-400 flex flex-col items-center gap-1.5">
-                                  <Upload className="w-6 h-6 text-slate-400" />
-                                  <span className="text-xs font-semibold">No image uploaded yet</span>
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Action Button Footer */}
-                            {banner.buttonEnabled !== false && (
-                              <div className="p-2.5 sm:p-3 bg-white border-t border-slate-100 flex items-center justify-end">
-                                <button
-                                  type="button"
-                                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#46c9f2] px-4 py-2 text-xs font-extrabold text-white shadow-sm shadow-cyan-500/20 pointer-events-none"
-                                >
-                                  <span>{banner.buttonText || 'Upgrade Plan'}</span>
-                                  <ArrowRight className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Banner Title */}
-                        <div>
-                          <label className={labelCls}>Banner Title</label>
-                          <input
-                            type="text"
-                            value={banner.title || ''}
-                            onChange={(e) => handleUpdateBanner(index, 'title', e.target.value)}
-                            className={inputCls}
-                            placeholder="e.g. Employer Subscription Plans"
-                          />
-                        </div>
-
-                        {/* 1. TARGET AUDIENCE SELECTOR (Choose 1 of 3) */}
-                        <div className="space-y-2 border-t border-slate-100 pt-4">
-                          <label className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
-                            1. Select Target Audience (Choose 1 Option)
-                          </label>
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            {Object.values(BANNER_TARGETS).map((target) => {
-                              const isSelected = currentTargetType === target.key;
-                              return (
-                                <button
-                                  key={target.key}
-                                  type="button"
-                                  onClick={() => handleTargetTypeChange(index, target.key)}
-                                  className={`flex flex-col items-start p-3.5 rounded-xl border-2 text-left transition cursor-pointer ${
-                                    isSelected
-                                      ? 'border-indigo-600 bg-indigo-50/70 text-indigo-950 shadow-xs'
-                                      : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'
-                                  }`}
-                                >
-                                  <div className="flex items-center justify-between w-full">
-                                    <span className="text-xs font-bold">{target.label}</span>
-                                    <div className={`h-4 w-4 rounded-full border flex items-center justify-center ${
-                                      isSelected ? 'border-indigo-600 bg-indigo-600' : 'border-slate-300'
-                                    }`}>
-                                      {isSelected && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
-                                    </div>
-                                  </div>
-                                  <span className="text-[11px] text-slate-400 mt-1">
-                                    {target.badge}
-                                  </span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        {/* 2. DISPLAY PAGES SELECTION (Checkboxes for chosen audience) */}
-                        <div className="space-y-2 border-t border-slate-100 pt-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <label className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
-                                2. Select Pages to Display Banner ({targetConfig.label})
-                              </label>
-                              <p className="text-[11px] text-slate-400 mt-0.5">
-                                Check the pages where this popup should appear when the user visits.
-                              </p>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => handleSelectAllPages(index, currentTargetType)}
-                              className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition cursor-pointer"
-                            >
-                              {isAllSelected ? 'Deselect All' : 'Select All'}
-                            </button>
-                          </div>
-
-                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 pt-1">
-                            {targetConfig.pages.map((p) => {
-                              const isChecked = selectedPages.includes(p.path);
-                              return (
-                                <label
-                                  key={p.path}
-                                  className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-medium cursor-pointer transition select-none ${
-                                    isChecked
-                                      ? 'border-indigo-300 bg-indigo-50 text-indigo-950 font-bold shadow-xs'
-                                      : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
-                                  }`}
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={isChecked}
-                                    onChange={() => handleToggleBannerPage(index, p.path)}
-                                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4"
-                                  />
-                                  <span className="truncate">{p.label}</span>
-                                </label>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        {/* 3. BANNER IMAGE & CROPPER */}
-                        <div className="space-y-2 border-t border-slate-100 pt-4">
-                          <label className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
-                            3. Banner Image
-                          </label>
-                          {banner.image ? (
-                            <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                              <div className="flex items-center gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => triggerBannerUpload(index)}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg transition cursor-pointer shadow-xs"
-                                >
-                                  <Upload className="w-3.5 h-3.5 text-slate-500" />
-                                  Replace Image
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleAdjustBannerCrop(index)}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg transition cursor-pointer"
-                                >
-                                  <Crop className="w-3.5 h-3.5 text-indigo-600" />
-                                  Adjust Crop
-                                </button>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveBannerImage(index)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-rose-600 hover:bg-rose-50 rounded-lg text-xs font-bold transition cursor-pointer"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                Remove Image
-                              </button>
-                            </div>
-                          ) : (
-                            <div
-                              onClick={() => triggerBannerUpload(index)}
-                              className="border-2 border-dashed border-indigo-200 hover:border-indigo-400 bg-indigo-50/20 hover:bg-indigo-50/50 rounded-xl p-5 text-center cursor-pointer transition flex flex-col items-center justify-center gap-1.5"
-                            >
-                              <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
-                                <Upload className="w-5 h-5" />
-                              </div>
-                              <p className="text-xs font-bold text-slate-800">Click to upload banner image</p>
-                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 bg-white px-2.5 py-0.5 rounded-full border border-indigo-100 shadow-xs">
-                                <Crop className="w-3 h-3" /> Select Image
+                        {/* Main 2-Column Grid: Left (Preview & Image Actions) + Right (Title, Audience & Pages) */}
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                          {/* LEFT COLUMN: Live Popup Preview (Modal) & Image Controls */}
+                          <div className="lg:col-span-5 flex flex-col space-y-2.5">
+                            <div className="flex items-center justify-between text-[11px] font-bold text-slate-700 px-0.5">
+                              <span className="flex items-center gap-1 text-indigo-600">
+                                <Eye className="w-3.5 h-3.5" />
+                                Live Popup Preview
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-medium">
+                                Modal: {rawWidth} × {rawHeight}
                               </span>
                             </div>
-                          )}
-                        </div>
 
-                        {/* 4. MODAL DIMENSIONS */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 border-t border-slate-100 pt-4">
-                          <div>
-                            <label className={labelCls}>Modal Width</label>
-                            <input
-                              type="text"
-                              value={banner.width || '850px'}
-                              onChange={(e) => handleUpdateBanner(index, 'width', e.target.value)}
-                              className={inputCls}
-                              placeholder="850px"
-                            />
-                            <div className="flex items-center gap-1 mt-1.5">
-                              <span className="text-[10px] text-slate-400">Presets:</span>
-                              {['550px', '650px', '850px'].map((w) => (
-                                <button
-                                  key={w}
-                                  type="button"
-                                  onClick={() => handleUpdateBanner(index, 'width', w)}
-                                  className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 cursor-pointer"
-                                >
-                                  {w}
-                                </button>
-                              ))}
+                            {/* Modal Preview Card */}
+                            <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 sm:p-3 flex items-center justify-center">
+                              <div className="relative bg-white rounded-xl shadow-md border border-slate-200/90 flex flex-col overflow-hidden w-full max-w-[340px]">
+                                {/* Close Cut Button */}
+                                <div className="absolute top-2 right-2 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-slate-900/60 text-white shadow pointer-events-none backdrop-blur-xs">
+                                  <X className="w-2.5 h-2.5 stroke-[2.5]" />
+                                </div>
+
+                                {/* Full Image Container - NO CROPPING OR CUTTING OFF */}
+                                <div className="w-full bg-white flex items-center justify-center p-0.5">
+                                  {banner.image ? (
+                                    <img
+                                      src={resolvePromoImageUrl(banner.image)}
+                                      alt="Live Banner Preview"
+                                      className="w-full h-auto object-contain block rounded-t-lg select-none"
+                                    />
+                                  ) : (
+                                    <div 
+                                      onClick={() => triggerBannerUpload(index)}
+                                      className="p-6 w-full text-center text-slate-400 flex flex-col items-center justify-center gap-1.5 cursor-pointer hover:bg-slate-50 transition"
+                                    >
+                                      <Upload className="w-5 h-5 text-indigo-500" />
+                                      <span className="text-xs font-semibold text-slate-600">No image uploaded</span>
+                                      <span className="text-[10px] text-indigo-600 font-bold underline">Click to upload</span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Action Button Footer Preview */}
+                                {banner.buttonEnabled !== false && (
+                                  <div className="p-2 sm:p-2.5 bg-white border-t border-slate-100 flex items-center justify-end">
+                                    <div className="inline-flex items-center justify-center gap-1 rounded-md bg-[#46c9f2] px-3 py-1 text-[11px] font-bold text-white shadow-xs pointer-events-none">
+                                      <span>{banner.buttonText || 'Upgrade Plan'}</span>
+                                      <ArrowRight className="w-3 h-3" />
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
 
-                          <div>
-                            <label className={labelCls}>Modal Max Height</label>
-                            <input
-                              type="text"
-                              value={banner.height || 'auto'}
-                              onChange={(e) => handleUpdateBanner(index, 'height', e.target.value)}
-                              className={inputCls}
-                              placeholder="auto"
-                            />
-                            <div className="flex items-center gap-1 mt-1.5">
-                              <span className="text-[10px] text-slate-400">Presets:</span>
-                              {['auto', '450px', '600px'].map((h) => (
+                            {/* Image Upload / Replace / Adjust Crop / Remove buttons */}
+                            {banner.image ? (
+                              <div className="flex items-center justify-between gap-1.5 pt-0.5">
+                                <div className="flex items-center gap-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => triggerBannerUpload(index)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[11px] font-bold rounded-lg transition cursor-pointer shadow-2xs"
+                                  >
+                                    <Upload className="w-3 h-3 text-slate-500" />
+                                    Replace
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAdjustBannerCrop(index)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-bold rounded-lg transition cursor-pointer"
+                                  >
+                                    <Crop className="w-3 h-3 text-indigo-600" />
+                                    Adjust Crop
+                                  </button>
+                                </div>
                                 <button
-                                  key={h}
                                   type="button"
-                                  onClick={() => handleUpdateBanner(index, 'height', h)}
-                                  className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 cursor-pointer"
+                                  onClick={() => handleRemoveBannerImage(index)}
+                                  className="inline-flex items-center gap-1 px-2 py-1 text-rose-600 hover:bg-rose-50 rounded-lg text-[11px] font-bold transition cursor-pointer"
                                 >
-                                  {h}
+                                  <Trash2 className="w-3 h-3" />
+                                  Remove
                                 </button>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* 5. ACTION BUTTON SETTINGS */}
-                        <div className="border-t border-slate-100 pt-4 space-y-3">
-                          <div className="flex items-center justify-between">
-                            <label className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                              Action Button
-                            </label>
-                            <label className="flex items-center gap-2 text-xs font-semibold text-slate-600 cursor-pointer">
-                              <span>{banner.buttonEnabled !== false ? 'Enabled' : 'Disabled'}</span>
+                              </div>
+                            ) : (
                               <button
                                 type="button"
-                                onClick={() => handleUpdateBanner(index, 'buttonEnabled', banner.buttonEnabled === false)}
-                                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
-                                  banner.buttonEnabled !== false ? 'bg-indigo-600' : 'bg-slate-200'
-                                }`}
+                                onClick={() => triggerBannerUpload(index)}
+                                className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 border border-dashed border-indigo-300 bg-indigo-50/50 hover:bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg transition cursor-pointer"
                               >
-                                <span
-                                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                                    banner.buttonEnabled !== false ? 'translate-x-4' : 'translate-x-0'
-                                  }`}
-                                />
+                                <Upload className="w-3.5 h-3.5" />
+                                Upload Banner Image
                               </button>
-                            </label>
+                            )}
                           </div>
 
-                          {banner.buttonEnabled !== false && (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                              <div>
-                                <label className={labelCls}>Button Text</label>
-                                <input
-                                  type="text"
-                                  value={banner.buttonText || ''}
-                                  onChange={(e) => handleUpdateBanner(index, 'buttonText', e.target.value)}
-                                  className={inputCls}
-                                  placeholder="Upgrade Plan"
-                                />
-                              </div>
-                              <div>
-                                <label className={labelCls}>Destination URL</label>
-                                <input
-                                  type="text"
-                                  value={banner.buttonLink || ''}
-                                  onChange={(e) => handleUpdateBanner(index, 'buttonLink', e.target.value)}
-                                  className={inputCls}
-                                  placeholder="/employer/subscription"
-                                />
+                          {/* RIGHT COLUMN: Banner Title, 1. Target Audience, 2. Pages */}
+                          <div className="lg:col-span-7 space-y-3">
+                            {/* Banner Title */}
+                            <div>
+                              <label className="text-[11px] font-bold text-slate-700 block mb-1 uppercase tracking-wider">
+                                Banner Title
+                              </label>
+                              <input
+                                type="text"
+                                value={banner.title || ''}
+                                onChange={(e) => handleUpdateBanner(index, 'title', e.target.value)}
+                                className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white text-slate-900 font-medium"
+                                placeholder="e.g. Employer Subscription Plans"
+                              />
+                            </div>
+
+                            {/* 1. Target Audience Selector (Choose 1 Option) */}
+                            <div className="space-y-1.5">
+                              <label className="text-[11px] font-bold text-slate-700 block uppercase tracking-wider">
+                                1. Select Target Audience (Choose 1 Option)
+                              </label>
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                {Object.values(BANNER_TARGETS).map((target) => {
+                                  const isSelected = currentTargetType === target.key;
+                                  return (
+                                    <button
+                                      key={target.key}
+                                      type="button"
+                                      onClick={() => handleTargetTypeChange(index, target.key)}
+                                      className={`flex flex-col items-start p-2 rounded-lg border-2 text-left transition cursor-pointer ${
+                                        isSelected
+                                          ? 'border-indigo-600 bg-indigo-50/70 text-indigo-950 shadow-2xs'
+                                          : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'
+                                      }`}
+                                    >
+                                      <div className="flex items-center justify-between w-full">
+                                        <span className="text-[11px] font-bold leading-tight">{target.label}</span>
+                                        <div className={`h-3.5 w-3.5 rounded-full border flex items-center justify-center shrink-0 ml-1 ${
+                                          isSelected ? 'border-indigo-600 bg-indigo-600' : 'border-slate-300'
+                                        }`}>
+                                          {isSelected && <div className="h-1 w-1 rounded-full bg-white" />}
+                                        </div>
+                                      </div>
+                                      <span className="text-[10px] text-slate-400 mt-0.5">
+                                        {target.badge}
+                                      </span>
+                                    </button>
+                                  );
+                                })}
                               </div>
                             </div>
-                          )}
+
+                            {/* 2. Display Pages Selection */}
+                            <div className="space-y-1.5">
+                              <div className="flex items-center justify-between">
+                                <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                                  2. Select Pages to Display Banner ({targetConfig.label})
+                                </label>
+                                <button
+                                  type="button"
+                                  onClick={() => handleSelectAllPages(index, currentTargetType)}
+                                  className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 transition cursor-pointer"
+                                >
+                                  {isAllSelected ? 'Deselect All' : 'Select All'}
+                                </button>
+                              </div>
+
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 max-h-[175px] overflow-y-auto pr-0.5">
+                                {targetConfig.pages.map((p) => {
+                                  const isChecked = selectedPages.includes(p.path);
+                                  return (
+                                    <label
+                                      key={p.path}
+                                      className={`flex items-center gap-1.5 p-1.5 px-2 rounded-lg border text-[11px] font-medium cursor-pointer transition select-none ${
+                                        isChecked
+                                          ? 'border-indigo-300 bg-indigo-50 text-indigo-950 font-bold shadow-2xs'
+                                          : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                                      }`}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={isChecked}
+                                        onChange={() => handleToggleBannerPage(index, p.path)}
+                                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-3.5 w-3.5"
+                                      />
+                                      <span className="truncate">{p.label}</span>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* BOTTOM ROW: Modal Dimensions & Action Button Controls */}
+                        <div className="border-t border-slate-100 pt-3 grid grid-cols-1 md:grid-cols-12 gap-3.5 items-start">
+                          {/* Modal Dimensions (md:col-span-5) */}
+                          <div className="md:col-span-5 space-y-2">
+                            <label className="text-[11px] font-bold text-slate-700 block uppercase tracking-wider">
+                              Modal Dimensions
+                            </label>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Width</label>
+                                <input
+                                  type="text"
+                                  value={banner.width || '850px'}
+                                  onChange={(e) => handleUpdateBanner(index, 'width', e.target.value)}
+                                  className="w-full px-2.5 py-1 text-xs rounded-md border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white font-medium"
+                                  placeholder="850px"
+                                />
+                                <div className="flex items-center gap-1 mt-1">
+                                  <span className="text-[9px] text-slate-400">Presets:</span>
+                                  {['550px', '650px', '850px'].map((w) => (
+                                    <button
+                                      key={w}
+                                      type="button"
+                                      onClick={() => handleUpdateBanner(index, 'width', w)}
+                                      className="text-[9px] font-bold px-1 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 cursor-pointer"
+                                    >
+                                      {w}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div>
+                                <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Max Height</label>
+                                <input
+                                  type="text"
+                                  value={banner.height || 'auto'}
+                                  onChange={(e) => handleUpdateBanner(index, 'height', e.target.value)}
+                                  className="w-full px-2.5 py-1 text-xs rounded-md border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white font-medium"
+                                  placeholder="auto"
+                                />
+                                <div className="flex items-center gap-1 mt-1">
+                                  <span className="text-[9px] text-slate-400">Presets:</span>
+                                  {['auto', '450px', '600px'].map((h) => (
+                                    <button
+                                      key={h}
+                                      type="button"
+                                      onClick={() => handleUpdateBanner(index, 'height', h)}
+                                      className="text-[9px] font-bold px-1 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 cursor-pointer"
+                                    >
+                                      {h}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Action Button Settings (md:col-span-7) */}
+                          <div className="md:col-span-7 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                                Action Button (Bottom Right of Popup)
+                              </label>
+                              <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 cursor-pointer">
+                                <span className="text-[11px]">{banner.buttonEnabled !== false ? 'Enabled' : 'Disabled'}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateBanner(index, 'buttonEnabled', banner.buttonEnabled === false)}
+                                  className={`relative inline-flex h-4 w-7.5 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                                    banner.buttonEnabled !== false ? 'bg-indigo-600' : 'bg-slate-200'
+                                  }`}
+                                >
+                                  <span
+                                    className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                      banner.buttonEnabled !== false ? 'translate-x-3.5' : 'translate-x-0'
+                                    }`}
+                                  />
+                                </button>
+                              </label>
+                            </div>
+
+                            {banner.buttonEnabled !== false ? (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <div>
+                                  <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Button Text</label>
+                                  <input
+                                    type="text"
+                                    value={banner.buttonText || ''}
+                                    onChange={(e) => handleUpdateBanner(index, 'buttonText', e.target.value)}
+                                    className="w-full px-2.5 py-1 text-xs rounded-md border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white font-medium"
+                                    placeholder="Upgrade Plan"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Destination URL</label>
+                                  <input
+                                    type="text"
+                                    value={banner.buttonLink || ''}
+                                    onChange={(e) => handleUpdateBanner(index, 'buttonLink', e.target.value)}
+                                    className="w-full px-2.5 py-1 text-xs rounded-md border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white font-medium"
+                                    placeholder="/employer/subscription"
+                                  />
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="text-[11px] text-slate-400 italic">No action button will be displayed on this popup.</p>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );

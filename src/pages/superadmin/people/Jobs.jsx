@@ -142,14 +142,8 @@ export const Jobs = () => {
 
   const fetchJobs = async () => {
     try {
-      const [response, requestsRes] = await Promise.all([
-        axios.get(`${BASE_API_URL}/jobs`, { headers: getAuthHeaders() }),
-        axios.get(`${BASE_API_URL}/admin/job-requests?limit=1`, { headers: getAuthHeaders() }).catch(() => null)
-      ]);
+      const response = await axios.get(`${BASE_API_URL}/jobs`, { headers: getAuthHeaders() });
       setList(response.data);
-      if (requestsRes?.data?.stats?.pending !== undefined) {
-        setPendingRequestCount(Number(requestsRes.data.stats.pending || 0) + Number(requestsRes.data.stats.viewed || 0));
-      }
     } catch (err) {
       console.error(err);
       showMessage('error', 'Failed to retrieve jobs list. Please try again.');
@@ -913,20 +907,6 @@ export const Jobs = () => {
               <option value="az">Sort: Title A-Z</option>
               <option value="za">Sort: Title Z-A</option>
             </select>
-
-            <Link
-              to="/admin/job-requests"
-              className="inline-flex items-center gap-1.5 rounded-[5px] bg-amber-500 hover:bg-amber-600 px-3.5 py-2 text-xs font-bold text-white transition-colors shadow-sm cursor-pointer"
-              title="Review job edit requests from employers"
-            >
-              <FileCheck2 className="w-3.5 h-3.5" />
-              <span>Job Requests</span>
-              {pendingRequestCount > 0 && (
-                <span className="ml-1 rounded-full bg-white px-1.5 py-0.2 text-[10px] font-black text-amber-700 shadow-2xs">
-                  {pendingRequestCount}
-                </span>
-              )}
-            </Link>
 
             <Link
               to="/admin/jobs/add"

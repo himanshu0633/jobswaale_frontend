@@ -188,7 +188,7 @@ export const PromoPopupModal = ({
 
         {/* Modal Image Display */}
         <div 
-          className="w-full overflow-hidden bg-slate-900 flex items-center justify-center"
+          className="w-full overflow-hidden bg-white flex items-center justify-center"
           style={{ maxHeight: modalMaxHeight }}
         >
           <img
