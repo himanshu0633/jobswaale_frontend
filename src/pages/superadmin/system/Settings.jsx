@@ -25,7 +25,8 @@ import {
   Crop,
   Megaphone,
   Eye,
-  Move
+  Move,
+  ArrowRight
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import { clearPublicSettingsCache } from '../../../utils/publicSettings';
