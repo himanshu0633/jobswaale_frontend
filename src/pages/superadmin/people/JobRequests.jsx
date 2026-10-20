@@ -565,8 +565,8 @@ export const JobRequests = () => {
 
       {/* Review / Comparison Modal */}
       {selectedRequest && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs">
-          <div className="relative w-full max-w-4xl max-h-[92vh] bg-white rounded-xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-8 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+          <div className="relative w-full max-w-4xl max-h-[82vh] my-auto bg-white rounded-xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             {/* Modal Header */}
             <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between gap-3 bg-slate-50">
               <div className="flex items-center gap-3">
@@ -630,7 +630,7 @@ export const JobRequests = () => {
             </div>
 
             {/* Modal Body Scrollable */}
-            <div className="p-4 sm:p-6 overflow-y-auto max-h-[62vh] space-y-4">
+            <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(82vh-180px)] space-y-4">
               {detailLoading ? (
                 <div className="p-8">
                   <PageSkeleton variant="card" />
@@ -643,7 +643,7 @@ export const JobRequests = () => {
                     <div>
                       <span className="font-bold">Comparing original vs newly edited fields:</span>
                       <p className="text-[11px] text-amber-800 mt-0.5">
-                        Values in <span className="bg-rose-100 px-1 py-0.2 rounded font-bold text-rose-700">Red</span> represent previous values (Pehle kya tha), and values in <span className="bg-emerald-100 px-1 py-0.2 rounded font-bold text-emerald-700">Green</span> represent new requested values (Ab new kya h).
+                        Values in <span className="bg-rose-100 px-1 py-0.2 rounded font-bold text-rose-700">Red</span> represent previous values, and values in <span className="bg-emerald-100 px-1 py-0.2 rounded font-bold text-emerald-700">Green</span> represent new requested values.
                       </p>
                     </div>
                   </div>
@@ -668,7 +668,7 @@ export const JobRequests = () => {
                             {/* Previous Value */}
                             <div className="p-3 bg-rose-50/30">
                               <span className="text-[10px] font-bold text-rose-600 uppercase tracking-wider block mb-1">
-                                Pehle kya tha (Previous):
+                                Previous:
                               </span>
                               <div className="text-slate-700 font-medium break-words leading-relaxed">
                                 {formatValue(item.oldVal)}
@@ -678,7 +678,7 @@ export const JobRequests = () => {
                             {/* New Proposed Value */}
                             <div className="p-3 bg-emerald-50/40">
                               <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block mb-1">
-                                Ab new kya h (New Requested):
+                                New Requested:
                               </span>
                               <div className="text-slate-900 font-bold break-words leading-relaxed">
                                 {formatValue(item.newVal)}
