@@ -11,6 +11,7 @@ import {
   ChevronRight,
   CreditCard,
   Factory,
+  FileCheck2,
   FileText,
   Gauge,
   Gift,
@@ -131,6 +132,7 @@ export const Sidebar = ({ isOpen, isCollapsed, toggleSidebar }) => {
 
           {!isCollapsed && <div className={`${sectionClass} mt-2 ${palette.title}`}>People</div>}
           {can('people.jobs.view') && <NavLink to={adminPath('/jobs')} icon={Table2} label="Jobs" active={isPathActive('/jobs')} />}
+          {can('people.jobs.view') && <NavLink to={adminPath('/job-requests')} icon={FileCheck2} label="Job Requests" active={isPathActive('/job-requests')} />}
           {can('people.jobseekers.view') && <NavLink to={adminPath('/jobseekers')} icon={UserSearch} label="Jobseeker" active={isPathActive('/jobseekers')} />}
           {can('people.employers.view') && <NavLink to={adminPath('/employers')} icon={Handshake} label="Employer" active={isPathActive('/employers')} />}
 

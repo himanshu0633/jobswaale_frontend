@@ -159,6 +159,7 @@ export const EmployerPostJob = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [rejectionNotice, setRejectionNotice] = useState('');
   const [missingFields, setMissingFields] = useState([]);
   const [fieldErrors, setFieldErrors] = useState({});
   const [upgradePopup, setUpgradePopup] = useState({ open: false, remainingCredits: null });
@@ -184,6 +185,9 @@ export const EmployerPostJob = () => {
         ]);
         const formData = formResponse?.data || {};
         const jobForm = jobResponse?.data?.form;
+        if (jobResponse?.data?.editRejectionReason) {
+          setRejectionNotice(jobResponse.data.editRejectionReason);
+        }
         const remainingCredits = Number(subscriptionResponse?.data?.subscription?.remainingCredits ?? 0);
         setMeta(formData);
         if (!isEditMode && remainingCredits <= 0) {
@@ -702,6 +706,21 @@ export const EmployerPostJob = () => {
                 Upgrade Subscription
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {rejectionNotice && (
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs shadow-xs">
+          <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-black text-sm block">Previous Edit Request Rejected by Admin</span>
+            <p className="mt-1 font-medium text-slate-800">
+              Reason: <span className="font-bold underline text-rose-700">{rejectionNotice}</span>
+            </p>
+            <p className="text-[11px] text-slate-500 mt-1">
+              Please address the feedback in the form below and click Submit to send your job for admin approval.
+            </p>
           </div>
         </div>
       )}

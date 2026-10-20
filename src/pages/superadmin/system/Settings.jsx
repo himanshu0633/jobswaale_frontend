@@ -1423,9 +1423,16 @@ export const Settings = () => {
                     const isAllSelected = allTargetPages.length > 0 && allTargetPages.every(p => selectedPages.includes(p));
 
                     const rawWidth = String(banner.width || '850px').trim();
-                    const previewWidth = rawWidth.includes('px') || rawWidth.includes('%') ? rawWidth : `${rawWidth}px`;
+                    const numWidth = parseInt(rawWidth, 10) || 850;
+                    // Proportional compact width for preview (260px - 440px)
+                    const previewWidth = `${Math.min(Math.max(Math.round(numWidth * 0.44), 260), 440)}px`;
+
                     const rawHeight = String(banner.height || 'auto').trim();
-                    const previewMaxHeight = rawHeight === 'auto' ? '360px' : (rawHeight.includes('px') ? rawHeight : `${rawHeight}px`);
+                    const numHeight = parseInt(rawHeight, 10);
+                    // Proportional compact max-height for preview (90px - 210px)
+                    const previewMaxHeight = rawHeight === 'auto' || !numHeight
+                      ? '150px'
+                      : `${Math.min(Math.max(Math.round(numHeight * 0.44), 90), 210)}px`;
 
                     return (
                       <div
@@ -1480,31 +1487,31 @@ export const Settings = () => {
                           </div>
                         </div>
 
-                        {/* LIVE MODAL PREVIEW (What You See Is What You Get) */}
-                        <div className="rounded-2xl border border-slate-200/80 bg-slate-950/70 p-4 sm:p-6 flex flex-col items-center justify-center space-y-3">
-                          <div className="w-full flex items-center justify-between text-white/90 text-xs font-bold px-1">
-                            <span className="flex items-center gap-1.5 text-cyan-400">
+                        {/* LIVE MODAL PREVIEW (Compact with White Background) */}
+                        <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 flex flex-col items-center justify-center space-y-3 shadow-xs">
+                          <div className="w-full flex items-center justify-between text-xs font-bold px-1">
+                            <span className="flex items-center gap-1.5 text-indigo-600">
                               <Eye className="w-4 h-4" />
-                              Live Popup Preview (Real-Time)
+                              Live Popup Preview (Compact)
                             </span>
-                            <span className="text-[11px] text-slate-300 font-normal">
-                              Updates immediately as you edit below
+                            <span className="text-[11px] text-slate-400 font-medium">
+                              Actual modal on site: {rawWidth} × {rawHeight}
                             </span>
                           </div>
 
                           {/* Realistic Modal Box */}
                           <div
-                            className="relative bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden max-w-full transition-all duration-200"
+                            className="relative bg-white rounded-2xl shadow-xl border border-slate-200 flex flex-col overflow-hidden max-w-full transition-all duration-200"
                             style={{ width: previewWidth }}
                           >
                             {/* Close Cut Button */}
-                            <div className="absolute top-3 right-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-slate-900/60 text-white shadow backdrop-blur-sm pointer-events-none">
-                              <X className="w-3.5 h-3.5 stroke-[2.5]" />
+                            <div className="absolute top-2.5 right-2.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-slate-900/60 text-white shadow backdrop-blur-sm pointer-events-none">
+                              <X className="w-3 h-3 stroke-[2.5]" />
                             </div>
 
                             {/* Image Container */}
                             <div
-                              className="w-full overflow-hidden bg-slate-950 flex items-center justify-center min-h-[160px]"
+                              className="w-full overflow-hidden bg-white flex items-center justify-center min-h-[90px]"
                               style={{ maxHeight: previewMaxHeight }}
                             >
                               {banner.image ? (
@@ -1514,8 +1521,8 @@ export const Settings = () => {
                                   className="w-full h-auto max-h-full object-contain block select-none"
                                 />
                               ) : (
-                                <div className="p-8 text-center text-slate-400 flex flex-col items-center gap-2">
-                                  <Upload className="w-8 h-8 text-slate-500" />
+                                <div className="p-6 text-center text-slate-400 flex flex-col items-center gap-1.5">
+                                  <Upload className="w-6 h-6 text-slate-400" />
                                   <span className="text-xs font-semibold">No image uploaded yet</span>
                                 </div>
                               )}
@@ -1523,13 +1530,13 @@ export const Settings = () => {
 
                             {/* Action Button Footer */}
                             {banner.buttonEnabled !== false && (
-                              <div className="p-3.5 sm:p-4 bg-white border-t border-slate-100 flex items-center justify-end">
+                              <div className="p-2.5 sm:p-3 bg-white border-t border-slate-100 flex items-center justify-end">
                                 <button
                                   type="button"
-                                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#46c9f2] px-6 py-2.5 text-xs sm:text-sm font-extrabold text-white shadow-md shadow-cyan-500/20 pointer-events-none"
+                                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#46c9f2] px-4 py-2 text-xs font-extrabold text-white shadow-sm shadow-cyan-500/20 pointer-events-none"
                                 >
                                   <span>{banner.buttonText || 'Upgrade Plan'}</span>
-                                  <ArrowRight className="w-4 h-4" />
+                                  <ArrowRight className="w-3.5 h-3.5" />
                                 </button>
                               </div>
                             )}

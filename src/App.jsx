@@ -107,6 +107,7 @@ const AddEmployer = lazy(() => import('./pages/superadmin/people/AddEmployer'));
 const Jobseekers = lazy(() => import('./pages/superadmin/people/Jobseekers'));
 const AddJobseeker = lazy(() => import('./pages/superadmin/people/AddJobseeker'));
 const Jobs = lazy(() => import('./pages/superadmin/people/Jobs'));
+const JobRequests = lazy(() => import('./pages/superadmin/people/JobRequests'));
 const PostJob = lazy(() => import('./pages/superadmin/people/PostJob'));
 
 // Admin Finance & Content Management
@@ -337,6 +338,7 @@ const ProtectedRoute = () => {
 const routePermissions = [
   { permission: 'dashboard.view', path: '/admin/dashboard' },
   { permission: 'people.jobs.view', path: '/admin/jobs' },
+  { permission: 'people.jobs.view', path: '/admin/job-requests' },
   { permission: 'people.jobseekers.view', path: '/admin/jobseekers' },
   { permission: 'people.employers.view', path: '/admin/employers' },
   { permission: 'masters.plans', path: '/admin/jobseeker-plans' },
@@ -449,6 +451,7 @@ const AdminSubRoutes = () => {
         <Route path="jobseekers/add" element={withPermission('people.jobseekers.manage', <AddJobseeker />)} />
         <Route path="jobseekers/edit/:id" element={withPermission('people.jobseekers.manage', <AddJobseeker />)} />
         <Route path="jobs" element={withPermission('people.jobs.view', <Jobs />)} />
+        <Route path="job-requests" element={withPermission('people.jobs.view', <JobRequests />)} />
         <Route path="jobs/add" element={withPermission('people.jobs.create', <PostJob />)} />
         <Route path="jobs/edit/:id" element={withPermission('people.jobs.edit', <PostJob />)} />
 

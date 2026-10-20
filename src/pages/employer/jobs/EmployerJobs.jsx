@@ -115,6 +115,7 @@ export const EmployerJobs = () => {
   const [duplicatingJobId, setDuplicatingJobId] = useState('');
   const [actionState, setActionState] = useState({ jobId: '', action: '' });
   const [filters, setFilters] = useState(getUrlFilters);
+  const [selectedRejectionJob, setSelectedRejectionJob] = useState(null);
 
   const loadJobs = async ({ silent = false } = {}) => {
     if (!silent) setLoading(true);
@@ -370,9 +371,30 @@ export const EmployerJobs = () => {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <p className="truncate text-sm font-extrabold text-slate-800">{job.title}</p>
-                      <span className={`shrink-0 rounded px-2 py-1 text-[11px] font-black ${statusTone[job.status] || statusTone.Active}`}>
-                        {job.status}
-                      </span>
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        <span className={`rounded px-2 py-0.5 text-[11px] font-black ${statusTone[job.status] || statusTone.Active}`}>
+                          {job.status}
+                        </span>
+                        {job.editRequestStatus === 'pending' && (
+                          <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200">
+                            ⏳ Edit Pending
+                          </span>
+                        )}
+                        {job.editRequestStatus === 'viewed' && (
+                          <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-200">
+                            👀 Under Review
+                          </span>
+                        )}
+                        {job.editRequestStatus === 'rejected' && (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedRejectionJob(job)}
+                            className="rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-bold text-rose-700 border border-rose-200 hover:bg-rose-100 transition cursor-pointer"
+                          >
+                            ❌ View Reason
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <p className="mt-0.5 text-xs font-semibold text-slate-400">{job.vacancies} openings</p>
                   </div>
@@ -439,9 +461,31 @@ export const EmployerJobs = () => {
                     <td className="px-4 py-4 text-sm font-semibold text-slate-500">{job.jobType}</td>
                     <td className="px-4 py-4 text-sm font-semibold text-slate-500">{formatDate(job.expiry, 'Not set')}</td>
                     <td className="px-4 py-4">
-                      <span className={`inline-flex rounded px-2 py-1 text-xs font-black ${statusTone[job.status] || statusTone.Active}`}>
-                        {job.status}
-                      </span>
+                      <div className="flex flex-col items-start gap-1">
+                        <span className={`inline-flex rounded px-2 py-0.5 text-xs font-black ${statusTone[job.status] || statusTone.Active}`}>
+                          {job.status}
+                        </span>
+                        {job.editRequestStatus === 'pending' && (
+                          <span className="inline-flex items-center gap-1 rounded bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200">
+                            ⏳ Edit Pending Approval
+                          </span>
+                        )}
+                        {job.editRequestStatus === 'viewed' && (
+                          <span className="inline-flex items-center gap-1 rounded bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-200">
+                            👀 Under Review (Viewed)
+                          </span>
+                        )}
+                        {job.editRequestStatus === 'rejected' && (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedRejectionJob(job)}
+                            className="inline-flex items-center gap-1 rounded bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700 border border-rose-200 hover:bg-rose-100 transition cursor-pointer"
+                            title="Click to view reason"
+                          >
+                            ❌ Edit Rejected (View Reason)
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )) : (
@@ -456,6 +500,66 @@ export const EmployerJobs = () => {
           </div>
         </div>
       </section>
+
+      {/* Rejection Reason Modal */}
+      {selectedRejectionJob && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-rose-50/70">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-100 text-rose-600 font-bold">
+                  !
+                </span>
+                <h4 className="text-sm font-black text-rose-950">Job Edit Request Rejected</h4>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedRejectionJob(null)}
+                className="h-7 w-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition cursor-pointer text-xs font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-5 space-y-3">
+              <div>
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Job Title</span>
+                <p className="text-sm font-extrabold text-slate-900 mt-0.5">{selectedRejectionJob.title}</p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-rose-50/80 border border-rose-200 text-xs text-rose-900 space-y-1">
+                <span className="font-black text-rose-800 block uppercase tracking-wide text-[10px]">
+                  Admin Rejection Reason:
+                </span>
+                <p className="font-semibold text-slate-800 leading-relaxed whitespace-pre-wrap">
+                  {selectedRejectionJob.editRejectionReason || 'No specific reason was provided by admin.'}
+                </p>
+              </div>
+
+              <p className="text-xs text-slate-500">
+                You can edit this job now, fix the issue described above, and resubmit for approval.
+              </p>
+            </div>
+
+            <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setSelectedRejectionJob(null)}
+                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+              >
+                Close
+              </button>
+              <Link
+                to={`/employer/jobs/${selectedRejectionJob.id}/edit`}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#6658dd] hover:bg-[#574bbc] text-white text-xs font-extrabold shadow-sm transition cursor-pointer"
+              >
+                <Edit className="w-3.5 h-3.5" />
+                <span>Edit & Resubmit Job</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
