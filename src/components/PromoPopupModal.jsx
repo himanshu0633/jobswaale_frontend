@@ -43,24 +43,19 @@ export const PromoPopupModal = ({
         const data = await getPublicSettings();
         if (!data) return;
 
-        // Determine current page key
-        const path = location.pathname.toLowerCase();
-        let currentPageKey = null;
-
-        if (path.startsWith('/employer')) {
-          currentPageKey = 'employer_login';
-        } else if (path.startsWith('/jobseeker')) {
-          currentPageKey = 'jobseeker_login';
-        } else if (path === '/' || path === '/home') {
-          currentPageKey = 'home';
-        } else if (path.startsWith('/about')) {
-          currentPageKey = 'about_us';
+        // Current user type
+        const storedUserStr = localStorage.getItem('publicUser') || localStorage.getItem('user');
+        let currentUserType = 'public';
+        if (storedUserStr) {
+          try {
+            const u = JSON.parse(storedUserStr);
+            const role = (u.accountType || u.role || u.roleName || '').toLowerCase().trim();
+            if (role === 'employer') currentUserType = 'employer';
+            else if (role === 'jobseeker') currentUserType = 'jobseeker';
+          } catch {}
         }
 
-        if (!currentPageKey) {
-          setIsOpen(false);
-          return;
-        }
+        const currentPath = location.pathname.toLowerCase().replace(/\/+$/, '') || '/';
 
         // Get banners list (with legacy single banner fallback)
         let banners = Array.isArray(data.popupBanners) && data.popupBanners.length > 0
@@ -71,22 +66,46 @@ export const PromoPopupModal = ({
           banners = [{
             id: 'banner_legacy',
             enabled: true,
+            targetType: 'employer',
+            pages: ['/employer'],
             image: data.promoPopupImage,
             width: data.promoPopupWidth || '850px',
             height: data.promoPopupHeight || 'auto',
             buttonEnabled: data.promoPopupButtonEnabled !== false,
             buttonText: data.promoPopupButtonText || 'Upgrade Plan',
-            buttonLink: data.promoPopupButtonLink || '/employer/subscription',
-            pages: ['employer_login']
+            buttonLink: data.promoPopupButtonLink || '/employer/subscription'
           }];
         }
 
-        // Find first active, undismissed banner matching this page
+        // Find first active, undismissed banner matching targetType and page
         const bannerToShow = banners.find((b) => {
           if (b.enabled === false) return false;
           if (!b.image) return false;
-          const pages = Array.isArray(b.pages) ? b.pages : [];
-          if (!pages.includes(currentPageKey)) return false;
+
+          // Target audience matching (jobseeker, employer, public)
+          const target = (b.targetType || '').toLowerCase().trim();
+          if (target === 'jobseeker' && currentUserType !== 'jobseeker') return false;
+          if (target === 'employer' && currentUserType !== 'employer') return false;
+          if (target === 'public' && currentUserType !== 'public') return false;
+
+          // Pages matching
+          const pages = Array.isArray(b.pages) ? b.pages.map(p => String(p).toLowerCase().trim()) : [];
+          if (pages.length === 0) return false;
+
+          const matchesPage = pages.some((p) => {
+            const cleanP = p.replace(/\/+$/, '') || '/';
+            if (cleanP === currentPath) return true;
+            if (cleanP !== '/' && currentPath.startsWith(cleanP)) return true;
+            // Legacy fallbacks
+            if (cleanP === 'employer_login' && currentPath.startsWith('/employer')) return true;
+            if (cleanP === 'jobseeker_login' && currentPath.startsWith('/jobseeker')) return true;
+            if (cleanP === 'home' && currentPath === '/') return true;
+            if (cleanP === 'about_us' && (currentPath === '/about' || currentPath.startsWith('/about'))) return true;
+            return false;
+          });
+
+          if (!matchesPage) return false;
+
           const isDismissed = sessionStorage.getItem(`promo_banner_dismissed_${b.id}`) === 'true';
           return !isDismissed;
         });
@@ -180,16 +199,13 @@ export const PromoPopupModal = ({
           />
         </div>
 
-        {/* Action Button Section */}
+        {/* Action Button Section (Without title label) */}
         {showButton && (
-          <div className="p-3.5 sm:p-4 bg-white border-t border-slate-100 flex items-center justify-between gap-3">
-            <span className="text-xs font-semibold text-slate-400 truncate">
-              {activeBanner.title || 'Special Announcement'}
-            </span>
+          <div className="p-3.5 sm:p-4 bg-white border-t border-slate-100 flex items-center justify-end">
             <button
               type="button"
               onClick={handleActionClick}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#46c9f2] hover:bg-[#33b8e1] px-5 py-2.5 text-xs sm:text-sm font-extrabold text-white shadow-md shadow-cyan-500/20 transition-all hover:shadow-lg hover:-translate-y-0.5 cursor-pointer shrink-0"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#46c9f2] hover:bg-[#33b8e1] px-6 py-2.5 text-xs sm:text-sm font-extrabold text-white shadow-md shadow-cyan-500/20 transition-all hover:shadow-lg hover:-translate-y-0.5 cursor-pointer shrink-0"
             >
               <span>{buttonText}</span>
               <ArrowRight className="w-4 h-4" />

@@ -33,19 +33,20 @@ import PromoCropperModal from '../../../components/PromoCropperModal';
 import PromoPopupModal, { resolvePromoImageUrl } from '../../../components/PromoPopupModal';
 
 const defaultSettings = {
-  // Popup Banners List (Multi-banner with page targeting)
+  // Popup Banners List (Multi-banner with targetType and page targeting)
   popupBanners: [
     {
       id: 'banner_employer_plans',
       title: 'Employer Subscription Plans',
       enabled: true,
+      targetType: 'employer',
+      pages: ['/employer'],
       image: '/promo-banner.jpg',
       width: '850px',
       height: 'auto',
       buttonEnabled: true,
       buttonText: 'Upgrade Plan',
-      buttonLink: '/employer/subscription',
-      pages: ['employer_login']
+      buttonLink: '/employer/subscription'
     }
   ],
 
@@ -199,6 +200,59 @@ const ToggleSwitch = ({ checked, onChange, label, subtext }) => (
   </div>
 );
 
+const BANNER_TARGETS = {
+  jobseeker: {
+    key: 'jobseeker',
+    label: 'Jobseeker (After Login)',
+    badge: 'Jobseeker Pages',
+    pages: [
+      { path: '/jobseeker/dashboard', label: 'Jobseeker Dashboard' },
+      { path: '/', label: 'Home' },
+      { path: '/jobs', label: 'Jobs' },
+      { path: '/employers', label: 'Employers' },
+      { path: '/jobseeker-plan', label: 'Pricing / Plans' },
+      { path: '/jobseeker/jobs-applied', label: 'Jobs Applied' },
+      { path: '/jobseeker/saved-jobs', label: 'Saved Jobs' },
+      { path: '/jobseeker/saved-employers', label: 'Saved Employers' },
+      { path: '/jobseeker/messages', label: 'Messages' },
+      { path: '/jobseeker/profile', label: 'My Profile' },
+      { path: '/about', label: 'About Us' }
+    ]
+  },
+  employer: {
+    key: 'employer',
+    label: 'Employer (After Login)',
+    badge: 'Employer Pages',
+    pages: [
+      { path: '/employer', label: 'Employer Dashboard' },
+      { path: '/', label: 'Home' },
+      { path: '/employer/jobs/create', label: 'Post a Job' },
+      { path: '/employer/jobs', label: 'Manage Jobs' },
+      { path: '/employer/applications', label: 'Applications' },
+      { path: '/employer/shortlisted', label: 'Shortlisted' },
+      { path: '/employer/company', label: 'Company Profile' },
+      { path: '/employer/subscription', label: 'Subscription / Plans' },
+      { path: '/employer/reports', label: 'Reports' },
+      { path: '/employer/messages', label: 'Messages' },
+      { path: '/about', label: 'About Us' }
+    ]
+  },
+  public: {
+    key: 'public',
+    label: 'Public / Visitor (Without Login)',
+    badge: 'Public Pages',
+    pages: [
+      { path: '/', label: 'Home Page' },
+      { path: '/jobs', label: 'Jobs' },
+      { path: '/employers', label: 'Employers' },
+      { path: '/pricing', label: 'Pricing' },
+      { path: '/about', label: 'About Us' },
+      { path: '/privacy-policy', label: 'Privacy Policy' },
+      { path: '/terms-conditions', label: 'Terms & Conditions' }
+    ]
+  }
+};
+
 export const Settings = () => {
   const [activeTab, setActiveTab] = useState('general');
   const [form, setForm] = useState(defaultSettings);
@@ -271,19 +325,51 @@ export const Settings = () => {
       id: `banner_${Date.now()}`,
       title: `Banner ${(form.popupBanners?.length || 0) + 1}`,
       enabled: true,
+      targetType: 'jobseeker',
+      pages: ['/jobseeker/dashboard'],
       image: '',
       width: '850px',
       height: 'auto',
       buttonEnabled: true,
       buttonText: 'Upgrade Plan',
-      buttonLink: '/employer/subscription',
-      pages: ['employer_login']
+      buttonLink: '/jobseeker-plan'
     };
     setForm(prev => ({
       ...prev,
       popupBanners: [...(prev.popupBanners || []), newBanner]
     }));
     showMessage('success', 'New banner added.');
+  };
+
+  const handleTargetTypeChange = (index, targetType) => {
+    const defaultPage = BANNER_TARGETS[targetType]?.pages[0]?.path || '/';
+    setForm(prev => {
+      const banners = [...(prev.popupBanners || [])];
+      if (banners[index]) {
+        banners[index] = {
+          ...banners[index],
+          targetType,
+          pages: [defaultPage]
+        };
+      }
+      return { ...prev, popupBanners: banners };
+    });
+  };
+
+  const handleSelectAllPages = (index, targetType) => {
+    const allPaths = BANNER_TARGETS[targetType]?.pages.map(p => p.path) || [];
+    setForm(prev => {
+      const banners = [...(prev.popupBanners || [])];
+      const banner = banners[index];
+      if (!banner) return prev;
+      const currentPages = Array.isArray(banner.pages) ? banner.pages : [];
+      const allSelected = allPaths.length > 0 && allPaths.every(p => currentPages.includes(p));
+      banners[index] = {
+        ...banner,
+        pages: allSelected ? [] : allPaths
+      };
+      return { ...prev, popupBanners: banners };
+    });
   };
 
   const handleRemoveBanner = (index) => {
@@ -361,14 +447,42 @@ export const Settings = () => {
               id: 'banner_employer_plans',
               title: 'Employer Subscription Plans',
               enabled: loaded.showPromoPopup !== false,
+              targetType: 'employer',
+              pages: ['/employer'],
               image: loaded.promoPopupImage,
               width: loaded.promoPopupWidth || '850px',
               height: loaded.promoPopupHeight || 'auto',
               buttonEnabled: loaded.promoPopupButtonEnabled !== false,
               buttonText: loaded.promoPopupButtonText || 'Upgrade Plan',
-              buttonLink: loaded.promoPopupButtonLink || '/employer/subscription',
-              pages: ['employer_login']
+              buttonLink: loaded.promoPopupButtonLink || '/employer/subscription'
             }] : defaultSettings.popupBanners);
+
+        // Normalize targetType and pages
+        banners = banners.map(b => {
+          let targetType = b.targetType;
+          let rawPages = Array.isArray(b.pages) ? b.pages : [];
+          if (!targetType) {
+            if (rawPages.includes('employer_login') || rawPages.some(p => String(p).startsWith('/employer'))) {
+              targetType = 'employer';
+            } else if (rawPages.includes('jobseeker_login') || rawPages.some(p => String(p).startsWith('/jobseeker'))) {
+              targetType = 'jobseeker';
+            } else {
+              targetType = 'public';
+            }
+          }
+          const mappedPages = rawPages.map(p => {
+            if (p === 'employer_login') return '/employer';
+            if (p === 'jobseeker_login') return '/jobseeker/dashboard';
+            if (p === 'home') return '/';
+            if (p === 'about_us') return '/about';
+            return p;
+          });
+          return {
+            ...b,
+            targetType: targetType || 'employer',
+            pages: mappedPages.length > 0 ? mappedPages : (targetType === 'employer' ? ['/employer'] : targetType === 'jobseeker' ? ['/jobseeker/dashboard'] : ['/'])
+          };
+        });
 
         setForm({
           ...defaultSettings,
@@ -421,6 +535,7 @@ export const Settings = () => {
         popupBanners: banners
       });
       clearPublicSettingsCache();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       showMessage('success', `${tabName.charAt(0).toUpperCase() + tabName.slice(1)} settings saved successfully.`);
     } catch (err) {
       console.error(err);
@@ -1250,7 +1365,7 @@ export const Settings = () => {
                     Popup Banners
                   </h5>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Manage promotional popup banners and their display locations across the portal.
+                    Configure popup banners, customize modal dimensions, and target specific audience pages.
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1298,27 +1413,42 @@ export const Settings = () => {
                   </button>
                 </div>
               ) : (
-                <div className="space-y-6">
+                <div className="space-y-8">
                   {form.popupBanners.map((banner, index) => {
-                    const pages = Array.isArray(banner.pages) ? banner.pages : [];
+                    const currentTargetType = banner.targetType || 'employer';
+                    const targetConfig = BANNER_TARGETS[currentTargetType] || BANNER_TARGETS.employer;
+                    const selectedPages = Array.isArray(banner.pages) ? banner.pages : [];
+                    const allTargetPages = targetConfig.pages.map(p => p.path);
+                    const isAllSelected = allTargetPages.length > 0 && allTargetPages.every(p => selectedPages.includes(p));
+
+                    const rawWidth = String(banner.width || '850px').trim();
+                    const previewWidth = rawWidth.includes('px') || rawWidth.includes('%') ? rawWidth : `${rawWidth}px`;
+                    const rawHeight = String(banner.height || 'auto').trim();
+                    const previewMaxHeight = rawHeight === 'auto' ? '360px' : (rawHeight.includes('px') ? rawHeight : `${rawHeight}px`);
+
                     return (
                       <div
                         key={banner.id || index}
-                        className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs space-y-4"
+                        className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-xs space-y-6"
                       >
                         {/* Banner Top Bar */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
                           <div className="flex items-center gap-2.5">
-                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-100 text-xs font-black text-indigo-700">
                               {index + 1}
                             </span>
-                            <span className="text-sm font-bold text-slate-800 truncate max-w-[280px]">
-                              {banner.title || `Banner ${index + 1}`}
-                            </span>
+                            <div>
+                              <h6 className="text-sm font-bold text-slate-900">
+                                {banner.title || `Banner ${index + 1}`}
+                              </h6>
+                              <span className="text-[11px] font-semibold text-indigo-600">
+                                {targetConfig.label}
+                              </span>
+                            </div>
                           </div>
 
                           <div className="flex items-center gap-3">
-                            {/* Status Toggle */}
+                            {/* Active Toggle */}
                             <label className="flex items-center gap-2 text-xs font-bold text-slate-600 cursor-pointer select-none">
                               <span>{banner.enabled !== false ? 'Active' : 'Inactive'}</span>
                               <button
@@ -1336,24 +1466,11 @@ export const Settings = () => {
                               </button>
                             </label>
 
-                            {/* Preview Button */}
-                            {banner.image && (
-                              <button
-                                type="button"
-                                onClick={() => setPreviewBannerItem(banner)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition cursor-pointer"
-                                title="Preview this banner"
-                              >
-                                <Eye className="w-3.5 h-3.5" />
-                                Preview
-                              </button>
-                            )}
-
                             {/* Delete Button */}
                             <button
                               type="button"
                               onClick={() => handleRemoveBanner(index)}
-                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-md text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg text-rose-600 hover:bg-rose-50 transition cursor-pointer"
                               title="Delete banner"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -1362,113 +1479,188 @@ export const Settings = () => {
                           </div>
                         </div>
 
-                        {/* Form Fields Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {/* Banner Title */}
-                          <div>
-                            <label className={labelCls}>Banner Title</label>
-                            <input
-                              type="text"
-                              value={banner.title || ''}
-                              onChange={(e) => handleUpdateBanner(index, 'title', e.target.value)}
-                              className={inputCls}
-                              placeholder="e.g. Employer Subscription Plans"
-                            />
+                        {/* LIVE MODAL PREVIEW (What You See Is What You Get) */}
+                        <div className="rounded-2xl border border-slate-200/80 bg-slate-950/70 p-4 sm:p-6 flex flex-col items-center justify-center space-y-3">
+                          <div className="w-full flex items-center justify-between text-white/90 text-xs font-bold px-1">
+                            <span className="flex items-center gap-1.5 text-cyan-400">
+                              <Eye className="w-4 h-4" />
+                              Live Popup Preview (Real-Time)
+                            </span>
+                            <span className="text-[11px] text-slate-300 font-normal">
+                              Updates immediately as you edit below
+                            </span>
                           </div>
 
-                          {/* Display Pages Selection */}
-                          <div>
-                            <label className={labelCls}>Display Pages</label>
-                            <div className="grid grid-cols-2 gap-2 pt-1">
-                              {[
-                                { key: 'employer_login', label: 'Employer Dashboard' },
-                                { key: 'jobseeker_login', label: 'Jobseeker Dashboard' },
-                                { key: 'home', label: 'Home Page' },
-                                { key: 'about_us', label: 'About Us' }
-                              ].map((opt) => {
-                                const isChecked = pages.includes(opt.key);
-                                return (
-                                  <label
-                                    key={opt.key}
-                                    className={`flex items-center gap-2 p-2 rounded-lg border text-xs font-medium cursor-pointer transition select-none ${
-                                      isChecked
-                                        ? 'border-indigo-300 bg-indigo-50/60 text-indigo-900 font-semibold'
-                                        : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
-                                    }`}
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked={isChecked}
-                                      onChange={() => handleToggleBannerPage(index, opt.key)}
-                                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-3.5 w-3.5"
-                                    />
-                                    <span>{opt.label}</span>
-                                  </label>
-                                );
-                              })}
+                          {/* Realistic Modal Box */}
+                          <div
+                            className="relative bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden max-w-full transition-all duration-200"
+                            style={{ width: previewWidth }}
+                          >
+                            {/* Close Cut Button */}
+                            <div className="absolute top-3 right-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-slate-900/60 text-white shadow backdrop-blur-sm pointer-events-none">
+                              <X className="w-3.5 h-3.5 stroke-[2.5]" />
                             </div>
+
+                            {/* Image Container */}
+                            <div
+                              className="w-full overflow-hidden bg-slate-950 flex items-center justify-center min-h-[160px]"
+                              style={{ maxHeight: previewMaxHeight }}
+                            >
+                              {banner.image ? (
+                                <img
+                                  src={resolvePromoImageUrl(banner.image)}
+                                  alt="Live Preview"
+                                  className="w-full h-auto max-h-full object-contain block select-none"
+                                />
+                              ) : (
+                                <div className="p-8 text-center text-slate-400 flex flex-col items-center gap-2">
+                                  <Upload className="w-8 h-8 text-slate-500" />
+                                  <span className="text-xs font-semibold">No image uploaded yet</span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Action Button Footer */}
+                            {banner.buttonEnabled !== false && (
+                              <div className="p-3.5 sm:p-4 bg-white border-t border-slate-100 flex items-center justify-end">
+                                <button
+                                  type="button"
+                                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#46c9f2] px-6 py-2.5 text-xs sm:text-sm font-extrabold text-white shadow-md shadow-cyan-500/20 pointer-events-none"
+                                >
+                                  <span>{banner.buttonText || 'Upgrade Plan'}</span>
+                                  <ArrowRight className="w-4 h-4" />
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
 
-                        {/* Banner Image */}
-                        <div className="space-y-2 border-t border-slate-100 pt-3">
-                          <label className={labelCls}>Banner Image</label>
-                          {banner.image ? (
-                            <div className="space-y-3">
-                              <div className="relative group rounded-xl border border-slate-200 bg-slate-900/5 p-2 flex items-center justify-center overflow-hidden min-h-[140px] max-h-[220px]">
-                                <img
-                                  src={resolvePromoImageUrl(banner.image)}
-                                  alt={banner.title || 'Banner'}
-                                  className="max-h-[200px] w-auto max-w-full rounded-lg object-contain shadow-xs"
-                                />
-                                <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => triggerBannerUpload(index)}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-slate-800 rounded-lg text-xs font-bold shadow hover:bg-slate-100 transition cursor-pointer"
-                                  >
-                                    <Upload className="w-3.5 h-3.5" />
-                                    Replace Image
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleAdjustBannerCrop(index)}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold shadow hover:bg-indigo-700 transition cursor-pointer"
-                                  >
-                                    <Crop className="w-3.5 h-3.5" />
-                                    Adjust Crop
-                                  </button>
-                                </div>
-                              </div>
+                        {/* Banner Title */}
+                        <div>
+                          <label className={labelCls}>Banner Title</label>
+                          <input
+                            type="text"
+                            value={banner.title || ''}
+                            onChange={(e) => handleUpdateBanner(index, 'title', e.target.value)}
+                            className={inputCls}
+                            placeholder="e.g. Employer Subscription Plans"
+                          />
+                        </div>
 
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => triggerBannerUpload(index)}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg transition cursor-pointer shadow-xs"
-                                  >
-                                    <Upload className="w-3.5 h-3.5 text-slate-500" />
-                                    Replace Image
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleAdjustBannerCrop(index)}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg transition cursor-pointer"
-                                  >
-                                    <Crop className="w-3.5 h-3.5 text-indigo-600" />
-                                    Adjust Crop
-                                  </button>
-                                </div>
+                        {/* 1. TARGET AUDIENCE SELECTOR (Choose 1 of 3) */}
+                        <div className="space-y-2 border-t border-slate-100 pt-4">
+                          <label className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
+                            1. Select Target Audience (Choose 1 Option)
+                          </label>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            {Object.values(BANNER_TARGETS).map((target) => {
+                              const isSelected = currentTargetType === target.key;
+                              return (
+                                <button
+                                  key={target.key}
+                                  type="button"
+                                  onClick={() => handleTargetTypeChange(index, target.key)}
+                                  className={`flex flex-col items-start p-3.5 rounded-xl border-2 text-left transition cursor-pointer ${
+                                    isSelected
+                                      ? 'border-indigo-600 bg-indigo-50/70 text-indigo-950 shadow-xs'
+                                      : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between w-full">
+                                    <span className="text-xs font-bold">{target.label}</span>
+                                    <div className={`h-4 w-4 rounded-full border flex items-center justify-center ${
+                                      isSelected ? 'border-indigo-600 bg-indigo-600' : 'border-slate-300'
+                                    }`}>
+                                      {isSelected && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                                    </div>
+                                  </div>
+                                  <span className="text-[11px] text-slate-400 mt-1">
+                                    {target.badge}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* 2. DISPLAY PAGES SELECTION (Checkboxes for chosen audience) */}
+                        <div className="space-y-2 border-t border-slate-100 pt-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <label className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
+                                2. Select Pages to Display Banner ({targetConfig.label})
+                              </label>
+                              <p className="text-[11px] text-slate-400 mt-0.5">
+                                Check the pages where this popup should appear when the user visits.
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleSelectAllPages(index, currentTargetType)}
+                              className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition cursor-pointer"
+                            >
+                              {isAllSelected ? 'Deselect All' : 'Select All'}
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 pt-1">
+                            {targetConfig.pages.map((p) => {
+                              const isChecked = selectedPages.includes(p.path);
+                              return (
+                                <label
+                                  key={p.path}
+                                  className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-medium cursor-pointer transition select-none ${
+                                    isChecked
+                                      ? 'border-indigo-300 bg-indigo-50 text-indigo-950 font-bold shadow-xs'
+                                      : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                                  }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    onChange={() => handleToggleBannerPage(index, p.path)}
+                                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+                                  />
+                                  <span className="truncate">{p.label}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* 3. BANNER IMAGE & CROPPER */}
+                        <div className="space-y-2 border-t border-slate-100 pt-4">
+                          <label className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
+                            3. Banner Image
+                          </label>
+                          {banner.image ? (
+                            <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                              <div className="flex items-center gap-2">
                                 <button
                                   type="button"
-                                  onClick={() => handleRemoveBannerImage(index)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-rose-600 hover:bg-rose-50 rounded-lg text-xs font-bold transition cursor-pointer"
+                                  onClick={() => triggerBannerUpload(index)}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg transition cursor-pointer shadow-xs"
                                 >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                  Remove Image
+                                  <Upload className="w-3.5 h-3.5 text-slate-500" />
+                                  Replace Image
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleAdjustBannerCrop(index)}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg transition cursor-pointer"
+                                >
+                                  <Crop className="w-3.5 h-3.5 text-indigo-600" />
+                                  Adjust Crop
                                 </button>
                               </div>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveBannerImage(index)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-rose-600 hover:bg-rose-50 rounded-lg text-xs font-bold transition cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                Remove Image
+                              </button>
                             </div>
                           ) : (
                             <div
@@ -1486,8 +1678,8 @@ export const Settings = () => {
                           )}
                         </div>
 
-                        {/* Dimensions */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 border-t border-slate-100 pt-3">
+                        {/* 4. MODAL DIMENSIONS */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 border-t border-slate-100 pt-4">
                           <div>
                             <label className={labelCls}>Modal Width</label>
                             <input
@@ -1537,10 +1729,10 @@ export const Settings = () => {
                           </div>
                         </div>
 
-                        {/* Action Button Settings */}
-                        <div className="border-t border-slate-100 pt-3 space-y-3">
+                        {/* 5. ACTION BUTTON SETTINGS */}
+                        <div className="border-t border-slate-100 pt-4 space-y-3">
                           <div className="flex items-center justify-between">
-                            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                            <label className="text-xs font-bold text-slate-800 uppercase tracking-wider">
                               Action Button
                             </label>
                             <label className="flex items-center gap-2 text-xs font-semibold text-slate-600 cursor-pointer">
