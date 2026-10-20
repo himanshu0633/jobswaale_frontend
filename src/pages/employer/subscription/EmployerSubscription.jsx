@@ -405,19 +405,19 @@ export const EmployerSubscription = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2.5 shrink-0">
             <a 
               href="#plans-pricing" 
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#6658dd] px-3.5 py-1.5 text-xs font-extrabold text-white transition hover:bg-[#5848d8] whitespace-nowrap shadow-xs"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#6658dd] px-5 py-2.5 min-w-[135px] text-xs font-extrabold text-white transition hover:bg-[#5848d8] whitespace-nowrap shadow-sm cursor-pointer"
             >
-              <Crown className="h-3.5 w-3.5 shrink-0" />
+              <Crown className="h-4 w-4 shrink-0" />
               <span>Upgrade Plan</span>
             </a>
             <button
               onClick={() => setSuccess('Cancellation request noted. Support team will review and process your request.')}
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-extrabold text-slate-600 transition hover:bg-slate-50 whitespace-nowrap shadow-xs"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-2.5 min-w-[135px] text-xs font-extrabold text-slate-700 transition hover:bg-slate-50 whitespace-nowrap shadow-sm cursor-pointer"
             >
-              <X className="h-3.5 w-3.5 shrink-0" />
+              <X className="h-4 w-4 shrink-0" />
               <span>Cancel Plan</span>
             </button>
           </div>
