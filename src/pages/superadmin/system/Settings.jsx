@@ -33,15 +33,31 @@ import PromoCropperModal from '../../../components/PromoCropperModal';
 import PromoPopupModal, { resolvePromoImageUrl } from '../../../components/PromoPopupModal';
 
 const defaultSettings = {
-  // Promo / Announcement Popup Modal
+  // Popup Banners List (Multi-banner with page targeting)
+  popupBanners: [
+    {
+      id: 'banner_employer_plans',
+      title: 'Employer Subscription Plans',
+      enabled: true,
+      image: '/promo-banner.jpg',
+      width: '850px',
+      height: 'auto',
+      buttonEnabled: true,
+      buttonText: 'Upgrade Plan',
+      buttonLink: '/employer/subscription',
+      pages: ['employer_login']
+    }
+  ],
+
+  // Promo / Announcement Popup Modal (Legacy fallback)
   showPromoPopup: true,
   promoPopupImage: '/promo-banner.jpg',
-  promoPopupWidth: '550px',
+  promoPopupWidth: '850px',
   promoPopupHeight: 'auto',
   promoPopupButtonText: 'Upgrade Plan',
   promoPopupButtonLink: '/employer/subscription',
   promoPopupButtonEnabled: true,
-  promoPopupTarget: 'all',
+  promoPopupTarget: 'employer',
 
   // General
   siteName: 'JobsWaale',
@@ -191,13 +207,19 @@ export const Settings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [newCompany, setNewCompany] = useState({ name: '', logo: '' });
-  const [cropperModal, setCropperModal] = useState({ isOpen: false, imageSrc: null, originalFile: null });
-  const [showLivePreview, setShowLivePreview] = useState(false);
-  const promoFileInputRef = useRef(null);
+  const [cropperModal, setCropperModal] = useState({ isOpen: false, imageSrc: null, originalFile: null, bannerIndex: null });
+  const [previewBannerItem, setPreviewBannerItem] = useState(null);
+  const [uploadBannerIndex, setUploadBannerIndex] = useState(null);
+  const bannerFileInputRef = useRef(null);
 
-  const handlePromoFileSelect = (e) => {
+  const triggerBannerUpload = (index) => {
+    setUploadBannerIndex(index);
+    bannerFileInputRef.current?.click();
+  };
+
+  const handleBannerFileSelect = (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || uploadBannerIndex === null) return;
     if (!file.type.startsWith('image/')) {
       showMessage('error', 'Please select a valid image file (PNG, JPG, WebP).');
       return;
@@ -207,36 +229,95 @@ export const Settings = () => {
       setCropperModal({
         isOpen: true,
         imageSrc: reader.result,
-        originalFile: file
+        originalFile: file,
+        bannerIndex: uploadBannerIndex
       });
     };
     reader.readAsDataURL(file);
     e.target.value = '';
   };
 
-  const handlePromoCropComplete = (uploadedUrl) => {
-    setForm(prev => ({
-      ...prev,
-      promoPopupImage: uploadedUrl
-    }));
-    showMessage('success', 'Promo popup image uploaded successfully! Click "Save Home Dashboard Settings" to persist.');
+  const handleBannerCropComplete = (uploadedUrl) => {
+    if (cropperModal.bannerIndex === null || cropperModal.bannerIndex === undefined) return;
+    const idx = cropperModal.bannerIndex;
+    setForm(prev => {
+      const banners = Array.isArray(prev.popupBanners) ? [...prev.popupBanners] : [];
+      if (banners[idx]) {
+        banners[idx] = { ...banners[idx], image: uploadedUrl };
+      }
+      return { ...prev, popupBanners: banners };
+    });
+    showMessage('success', 'Banner image uploaded successfully!');
   };
 
-  const handleAdjustExistingCrop = () => {
-    if (!form.promoPopupImage) return;
+  const handleAdjustBannerCrop = (index) => {
+    const banner = form.popupBanners?.[index];
+    if (!banner?.image) return;
     setCropperModal({
       isOpen: true,
-      imageSrc: form.promoPopupImage,
-      originalFile: null
+      imageSrc: banner.image,
+      originalFile: null,
+      bannerIndex: index
     });
   };
 
-  const handleRemovePromoImage = () => {
+  const handleRemoveBannerImage = (index) => {
+    handleUpdateBanner(index, 'image', '');
+    showMessage('success', 'Banner image removed.');
+  };
+
+  const handleAddBanner = () => {
+    const newBanner = {
+      id: `banner_${Date.now()}`,
+      title: `Banner ${(form.popupBanners?.length || 0) + 1}`,
+      enabled: true,
+      image: '',
+      width: '850px',
+      height: 'auto',
+      buttonEnabled: true,
+      buttonText: 'Upgrade Plan',
+      buttonLink: '/employer/subscription',
+      pages: ['employer_login']
+    };
     setForm(prev => ({
       ...prev,
-      promoPopupImage: ''
+      popupBanners: [...(prev.popupBanners || []), newBanner]
     }));
-    showMessage('success', 'Promo popup image removed.');
+    showMessage('success', 'New banner added.');
+  };
+
+  const handleRemoveBanner = (index) => {
+    setForm(prev => {
+      const banners = [...(prev.popupBanners || [])];
+      banners.splice(index, 1);
+      return { ...prev, popupBanners: banners };
+    });
+    showMessage('success', 'Banner removed.');
+  };
+
+  const handleUpdateBanner = (index, field, value) => {
+    setForm(prev => {
+      const banners = [...(prev.popupBanners || [])];
+      if (banners[index]) {
+        banners[index] = { ...banners[index], [field]: value };
+      }
+      return { ...prev, popupBanners: banners };
+    });
+  };
+
+  const handleToggleBannerPage = (index, pageKey) => {
+    setForm(prev => {
+      const banners = [...(prev.popupBanners || [])];
+      const banner = banners[index];
+      if (!banner) return prev;
+      const currentPages = Array.isArray(banner.pages) ? [...banner.pages] : [];
+      const exists = currentPages.includes(pageKey);
+      const updatedPages = exists
+        ? currentPages.filter(p => p !== pageKey)
+        : [...currentPages, pageKey];
+      banners[index] = { ...banner, pages: updatedPages };
+      return { ...prev, popupBanners: banners };
+    });
   };
 
   const handleAddCompany = () => {
@@ -273,7 +354,27 @@ export const Settings = () => {
       setLoading(true);
       try {
         const response = await axios.get(`${BASE_API_URL}/settings`, { headers: getAdminHeaders() });
-        setForm({ ...defaultSettings, ...(response.data || {}) });
+        const loaded = response.data || {};
+        let banners = Array.isArray(loaded.popupBanners) && loaded.popupBanners.length > 0
+          ? loaded.popupBanners
+          : (loaded.promoPopupImage ? [{
+              id: 'banner_employer_plans',
+              title: 'Employer Subscription Plans',
+              enabled: loaded.showPromoPopup !== false,
+              image: loaded.promoPopupImage,
+              width: loaded.promoPopupWidth || '850px',
+              height: loaded.promoPopupHeight || 'auto',
+              buttonEnabled: loaded.promoPopupButtonEnabled !== false,
+              buttonText: loaded.promoPopupButtonText || 'Upgrade Plan',
+              buttonLink: loaded.promoPopupButtonLink || '/employer/subscription',
+              pages: ['employer_login']
+            }] : defaultSettings.popupBanners);
+
+        setForm({
+          ...defaultSettings,
+          ...loaded,
+          popupBanners: banners
+        });
       } catch (err) {
         showMessage('error', err.response?.data?.message || 'Failed to load settings.');
       } finally {
@@ -296,8 +397,29 @@ export const Settings = () => {
   const handleSave = async (tabName) => {
     setSaving(true);
     try {
-      const response = await axios.put(`${BASE_API_URL}/settings`, form, { headers: getAdminHeaders() });
-      setForm({ ...defaultSettings, ...(response.data.settings || {}) });
+      const firstBanner = form.popupBanners?.[0];
+      const payload = {
+        ...form,
+        showPromoPopup: firstBanner ? firstBanner.enabled !== false : false,
+        promoPopupImage: firstBanner?.image || '',
+        promoPopupWidth: firstBanner?.width || '850px',
+        promoPopupHeight: firstBanner?.height || 'auto',
+        promoPopupButtonText: firstBanner?.buttonText || 'Upgrade Plan',
+        promoPopupButtonLink: firstBanner?.buttonLink || '/employer/subscription',
+        promoPopupButtonEnabled: firstBanner ? firstBanner.buttonEnabled !== false : true,
+      };
+
+      const response = await axios.put(`${BASE_API_URL}/settings`, payload, { headers: getAdminHeaders() });
+      const loaded = response.data.settings || {};
+      let banners = Array.isArray(loaded.popupBanners) && loaded.popupBanners.length > 0
+        ? loaded.popupBanners
+        : (form.popupBanners || defaultSettings.popupBanners);
+
+      setForm({
+        ...defaultSettings,
+        ...loaded,
+        popupBanners: banners
+      });
       clearPublicSettingsCache();
       showMessage('success', `${tabName.charAt(0).toUpperCase() + tabName.slice(1)} settings saved successfully.`);
     } catch (err) {
@@ -329,7 +451,8 @@ export const Settings = () => {
     { key: 'notification', label: 'Notifications', icon: <BellRing className="w-4 h-4 sm:w-4.5 sm:h-4.5" /> },
     { key: 'security', label: 'Security', icon: <ShieldCheck className="w-4 h-4 sm:w-4.5 sm:h-4.5" /> },
     { key: 'email', label: 'Email', icon: <Mail className="w-4 h-4 sm:w-4.5 sm:h-4.5" /> },
-    { key: 'homeDashboard', label: 'Home dashboard', icon: <LayoutDashboard className="w-4 h-4 sm:w-4.5 sm:h-4.5" /> }
+    { key: 'homeDashboard', label: 'Home dashboard', icon: <LayoutDashboard className="w-4 h-4 sm:w-4.5 sm:h-4.5" /> },
+    { key: 'bannerUpdate', label: 'Banner Update', icon: <Megaphone className="w-4 h-4 sm:w-4.5 sm:h-4.5" /> }
   ];
 
   return (
@@ -928,283 +1051,6 @@ export const Settings = () => {
                 </div>
               </div>
 
-              {/* Promo & Announcement Popup Modal Section (Above Stats Bar Counters) */}
-              <div className="space-y-4 rounded-xl border border-indigo-100 bg-gradient-to-br from-white to-indigo-50/25 p-4 sm:p-5 shadow-sm">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-indigo-100/70 pb-3">
-                  <div>
-                    <h5 className="flex items-center gap-2 text-indigo-950 text-sm font-bold">
-                      <Megaphone className="w-4 h-4 text-indigo-600" />
-                      Promo & Announcement Popup Modal
-                    </h5>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Display an announcement or promo popup modal to users after login or register on their dashboard.
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {form.promoPopupImage && (
-                      <button
-                        type="button"
-                        onClick={() => setShowLivePreview(true)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-200 bg-white hover:bg-indigo-50 text-indigo-700 text-xs font-bold transition shadow-xs cursor-pointer"
-                        title="Preview how the popup modal looks"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        Preview Popup
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* On / Off Toggle Switch */}
-                <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-xs">
-                  <ToggleSwitch
-                    label="Enable Promo Popup Modal"
-                    subtext="When ON, eligible users will see this popup on the dashboard after login or registration with a cut (X) button."
-                    checked={form.showPromoPopup ?? false}
-                    onChange={() => handleToggle('showPromoPopup')}
-                  />
-                </div>
-
-                {/* Image Upload & Adjustments */}
-                <div className="space-y-3 bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                      <Upload className="w-3.5 h-3.5 text-indigo-600" />
-                      Banner Image & Cropper
-                    </label>
-                    <span className="text-[11px] font-medium text-slate-400">
-                      Supports full image & crop adjustments
-                    </span>
-                  </div>
-
-                  <input
-                    type="file"
-                    ref={promoFileInputRef}
-                    accept="image/*"
-                    onChange={handlePromoFileSelect}
-                    className="hidden"
-                  />
-
-                  {form.promoPopupImage ? (
-                    <div className="space-y-3">
-                      {/* Image Preview Box */}
-                      <div className="relative group rounded-xl border border-slate-200 bg-slate-900/5 p-2 flex items-center justify-center overflow-hidden min-h-[160px] max-h-[260px]">
-                        <img
-                          src={resolvePromoImageUrl(form.promoPopupImage)}
-                          alt="Promo banner preview"
-                          className="max-h-[240px] w-auto max-w-full rounded-lg object-contain shadow-sm"
-                        />
-                        <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => promoFileInputRef.current?.click()}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-slate-800 rounded-lg text-xs font-bold shadow hover:bg-slate-100 transition cursor-pointer"
-                          >
-                            <Upload className="w-3.5 h-3.5" />
-                            Replace Image
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleAdjustExistingCrop}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold shadow hover:bg-indigo-700 transition cursor-pointer"
-                          >
-                            <Crop className="w-3.5 h-3.5" />
-                            Adjust Crop
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Image Action Buttons */}
-                      <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => promoFileInputRef.current?.click()}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg transition cursor-pointer shadow-xs"
-                          >
-                            <Upload className="w-3.5 h-3.5 text-slate-500" />
-                            Replace Image
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleAdjustExistingCrop}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg transition cursor-pointer"
-                          >
-                            <Crop className="w-3.5 h-3.5 text-indigo-600" />
-                            Adjust Crop
-                          </button>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={handleRemovePromoImage}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-rose-600 hover:bg-rose-50 rounded-lg text-xs font-bold transition cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          Remove Image
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    /* Empty State: Upload Prompt */
-                    <div
-                      onClick={() => promoFileInputRef.current?.click()}
-                      className="border-2 border-dashed border-indigo-200 hover:border-indigo-400 bg-indigo-50/30 hover:bg-indigo-50/60 rounded-xl p-6 text-center cursor-pointer transition flex flex-col items-center justify-center gap-2"
-                    >
-                      <div className="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
-                        <Upload className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-slate-800">
-                          Click to upload & crop promo image
-                        </p>
-                        <p className="text-[11px] text-slate-400 mt-0.5">
-                          Upload high-resolution image banner. You can crop, zoom, and adjust, or keep full image.
-                        </p>
-                      </div>
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 bg-white px-3 py-1 rounded-full border border-indigo-100 shadow-xs">
-                        <Crop className="w-3 h-3" /> Select Image
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Width & Height Dimensions */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-100">
-                    <div>
-                      <label className={labelCls}>
-                        Modal Width (e.g. 550px, 600px, 90%)
-                      </label>
-                      <input
-                        type="text"
-                        value={form.promoPopupWidth || '550px'}
-                        onChange={(e) => setForm({ ...form, promoPopupWidth: e.target.value })}
-                        className={inputCls}
-                        placeholder="550px"
-                      />
-                      <div className="flex items-center gap-1 mt-1.5">
-                        <span className="text-[10px] text-slate-400">Presets:</span>
-                        {['460px', '550px', '650px'].map((w) => (
-                          <button
-                            key={w}
-                            type="button"
-                            onClick={() => setForm({ ...form, promoPopupWidth: w })}
-                            className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 cursor-pointer"
-                          >
-                            {w}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className={labelCls}>
-                        Modal Max Height (e.g. auto, 450px)
-                      </label>
-                      <input
-                        type="text"
-                        value={form.promoPopupHeight || 'auto'}
-                        onChange={(e) => setForm({ ...form, promoPopupHeight: e.target.value })}
-                        className={inputCls}
-                        placeholder="auto"
-                      />
-                      <div className="flex items-center gap-1 mt-1.5">
-                        <span className="text-[10px] text-slate-400">Presets:</span>
-                        {['auto', '400px', '500px'].map((h) => (
-                          <button
-                            key={h}
-                            type="button"
-                            onClick={() => setForm({ ...form, promoPopupHeight: h })}
-                            className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 cursor-pointer"
-                          >
-                            {h}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action Button & Path Configuration */}
-                <div className="space-y-3 bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                    <div>
-                      <h6 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">
-                        Popup Action Button (Upgrade Plan / Custom Path)
-                      </h6>
-                      <p className="text-[11px] text-slate-400 mt-0.5">
-                        Configure the action button displayed below the image with custom name and destination path.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleToggle('promoPopupButtonEnabled')}
-                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                        form.promoPopupButtonEnabled !== false ? 'bg-indigo-600' : 'bg-slate-200'
-                      }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                          form.promoPopupButtonEnabled !== false ? 'translate-x-4' : 'translate-x-0'
-                        }`}
-                      />
-                    </button>
-                  </div>
-
-                  {form.promoPopupButtonEnabled !== false && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                      <div>
-                        <label className={labelCls}>
-                          Button Name / Text <span className="text-rose-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={form.promoPopupButtonText || ''}
-                          onChange={(e) => setForm({ ...form, promoPopupButtonText: e.target.value })}
-                          className={inputCls}
-                          placeholder="Upgrade Plan"
-                        />
-                        <small className="text-[11px] text-slate-400 mt-1 block">
-                          Example: "Upgrade Plan", "Claim Offer", "Explore Packages"
-                        </small>
-                      </div>
-
-                      <div>
-                        <label className={labelCls}>
-                          Destination Path / URL <span className="text-rose-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={form.promoPopupButtonLink || ''}
-                          onChange={(e) => setForm({ ...form, promoPopupButtonLink: e.target.value })}
-                          className={inputCls}
-                          placeholder="/employer/subscription"
-                        />
-                        <small className="text-[11px] text-slate-400 mt-1 block">
-                          Example: "/employer/subscription", "/pricing", or external URL
-                        </small>
-                      </div>
-
-                      <div className="sm:col-span-2">
-                        <label className={labelCls}>
-                          Target Audience
-                        </label>
-                        <select
-                          value={form.promoPopupTarget || 'all'}
-                          onChange={(e) => setForm({ ...form, promoPopupTarget: e.target.value })}
-                          className={inputCls}
-                        >
-                          <option value="all">All Users (Employers & Jobseekers)</option>
-                          <option value="employer">Employers Only</option>
-                          <option value="jobseeker">Jobseekers Only</option>
-                        </select>
-                        <small className="text-[11px] text-slate-400 mt-1 block">
-                          Choose which users will see this popup on their dashboard after logging in or registering.
-                        </small>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
               {/* Homepage Statistics Counters */}
               <div className="space-y-4">
                 <h5 className="flex items-center gap-2 bg-slate-50 text-slate-700 text-sm font-semibold px-3 py-2 rounded-lg">
@@ -1392,24 +1238,400 @@ export const Settings = () => {
               </div>
             </div>
           )}
+
+          {/* Tab 6: Banner Update */}
+          {activeTab === 'bannerUpdate' && (
+            <div className="space-y-6">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
+                <div>
+                  <h5 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <Megaphone className="w-5 h-5 text-indigo-600" />
+                    Popup Banners
+                  </h5>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Manage promotional popup banners and their display locations across the portal.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleAddBanner}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-200 transition shadow-xs cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add More Banner
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSave('banner settings')}
+                    disabled={saving}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition shadow-xs cursor-pointer disabled:opacity-60"
+                  >
+                    <Save className="w-4 h-4" />
+                    {saving ? 'Saving...' : 'Save Banner Settings'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Hidden Banner File Input */}
+              <input
+                type="file"
+                ref={bannerFileInputRef}
+                accept="image/*"
+                onChange={handleBannerFileSelect}
+                className="hidden"
+              />
+
+              {/* Banners List */}
+              {(!form.popupBanners || form.popupBanners.length === 0) ? (
+                <div className="p-8 text-center rounded-xl border border-dashed border-slate-300 bg-slate-50">
+                  <Megaphone className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                  <p className="text-sm font-semibold text-slate-700">No Banners Added</p>
+                  <p className="text-xs text-slate-400 mt-1">Click below to create your first popup banner.</p>
+                  <button
+                    type="button"
+                    onClick={handleAddBanner}
+                    className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-500 cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" /> Add Banner
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {form.popupBanners.map((banner, index) => {
+                    const pages = Array.isArray(banner.pages) ? banner.pages : [];
+                    return (
+                      <div
+                        key={banner.id || index}
+                        className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs space-y-4"
+                      >
+                        {/* Banner Top Bar */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                          <div className="flex items-center gap-2.5">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700">
+                              {index + 1}
+                            </span>
+                            <span className="text-sm font-bold text-slate-800 truncate max-w-[280px]">
+                              {banner.title || `Banner ${index + 1}`}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            {/* Status Toggle */}
+                            <label className="flex items-center gap-2 text-xs font-bold text-slate-600 cursor-pointer select-none">
+                              <span>{banner.enabled !== false ? 'Active' : 'Inactive'}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateBanner(index, 'enabled', banner.enabled === false)}
+                                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                                  banner.enabled !== false ? 'bg-indigo-600' : 'bg-slate-200'
+                                }`}
+                              >
+                                <span
+                                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                    banner.enabled !== false ? 'translate-x-4' : 'translate-x-0'
+                                  }`}
+                                />
+                              </button>
+                            </label>
+
+                            {/* Preview Button */}
+                            {banner.image && (
+                              <button
+                                type="button"
+                                onClick={() => setPreviewBannerItem(banner)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition cursor-pointer"
+                                title="Preview this banner"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                Preview
+                              </button>
+                            )}
+
+                            {/* Delete Button */}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveBanner(index)}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-md text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                              title="Delete banner"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Form Fields Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* Banner Title */}
+                          <div>
+                            <label className={labelCls}>Banner Title</label>
+                            <input
+                              type="text"
+                              value={banner.title || ''}
+                              onChange={(e) => handleUpdateBanner(index, 'title', e.target.value)}
+                              className={inputCls}
+                              placeholder="e.g. Employer Subscription Plans"
+                            />
+                          </div>
+
+                          {/* Display Pages Selection */}
+                          <div>
+                            <label className={labelCls}>Display Pages</label>
+                            <div className="grid grid-cols-2 gap-2 pt-1">
+                              {[
+                                { key: 'employer_login', label: 'Employer Dashboard' },
+                                { key: 'jobseeker_login', label: 'Jobseeker Dashboard' },
+                                { key: 'home', label: 'Home Page' },
+                                { key: 'about_us', label: 'About Us' }
+                              ].map((opt) => {
+                                const isChecked = pages.includes(opt.key);
+                                return (
+                                  <label
+                                    key={opt.key}
+                                    className={`flex items-center gap-2 p-2 rounded-lg border text-xs font-medium cursor-pointer transition select-none ${
+                                      isChecked
+                                        ? 'border-indigo-300 bg-indigo-50/60 text-indigo-900 font-semibold'
+                                        : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                                    }`}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={isChecked}
+                                      onChange={() => handleToggleBannerPage(index, opt.key)}
+                                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-3.5 w-3.5"
+                                    />
+                                    <span>{opt.label}</span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Banner Image */}
+                        <div className="space-y-2 border-t border-slate-100 pt-3">
+                          <label className={labelCls}>Banner Image</label>
+                          {banner.image ? (
+                            <div className="space-y-3">
+                              <div className="relative group rounded-xl border border-slate-200 bg-slate-900/5 p-2 flex items-center justify-center overflow-hidden min-h-[140px] max-h-[220px]">
+                                <img
+                                  src={resolvePromoImageUrl(banner.image)}
+                                  alt={banner.title || 'Banner'}
+                                  className="max-h-[200px] w-auto max-w-full rounded-lg object-contain shadow-xs"
+                                />
+                                <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => triggerBannerUpload(index)}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-slate-800 rounded-lg text-xs font-bold shadow hover:bg-slate-100 transition cursor-pointer"
+                                  >
+                                    <Upload className="w-3.5 h-3.5" />
+                                    Replace Image
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAdjustBannerCrop(index)}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold shadow hover:bg-indigo-700 transition cursor-pointer"
+                                  >
+                                    <Crop className="w-3.5 h-3.5" />
+                                    Adjust Crop
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => triggerBannerUpload(index)}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg transition cursor-pointer shadow-xs"
+                                  >
+                                    <Upload className="w-3.5 h-3.5 text-slate-500" />
+                                    Replace Image
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAdjustBannerCrop(index)}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg transition cursor-pointer"
+                                  >
+                                    <Crop className="w-3.5 h-3.5 text-indigo-600" />
+                                    Adjust Crop
+                                  </button>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveBannerImage(index)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-rose-600 hover:bg-rose-50 rounded-lg text-xs font-bold transition cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  Remove Image
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div
+                              onClick={() => triggerBannerUpload(index)}
+                              className="border-2 border-dashed border-indigo-200 hover:border-indigo-400 bg-indigo-50/20 hover:bg-indigo-50/50 rounded-xl p-5 text-center cursor-pointer transition flex flex-col items-center justify-center gap-1.5"
+                            >
+                              <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                                <Upload className="w-5 h-5" />
+                              </div>
+                              <p className="text-xs font-bold text-slate-800">Click to upload banner image</p>
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 bg-white px-2.5 py-0.5 rounded-full border border-indigo-100 shadow-xs">
+                                <Crop className="w-3 h-3" /> Select Image
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Dimensions */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 border-t border-slate-100 pt-3">
+                          <div>
+                            <label className={labelCls}>Modal Width</label>
+                            <input
+                              type="text"
+                              value={banner.width || '850px'}
+                              onChange={(e) => handleUpdateBanner(index, 'width', e.target.value)}
+                              className={inputCls}
+                              placeholder="850px"
+                            />
+                            <div className="flex items-center gap-1 mt-1.5">
+                              <span className="text-[10px] text-slate-400">Presets:</span>
+                              {['550px', '650px', '850px'].map((w) => (
+                                <button
+                                  key={w}
+                                  type="button"
+                                  onClick={() => handleUpdateBanner(index, 'width', w)}
+                                  className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 cursor-pointer"
+                                >
+                                  {w}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className={labelCls}>Modal Max Height</label>
+                            <input
+                              type="text"
+                              value={banner.height || 'auto'}
+                              onChange={(e) => handleUpdateBanner(index, 'height', e.target.value)}
+                              className={inputCls}
+                              placeholder="auto"
+                            />
+                            <div className="flex items-center gap-1 mt-1.5">
+                              <span className="text-[10px] text-slate-400">Presets:</span>
+                              {['auto', '450px', '600px'].map((h) => (
+                                <button
+                                  key={h}
+                                  type="button"
+                                  onClick={() => handleUpdateBanner(index, 'height', h)}
+                                  className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 cursor-pointer"
+                                >
+                                  {h}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action Button Settings */}
+                        <div className="border-t border-slate-100 pt-3 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                              Action Button
+                            </label>
+                            <label className="flex items-center gap-2 text-xs font-semibold text-slate-600 cursor-pointer">
+                              <span>{banner.buttonEnabled !== false ? 'Enabled' : 'Disabled'}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateBanner(index, 'buttonEnabled', banner.buttonEnabled === false)}
+                                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                                  banner.buttonEnabled !== false ? 'bg-indigo-600' : 'bg-slate-200'
+                                }`}
+                              >
+                                <span
+                                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                    banner.buttonEnabled !== false ? 'translate-x-4' : 'translate-x-0'
+                                  }`}
+                                />
+                              </button>
+                            </label>
+                          </div>
+
+                          {banner.buttonEnabled !== false && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <div>
+                                <label className={labelCls}>Button Text</label>
+                                <input
+                                  type="text"
+                                  value={banner.buttonText || ''}
+                                  onChange={(e) => handleUpdateBanner(index, 'buttonText', e.target.value)}
+                                  className={inputCls}
+                                  placeholder="Upgrade Plan"
+                                />
+                              </div>
+                              <div>
+                                <label className={labelCls}>Destination URL</label>
+                                <input
+                                  type="text"
+                                  value={banner.buttonLink || ''}
+                                  onChange={(e) => handleUpdateBanner(index, 'buttonLink', e.target.value)}
+                                  className={inputCls}
+                                  placeholder="/employer/subscription"
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Bottom Actions */}
+                  <div className="flex items-center justify-between gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={handleAddBanner}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 border border-dashed border-indigo-300 bg-indigo-50/50 hover:bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg transition cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add More Banner
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSave('banner settings')}
+                      disabled={saving}
+                      className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-bold rounded-lg transition shadow-sm cursor-pointer disabled:opacity-60"
+                    >
+                      <Save className="w-4 h-4" />
+                      {saving ? 'Saving...' : 'Save Banner Settings'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Promo Image Cropper Modal */}
       <PromoCropperModal
         isOpen={cropperModal.isOpen}
-        onClose={() => setCropperModal({ isOpen: false, imageSrc: null, originalFile: null })}
+        onClose={() => setCropperModal({ isOpen: false, imageSrc: null, originalFile: null, bannerIndex: null })}
         imageSrc={cropperModal.imageSrc}
         originalFile={cropperModal.originalFile}
-        onCropComplete={handlePromoCropComplete}
+        onCropComplete={handleBannerCropComplete}
       />
 
       {/* Live Preview Modal for Admin */}
-      {showLivePreview && (
+      {previewBannerItem && (
         <PromoPopupModal
           forcePreview={true}
-          previewSettings={form}
-          onClosePreview={() => setShowLivePreview(false)}
+          previewBanner={previewBannerItem}
+          onClosePreview={() => setPreviewBannerItem(null)}
         />
       )}
     </div>

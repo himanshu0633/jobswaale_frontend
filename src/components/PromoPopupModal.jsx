@@ -16,17 +16,25 @@ export const resolvePromoImageUrl = (url) => {
   return trimmed;
 };
 
-export const PromoPopupModal = ({ forcePreview = false, previewSettings = null, onClosePreview }) => {
+export const PromoPopupModal = ({ 
+  forcePreview = false, 
+  previewBanner = null, 
+  previewSettings = null, 
+  onClosePreview 
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [settings, setSettings] = useState(previewSettings || null);
+  const [activeBanner, setActiveBanner] = useState(previewBanner || null);
   const [isOpen, setIsOpen] = useState(forcePreview);
 
-  // Load settings when not in preview mode
+  // Handle preview mode or evaluate banner based on current route
   useEffect(() => {
-    if (forcePreview && previewSettings) {
-      setSettings(previewSettings);
-      setIsOpen(true);
+    if (forcePreview) {
+      const banner = previewBanner || (previewSettings?.popupBanners?.[0] || previewSettings);
+      if (banner) {
+        setActiveBanner(banner);
+        setIsOpen(true);
+      }
       return;
     }
 
@@ -34,67 +42,74 @@ export const PromoPopupModal = ({ forcePreview = false, previewSettings = null, 
       try {
         const data = await getPublicSettings();
         if (!data) return;
-        setSettings(data);
 
-        // If popup is turned off or no image configured, do not show
-        if (!data.showPromoPopup || !data.promoPopupImage) {
-          setIsOpen(false);
-          return;
-        }
-
-        // Check if user already dismissed in this session
-        const isDismissed = sessionStorage.getItem('promo_popup_dismissed') === 'true';
-        if (isDismissed) {
-          setIsOpen(false);
-          return;
-        }
-
-        // Check target audience
-        const storedUserStr = localStorage.getItem('publicUser') || localStorage.getItem('user');
-        const token = localStorage.getItem('publicToken') || localStorage.getItem('token');
-        let userRole = 'visitor';
-        if (storedUserStr) {
-          try {
-            const u = JSON.parse(storedUserStr);
-            userRole = (u.accountType || u.role || 'jobseeker').toLowerCase();
-          } catch {}
-        }
-
-        const target = (data.promoPopupTarget || 'all').toLowerCase();
-        if (target === 'employer' && userRole !== 'employer') return;
-        if (target === 'jobseeker' && userRole !== 'jobseeker') return;
-
-        // Check if user is on a dashboard / home page
+        // Determine current page key
         const path = location.pathname.toLowerCase();
-        const isDashboardOrHome = 
-          path === '/' || 
-          path === '/home' || 
-          path.startsWith('/employer') || 
-          path.startsWith('/jobseeker');
+        let currentPageKey = null;
 
-        if (!isDashboardOrHome) return;
-
-        // Check if user is logged in or just authenticated
-        const justAuth = 
-          sessionStorage.getItem('just_authenticated') === 'true' ||
-          localStorage.getItem('show_promo_popup_pending') === 'true';
-
-        // Trigger if authenticated or just logged in/registered, or on dashboard with active session
-        const hasSession = Boolean(token || storedUserStr);
-        if (justAuth || hasSession) {
-          // Slight delay for smooth visual transition
-          const timer = setTimeout(() => {
-            setIsOpen(true);
-          }, 450);
-          return () => clearTimeout(timer);
+        if (path.startsWith('/employer')) {
+          currentPageKey = 'employer_login';
+        } else if (path.startsWith('/jobseeker')) {
+          currentPageKey = 'jobseeker_login';
+        } else if (path === '/' || path === '/home') {
+          currentPageKey = 'home';
+        } else if (path.startsWith('/about')) {
+          currentPageKey = 'about_us';
         }
+
+        if (!currentPageKey) {
+          setIsOpen(false);
+          return;
+        }
+
+        // Get banners list (with legacy single banner fallback)
+        let banners = Array.isArray(data.popupBanners) && data.popupBanners.length > 0
+          ? data.popupBanners
+          : [];
+
+        if (banners.length === 0 && data.showPromoPopup && data.promoPopupImage) {
+          banners = [{
+            id: 'banner_legacy',
+            enabled: true,
+            image: data.promoPopupImage,
+            width: data.promoPopupWidth || '850px',
+            height: data.promoPopupHeight || 'auto',
+            buttonEnabled: data.promoPopupButtonEnabled !== false,
+            buttonText: data.promoPopupButtonText || 'Upgrade Plan',
+            buttonLink: data.promoPopupButtonLink || '/employer/subscription',
+            pages: ['employer_login']
+          }];
+        }
+
+        // Find first active, undismissed banner matching this page
+        const bannerToShow = banners.find((b) => {
+          if (b.enabled === false) return false;
+          if (!b.image) return false;
+          const pages = Array.isArray(b.pages) ? b.pages : [];
+          if (!pages.includes(currentPageKey)) return false;
+          const isDismissed = sessionStorage.getItem(`promo_banner_dismissed_${b.id}`) === 'true';
+          return !isDismissed;
+        });
+
+        if (!bannerToShow) {
+          setIsOpen(false);
+          return;
+        }
+
+        setActiveBanner(bannerToShow);
+
+        // Smooth visual entry after route transition
+        const timer = setTimeout(() => {
+          setIsOpen(true);
+        }, 450);
+        return () => clearTimeout(timer);
       } catch (err) {
-        console.error('Failed to evaluate promo popup:', err);
+        console.error('Failed to evaluate promo banner:', err);
       }
     };
 
     checkAndShowPopup();
-  }, [location.pathname, forcePreview, previewSettings]);
+  }, [location.pathname, forcePreview, previewBanner, previewSettings]);
 
   const handleClose = () => {
     setIsOpen(false);
@@ -102,13 +117,14 @@ export const PromoPopupModal = ({ forcePreview = false, previewSettings = null, 
       onClosePreview();
       return;
     }
-    sessionStorage.setItem('promo_popup_dismissed', 'true');
-    localStorage.removeItem('show_promo_popup_pending');
+    if (activeBanner?.id) {
+      sessionStorage.setItem(`promo_banner_dismissed_${activeBanner.id}`, 'true');
+    }
   };
 
   const handleActionClick = () => {
     handleClose();
-    const link = settings?.promoPopupButtonLink || '/employer/subscription';
+    const link = activeBanner?.buttonLink || '/employer/subscription';
     if (/^https?:\/\//i.test(link)) {
       window.open(link, '_blank', 'noopener,noreferrer');
     } else {
@@ -116,19 +132,19 @@ export const PromoPopupModal = ({ forcePreview = false, previewSettings = null, 
     }
   };
 
-  if (!isOpen || !settings?.promoPopupImage) return null;
+  if (!isOpen || !activeBanner?.image) return null;
 
   // Sizing styles
-  const rawWidth = String(settings.promoPopupWidth || '550px').trim();
+  const rawWidth = String(activeBanner.width || '850px').trim();
   const modalWidth = rawWidth.includes('px') || rawWidth.includes('%') || rawWidth.includes('rem') 
     ? rawWidth 
     : `${rawWidth}px`;
 
-  const rawHeight = String(settings.promoPopupHeight || 'auto').trim();
+  const rawHeight = String(activeBanner.height || 'auto').trim();
   const modalMaxHeight = rawHeight === 'auto' ? '85vh' : (rawHeight.includes('px') ? rawHeight : `${rawHeight}px`);
 
-  const buttonText = settings.promoPopupButtonText || 'Upgrade Plan';
-  const showButton = settings.promoPopupButtonEnabled !== false && Boolean(buttonText.trim());
+  const buttonText = activeBanner.buttonText || 'Upgrade Plan';
+  const showButton = activeBanner.buttonEnabled !== false && Boolean(buttonText.trim());
 
   return (
     <div 
@@ -141,12 +157,12 @@ export const PromoPopupModal = ({ forcePreview = false, previewSettings = null, 
         className="relative bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden max-w-full animate-in zoom-in-95 duration-200"
         style={{ width: modalWidth }}
       >
-        {/* Cut / Close Button (X) */}
+        {/* Close Button */}
         <button
           type="button"
           onClick={handleClose}
           className="absolute top-3 right-3 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-slate-900/60 hover:bg-slate-900 text-white shadow-md transition-transform hover:scale-110 cursor-pointer backdrop-blur-sm"
-          title="Close Popup"
+          title="Close"
         >
           <X className="w-4 h-4 stroke-[2.5]" />
         </button>
@@ -157,18 +173,18 @@ export const PromoPopupModal = ({ forcePreview = false, previewSettings = null, 
           style={{ maxHeight: modalMaxHeight }}
         >
           <img
-            src={resolvePromoImageUrl(settings.promoPopupImage)}
-            alt="Promotion / Announcement"
+            src={resolvePromoImageUrl(activeBanner.image)}
+            alt={activeBanner.title || 'Announcement'}
             className="w-full h-auto max-h-full object-contain block select-none"
             loading="eager"
           />
         </div>
 
-        {/* Action Button Section (Upgrade Plan / Custom Path) */}
+        {/* Action Button Section */}
         {showButton && (
           <div className="p-3.5 sm:p-4 bg-white border-t border-slate-100 flex items-center justify-between gap-3">
             <span className="text-xs font-semibold text-slate-400 truncate">
-              Special Announcement
+              {activeBanner.title || 'Special Announcement'}
             </span>
             <button
               type="button"
