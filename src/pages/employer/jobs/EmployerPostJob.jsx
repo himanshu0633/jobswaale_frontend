@@ -185,6 +185,11 @@ export const EmployerPostJob = () => {
         ]);
         const formData = formResponse?.data || {};
         const jobForm = jobResponse?.data?.form;
+        if (jobResponse?.data?.status) {
+          setLoadedJobStatus(jobResponse.data.status);
+        } else if (jobResponse?.data?.rawStatus) {
+          setLoadedJobStatus(jobResponse.data.rawStatus);
+        }
         if (jobResponse?.data?.editRejectionReason) {
           setRejectionNotice(jobResponse.data.editRejectionReason);
         }
@@ -533,9 +538,12 @@ export const EmployerPostJob = () => {
   };
 
   const submitJob = async (status = 'publish') => {
-    const canEditLoadedJob = ['Active', 'Draft'].includes(loadedJobStatus);
+    const canEditLoadedJob = [
+      'Active', 'Draft', 'Requested', 'Request Viewed', 'Rejected',
+      'active', 'draft', 'requested', 'viewed', 'rejected'
+    ].includes(loadedJobStatus) || !loadedJobStatus;
     if (isEditMode && !canEditLoadedJob) {
-      setMessage({ type: 'error', text: `${loadedJobStatus} jobs cannot be edited. Only active or draft jobs can be edited.` });
+      setMessage({ type: 'error', text: `${loadedJobStatus} jobs cannot be edited. Only active, draft, requested, or rejected jobs can be edited.` });
       return;
     }
 

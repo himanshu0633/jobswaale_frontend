@@ -45,7 +45,10 @@ const statusTone = {
   Expired: 'bg-rose-50 text-rose-600',
   Paused: 'bg-slate-100 text-slate-600',
   Closed: 'bg-slate-100 text-slate-600',
-  Inactive: 'bg-amber-50 text-amber-600'
+  Inactive: 'bg-amber-50 text-amber-600',
+  Requested: 'bg-amber-50 text-amber-700 border border-amber-200',
+  'Request Viewed': 'bg-blue-50 text-blue-700 border border-blue-200',
+  Rejected: 'bg-rose-50 text-rose-700 border border-rose-200'
 };
 
 const statCards = [
@@ -66,16 +69,22 @@ const parseJobDate = (value) => {
 };
 
 const normalizeJobStatus = (job) => {
-  const s = String(job.status || job.rawStatus || '').toLowerCase();
-  if (s === 'draft' || s === 'pending') return 'Draft';
+  const reqStatus = String(job.editRequestStatus || '').toLowerCase();
+  const rawStatus = String(job.rawStatus || '').toLowerCase();
+  const s = String(job.status || '').toLowerCase();
+
+  if (reqStatus === 'pending' || s === 'requested' || rawStatus === 'requested') return 'Requested';
+  if (reqStatus === 'viewed' || s === 'viewed' || s === 'request viewed' || rawStatus === 'viewed') return 'Request Viewed';
+  if (reqStatus === 'rejected' || s === 'rejected' || rawStatus === 'rejected') return 'Rejected';
+
+  if (s === 'draft' || s === 'pending' || rawStatus === 'pending') return 'Draft';
   const expiry = parseJobDate(job.expiry);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const isExpired = s === 'expired' || (expiry && expiry.getTime() < today.getTime());
+  const isExpired = s === 'expired' || rawStatus === 'expired' || (expiry && expiry.getTime() < today.getTime());
   if (isExpired) return 'Expired';
-  if (s === 'paused' || s === 'closed') return 'Closed';
-  if (s === 'inactive') return 'Inactive';
-  if (!expiry) return job.status || 'Active';
+  if (s === 'paused' || s === 'closed' || rawStatus === 'closed') return 'Closed';
+  if (s === 'inactive' || rawStatus === 'inactive') return 'Inactive';
   return 'Active';
 };
 
@@ -216,7 +225,7 @@ export const EmployerJobs = () => {
     const isDraft = job.status === 'Draft';
     const isClosed = job.status === 'Closed' || job.status === 'Paused';
     const isExpired = job.status === 'Expired';
-    const canEdit = isActive || isDraft;
+    const canEdit = isActive || isDraft || job.status === 'Rejected' || job.status === 'Requested' || job.status === 'Request Viewed';
 
     return (
       <>
@@ -225,7 +234,7 @@ export const EmployerJobs = () => {
           <button
             type="button"
             disabled
-            title={isExpired ? 'Expired jobs cannot be edited' : `Only active or draft jobs can be edited (${job.status})`}
+            title={isExpired ? 'Expired jobs cannot be edited' : `Job cannot be edited (${job.status})`}
             className="cursor-not-allowed rounded p-2 text-slate-300 opacity-50"
           >
             <Edit className="h-4 w-4" />
@@ -331,6 +340,9 @@ export const EmployerJobs = () => {
               <select className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none focus:border-[#6658dd]" value={filters.status} onChange={(event) => setFilter('status', event.target.value)}>
                 <option value="">All Status</option>
                 <option>Active</option>
+                <option>Requested</option>
+                <option>Request Viewed</option>
+                <option>Rejected</option>
                 <option>Inactive</option>
                 <option>Draft</option>
                 <option>Expired</option>
@@ -371,28 +383,21 @@ export const EmployerJobs = () => {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <p className="truncate text-sm font-extrabold text-slate-800">{job.title}</p>
-                      <div className="flex flex-col items-end gap-1 shrink-0">
-                        <span className={`rounded px-2 py-0.5 text-[11px] font-black ${statusTone[job.status] || statusTone.Active}`}>
-                          {job.status}
-                        </span>
-                        {job.editRequestStatus === 'pending' && (
-                          <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200">
-                            ⏳ Edit Pending
-                          </span>
-                        )}
-                        {job.editRequestStatus === 'viewed' && (
-                          <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-200">
-                            👀 Under Review
-                          </span>
-                        )}
-                        {job.editRequestStatus === 'rejected' && (
+                      <div className="flex items-center gap-1 shrink-0">
+                        {job.status === 'Rejected' ? (
                           <button
                             type="button"
                             onClick={() => setSelectedRejectionJob(job)}
-                            className="rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-bold text-rose-700 border border-rose-200 hover:bg-rose-100 transition cursor-pointer"
+                            className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-black bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition cursor-pointer"
+                            title="Click to view rejection reason"
                           >
-                            ❌ View Reason
+                            <span>Rejected</span>
+                            <span className="text-[9px] font-bold underline">Reason</span>
                           </button>
+                        ) : (
+                          <span className={`rounded px-2 py-0.5 text-[11px] font-black ${statusTone[job.status] || statusTone.Active}`}>
+                            {job.status}
+                          </span>
                         )}
                       </div>
                     </div>
@@ -461,31 +466,21 @@ export const EmployerJobs = () => {
                     <td className="px-4 py-4 text-sm font-semibold text-slate-500">{job.jobType}</td>
                     <td className="px-4 py-4 text-sm font-semibold text-slate-500">{formatDate(job.expiry, 'Not set')}</td>
                     <td className="px-4 py-4">
-                      <div className="flex flex-col items-start gap-1">
-                        <span className={`inline-flex rounded px-2 py-0.5 text-xs font-black ${statusTone[job.status] || statusTone.Active}`}>
+                      {job.status === 'Rejected' ? (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedRejectionJob(job)}
+                          className="inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-black bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition cursor-pointer"
+                          title="Click to view rejection reason"
+                        >
+                          <span>Rejected</span>
+                          <span className="text-[10px] font-bold underline">Reason</span>
+                        </button>
+                      ) : (
+                        <span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${statusTone[job.status] || statusTone.Active}`}>
                           {job.status}
                         </span>
-                        {job.editRequestStatus === 'pending' && (
-                          <span className="inline-flex items-center gap-1 rounded bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200">
-                            ⏳ Edit Pending Approval
-                          </span>
-                        )}
-                        {job.editRequestStatus === 'viewed' && (
-                          <span className="inline-flex items-center gap-1 rounded bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-200">
-                            👀 Under Review (Viewed)
-                          </span>
-                        )}
-                        {job.editRequestStatus === 'rejected' && (
-                          <button
-                            type="button"
-                            onClick={() => setSelectedRejectionJob(job)}
-                            className="inline-flex items-center gap-1 rounded bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700 border border-rose-200 hover:bg-rose-100 transition cursor-pointer"
-                            title="Click to view reason"
-                          >
-                            ❌ Edit Rejected (View Reason)
-                          </button>
-                        )}
-                      </div>
+                      )}
                     </td>
                   </tr>
                 )) : (
