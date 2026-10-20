@@ -296,6 +296,27 @@ export const JobRequests = () => {
 
       {/* Top KPI Stat Cards (Matches Jobs Management exactly) */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        {/* Total Requests Card */}
+        <div
+          onClick={() => handleTabChange('all')}
+          className={`cursor-pointer rounded-[5px] bg-white p-4 border transition-all shadow-sm ${
+            activeTab === 'all'
+              ? 'border-[#6658dd] ring-2 ring-[#6658dd]/20 shadow-md'
+              : 'border-slate-200 hover:border-indigo-300'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Requests</span>
+              <p className="mt-1 text-2xl font-black text-[#6658dd]">{stats.all}</p>
+              <p className="mt-0.5 text-[11px] text-slate-400">All submissions</p>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#e8e6fa] text-[#6658dd]">
+              <FileCheck2 className="h-5 w-5" />
+            </div>
+          </div>
+        </div>
+
         {/* Pending Card */}
         <div
           onClick={() => handleTabChange('pending')}
@@ -381,27 +402,6 @@ export const JobRequests = () => {
             </div>
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
               <XCircle className="h-5 w-5" />
-            </div>
-          </div>
-        </div>
-
-        {/* Total Requests Card */}
-        <div
-          onClick={() => handleTabChange('all')}
-          className={`cursor-pointer rounded-[5px] bg-white p-4 border transition-all shadow-sm ${
-            activeTab === 'all'
-              ? 'border-[#6658dd] ring-2 ring-[#6658dd]/20 shadow-md'
-              : 'border-slate-200 hover:border-indigo-300'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Requests</span>
-              <p className="mt-1 text-2xl font-black text-[#6658dd]">{stats.all}</p>
-              <p className="mt-0.5 text-[11px] text-slate-400">All submissions</p>
-            </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#e8e6fa] text-[#6658dd]">
-              <FileCheck2 className="h-5 w-5" />
             </div>
           </div>
         </div>
