@@ -869,7 +869,22 @@ const EmployerCandidateProfile = () => {
             </div>
             <p className="mt-1 text-base font-semibold text-slate-400">{candidate.designation || candidate.role}</p>
             <div className="mt-3 flex flex-wrap items-center gap-4 text-sm font-semibold text-slate-500">
-              <span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4" />{candidate.location}</span>
+              <span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4 text-slate-400" />{candidate.location}</span>
+              {candidate.currentJobLocation && (
+                <span className="inline-flex items-center gap-1 text-[#6658dd] bg-indigo-50/60 px-2 py-0.5 rounded border border-indigo-100 text-xs font-bold">
+                  <Briefcase className="h-3.5 w-3.5" />
+                  <span>Current Job: {candidate.currentJobLocation}</span>
+                </span>
+              )}
+              {candidate.preferredLocation && (
+                <span className="inline-flex items-center gap-1 text-slate-600 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 text-xs font-semibold">
+                  <MapPin className="h-3.5 w-3.5 text-emerald-600" />
+                  <span>Prefers: {candidate.preferredLocation}</span>
+                  {candidate.relocate === 'yes' && (
+                    <span className="ml-1 text-emerald-700 font-bold">(Willing to relocate)</span>
+                  )}
+                </span>
+              )}
               <span className="inline-flex items-center gap-1"><Mail className="h-4 w-4" />{candidate.email || 'N/A'}</span>
               <span className="inline-flex items-center gap-1"><Phone className="h-4 w-4" />{candidate.phone || 'N/A'}</span>
             </div>

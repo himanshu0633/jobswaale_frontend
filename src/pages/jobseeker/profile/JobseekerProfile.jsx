@@ -80,7 +80,9 @@ const emptyExperience = {
   startDate: '',
   endDate: '',
   currentlyWorking: false,
-  description: ''
+  description: '',
+  location: '',
+  jobLocation: ''
 };
 
 const monthIndex = (value) => {
@@ -164,59 +166,90 @@ const SearchableSelect = ({
       <label className="mb-1.5 block text-sm font-bold text-slate-600">
         {label} {required && <span className="text-rose-500">*</span>}
       </label>
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={() => {
-          setOpen(prev => !prev);
-          setQuery('');
-        }}
-        className="flex min-h-[42px] w-full items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-2.5 text-left text-sm text-slate-700 transition focus:border-[#0047C7] focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
-      >
-        <span className={displayValue ? 'truncate' : 'truncate text-slate-400'}>
-          {displayValue || placeholder}
-        </span>
-        <Search className="ml-2 h-4 w-4 shrink-0 text-slate-400" />
-      </button>
-
-      {open && !disabled && (
-        <div className="absolute z-30 mt-1 w-full rounded-md border border-slate-200 bg-white shadow-lg">
-          <div className="border-b border-slate-100 p-2">
-            <input
-              autoFocus
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={placeholder}
-              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-[#0047C7]"
-            />
+      <div className="relative">
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => {
+            setOpen(prev => !prev);
+            setQuery('');
+          }}
+          className="flex min-h-[42px] w-full items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-2.5 text-left text-sm text-slate-700 transition focus:border-[#0047C7] focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+        >
+          <span className={displayValue ? 'truncate font-medium' : 'truncate text-slate-400'}>
+            {displayValue || placeholder}
+          </span>
+          <div className="ml-2 flex items-center gap-1.5 shrink-0">
+            {value && !disabled && (
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onChange('');
+                }}
+                className="p-0.5 text-slate-400 hover:text-slate-600 rounded transition cursor-pointer"
+                title="Clear"
+              >
+                <X className="h-3.5 w-3.5" />
+              </span>
+            )}
+            <Search className="h-4 w-4 text-slate-400" />
           </div>
-          <div className="max-h-56 overflow-y-auto py-1">
-            {filtered.length > 0 ? filtered.map(option => {
-              const optionValue = getOptionValue(option);
-              const optionLabel = getOptionLabel(option);
-              return (
+        </button>
+
+        {open && !disabled && (
+          <div className="absolute z-30 mt-1 w-full rounded-md border border-slate-200 bg-white shadow-lg">
+            <div className="border-b border-slate-100 p-2">
+              <input
+                autoFocus
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={placeholder}
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-[#0047C7]"
+              />
+            </div>
+            <div className="max-h-56 overflow-y-auto py-1">
+              {filtered.length > 0 ? filtered.map(option => {
+                const optionValue = getOptionValue(option);
+                const optionLabel = getOptionLabel(option);
+                return (
+                  <button
+                    key={optionValue}
+                    type="button"
+                    onClick={() => {
+                      onChange(optionValue, option);
+                      setOpen(false);
+                      setQuery('');
+                    }}
+                    className={`block w-full px-3 py-2 text-left text-sm transition hover:bg-blue-50 ${
+                      normalizeText(value) === normalizeText(optionValue) ? 'bg-blue-50 font-bold text-[#0047C7]' : 'text-slate-700'
+                    }`}
+                  >
+                    {optionLabel}
+                  </button>
+                );
+              }) : (
+                <div className="px-3 py-2.5 text-sm font-semibold text-slate-400">No matching options found</div>
+              )}
+              {query.trim() && !options.some(opt => normalizeText(getOptionLabel(opt)) === normalizeText(query)) && (
                 <button
-                  key={optionValue}
                   type="button"
                   onClick={() => {
-                    onChange(optionValue, option);
+                    onChange(query.trim());
                     setOpen(false);
                     setQuery('');
                   }}
-                  className={`block w-full px-3 py-2 text-left text-sm transition hover:bg-blue-50 ${
-                    normalizeText(value) === normalizeText(optionValue) ? 'bg-blue-50 font-bold text-[#0047C7]' : 'text-slate-700'
-                  }`}
+                  className="block w-full border-t border-slate-100 px-3 py-2 text-left text-sm font-bold text-[#0047C7] transition hover:bg-blue-50 cursor-pointer"
                 >
-                  {optionLabel}
+                  + Use &quot;{query.trim()}&quot;
                 </button>
-              );
-            }) : (
-              <div className="px-3 py-3 text-sm font-semibold text-slate-400">No options found</div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
@@ -341,6 +374,7 @@ export const JobseekerProfile = () => {
   const [profileCompletionScore, setProfileCompletionScore] = useState(0);
   
   // Custom states
+  const [currentJobLocation, setCurrentJobLocation] = useState('');
   const [gender, setGender] = useState('');
   const [skills, setSkills] = useState([]);
   const [skillInput, setSkillInput] = useState('');
@@ -370,6 +404,7 @@ export const JobseekerProfile = () => {
     district: data.district ?? '',
     address: data.address ?? '',
     pinCode: data.pinCode ?? '',
+    currentJobLocation: data.currentJobLocation ?? '',
     currentSalary: data.currentSalary ?? '',
     currentMonthlySalary: String(data.currentMonthlySalary ?? ''),
     currentAnnualSalary: String(data.currentAnnualSalary ?? ''),
@@ -396,7 +431,9 @@ export const JobseekerProfile = () => {
       startDate: e.startDate || '',
       endDate: e.endDate || '',
       currentlyWorking: Boolean(e.currentlyWorking),
-      description: e.description || ''
+      description: e.description || '',
+      location: e.location || e.jobLocation || '',
+      jobLocation: e.location || e.jobLocation || ''
     })) : [],
     locations: Array.isArray(data.locations) ? [...data.locations] : []
   });
@@ -411,6 +448,7 @@ export const JobseekerProfile = () => {
     if (!isEditing || !initialSnapshotRef.current) return false;
     const currentObj = getSnapshotObj({
       name, phone, gender, dob, city, state, country, district, address, pinCode,
+      currentJobLocation,
       currentSalary, currentMonthlySalary, currentAnnualSalary,
       expectedSalary, monthlySalary, annualSalary,
       industryType, jobCategory, jobType, jobSearchStatus,
@@ -421,6 +459,7 @@ export const JobseekerProfile = () => {
     return JSON.stringify(currentObj) !== initialSnapshotRef.current;
   }, [
     isEditing, name, phone, gender, dob, city, state, country, district, address, pinCode,
+    currentJobLocation,
     currentSalary, currentMonthlySalary, currentAnnualSalary,
     expectedSalary, monthlySalary, annualSalary,
     industryType, jobCategory, jobType, jobSearchStatus,
@@ -445,6 +484,7 @@ export const JobseekerProfile = () => {
     setDistrict(init.district);
     setAddress(init.address);
     setPinCode(init.pinCode);
+    setCurrentJobLocation(init.currentJobLocation || '');
     setCurrentSalary(init.currentSalary);
     setCurrentMonthlySalary(init.currentMonthlySalary);
     setCurrentAnnualSalary(init.currentAnnualSalary);
@@ -618,6 +658,9 @@ export const JobseekerProfile = () => {
         const fetchedExps = Array.isArray(seeker.experiences) ? seeker.experiences : [];
         setExperiences(fetchedExps.length > 0 ? fetchedExps : [{ ...emptyExperience }]);
         
+        const curJobLoc = seeker.currentJobLocation || (fetchedExps.find(e => e.currentlyWorking)?.location || '');
+        setCurrentJobLocation(curJobLoc);
+
         if (seeker.preferredLocation) {
           setLocations(seeker.preferredLocation.split(',').map(l => l.trim()).filter(Boolean));
         }
@@ -652,6 +695,7 @@ export const JobseekerProfile = () => {
           district: seeker.district || '',
           address: seeker.address || '',
           pinCode: seeker.pinCode || '',
+          currentJobLocation: curJobLoc,
           currentSalary: initCurrentSalary,
           currentMonthlySalary: initCurMonthly,
           currentAnnualSalary: initCurAnnual,
@@ -937,9 +981,12 @@ export const JobseekerProfile = () => {
           employmentType: item.employmentType || 'Full-time',
           startDate: String(item.startDate || '').slice(0, 7),
           endDate: item.currentlyWorking ? '' : String(item.endDate || '').slice(0, 7),
-          description: String(item.description || '').trim()
+          currentlyWorking: Boolean(item.currentlyWorking),
+          description: String(item.description || '').trim(),
+          location: String(item.location || item.jobLocation || '').trim(),
+          jobLocation: String(item.location || item.jobLocation || '').trim()
         }))
-        .filter(item => item.position || item.company || item.startDate || item.endDate || item.description);
+        .filter(item => item.position || item.company || item.startDate || item.endDate || item.description || item.location);
       const periodError = validateExperiencePeriods(cleanExperiences);
       if (periodError) {
         setError(periodError);
@@ -968,6 +1015,7 @@ export const JobseekerProfile = () => {
         district,
         address,
         pinCode,
+        currentJobLocation,
         designation: computedDesignation,
         relocate,
         experience: computedExperience,
@@ -1010,6 +1058,7 @@ export const JobseekerProfile = () => {
         district,
         address,
         pinCode,
+        currentJobLocation,
         currentSalary,
         currentMonthlySalary: String(currentMonthlySalary),
         currentAnnualSalary: String(currentAnnualSalary),
@@ -1376,6 +1425,20 @@ export const JobseekerProfile = () => {
 
               {/* Designation is automatically calculated from experiences */}
 
+              {/* Current Job Location */}
+              <div className="sm:col-span-2">
+                <SearchableSelect
+                  label="Current Job Location"
+                  value={currentJobLocation}
+                  onChange={setCurrentJobLocation}
+                  options={cities}
+                  getOptionValue={getCityValue}
+                  getOptionLabel={getCityLabel}
+                  placeholder="Search and select current job location (e.g. Delhi, Baddi, Mohali)..."
+                  disabled={!isEditing}
+                />
+              </div>
+
               {/* Preferred Location */}
               <div className="sm:col-span-2">
                 <SearchableMultiCitySelect
@@ -1715,10 +1778,43 @@ export const JobseekerProfile = () => {
                             type="checkbox"
                             disabled={!isEditing}
                             checked={Boolean(item.currentlyWorking)}
-                            onChange={(e) => setExperiences(experiences.map((exp, itemIndex) => itemIndex === index ? { ...exp, currentlyWorking: e.target.checked, endDate: e.target.checked ? '' : exp.endDate } : exp))}
+                            onChange={(e) => {
+                              const isChecked = e.target.checked;
+                              setExperiences(experiences.map((exp, itemIndex) => itemIndex === index ? {
+                                ...exp,
+                                currentlyWorking: isChecked,
+                                endDate: isChecked ? '' : exp.endDate,
+                                location: isChecked ? (exp.location || currentJobLocation || '') : exp.location,
+                                jobLocation: isChecked ? (exp.jobLocation || currentJobLocation || '') : exp.jobLocation
+                              } : exp));
+                            }}
                           />
                           Currently working here
                         </label>
+                        {Boolean(item.currentlyWorking) && (
+                          <div className="sm:col-span-2">
+                            <SearchableSelect
+                              label="Current Job Location"
+                              value={item.location || item.jobLocation || ''}
+                              disabled={!isEditing}
+                              onChange={(val) => {
+                                setExperiences(experiences.map((exp, itemIndex) => {
+                                  if (itemIndex === index) {
+                                    return { ...exp, location: val, jobLocation: val };
+                                  }
+                                  return exp;
+                                }));
+                                if (!currentJobLocation) {
+                                  setCurrentJobLocation(val);
+                                }
+                              }}
+                              options={cities}
+                              getOptionValue={getCityValue}
+                              getOptionLabel={getCityLabel}
+                              placeholder="Search or select current job location (e.g. Baddi, Delhi, Mohali)..."
+                            />
+                          </div>
+                        )}
                         <div>
                           <label className="mb-1 block text-xs font-extrabold uppercase tracking-wide text-slate-500">Start Date</label>
                           <input

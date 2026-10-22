@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -19,6 +19,7 @@ import {
   Filter,
   GraduationCap,
   IndianRupee,
+  Info,
   Layers,
   Loader,
   Lock,
@@ -51,6 +52,9 @@ const initialFilters = {
   minExp: '',
   maxExp: '',
   location: '',
+  locations: [],
+  includeRelocate: true,
+  excludeAnywhere: false,
   minSalary: '',
   maxSalary: '',
   gender: '',
@@ -438,11 +442,22 @@ const CandidateActions = ({
 export const EmployerSearchCandidates = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const urlLocations = searchParams.get('locations')
+    ? searchParams.get('locations').split(',').map(s => s.trim()).filter(Boolean)
+    : (searchParams.get('location') ? [searchParams.get('location').trim()] : []);
+  const urlIncludeRelocate = searchParams.get('includeRelocate') !== null
+    ? searchParams.get('includeRelocate') === 'true'
+    : true;
+  const urlExcludeAnywhere = searchParams.get('excludeAnywhere') === 'true';
+
   const [filters, setFilters] = useState(() => ({
     ...initialFilters,
     search: searchParams.get('search') || '',
     jobTitle: searchParams.get('jobTitle') || '',
-    location: searchParams.get('location') || '',
+    location: urlLocations[0] || '',
+    locations: urlLocations,
+    includeRelocate: urlIncludeRelocate,
+    excludeAnywhere: urlExcludeAnywhere,
     minExp: searchParams.get('minExp') || '',
     maxExp: searchParams.get('maxExp') || '',
     minSalary: searchParams.get('minSalary') || '',
@@ -482,6 +497,59 @@ export const EmployerSearchCandidates = () => {
     message: "Candidate's details have been unlocked.",
     remainingUnlocks: ''
   });
+
+  const [locationInput, setLocationInput] = useState('');
+  const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
+  const [masterCities, setMasterCities] = useState([]);
+  const locationContainerRef = useRef(null);
+  const locationInputRef = useRef(null);
+
+  useEffect(() => {
+    axios.get(`${BASE_API_URL}/masters/cities`)
+      .then((res) => {
+        const list = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+        const names = list.map(c => typeof c === 'string' ? c : (c.name || c.city || '')).filter(Boolean);
+        setMasterCities(names);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (locationContainerRef.current && !locationContainerRef.current.contains(e.target)) {
+        setLocationDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleAddLocation = (loc) => {
+    const clean = String(loc || '').trim();
+    if (!clean) return;
+    const exists = (filters.locations || []).some(l => l.toLowerCase() === clean.toLowerCase());
+    if (!exists) {
+      const next = [...(filters.locations || []), clean];
+      setFilters(prev => ({
+        ...prev,
+        locations: next,
+        location: next[0] || ''
+      }));
+      setCurrentPage(1);
+    }
+    setLocationInput('');
+    setLocationDropdownOpen(false);
+  };
+
+  const handleRemoveLocation = (locToRemove) => {
+    const next = (filters.locations || []).filter(l => l.toLowerCase() !== locToRemove.toLowerCase());
+    setFilters(prev => ({
+      ...prev,
+      locations: next,
+      location: next[0] || ''
+    }));
+    setCurrentPage(1);
+  };
 
   useEffect(() => {
     const handleUnlockSuccess = (e) => {
@@ -545,9 +613,10 @@ export const EmployerSearchCandidates = () => {
   const resetFilters = () => {
     setFilters(initialFilters);
     setTableSearch('');
+    setLocationInput('');
     setCurrentPage(1);
     const newParams = new URLSearchParams(searchParams);
-    ['search', 'jobTitle', 'skills', 'skill', 'minExp', 'maxExp', 'location', 'minSalary', 'maxSalary', 'gender', 'qualification', 'industryType', 'industry', 'jobCategory', 'category', 'department', 'activity', 'sortBy'].forEach(k => newParams.delete(k));
+    ['search', 'jobTitle', 'skills', 'skill', 'minExp', 'maxExp', 'location', 'locations', 'includeRelocate', 'excludeAnywhere', 'minSalary', 'maxSalary', 'gender', 'qualification', 'industryType', 'industry', 'jobCategory', 'category', 'department', 'activity', 'sortBy'].forEach(k => newParams.delete(k));
     const qs = newParams.toString();
     navigate(qs ? `?${qs}` : window.location.pathname, { replace: true });
   };
@@ -560,7 +629,20 @@ export const EmployerSearchCandidates = () => {
     if (filters.skills && filters.skills.length) params.set('skills', filters.skills.join(','));
     if (filters.minExp) params.set('minExp', filters.minExp);
     if (filters.maxExp) params.set('maxExp', filters.maxExp);
-    if (filters.location) params.set('location', filters.location);
+    
+    const locList = (filters.locations && filters.locations.length > 0)
+      ? filters.locations
+      : (filters.location ? [filters.location] : []);
+    if (locList.length > 0) {
+      params.set('locations', locList.join(','));
+      params.set('location', locList[0]);
+    }
+    if (filters.includeRelocate !== undefined) {
+      params.set('includeRelocate', String(filters.includeRelocate));
+    }
+    if (filters.excludeAnywhere) {
+      params.set('excludeAnywhere', 'true');
+    }
     if (filters.minSalary) params.set('minSalary', filters.minSalary);
     if (filters.maxSalary) params.set('maxSalary', filters.maxSalary);
     if (filters.gender) params.set('gender', filters.gender);
@@ -598,6 +680,22 @@ export const EmployerSearchCandidates = () => {
   const startIndex = pagination.total ? (safePage - 1) * pagination.limit : 0;
   const optionFilters = data.filters || {};
 
+  const locationSuggestions = useMemo(() => {
+    const query = locationInput.trim().toLowerCase();
+    const all = Array.from(new Set([
+      ...masterCities,
+      ...(optionFilters.locations || [])
+    ].map(s => String(s).trim()).filter(Boolean)));
+
+    const selectedSet = new Set((filters.locations || []).map(l => l.toLowerCase()));
+    const unselected = all.filter(l => !selectedSet.has(l.toLowerCase()));
+
+    if (!query) {
+      return unselected.slice(0, 15);
+    }
+    return unselected.filter(l => l.toLowerCase().includes(query)).slice(0, 15);
+  }, [locationInput, masterCities, optionFilters.locations, filters.locations]);
+
   const qualificationOptions = useMemo(() => {
     const list = [...standardQualifications, ...(optionFilters.qualifications || [])];
     return Array.from(new Set(list.filter(Boolean)));
@@ -629,7 +727,11 @@ export const EmployerSearchCandidates = () => {
     if (filters.jobTitle) count++;
     if (filters.skills && filters.skills.length > 0) count += filters.skills.length;
     if (filters.minExp || filters.maxExp) count++;
-    if (filters.location) count++;
+    if ((filters.locations && filters.locations.length > 0) || filters.location) {
+      count += (filters.locations?.length || 1);
+    }
+    if (!filters.includeRelocate) count++;
+    if (filters.excludeAnywhere) count++;
     if (filters.minSalary || filters.maxSalary) count++;
     if (filters.gender) count++;
     if (filters.qualification) count++;
@@ -789,31 +891,152 @@ export const EmployerSearchCandidates = () => {
               </div>
             </div>
 
-            {/* Filter 3: Location: Candidate's Current Location */}
+            {/* Filter 3: Current Location of Candidate */}
             <div>
               <label className={filterLabelClass}>
                 <span className="flex items-center gap-1.5 text-slate-700">
                   <MapPin className="h-3.5 w-3.5 text-[#6658dd]" />
-                  <span>3. Current Location</span>
+                  <span>3. Current location of candidate</span>
                 </span>
               </label>
-              <div className="relative">
-                <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input
-                  className={`${filterControlClass} pl-9 pr-8`}
-                  value={filters.location}
-                  onChange={(event) => setFilter('location', event.target.value)}
-                  placeholder="City, State (e.g. Mumbai, Baddi)"
-                />
-                {filters.location && (
-                  <button
-                    type="button"
-                    onClick={() => setFilter('location', '')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
+
+              <div ref={locationContainerRef} className="relative">
+                <div
+                  onClick={() => locationInputRef.current?.focus()}
+                  className="candidate-filter-control min-h-[42px] h-auto w-full rounded-md border border-slate-200 bg-white p-1.5 flex flex-wrap items-center gap-1.5 transition focus-within:border-[#6658dd] focus-within:ring-2 focus-within:ring-indigo-100 cursor-text"
+                >
+                  {(filters.locations || []).map((loc) => (
+                    <span
+                      key={loc}
+                      className="inline-flex items-center gap-1.5 rounded-sm bg-slate-100 px-2 py-1 text-xs font-bold text-slate-700 border border-slate-200 shadow-2xs"
+                    >
+                      <span>{loc}</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveLocation(loc);
+                        }}
+                        className="text-slate-400 hover:text-slate-700 transition cursor-pointer"
+                        title={`Remove ${loc}`}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                  <input
+                    ref={locationInputRef}
+                    value={locationInput}
+                    onChange={(e) => {
+                      setLocationInput(e.target.value);
+                      setLocationDropdownOpen(true);
+                    }}
+                    onFocus={() => setLocationDropdownOpen(true)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (locationInput.trim()) {
+                          handleAddLocation(locationInput.trim());
+                        }
+                      } else if (e.key === 'Backspace' && !locationInput && filters.locations?.length) {
+                        handleRemoveLocation(filters.locations[filters.locations.length - 1]);
+                      }
+                    }}
+                    placeholder={filters.locations?.length ? 'Add location' : 'Add location (e.g. Baddi, Delhi, Mumbai)'}
+                    className="flex-1 min-w-[100px] bg-transparent text-xs font-semibold text-slate-700 outline-none placeholder:font-normal placeholder:text-slate-400"
+                  />
+                  {filters.locations?.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setFilters(prev => ({ ...prev, locations: [], location: '' }));
+                        setLocationInput('');
+                      }}
+                      className="text-slate-300 hover:text-slate-500 p-1"
+                      title="Clear all locations"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Suggestions Dropdown */}
+                {locationDropdownOpen && (
+                  <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-56 overflow-y-auto rounded-md border border-slate-200 bg-white py-1 shadow-xl">
+                    {locationInput.trim() && !(filters.locations || []).some(l => l.toLowerCase() === locationInput.trim().toLowerCase()) && (
+                      <button
+                        type="button"
+                        onClick={() => handleAddLocation(locationInput.trim())}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-bold text-[#6658dd] hover:bg-indigo-50 border-b border-slate-100 cursor-pointer"
+                      >
+                        <span className="text-slate-400">+ Add</span> "{locationInput.trim()}"
+                      </button>
+                    )}
+                    {locationSuggestions.length > 0 ? (
+                      locationSuggestions.map((loc) => (
+                        <button
+                          key={loc}
+                          type="button"
+                          onClick={() => handleAddLocation(loc)}
+                          className="flex w-full items-center justify-between px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                        >
+                          <span className="flex items-center gap-2">
+                            <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                            {loc}
+                          </span>
+                        </button>
+                      ))
+                    ) : (
+                      !locationInput.trim() && (
+                        <div className="px-3 py-2 text-xs font-medium text-slate-400">
+                          Type to search locations...
+                        </div>
+                      )
+                    )}
+                  </div>
                 )}
+              </div>
+
+              {/* Checkboxes below location input */}
+              <div className="mt-2.5 space-y-2">
+                <label className="flex items-start gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(filters.includeRelocate)}
+                    onChange={(e) => setFilter('includeRelocate', e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#0047C7] focus:ring-[#0047C7]"
+                  />
+                  <span className="text-xs font-medium text-slate-700 leading-tight">
+                    Include candidates who prefer to relocate to above locations
+                  </span>
+                </label>
+
+                <label className="flex items-start gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(filters.excludeAnywhere)}
+                    onChange={(e) => setFilter('excludeAnywhere', e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#0047C7] focus:ring-[#0047C7]"
+                  />
+                  <span className="text-xs font-medium text-slate-700 leading-tight flex items-center gap-1">
+                    <span>Exclude candidates who have mentioned Anywhere in...</span>
+                    <span title="Excludes candidates who selected generic 'Anywhere in India' or 'Anywhere in State' instead of specific cities.">
+                      <Info className="h-3.5 w-3.5 text-slate-400 inline" />
+                    </span>
+                  </span>
+                </label>
+              </div>
+
+              {/* Informational Message Banner */}
+              <div className="mt-2.5 flex items-start gap-2 rounded-md bg-[#eef5fc] border border-[#d6e7f7] p-2.5 text-[11px] font-medium text-slate-700 leading-relaxed">
+                <Info className="h-4 w-4 text-[#0047C7] shrink-0 mt-0.5" />
+                <div>
+                  You will get candidates who are {filters.includeRelocate ? 'either currently in OR prefer to relocate to' : 'currently in'}{' '}
+                  <span className="font-bold text-slate-900">
+                    {filters.locations && filters.locations.length > 0 ? filters.locations.join(', ') : 'any location'}
+                  </span>.
+                </div>
               </div>
             </div>
 
@@ -1029,13 +1252,39 @@ export const EmployerSearchCandidates = () => {
                 </span>
               )}
 
-              {filters.location && (
-                <span className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-indigo-200 px-2.5 py-1 text-xs font-bold text-slate-700 shadow-xs">
-                  <span className="text-slate-400">Location:</span>
-                  <span className="text-[#6658dd] font-black">{filters.location}</span>
+              {filters.locations && filters.locations.length > 0 && filters.locations.map((loc) => (
+                <span key={loc} className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-indigo-200 px-2.5 py-1 text-xs font-bold text-slate-700 shadow-xs">
+                  <span className="text-slate-400">Loc:</span>
+                  <span className="text-[#6658dd] font-black">{loc}</span>
                   <button
                     type="button"
-                    onClick={() => setFilter('location', '')}
+                    onClick={() => handleRemoveLocation(loc)}
+                    className="text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+
+              {!filters.includeRelocate && (
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-amber-200 px-2.5 py-1 text-xs font-bold text-amber-800 shadow-xs">
+                  <span>Exclude Relocate</span>
+                  <button
+                    type="button"
+                    onClick={() => setFilter('includeRelocate', true)}
+                    className="text-amber-500 hover:text-amber-700 transition cursor-pointer"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+
+              {filters.excludeAnywhere && (
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-indigo-200 px-2.5 py-1 text-xs font-bold text-slate-700 shadow-xs">
+                  <span>Exclude 'Anywhere'</span>
+                  <button
+                    type="button"
+                    onClick={() => setFilter('excludeAnywhere', false)}
                     className="text-slate-400 hover:text-rose-600 transition cursor-pointer"
                   >
                     <X className="h-3 w-3" />
@@ -1239,10 +1488,23 @@ export const EmployerSearchCandidates = () => {
                         <span>{candidate.email || 'Hidden (Unlock to View)'}</span>
                       </button>
                     )}
-                    <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400">
-                      <MapPin className="h-3 w-3 shrink-0" />
-                      {candidate.location}
-                    </p>
+                    <div className="mt-0.5 space-y-0.5 text-xs font-semibold text-slate-400">
+                      <p className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3 shrink-0" />
+                        <span>{candidate.location}</span>
+                        {candidate.currentJobLocation && (
+                          <span className="text-indigo-600 font-bold ml-1">• Working in: {candidate.currentJobLocation}</span>
+                        )}
+                      </p>
+                      {candidate.preferredLocation && (
+                        <p className="text-[11px] text-slate-500 font-medium pl-4">
+                          Prefers: <span className="text-slate-700 font-semibold">{candidate.preferredLocation}</span>
+                          {candidate.relocate === 'yes' && (
+                            <span className="ml-1 text-emerald-600 font-bold">(Willing to relocate)</span>
+                          )}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <div className="shrink-0 text-right">
                     {renderActivityBadge(candidate.lastActive, candidate.availability)}
@@ -1371,10 +1633,23 @@ export const EmployerSearchCandidates = () => {
                               <span>{candidate.email || 'Hidden (Unlock to View)'}</span>
                             </button>
                           )}
-                          <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400">
-                            <MapPin className="h-3 w-3" />
-                            {candidate.location}
-                          </p>
+                          <div className="mt-0.5 space-y-0.5 text-xs font-semibold text-slate-400">
+                            <p className="flex items-center gap-1">
+                              <MapPin className="h-3 w-3 shrink-0" />
+                              <span>{candidate.location}</span>
+                              {candidate.currentJobLocation && (
+                                <span className="text-indigo-600 font-bold ml-1">• Working in: {candidate.currentJobLocation}</span>
+                              )}
+                            </p>
+                            {candidate.preferredLocation && (
+                              <p className="text-[11px] text-slate-500 font-medium pl-4">
+                                Prefers: <span className="text-slate-700 font-semibold">{candidate.preferredLocation}</span>
+                                {candidate.relocate === 'yes' && (
+                                  <span className="ml-1 text-emerald-600 font-bold">(Willing to relocate)</span>
+                                )}
+                              </p>
+                            )}
+                          </div>
                           {candidate.skills && candidate.skills.length > 0 && (
                             <div className="mt-1.5 flex flex-wrap gap-1 max-w-[280px]">
                               {candidate.skills.slice(0, 4).map(skill => {
