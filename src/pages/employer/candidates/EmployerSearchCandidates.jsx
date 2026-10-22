@@ -19,6 +19,7 @@ import {
   Filter,
   GraduationCap,
   IndianRupee,
+  Layers,
   Loader,
   Lock,
   MapPin,
@@ -42,7 +43,7 @@ import { downloadBlobResponse, viewBlobResponse } from '../../../utils/downloadF
 import SkillMultiSelectFilter from '../../../components/SkillMultiSelectFilter';
 
 const initialFilters = {
-  // 8 Filters requested by Employer
+  // 9 Filters: Title/Skills, Exp, Loc, Salary, Gender, Qual, Industry Type, Job Category, Activity
   search: '',
   jobTitle: '',
   skills: [],
@@ -54,6 +55,8 @@ const initialFilters = {
   maxSalary: '',
   gender: '',
   qualification: '',
+  industryType: '',
+  jobCategory: '',
   department: '',
   activity: '',
   // Sorting & Extra
@@ -133,8 +136,37 @@ const standardQualifications = [
   'B.Pharm', 'M.Pharm', 'B.Sc.', 'M.Sc.', 'MBA', 'B.Tech', 'M.Tech', 'B.Com', 'Diploma', 'Ph.D', '12th Pass'
 ];
 
-const standardDepartments = [
-  'QA', 'QC', 'Production', 'Regulatory Affairs', 'R&D', 'Packaging', 'HR', 'Pharma', 'Sales & Marketing', 'Healthcare', 'Biotechnology'
+const standardIndustries = [
+  'Pharmaceutical',
+  'Biotechnology',
+  'Healthcare & Hospitals',
+  'Chemical & Petrochemical',
+  'Medical Devices',
+  'Clinical Research (CRO)',
+  'FMCG / Food & Beverage',
+  'Cosmetics & Personal Care',
+  'Ayush / Herbal & Ayurvedic',
+  'Information Technology / Pharma IT',
+  'Manufacturing',
+  'Packaging & Logistics'
+];
+
+const standardJobCategories = [
+  'Quality Assurance (QA)',
+  'Quality Control (QC)',
+  'Production & Manufacturing',
+  'Regulatory Affairs (RA)',
+  'R&D / Formulation',
+  'Analytical Development (AR&D)',
+  'Microbiology',
+  'Packaging & Labeling',
+  'Maintenance & Engineering',
+  'Pharmacovigilance (PV)',
+  'Clinical Operations',
+  'Supply Chain & Warehouse',
+  'Human Resources (HR)',
+  'Sales & Marketing',
+  'Administration'
 ];
 
 const statCards = [
@@ -417,6 +449,8 @@ export const EmployerSearchCandidates = () => {
     maxSalary: searchParams.get('maxSalary') || '',
     gender: searchParams.get('gender') || '',
     qualification: searchParams.get('qualification') || '',
+    industryType: searchParams.get('industryType') || searchParams.get('industry') || '',
+    jobCategory: searchParams.get('jobCategory') || searchParams.get('category') || searchParams.get('department') || '',
     department: searchParams.get('department') || searchParams.get('industry') || '',
     activity: searchParams.get('activity') || '',
     sortBy: searchParams.get('sortBy') || '',
@@ -513,7 +547,7 @@ export const EmployerSearchCandidates = () => {
     setTableSearch('');
     setCurrentPage(1);
     const newParams = new URLSearchParams(searchParams);
-    ['search', 'jobTitle', 'skills', 'skill', 'minExp', 'maxExp', 'location', 'minSalary', 'maxSalary', 'gender', 'qualification', 'department', 'activity', 'sortBy'].forEach(k => newParams.delete(k));
+    ['search', 'jobTitle', 'skills', 'skill', 'minExp', 'maxExp', 'location', 'minSalary', 'maxSalary', 'gender', 'qualification', 'industryType', 'industry', 'jobCategory', 'category', 'department', 'activity', 'sortBy'].forEach(k => newParams.delete(k));
     const qs = newParams.toString();
     navigate(qs ? `?${qs}` : window.location.pathname, { replace: true });
   };
@@ -531,7 +565,8 @@ export const EmployerSearchCandidates = () => {
     if (filters.maxSalary) params.set('maxSalary', filters.maxSalary);
     if (filters.gender) params.set('gender', filters.gender);
     if (filters.qualification) params.set('qualification', filters.qualification);
-    if (filters.department) params.set('department', filters.department);
+    if (filters.industryType) params.set('industryType', filters.industryType);
+    if (filters.jobCategory) params.set('jobCategory', filters.jobCategory);
     if (filters.activity) params.set('activity', filters.activity);
     if (filters.sortBy) params.set('sortBy', filters.sortBy);
     params.set('page', String(currentPage));
@@ -568,15 +603,25 @@ export const EmployerSearchCandidates = () => {
     return Array.from(new Set(list.filter(Boolean)));
   }, [optionFilters.qualifications]);
 
-  const departmentOptions = useMemo(() => {
+  const industryTypeOptions = useMemo(() => {
     const list = [
-      ...standardDepartments,
-      ...(optionFilters.industries || []),
-      ...(optionFilters.departments || []),
-      ...(optionFilters.roles || [])
+      ...standardIndustries,
+      ...(optionFilters.industryTypes || []),
+      ...(optionFilters.industries || [])
     ];
     return Array.from(new Set(list.filter(Boolean)));
-  }, [optionFilters.industries, optionFilters.departments, optionFilters.roles]);
+  }, [optionFilters.industryTypes, optionFilters.industries]);
+
+  const jobCategoryOptions = useMemo(() => {
+    const list = [
+      ...standardJobCategories,
+      ...(optionFilters.jobCategories || []),
+      ...(optionFilters.categories || []),
+      ...(optionFilters.roles || []),
+      ...(optionFilters.departments || [])
+    ];
+    return Array.from(new Set(list.filter(Boolean)));
+  }, [optionFilters.jobCategories, optionFilters.categories, optionFilters.roles, optionFilters.departments]);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -588,7 +633,8 @@ export const EmployerSearchCandidates = () => {
     if (filters.minSalary || filters.maxSalary) count++;
     if (filters.gender) count++;
     if (filters.qualification) count++;
-    if (filters.department) count++;
+    if (filters.industryType) count++;
+    if (filters.jobCategory) count++;
     if (filters.activity) count++;
     return count;
   }, [filters]);
@@ -636,11 +682,11 @@ export const EmployerSearchCandidates = () => {
               <h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Search Candidates</h2>
               <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-black text-[#6658dd] border border-indigo-100 shadow-xs">
                 <Sparkles className="h-3 w-3" />
-                8 Search Filters
+                9 Search Filters
               </span>
             </div>
             <p className="mt-1 text-xs font-semibold text-slate-400 sm:text-sm">
-              Combine job title & skills, experience, location, salary, gender, qualification, department, and activity to find matching candidates.
+              Combine job title & skills, experience, location, salary, gender, qualification, industry type, job category, and activity to find matching candidates.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -666,8 +712,8 @@ export const EmployerSearchCandidates = () => {
         </div>
 
         <div className="p-4 sm:p-5">
-          {/* 8 Filters Grid: 4 columns on large screens, 2 columns on tablet, 1 column on mobile */}
-          <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+          {/* 9 Filters Grid: 3 columns on desktop (3x3 perfectly balanced), 2 on tablet, 1 on mobile */}
+          <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
             {/* Filter 1: Job Title & Job Skills */}
             <div>
               <label className={filterLabelClass}>
@@ -840,32 +886,52 @@ export const EmployerSearchCandidates = () => {
               </select>
             </div>
 
-            {/* Filter 7: Department / Industry: QA, QC, Production, HR, Pharma, etc. */}
+            {/* Filter 7: Industry Type: Pharmaceutical, Biotechnology, Healthcare, Chemical, etc. */}
             <div>
               <label className={filterLabelClass}>
                 <span className="flex items-center gap-1.5 text-slate-700">
                   <Building2 className="h-3.5 w-3.5 text-[#6658dd]" />
-                  <span>7. Department / Industry</span>
+                  <span>7. Industry Type</span>
                 </span>
               </label>
               <select
-                value={filters.department}
-                onChange={(e) => setFilter('department', e.target.value)}
+                value={filters.industryType}
+                onChange={(e) => setFilter('industryType', e.target.value)}
                 className={filterControlClass}
               >
-                <option value="">All Departments / Industries</option>
-                {departmentOptions.map(d => (
-                  <option key={d} value={d}>{d}</option>
+                <option value="">All Industry Types</option>
+                {industryTypeOptions.map(ind => (
+                  <option key={ind} value={ind}>{ind}</option>
                 ))}
               </select>
             </div>
 
-            {/* Filter 8: Candidate Activity: Active within 3 months, 6 months, or All Candidates */}
+            {/* Filter 8: Job Category: QA, QC, Production, Regulatory Affairs, R&D, Packaging, HR, etc. */}
+            <div>
+              <label className={filterLabelClass}>
+                <span className="flex items-center gap-1.5 text-slate-700">
+                  <Layers className="h-3.5 w-3.5 text-[#6658dd]" />
+                  <span>8. Job Category</span>
+                </span>
+              </label>
+              <select
+                value={filters.jobCategory}
+                onChange={(e) => setFilter('jobCategory', e.target.value)}
+                className={filterControlClass}
+              >
+                <option value="">All Job Categories</option>
+                {jobCategoryOptions.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Filter 9: Candidate Activity: Active within 3 months, 6 months, or All Candidates */}
             <div>
               <label className={filterLabelClass}>
                 <span className="flex items-center gap-1.5 text-slate-700">
                   <Activity className="h-3.5 w-3.5 text-[#6658dd]" />
-                  <span>8. Candidate Activity</span>
+                  <span>9. Candidate Activity</span>
                 </span>
               </label>
               <select
@@ -1024,13 +1090,27 @@ export const EmployerSearchCandidates = () => {
                 </span>
               )}
 
-              {filters.department && (
+              {filters.industryType && (
                 <span className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-indigo-200 px-2.5 py-1 text-xs font-bold text-slate-700 shadow-xs">
-                  <span className="text-slate-400">Dept:</span>
-                  <span className="text-[#6658dd] font-black">{filters.department}</span>
+                  <span className="text-slate-400">Industry:</span>
+                  <span className="text-[#6658dd] font-black">{filters.industryType}</span>
                   <button
                     type="button"
-                    onClick={() => setFilter('department', '')}
+                    onClick={() => setFilter('industryType', '')}
+                    className="text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+
+              {filters.jobCategory && (
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-indigo-200 px-2.5 py-1 text-xs font-bold text-slate-700 shadow-xs">
+                  <span className="text-slate-400">Category:</span>
+                  <span className="text-[#6658dd] font-black">{filters.jobCategory}</span>
+                  <button
+                    type="button"
+                    onClick={() => setFilter('jobCategory', '')}
                     className="text-slate-400 hover:text-rose-600 transition cursor-pointer"
                   >
                     <X className="h-3 w-3" />
@@ -1172,9 +1252,10 @@ export const EmployerSearchCandidates = () => {
                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs font-semibold text-slate-500">
                   <p className="truncate"><span className="text-slate-400">Experience:</span> {candidate.experience}</p>
                   <p className="truncate"><span className="text-slate-400">Qualification:</span> {candidate.qualification || '-'}</p>
-                  <p className="truncate"><span className="text-slate-400">Department:</span> {candidate.industry || candidate.role || '-'}</p>
+                  <p className="truncate"><span className="text-slate-400">Job Category:</span> <span className="font-bold text-[#3f4254]">{candidate.jobCategory || candidate.role || '-'}</span></p>
+                  <p className="truncate"><span className="text-slate-400">Industry Type:</span> <span className="font-semibold text-[#6658dd]">{candidate.industryType || candidate.industry || '-'}</span></p>
                   <p className="truncate"><span className="text-slate-400">Current CTC:</span> <span className="font-semibold text-slate-700">{formatInlineSalary(candidate.currentSalary)}</span></p>
-                  <p className="col-span-2 truncate"><span className="text-slate-400">Expected CTC:</span> <span className="font-bold text-[#0047C7]">{formatInlineSalary(candidate.expectedSalary)}</span></p>
+                  <p className="truncate"><span className="text-slate-400">Expected CTC:</span> <span className="font-bold text-[#0047C7]">{formatInlineSalary(candidate.expectedSalary)}</span></p>
                 </div>
 
                 {candidate.skills && candidate.skills.length > 0 && (
@@ -1227,7 +1308,7 @@ export const EmployerSearchCandidates = () => {
                   <th className="px-5 py-3">Candidate</th>
                   <th className="px-4 py-3">Experience</th>
                   <th className="px-4 py-3">Qualification</th>
-                  <th className="px-4 py-3">Department</th>
+                  <th className="px-4 py-3">Job Category & Industry</th>
                   <th className="px-4 py-3">Current CTC</th>
                   <th className="px-4 py-3">Expected CTC</th>
                   <th className="px-4 py-3">Activity & Status</th>
@@ -1328,7 +1409,16 @@ export const EmployerSearchCandidates = () => {
                       {candidate.qualification || '-'}
                     </td>
                     <td className="px-4 py-3.5 text-xs font-semibold text-slate-600">
-                      {candidate.industry || candidate.role || '-'}
+                      <div className="leading-snug">
+                        <span className="font-extrabold text-[#3f4254] block">
+                          {candidate.jobCategory || candidate.role || '-'}
+                        </span>
+                        {(candidate.industryType || candidate.industry) && (
+                          <span className="inline-block mt-1 text-[11px] font-semibold text-[#6658dd] bg-indigo-50 border border-indigo-100 rounded px-1.5 py-0.5">
+                            {candidate.industryType || candidate.industry}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3.5">{renderCandidateSalaryCell(candidate.currentSalary, false)}</td>
                     <td className="px-4 py-3.5">{renderCandidateSalaryCell(candidate.expectedSalary, true)}</td>

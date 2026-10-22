@@ -269,7 +269,7 @@ export const PromoPopupModal = ({
       }}
     >
       <div 
-        className="relative bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden max-w-[calc(100vw-24px)] sm:max-w-[calc(100vw-48px)] animate-in zoom-in-95 duration-200"
+        className="relative bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden max-w-[calc(100vw-24px)] sm:max-w-[calc(100vw-48px)] max-h-[92vh] animate-in zoom-in-95 duration-200"
         style={{ width: modalWidth }}
       >
         {/* Close Button (Cut Button) */}
@@ -290,17 +290,21 @@ export const PromoPopupModal = ({
           </div>
         )}
 
-        {/* Modal Image Display - Full image shown with clean padding and no cutting off */}
+        {/* Modal Image Display - Full image shown with clean padding, zero scrollbars, and no cutting off */}
         <div 
-          className="w-full bg-white flex items-center justify-center p-3 sm:p-5 overflow-y-auto"
-          style={{ maxHeight: rawHeight === 'auto' ? (showButton ? 'calc(80vh - 75px)' : '82vh') : modalMaxHeight }}
+          className="w-full bg-white flex items-center justify-center p-4 sm:p-6 overflow-hidden flex-1 min-h-0 [&::-webkit-scrollbar]:hidden"
+          style={{ 
+            maxHeight: rawHeight === 'auto' ? (showButton ? 'calc(85vh - 75px)' : '85vh') : modalMaxHeight,
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none'
+          }}
         >
           <img
             src={resolvePromoImageUrl(activeBanner.image)}
             alt={activeBanner.title || 'Announcement'}
-            className="w-auto h-auto max-w-full max-h-full object-contain block select-none rounded-xl shadow-xs"
+            className="w-auto h-auto max-w-full max-h-full object-contain block select-none rounded-xl"
             style={{ 
-              maxHeight: rawHeight === 'auto' ? (showButton ? 'calc(80vh - 95px)' : 'calc(82vh - 35px)') : modalMaxHeight,
+              maxHeight: rawHeight === 'auto' ? (showButton ? 'calc(85vh - 135px)' : 'calc(85vh - 65px)') : `calc(${modalMaxHeight} - 48px)`,
               imageRendering: '-webkit-optimize-contrast'
             }}
             loading="eager"
