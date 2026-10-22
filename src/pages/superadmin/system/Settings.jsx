@@ -29,7 +29,8 @@ import {
   MoveHorizontal,
   MoveVertical,
   Info,
-  ArrowRight
+  ArrowRight,
+  Image as ImageIcon
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import { clearPublicSettingsCache } from '../../../utils/publicSettings';
@@ -1551,7 +1552,7 @@ export const Settings = () => {
                               </span>
                               <div className="flex items-center gap-2">
                                 <span className="text-[10px] text-slate-500 font-medium">
-                                  Size: {currentWidthNum}px × {isAutoHeight ? 'Auto' : `${currentHeightNum}px`}
+                                  Display: {currentWidthNum}px × {isAutoHeight ? 'Auto Fit' : `${currentHeightNum}px`}
                                 </span>
                                 {banner.image && (
                                   <button
@@ -1589,10 +1590,10 @@ export const Settings = () => {
 
                                 {/* Full Image Container - WITH INNER PADDING & DYNAMIC HEIGHT */}
                                 <div 
-                                  className="w-full bg-white flex items-center justify-center p-3 sm:p-4 overflow-hidden transition-all duration-300"
+                                  className="w-full bg-white flex items-center justify-center p-2.5 sm:p-3 overflow-hidden transition-all duration-300"
                                   style={{
                                     maxHeight: isAutoHeight 
-                                      ? '260px' 
+                                      ? '240px' 
                                       : `${Math.min(300, Math.max(130, Math.round((currentHeightNum / 850) * 240)))}px`,
                                     minHeight: '120px'
                                   }}
@@ -1601,7 +1602,7 @@ export const Settings = () => {
                                     <img
                                       src={resolvePromoImageUrl(banner.image)}
                                       alt="Live Banner Preview"
-                                      className="w-auto h-auto max-w-full max-h-full object-contain block rounded-lg select-none shadow-xs"
+                                      className="w-full h-auto max-h-[230px] object-contain block rounded-lg select-none shadow-xs mx-auto"
                                       style={{ imageRendering: '-webkit-optimize-contrast' }}
                                     />
                                   ) : (
@@ -1612,7 +1613,7 @@ export const Settings = () => {
                                       <Upload className="w-5 h-5 text-indigo-500" />
                                       <span className="text-xs font-semibold text-slate-600">No image uploaded</span>
                                       <span className="text-[10px] text-indigo-600 font-bold underline">Click to upload banner photo</span>
-                                      <span className="text-[9.5px] text-slate-400 mt-1">Recommended: 850×500 px (Max 5MB)</span>
+                                      <span className="text-[9.5px] text-slate-400 mt-1">Recommended: 850 × 520 px (Max 5MB)</span>
                                     </div>
                                   )}
                                 </div>
@@ -1626,6 +1627,27 @@ export const Settings = () => {
                                     </div>
                                   </div>
                                 )}
+                              </div>
+                            </div>
+
+                            {/* Prominent Image Dimensions & Display Guide (as requested by user) */}
+                            <div className="rounded-xl border border-indigo-200/80 bg-gradient-to-br from-indigo-50/70 to-sky-50/40 p-3 space-y-1.5 shadow-2xs">
+                              <div className="flex items-center justify-between">
+                                <span className="flex items-center gap-1.5 text-xs font-bold text-indigo-950">
+                                  <ImageIcon className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                                  <span>Recommended Image Size:</span>
+                                  <span className="text-indigo-700 font-black">850 × 520 px</span>
+                                </span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200 shrink-0">
+                                  Ratio 16:10
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                                Pop-up modal mein image bina kate (zero cut) aur bina kisi extra blank space ke Banner 1 jaisi perfect fit dikhegi. Kripya <strong className="text-indigo-900 font-bold">850 × 520 px</strong> size ki photo upload karein.
+                              </p>
+                              <div className="flex flex-wrap items-center justify-between gap-1.5 pt-1 border-t border-indigo-100 text-[10px] text-slate-500 font-semibold">
+                                <span>Display Mode: <strong className="text-slate-700">100% Full View (Zero Cut)</strong></span>
+                                <span>Formats: <strong className="text-slate-700">PNG, JPG, WebP (Max 5MB)</strong></span>
                               </div>
                             </div>
 
@@ -1660,17 +1682,17 @@ export const Settings = () => {
                                 </button>
                               </div>
                             ) : (
-                              <div className="space-y-1">
+                              <div className="space-y-1.5">
                                 <button
                                   type="button"
                                   onClick={() => triggerBannerUpload(index)}
-                                  className="w-full inline-flex items-center justify-center gap-1.5 py-2 border border-dashed border-indigo-300 bg-indigo-50/50 hover:bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg transition cursor-pointer"
+                                  className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 border border-dashed border-indigo-300 bg-indigo-50/60 hover:bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg transition cursor-pointer shadow-2xs"
                                 >
                                   <Upload className="w-3.5 h-3.5" />
-                                  Upload Banner Image
+                                  Upload Banner Image (850 × 520 px)
                                 </button>
-                                <p className="text-[10px] text-center text-slate-400">
-                                  Recommended: 850 × 500 px • PNG, JPG, WebP (Max 5MB)
+                                <p className="text-[10.5px] text-center text-slate-500 font-medium">
+                                  Optimal Size: <strong className="text-slate-700 font-bold">850 × 520 px</strong> • Modal mein bina cut hue full dikhegi
                                 </p>
                               </div>
                             )}

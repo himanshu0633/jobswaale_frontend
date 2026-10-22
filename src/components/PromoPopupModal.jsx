@@ -72,6 +72,25 @@ export const PromoPopupModal = ({
   const location = useLocation();
   const [activeBanner, setActiveBanner] = useState(previewBanner || null);
   const [isOpen, setIsOpen] = useState(forcePreview);
+  const [imageAspectRatio, setImageAspectRatio] = useState(null);
+  const [viewportDims, setViewportDims] = useState({
+    w: typeof window !== 'undefined' ? window.innerWidth : 1200,
+    h: typeof window !== 'undefined' ? window.innerHeight : 800
+  });
+
+  // Track viewport dimensions for responsive edge-to-edge modal wrapping
+  useEffect(() => {
+    const handleResize = () => {
+      setViewportDims({ w: window.innerWidth, h: window.innerHeight });
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Reset aspect ratio when the banner image changes
+  useEffect(() => {
+    setImageAspectRatio(null);
+  }, [activeBanner?.image]);
 
   // Handle preview mode or evaluate banner based on current route
   useEffect(() => {
@@ -251,15 +270,31 @@ export const PromoPopupModal = ({
 
   // Sizing styles
   const rawWidth = String(activeBanner.width || '850px').trim();
-  const modalWidth = rawWidth.includes('px') || rawWidth.includes('%') || rawWidth.includes('rem') 
-    ? rawWidth 
-    : `${rawWidth}px`;
-
   const rawHeight = String(activeBanner.height || 'auto').trim();
+  const parsedWidthNum = parseInt(rawWidth, 10) || 850;
   const modalMaxHeight = rawHeight === 'auto' ? '85vh' : (rawHeight.includes('px') ? rawHeight : `${rawHeight}px`);
 
   const buttonText = activeBanner.buttonText || 'Upgrade Plan';
   const showButton = activeBanner.buttonEnabled !== false && Boolean(buttonText.trim());
+
+  const handleImageLoad = (e) => {
+    const { naturalWidth, naturalHeight } = e.target;
+    if (naturalWidth && naturalHeight && naturalHeight > 0) {
+      setImageAspectRatio(naturalWidth / naturalHeight);
+    }
+  };
+
+  // Compute responsive maximum image height based on viewport
+  const maxAvailableImgHeight = Math.max(240, viewportDims.h * 0.86 - (showButton ? 120 : 65));
+
+  // Determine optimal modal width: snugly hugs image aspect ratio so Banner 2/3/etc. look identical to Banner 1
+  const effectiveRatio = imageAspectRatio || (850 / 520);
+  let computedModalWidth = parsedWidthNum;
+  if (rawHeight === 'auto') {
+    const widthConstrainedByHeight = Math.round(maxAvailableImgHeight * effectiveRatio);
+    computedModalWidth = Math.min(parsedWidthNum, widthConstrainedByHeight);
+  }
+  const finalModalWidthPx = Math.min(computedModalWidth, Math.max(280, viewportDims.w - 32));
 
   return (
     <div 
@@ -269,8 +304,12 @@ export const PromoPopupModal = ({
       }}
     >
       <div 
-        className="relative bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden max-w-[calc(100vw-24px)] sm:max-w-[calc(100vw-48px)] max-h-[92vh] animate-in zoom-in-95 duration-200"
-        style={{ width: modalWidth }}
+        className="relative bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 mx-auto"
+        style={{ 
+          width: `${finalModalWidthPx}px`,
+          maxWidth: 'calc(100vw - 24px)',
+          maxHeight: '92vh'
+        }}
       >
         {/* Close Button (Cut Button) */}
         <button
@@ -286,15 +325,15 @@ export const PromoPopupModal = ({
         {forcePreview && (
           <div className="absolute top-2.5 left-3 z-30 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/80 text-white text-[11px] font-bold backdrop-blur-sm shadow border border-white/20 select-none">
             <Eye className="w-3.5 h-3.5 text-sky-400" />
-            <span>Full Size Preview ({modalWidth} × {rawHeight === 'auto' ? 'Auto' : modalMaxHeight})</span>
+            <span>Full Size Preview ({finalModalWidthPx}px × {rawHeight === 'auto' ? 'Auto Fit' : modalMaxHeight})</span>
           </div>
         )}
 
-        {/* Modal Image Display - Full image shown with clean padding, zero scrollbars, and no cutting off */}
+        {/* Modal Image Display - Snug padding, zero cropping, full clarity (matches Banner 1 look) */}
         <div 
-          className="w-full bg-white flex items-center justify-center p-4 sm:p-6 overflow-hidden flex-1 min-h-0 [&::-webkit-scrollbar]:hidden"
+          className="w-full bg-white flex items-center justify-center p-2.5 sm:p-3.5 overflow-hidden flex-1 min-h-0 [&::-webkit-scrollbar]:hidden"
           style={{ 
-            maxHeight: rawHeight === 'auto' ? (showButton ? 'calc(85vh - 75px)' : '85vh') : modalMaxHeight,
+            maxHeight: rawHeight === 'auto' ? `${maxAvailableImgHeight + 20}px` : modalMaxHeight,
             scrollbarWidth: 'none',
             msOverflowStyle: 'none'
           }}
@@ -302,9 +341,11 @@ export const PromoPopupModal = ({
           <img
             src={resolvePromoImageUrl(activeBanner.image)}
             alt={activeBanner.title || 'Announcement'}
-            className="w-auto h-auto max-w-full max-h-full object-contain block select-none rounded-xl"
+            onLoad={handleImageLoad}
+            className="w-full h-auto max-w-full block select-none rounded-xl mx-auto shadow-2xs"
             style={{ 
-              maxHeight: rawHeight === 'auto' ? (showButton ? 'calc(85vh - 135px)' : 'calc(85vh - 65px)') : `calc(${modalMaxHeight} - 48px)`,
+              maxHeight: `${maxAvailableImgHeight}px`,
+              objectFit: 'contain',
               imageRendering: '-webkit-optimize-contrast'
             }}
             loading="eager"
@@ -313,7 +354,7 @@ export const PromoPopupModal = ({
 
         {/* Action Button Section */}
         {showButton && (
-          <div className="p-3.5 sm:p-4 bg-white border-t border-slate-100 flex items-center justify-end">
+          <div className="p-3 sm:p-3.5 bg-white border-t border-slate-100 flex items-center justify-end">
             <button
               type="button"
               onClick={handleActionClick}

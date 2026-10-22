@@ -13,7 +13,7 @@ export const PromoCropperModal = ({
   const [zoom, setZoom] = useState(1);
   const [offsetX, setOffsetX] = useState(0);
   const [offsetY, setOffsetY] = useState(0);
-  const [aspectRatio, setAspectRatio] = useState('free'); // 'free', '16:9', '4:3', '1:1'
+  const [aspectRatio, setAspectRatio] = useState('16:10'); // '16:10', '16:9', '4:3', '1:1', 'free'
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -47,6 +47,8 @@ export const PromoCropperModal = ({
   // Compute frame dimensions based on chosen aspect ratio
   const getCanvasDimensions = () => {
     switch (aspectRatio) {
+      case '16:10':
+        return { width: 560, height: 350 }; // Optimal 850 x 530 / 16:10 banner ratio
       case '16:9':
         return { width: 560, height: 315 };
       case '4:3':
@@ -57,10 +59,10 @@ export const PromoCropperModal = ({
       default:
         if (imgRef.current) {
           const naturalRatio = imgRef.current.width / (imgRef.current.height || 1);
-          const maxW = 540;
+          const maxW = 560;
           return { width: maxW, height: Math.round(maxW / (naturalRatio || 1.33)) };
         }
-        return { width: 540, height: 360 };
+        return { width: 560, height: 350 };
     }
   };
 
@@ -178,8 +180,9 @@ export const PromoCropperModal = ({
       const naturalW = img.naturalWidth || img.width || 1200;
       const naturalH = img.naturalHeight || img.height || 800;
 
-      // Maintain high resolution export so banner is crisp and clear
-      const scaleMultiplier = Math.max(1, Math.min(3, naturalW / canvasDims.width));
+      // Maintain high resolution export (minimum 1024px width or natural width) so banner is always sharp
+      const minTargetW = 1024;
+      const scaleMultiplier = Math.max(minTargetW / canvasDims.width, naturalW / canvasDims.width, 1.5);
       const targetW = Math.round(canvasDims.width * scaleMultiplier);
       const targetH = Math.round(canvasDims.height * scaleMultiplier);
 
@@ -285,7 +288,7 @@ export const PromoCropperModal = ({
           <ImageIcon className="w-4 h-4 text-indigo-600 shrink-0" />
           <div className="flex-1 leading-tight text-[11px]">
             <span className="font-bold text-indigo-950">Recommended Size: </span>
-            <span className="font-semibold text-slate-600">850 × 500 px (Landscape) or 650 × 800 px (Vertical).</span>
+            <span className="font-semibold text-slate-600">850 × 520 px (Optimal 16:10 Landscape). </span>
             <span className="text-indigo-600 ml-1 font-bold">Tip: Click &quot;Keep Full Image&quot; below to use original full photo without cropping.</span>
           </div>
         </div>
@@ -294,6 +297,7 @@ export const PromoCropperModal = ({
         <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
           <span className="font-semibold text-slate-500 shrink-0">Frame Ratio:</span>
           {[
+            { id: '16:10', label: 'Recommended: 850×520 (16:10)' },
             { id: '16:9', label: 'Landscape (16:9)' },
             { id: '4:3', label: 'Standard (4:3)' },
             { id: '1:1', label: 'Square (1:1)' },
@@ -310,7 +314,7 @@ export const PromoCropperModal = ({
               }}
               className={`px-3 py-1.5 rounded-lg font-bold border transition cursor-pointer shrink-0 ${
                 aspectRatio === ratio.id 
-                  ? 'bg-indigo-50 border-indigo-500 text-indigo-700' 
+                  ? 'bg-indigo-50 border-indigo-500 text-indigo-700 shadow-2xs' 
                   : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
               }`}
             >
