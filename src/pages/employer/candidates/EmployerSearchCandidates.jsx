@@ -4,28 +4,36 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Activity,
   Bookmark,
+  Briefcase,
+  Building2,
+  Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
   ChevronUp,
+  Clock,
   Download,
   Eye,
+  Filter,
+  GraduationCap,
+  IndianRupee,
   Loader,
   Lock,
   MapPin,
   MessageCircle,
   MoreVertical,
+  RotateCcw,
   Search,
   SlidersHorizontal,
+  Sparkles,
   Star,
   Unlock,
   User,
   UserCheck,
   UserPlus,
   Users,
-  Check,
-  Sparkles,
   X
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
@@ -34,25 +42,100 @@ import { downloadBlobResponse, viewBlobResponse } from '../../../utils/downloadF
 import SkillMultiSelectFilter from '../../../components/SkillMultiSelectFilter';
 
 const initialFilters = {
+  // 8 Filters requested by Employer
   search: '',
-  role: '',
-  location: '',
-  experience: '',
-  qualification: '',
-  skill: '',
+  jobTitle: '',
   skills: [],
+  skill: '',
+  minExp: '',
+  maxExp: '',
+  location: '',
   minSalary: '',
   maxSalary: '',
-  notice: '',
-  employmentTypes: [],
-  industry: '',
   gender: '',
-  language: '',
-  company: '',
-  sortBy: '',
-  ageMin: '',
-  ageMax: ''
+  qualification: '',
+  department: '',
+  activity: '',
+  // Sorting & Extra
+  sortBy: ''
 };
+
+const minExpOptions = [
+  { value: '', label: 'Min Exp (Any)' },
+  { value: '0', label: '0 (Fresher)' },
+  { value: '1', label: '1 Year' },
+  { value: '2', label: '2 Years' },
+  { value: '3', label: '3 Years' },
+  { value: '4', label: '4 Years' },
+  { value: '5', label: '5 Years' },
+  { value: '7', label: '7 Years' },
+  { value: '10', label: '10 Years' },
+  { value: '15', label: '15+ Years' }
+];
+
+const maxExpOptions = [
+  { value: '', label: 'Max Exp (Any)' },
+  { value: '1', label: '1 Year' },
+  { value: '2', label: '2 Years' },
+  { value: '3', label: '3 Years' },
+  { value: '5', label: '5 Years' },
+  { value: '7', label: '7 Years' },
+  { value: '10', label: '10 Years' },
+  { value: '15', label: '15 Years' },
+  { value: '20', label: '20+ Years' }
+];
+
+const minSalaryOptions = [
+  { value: '', label: 'Min CTC (Any)' },
+  { value: '1', label: '₹1 LPA' },
+  { value: '2', label: '₹2 LPA' },
+  { value: '3', label: '₹3 LPA' },
+  { value: '5', label: '₹5 LPA' },
+  { value: '7', label: '₹7 LPA' },
+  { value: '10', label: '₹10 LPA' },
+  { value: '15', label: '₹15 LPA' },
+  { value: '20', label: '₹20 LPA' },
+  { value: '25', label: '₹25 LPA' },
+  { value: '30', label: '₹30 LPA' },
+  { value: '50', label: '₹50 LPA' }
+];
+
+const maxSalaryOptions = [
+  { value: '', label: 'Max CTC (Any)' },
+  { value: '2', label: '₹2 LPA' },
+  { value: '3', label: '₹3 LPA' },
+  { value: '5', label: '₹5 LPA' },
+  { value: '7', label: '₹7 LPA' },
+  { value: '10', label: '₹10 LPA' },
+  { value: '15', label: '₹15 LPA' },
+  { value: '20', label: '₹20 LPA' },
+  { value: '25', label: '₹25 LPA' },
+  { value: '30', label: '₹30 LPA' },
+  { value: '50', label: '₹50 LPA' },
+  { value: '75', label: '₹75 LPA' },
+  { value: '100', label: '₹100 LPA' }
+];
+
+const genderOptions = [
+  { value: '', label: 'Any Gender' },
+  { value: 'Male', label: 'Male' },
+  { value: 'Female', label: 'Female' }
+];
+
+const activityOptions = [
+  { value: '', label: 'All Candidates' },
+  { value: '3months', label: 'Active within 3 Months' },
+  { value: '6months', label: 'Active within 6 Months' },
+  { value: '1month', label: 'Active within 30 Days' }
+];
+
+const standardQualifications = [
+  'B.Pharm', 'M.Pharm', 'B.Sc.', 'M.Sc.', 'MBA', 'B.Tech', 'M.Tech', 'B.Com', 'Diploma', 'Ph.D', '12th Pass'
+];
+
+const standardDepartments = [
+  'QA', 'QC', 'Production', 'Regulatory Affairs', 'R&D', 'Packaging', 'HR', 'Pharma', 'Sales & Marketing', 'Healthcare', 'Biotechnology'
+];
 
 const statCards = [
   { key: 'total', title: 'Total', icon: Users, tone: 'bg-violet-50 text-[#6658dd]' },
@@ -216,8 +299,34 @@ const formatInlineSalary = (val) => {
   return str;
 };
 
-const filterLabelClass = 'mb-2 block text-xs font-extrabold text-slate-500';
-const filterControlClass = 'candidate-filter-control h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 outline-none placeholder:font-bold placeholder:text-slate-400 focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100';
+const filterLabelClass = 'mb-1.5 block text-xs font-extrabold text-slate-600';
+const filterControlClass = 'candidate-filter-control h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 outline-none placeholder:font-medium placeholder:text-slate-400 focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100 transition';
+
+const renderActivityBadge = (lastActive, availability) => {
+  if (!lastActive && !availability) return null;
+  const isToday = lastActive?.includes('Today') || lastActive?.includes('Yesterday');
+  const isRecent = isToday || lastActive?.includes('d ago');
+  const badgeClass = isToday
+    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+    : (isRecent ? 'bg-sky-50 text-sky-700 border-sky-200' : 'bg-slate-50 text-slate-700 border-slate-200');
+  const dotClass = isToday ? 'bg-emerald-500 animate-pulse' : (isRecent ? 'bg-sky-500' : 'bg-slate-400');
+
+  return (
+    <div className="space-y-1">
+      {lastActive && (
+        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-extrabold border ${badgeClass}`}>
+          <span className={`h-1.5 w-1.5 rounded-full ${dotClass}`} />
+          <span>{lastActive}</span>
+        </span>
+      )}
+      {availability && (
+        <span className={`block text-[11px] font-bold ${availabilityTone[availability] || 'text-slate-500'}`}>
+          {availability}
+        </span>
+      )}
+    </div>
+  );
+};
 
 const SelectField = ({ label, value, onChange, children, uppercase = false }) => (
   <div>
@@ -300,7 +409,17 @@ export const EmployerSearchCandidates = () => {
   const [filters, setFilters] = useState(() => ({
     ...initialFilters,
     search: searchParams.get('search') || '',
+    jobTitle: searchParams.get('jobTitle') || '',
     location: searchParams.get('location') || '',
+    minExp: searchParams.get('minExp') || '',
+    maxExp: searchParams.get('maxExp') || '',
+    minSalary: searchParams.get('minSalary') || '',
+    maxSalary: searchParams.get('maxSalary') || '',
+    gender: searchParams.get('gender') || '',
+    qualification: searchParams.get('qualification') || '',
+    department: searchParams.get('department') || searchParams.get('industry') || '',
+    activity: searchParams.get('activity') || '',
+    sortBy: searchParams.get('sortBy') || '',
     skills: searchParams.get('skills')
       ? searchParams.get('skills').split(',').map(s => s.trim()).filter(Boolean)
       : (searchParams.get('skill') ? [searchParams.get('skill').trim()] : [])
@@ -314,7 +433,8 @@ export const EmployerSearchCandidates = () => {
     });
     setCurrentPage(1);
   }, [urlSearch]);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
+
+  const [skillsSelectorOpen, setSkillsSelectorOpen] = useState(false);
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [tableSearch, setTableSearch] = useState('');
@@ -388,20 +508,12 @@ export const EmployerSearchCandidates = () => {
     setCurrentPage(1);
   };
 
-  const toggleEmploymentType = (type) => {
-    setFilters((current) => {
-      const exists = current.employmentTypes.includes(type);
-      return { ...current, employmentTypes: exists ? current.employmentTypes.filter((item) => item !== type) : [...current.employmentTypes, type] };
-    });
-    setCurrentPage(1);
-  };
-
   const resetFilters = () => {
     setFilters(initialFilters);
     setTableSearch('');
     setCurrentPage(1);
     const newParams = new URLSearchParams(searchParams);
-    newParams.delete('search');
+    ['search', 'jobTitle', 'skills', 'skill', 'minExp', 'maxExp', 'location', 'minSalary', 'maxSalary', 'gender', 'qualification', 'department', 'activity', 'sortBy'].forEach(k => newParams.delete(k));
     const qs = newParams.toString();
     navigate(qs ? `?${qs}` : window.location.pathname, { replace: true });
   };
@@ -410,12 +522,18 @@ export const EmployerSearchCandidates = () => {
     const params = new URLSearchParams();
     const search = [filters.search, tableSearch].filter(Boolean).join(' ').trim();
     if (search) params.set('search', search);
-    Object.entries(filters).forEach(([key, value]) => {
-      if (key === 'search' || key === 'employmentTypes' || key === 'skills') return;
-      if (value) params.set(key, value);
-    });
+    if (filters.jobTitle) params.set('jobTitle', filters.jobTitle);
     if (filters.skills && filters.skills.length) params.set('skills', filters.skills.join(','));
-    if (filters.employmentTypes.length) params.set('employmentTypes', filters.employmentTypes.join(','));
+    if (filters.minExp) params.set('minExp', filters.minExp);
+    if (filters.maxExp) params.set('maxExp', filters.maxExp);
+    if (filters.location) params.set('location', filters.location);
+    if (filters.minSalary) params.set('minSalary', filters.minSalary);
+    if (filters.maxSalary) params.set('maxSalary', filters.maxSalary);
+    if (filters.gender) params.set('gender', filters.gender);
+    if (filters.qualification) params.set('qualification', filters.qualification);
+    if (filters.department) params.set('department', filters.department);
+    if (filters.activity) params.set('activity', filters.activity);
+    if (filters.sortBy) params.set('sortBy', filters.sortBy);
     params.set('page', String(currentPage));
     params.set('limit', String(pageSize));
     return params.toString();
@@ -444,16 +562,50 @@ export const EmployerSearchCandidates = () => {
   const safePage = pagination.page || 1;
   const startIndex = pagination.total ? (safePage - 1) * pagination.limit : 0;
   const optionFilters = data.filters || {};
-  const employmentOptions = optionFilters.employmentTypes?.length ? optionFilters.employmentTypes : ['Full Time', 'Part Time', 'Contract', 'Internship'];
+
+  const qualificationOptions = useMemo(() => {
+    const list = [...standardQualifications, ...(optionFilters.qualifications || [])];
+    return Array.from(new Set(list.filter(Boolean)));
+  }, [optionFilters.qualifications]);
+
+  const departmentOptions = useMemo(() => {
+    const list = [
+      ...standardDepartments,
+      ...(optionFilters.industries || []),
+      ...(optionFilters.departments || []),
+      ...(optionFilters.roles || [])
+    ];
+    return Array.from(new Set(list.filter(Boolean)));
+  }, [optionFilters.industries, optionFilters.departments, optionFilters.roles]);
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (filters.search) count++;
+    if (filters.jobTitle) count++;
+    if (filters.skills && filters.skills.length > 0) count += filters.skills.length;
+    if (filters.minExp || filters.maxExp) count++;
+    if (filters.location) count++;
+    if (filters.minSalary || filters.maxSalary) count++;
+    if (filters.gender) count++;
+    if (filters.qualification) count++;
+    if (filters.department) count++;
+    if (filters.activity) count++;
+    return count;
+  }, [filters]);
+
+  const hasActiveFilters = activeFilterCount > 0;
   const goToPage = (page) => setCurrentPage(Math.min(Math.max(page, 1), totalPages));
   const visibleRows = data.candidates || [];
-  const hasActiveFilters = Object.values(filters).some((value) => Array.isArray(value) ? value.length > 0 : Boolean(value)) || Boolean(tableSearch);
 
   return (
     <div className="space-y-4 px-3 sm:space-y-5 sm:px-0">
       <div className="flex flex-col justify-between gap-2 md:flex-row md:items-center md:gap-3">
         <h1 className="text-lg font-extrabold text-[#3f4254] sm:text-xl">Candidates</h1>
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-400 sm:text-sm"><span className="text-[#3f4254]">JobsWaale</span><ChevronRight className="h-4 w-4" /><span>Candidates</span></div>
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-400 sm:text-sm">
+          <span className="text-[#3f4254]">JobsWaale</span>
+          <ChevronRight className="h-4 w-4" />
+          <span>Candidates</span>
+        </div>
       </div>
 
       {error && <div className="rounded-md border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{error}</div>}
@@ -462,30 +614,72 @@ export const EmployerSearchCandidates = () => {
         {statCards.map((card) => (
           <section key={card.key} className="rounded-md border border-slate-100 bg-white p-3 shadow-sm sm:p-5">
             <div className="flex items-center gap-2 sm:gap-4">
-              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${card.tone}`}><card.icon className="h-4 w-4 sm:h-5 sm:w-5" /></span>
-              <div className="min-w-0"><p className="truncate text-xs font-semibold text-slate-400 sm:text-sm">{card.title}</p><p className="mt-1 text-base font-black text-[#3f4254] sm:text-xl">{Number(data.stats?.[card.key] || 0).toLocaleString('en-IN')}</p></div>
+              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${card.tone}`}>
+                <card.icon className="h-4 w-4 sm:h-5 sm:w-5" />
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-xs font-semibold text-slate-400 sm:text-sm">{card.title}</p>
+                <p className="mt-1 text-base font-black text-[#3f4254] sm:text-xl">
+                  {Number(data.stats?.[card.key] || 0).toLocaleString('en-IN')}
+                </p>
+              </div>
             </div>
           </section>
         ))}
       </div>
 
-      <section className="rounded-md border border-slate-100 bg-white shadow-sm">
-        <div className="flex flex-col justify-between gap-4 border-b border-dashed border-slate-200 px-4 py-4 sm:px-5 lg:flex-row lg:items-center">
-          <div><h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Search Candidates</h2><p className="mt-1 text-xs font-semibold text-slate-400 sm:text-sm">Search, filter, and discover candidates from the talent pool. Save profiles for later review.</p></div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => setAdvancedOpen((current) => !current)} className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#6658dd] px-4 text-sm font-extrabold text-white transition hover:bg-[#5848d8]"><SlidersHorizontal className="h-4 w-4" />{advancedOpen ? 'Hide Advanced Filters' : 'Advanced Filters'}</button>
-            <button type="button" className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-slate-100 px-4 text-sm font-extrabold text-slate-600 transition hover:bg-slate-200"><Bookmark className="h-4 w-4" />Save Search</button>
+      <section className="rounded-xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
+        {/* Section Header */}
+        <div className="flex flex-col justify-between gap-4 border-b border-slate-100 bg-gradient-to-r from-slate-50/80 via-white to-indigo-50/20 px-5 py-4 lg:flex-row lg:items-center">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-base font-extrabold text-[#3f4254] sm:text-lg">Search Candidates</h2>
+              <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-black text-[#6658dd] border border-indigo-100 shadow-xs">
+                <Sparkles className="h-3 w-3" />
+                8 Search Filters
+              </span>
+            </div>
+            <p className="mt-1 text-xs font-semibold text-slate-400 sm:text-sm">
+              Combine job title & skills, experience, location, salary, gender, qualification, department, and activity to find matching candidates.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 text-xs font-extrabold text-rose-600 transition hover:bg-rose-100 cursor-pointer shadow-xs"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                Reset Filters ({activeFilterCount})
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setSkillsSelectorOpen((prev) => !prev)}
+              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 text-xs font-extrabold text-[#6658dd] transition hover:bg-indigo-100 cursor-pointer shadow-xs"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              {skillsSelectorOpen ? 'Hide Skill Tags' : '+ Multi-Select Skills'}
+            </button>
           </div>
         </div>
 
         <div className="p-4 sm:p-5">
-          <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.45fr_1fr_1fr_1fr_1fr_auto]">
+          {/* 8 Filters Grid: 4 columns on large screens, 2 columns on tablet, 1 column on mobile */}
+          <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Filter 1: Job Title & Job Skills */}
             <div>
-              <label className={filterLabelClass}>Search Candidate</label>
+              <label className={filterLabelClass}>
+                <span className="flex items-center gap-1.5 text-slate-700">
+                  <Briefcase className="h-3.5 w-3.5 text-[#6658dd]" />
+                  <span>1. Job Title & Skills</span>
+                </span>
+              </label>
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
-                  className={`${filterControlClass} py-2 pl-9 pr-3`}
+                  className={`${filterControlClass} py-2 pl-9 pr-8`}
                   value={filters.search}
                   onChange={(event) => {
                     const val = event.target.value;
@@ -499,28 +693,242 @@ export const EmployerSearchCandidates = () => {
                     const qs = newParams.toString();
                     navigate(qs ? `?${qs}` : window.location.pathname, { replace: true });
                   }}
-                  placeholder="Skills, title, name, company"
+                  placeholder="e.g. QA, QC, React, HPLC"
                 />
+                {filters.search && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilter('search', '');
+                      const newParams = new URLSearchParams(searchParams);
+                      newParams.delete('search');
+                      const qs = newParams.toString();
+                      navigate(qs ? `?${qs}` : window.location.pathname, { replace: true });
+                    }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
               </div>
             </div>
-            <SelectField label="Job Role" value={filters.role} onChange={(value) => setFilter('role', value)}><option value="">All Roles</option>{(optionFilters.roles || []).map((item) => <option key={item}>{item}</option>)}</SelectField>
-            <div><label className={filterLabelClass}>Location</label><input className={filterControlClass} value={filters.location} onChange={(event) => setFilter('location', event.target.value)} placeholder="City, State" /></div>
-            <SelectField label="Experience" value={filters.experience} onChange={(value) => setFilter('experience', value)}><option value="">All Experience</option>{(optionFilters.experiences || ['Fresher', '1 - 2 Years', '2 - 5 Years', '5+ Years']).map((item) => <option key={item}>{item}</option>)}</SelectField>
-            <SelectField label="Qualification" value={filters.qualification} onChange={(value) => setFilter('qualification', value)}><option value="">All Qualifications</option>{(optionFilters.qualifications || []).map((item) => <option key={item}>{item}</option>)}</SelectField>
-            <div className="flex items-end"><ClearFilterButton active={hasActiveFilters} onClick={resetFilters} /></div>
+
+            {/* Filter 2: Experience: Minimum and Maximum */}
+            <div>
+              <label className={filterLabelClass}>
+                <span className="flex items-center gap-1.5 text-slate-700">
+                  <Clock className="h-3.5 w-3.5 text-[#6658dd]" />
+                  <span>2. Experience (Min - Max)</span>
+                </span>
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <select
+                  value={filters.minExp}
+                  onChange={(e) => setFilter('minExp', e.target.value)}
+                  className={filterControlClass}
+                >
+                  {minExpOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+                <select
+                  value={filters.maxExp}
+                  onChange={(e) => setFilter('maxExp', e.target.value)}
+                  className={filterControlClass}
+                >
+                  {maxExpOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Filter 3: Location: Candidate's Current Location */}
+            <div>
+              <label className={filterLabelClass}>
+                <span className="flex items-center gap-1.5 text-slate-700">
+                  <MapPin className="h-3.5 w-3.5 text-[#6658dd]" />
+                  <span>3. Current Location</span>
+                </span>
+              </label>
+              <div className="relative">
+                <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  className={`${filterControlClass} pl-9 pr-8`}
+                  value={filters.location}
+                  onChange={(event) => setFilter('location', event.target.value)}
+                  placeholder="City, State (e.g. Mumbai, Baddi)"
+                />
+                {filters.location && (
+                  <button
+                    type="button"
+                    onClick={() => setFilter('location', '')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Filter 4: Salary: Minimum and Maximum */}
+            <div>
+              <label className={filterLabelClass}>
+                <span className="flex items-center gap-1.5 text-slate-700">
+                  <IndianRupee className="h-3.5 w-3.5 text-[#6658dd]" />
+                  <span>4. Salary (Min - Max LPA)</span>
+                </span>
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <select
+                  value={filters.minSalary}
+                  onChange={(e) => setFilter('minSalary', e.target.value)}
+                  className={filterControlClass}
+                >
+                  {minSalaryOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+                <select
+                  value={filters.maxSalary}
+                  onChange={(e) => setFilter('maxSalary', e.target.value)}
+                  className={filterControlClass}
+                >
+                  {maxSalaryOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Filter 5: Gender: Male, Female, Any */}
+            <div>
+              <label className={filterLabelClass}>
+                <span className="flex items-center gap-1.5 text-slate-700">
+                  <User className="h-3.5 w-3.5 text-[#6658dd]" />
+                  <span>5. Gender</span>
+                </span>
+              </label>
+              <select
+                value={filters.gender}
+                onChange={(e) => setFilter('gender', e.target.value)}
+                className={filterControlClass}
+              >
+                {genderOptions.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Filter 6: Qualification: B.Pharm, M.Pharm, B.Sc., MBA, etc. */}
+            <div>
+              <label className={filterLabelClass}>
+                <span className="flex items-center gap-1.5 text-slate-700">
+                  <GraduationCap className="h-3.5 w-3.5 text-[#6658dd]" />
+                  <span>6. Qualification</span>
+                </span>
+              </label>
+              <select
+                value={filters.qualification}
+                onChange={(e) => setFilter('qualification', e.target.value)}
+                className={filterControlClass}
+              >
+                <option value="">All Qualifications</option>
+                {qualificationOptions.map(q => (
+                  <option key={q} value={q}>{q}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Filter 7: Department / Industry: QA, QC, Production, HR, Pharma, etc. */}
+            <div>
+              <label className={filterLabelClass}>
+                <span className="flex items-center gap-1.5 text-slate-700">
+                  <Building2 className="h-3.5 w-3.5 text-[#6658dd]" />
+                  <span>7. Department / Industry</span>
+                </span>
+              </label>
+              <select
+                value={filters.department}
+                onChange={(e) => setFilter('department', e.target.value)}
+                className={filterControlClass}
+              >
+                <option value="">All Departments / Industries</option>
+                {departmentOptions.map(d => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Filter 8: Candidate Activity: Active within 3 months, 6 months, or All Candidates */}
+            <div>
+              <label className={filterLabelClass}>
+                <span className="flex items-center gap-1.5 text-slate-700">
+                  <Activity className="h-3.5 w-3.5 text-[#6658dd]" />
+                  <span>8. Candidate Activity</span>
+                </span>
+              </label>
+              <select
+                value={filters.activity}
+                onChange={(e) => setFilter('activity', e.target.value)}
+                className={filterControlClass}
+              >
+                {activityOptions.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          {filters.skills && filters.skills.length > 0 && (
-            <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg bg-indigo-50/70 p-2.5 border border-indigo-100">
-              <span className="text-xs font-black text-[#6658dd] flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5" />
-                Filtered by Skills (All {filters.skills.length} must match):
+          {/* Optional Multi-Select Skills Drawer */}
+          {skillsSelectorOpen && (
+            <div className="mt-4 rounded-xl border border-indigo-200 bg-indigo-50/40 p-4 shadow-inner">
+              <SkillMultiSelectFilter
+                label="Multi-Select Skills from Talent Pool (AND Logic)"
+                selectedSkills={filters.skills || []}
+                onChange={(nextSkills) => {
+                  setFilter('skills', nextSkills);
+                  setFilter('skill', nextSkills.join(','));
+                }}
+                fallbackSkills={optionFilters.skills || []}
+              />
+            </div>
+          )}
+
+          {/* Active Filter Chips Bar */}
+          {hasActiveFilters && (
+            <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-indigo-100 bg-indigo-50/50 p-3">
+              <span className="text-xs font-black text-[#6658dd] flex items-center gap-1.5 mr-1">
+                <Filter className="h-3.5 w-3.5" />
+                Active Filters ({activeFilterCount}):
               </span>
-              {filters.skills.map(skill => (
+
+              {filters.search && (
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-indigo-200 px-2.5 py-1 text-xs font-bold text-slate-700 shadow-xs">
+                  <span className="text-slate-400">Title/Skills:</span>
+                  <span className="text-[#6658dd] font-black">{filters.search}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilter('search', '');
+                      const newParams = new URLSearchParams(searchParams);
+                      newParams.delete('search');
+                      const qs = newParams.toString();
+                      navigate(qs ? `?${qs}` : window.location.pathname, { replace: true });
+                    }}
+                    className="text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+
+              {filters.skills && filters.skills.map((skill) => (
                 <span
                   key={skill}
-                  className="inline-flex items-center gap-1 rounded-md bg-[#6658dd] px-2.5 py-0.5 text-xs font-extrabold text-white shadow-xs"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#6658dd] px-2.5 py-1 text-xs font-black text-white shadow-xs"
                 >
+                  <Sparkles className="h-3 w-3" />
                   <span>{skill}</span>
                   <button
                     type="button"
@@ -529,69 +937,174 @@ export const EmployerSearchCandidates = () => {
                       setFilter('skills', next);
                       setFilter('skill', next.join(','));
                     }}
-                    className="text-indigo-200 hover:text-white cursor-pointer"
-                    aria-label={`Remove ${skill}`}
+                    className="text-indigo-200 hover:text-white transition cursor-pointer"
                   >
                     <X className="h-3 w-3" />
                   </button>
                 </span>
               ))}
+
+              {(filters.minExp || filters.maxExp) && (
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-indigo-200 px-2.5 py-1 text-xs font-bold text-slate-700 shadow-xs">
+                  <span className="text-slate-400">Exp:</span>
+                  <span className="text-[#6658dd] font-black">
+                    {filters.minExp ? `${filters.minExp} Yrs` : '0'} - {filters.maxExp ? `${filters.maxExp} Yrs` : 'Any'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilter('minExp', '');
+                      setFilter('maxExp', '');
+                    }}
+                    className="text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+
+              {filters.location && (
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-indigo-200 px-2.5 py-1 text-xs font-bold text-slate-700 shadow-xs">
+                  <span className="text-slate-400">Location:</span>
+                  <span className="text-[#6658dd] font-black">{filters.location}</span>
+                  <button
+                    type="button"
+                    onClick={() => setFilter('location', '')}
+                    className="text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+
+              {(filters.minSalary || filters.maxSalary) && (
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-indigo-200 px-2.5 py-1 text-xs font-bold text-slate-700 shadow-xs">
+                  <span className="text-slate-400">CTC:</span>
+                  <span className="text-[#6658dd] font-black">
+                    ₹{filters.minSalary || '0'} - ₹{filters.maxSalary ? `${filters.maxSalary} LPA` : 'Any'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilter('minSalary', '');
+                      setFilter('maxSalary', '');
+                    }}
+                    className="text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+
+              {filters.gender && (
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-indigo-200 px-2.5 py-1 text-xs font-bold text-slate-700 shadow-xs">
+                  <span className="text-slate-400">Gender:</span>
+                  <span className="text-[#6658dd] font-black">{filters.gender}</span>
+                  <button
+                    type="button"
+                    onClick={() => setFilter('gender', '')}
+                    className="text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+
+              {filters.qualification && (
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-indigo-200 px-2.5 py-1 text-xs font-bold text-slate-700 shadow-xs">
+                  <span className="text-slate-400">Qual:</span>
+                  <span className="text-[#6658dd] font-black">{filters.qualification}</span>
+                  <button
+                    type="button"
+                    onClick={() => setFilter('qualification', '')}
+                    className="text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+
+              {filters.department && (
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-indigo-200 px-2.5 py-1 text-xs font-bold text-slate-700 shadow-xs">
+                  <span className="text-slate-400">Dept:</span>
+                  <span className="text-[#6658dd] font-black">{filters.department}</span>
+                  <button
+                    type="button"
+                    onClick={() => setFilter('department', '')}
+                    className="text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+
+              {filters.activity && (
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-indigo-200 px-2.5 py-1 text-xs font-bold text-slate-700 shadow-xs">
+                  <span className="text-slate-400">Activity:</span>
+                  <span className="text-[#6658dd] font-black">
+                    {filters.activity === '3months' ? 'Active in 3 Months' : (filters.activity === '6months' ? 'Active in 6 Months' : 'Active in 30 Days')}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setFilter('activity', '')}
+                    className="text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+
               {loading && (
-                <span className="inline-flex items-center gap-1.5 rounded-md border border-indigo-200 bg-white px-2.5 py-0.5 text-xs font-black text-[#6658dd] shadow-xs animate-pulse">
+                <span className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-white px-2.5 py-1 text-xs font-black text-[#6658dd] shadow-xs animate-pulse">
                   <Loader className="h-3 w-3 animate-spin text-[#6658dd]" />
                   <span>Searching...</span>
                 </span>
               )}
+
               <button
                 type="button"
-                onClick={() => {
-                  setFilter('skills', []);
-                  setFilter('skill', '');
-                }}
-                className="text-xs font-bold text-rose-600 hover:text-rose-700 underline cursor-pointer ml-auto"
+                onClick={resetFilters}
+                className="ml-auto text-xs font-black text-rose-600 hover:text-rose-700 underline cursor-pointer"
               >
-                Clear Skills
+                Clear All
               </button>
             </div>
           )}
 
-          {advancedOpen && (
-            <div className="advanced-filter-panel mb-5 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:p-5">
-              <div className="mb-5 flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h3 className="flex items-center gap-2 text-sm font-extrabold text-[#3f4254]"><SlidersHorizontal className="h-4 w-4" />Advanced Filters</h3>
-                  <p className="mt-1 text-xs font-semibold text-slate-500">Refine candidates with profile, salary, and availability filters.</p>
-                </div>
-                <ClearFilterButton active={hasActiveFilters} onClick={resetFilters} className="h-9 text-xs sm:w-auto" label="Clear All Filters" />
+          <div className="mb-3 mt-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-600">
+                <select
+                  value={pageSize}
+                  onChange={(event) => { setPageSize(Number(event.target.value)); setCurrentPage(1); }}
+                  className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold"
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                </select>
+                <span>entries per page</span>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <div className="sm:col-span-2 xl:col-span-2">
-                  <SkillMultiSelectFilter
-                    label="Search by Skill"
-                    selectedSkills={filters.skills || []}
-                    onChange={(nextSkills) => {
-                      setFilter('skills', nextSkills);
-                      setFilter('skill', nextSkills.join(','));
-                    }}
-                    fallbackSkills={optionFilters.skills || []}
-                  />
-                </div>
-                <SelectField uppercase label="Min Salary (LPA)" value={filters.minSalary} onChange={(value) => setFilter('minSalary', value)}><option value="">No Min</option>{[3, 5, 10, 15, 20, 25, 30, 50].map((value) => <option key={value}>{value}</option>)}</SelectField>
-                <SelectField uppercase label="Max Salary (LPA)" value={filters.maxSalary} onChange={(value) => setFilter('maxSalary', value)}><option value="">No Max</option>{[5, 10, 15, 20, 25, 30, 50, 100].map((value) => <option key={value}>{value}</option>)}</SelectField>
-                <SelectField uppercase label="Notice Period" value={filters.notice} onChange={(value) => setFilter('notice', value)}><option value="">Any</option>{['Immediate', '15 Days', '30 Days', '60 Days', '90 Days'].map((item) => <option key={item}>{item}</option>)}</SelectField>
-                <div><label className={`${filterLabelClass} uppercase tracking-wide`}>Employment Type</label><div className="grid grid-cols-2 gap-2 text-sm font-semibold text-slate-600">{employmentOptions.map((type) => <label key={type} className="candidate-check-option flex min-h-10 items-center gap-2 rounded-md border border-slate-200 bg-white px-3"><input type="checkbox" checked={filters.employmentTypes.includes(type)} onChange={() => toggleEmploymentType(type)} className="h-4 w-4 rounded border-slate-200 text-[#6658dd] focus:ring-[#6658dd]" /><span className="truncate">{type}</span></label>)}</div></div>
-                <SelectField uppercase label="Industry" value={filters.industry} onChange={(value) => setFilter('industry', value)}><option value="">All Industries</option>{(optionFilters.industries || []).map((item) => <option key={item}>{item}</option>)}</SelectField>
-                <SelectField uppercase label="Gender" value={filters.gender} onChange={(value) => setFilter('gender', value)}><option value="">Any</option>{['Male', 'Female', 'Other'].map((item) => <option key={item}>{item}</option>)}</SelectField>
-                <SelectField uppercase label="Languages" value={filters.language} onChange={(value) => setFilter('language', value)}><option value="">All Languages</option></SelectField>
-                <div><label className={`${filterLabelClass} uppercase tracking-wide`}>Current Company</label><input className={filterControlClass} value={filters.company} onChange={(event) => setFilter('company', event.target.value)} placeholder="Company name" /></div>
-                <SelectField uppercase label="Sort By" value={filters.sortBy} onChange={(value) => setFilter('sortBy', value)}><option value="">Relevance</option><option>Experience (High to Low)</option><option>Experience (Low to High)</option><option>Salary (High to Low)</option><option>Salary (Low to High)</option><option>Newest First</option></SelectField>
-              </div>
+              <span className="text-xs font-bold text-slate-400">
+                • Total: <span className="font-extrabold text-slate-700">{Number(pagination.total || 0).toLocaleString('en-IN')}</span> candidates
+              </span>
             </div>
-          )}
 
-          <div className="mb-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-            <div className="flex items-center gap-2 text-sm font-semibold text-slate-600"><select value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setCurrentPage(1); }} className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold"><option value={10}>10</option><option value={25}>25</option><option value={50}>50</option></select>entries per page</div>
-            {/* <label className="flex items-center gap-2 text-sm font-bold text-slate-600">Search:<input value={tableSearch} onChange={(event) => { setTableSearch(event.target.value); setCurrentPage(1); }} className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-bold placeholder:font-bold outline-none focus:border-[#6658dd] focus:ring-2 focus:ring-indigo-100 sm:w-48" placeholder="Search..." /></label> */}
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-extrabold text-slate-500 whitespace-nowrap">Sort By:</label>
+              <select
+                value={filters.sortBy}
+                onChange={(e) => setFilter('sortBy', e.target.value)}
+                className={filterControlClass}
+                style={{ width: 'auto' }}
+              >
+                <option value="">Experience (High to Low)</option>
+                <option value="Experience (Low to High)">Experience (Low to High)</option>
+                <option value="Salary (High to Low)">Salary (High to Low)</option>
+                <option value="Salary (Low to High)">Salary (Low to High)</option>
+                <option value="Newest First">Newest / Recently Active</option>
+              </select>
+            </div>
           </div>
 
           {/* Card list — mobile only */}
@@ -607,16 +1120,34 @@ export const EmployerSearchCandidates = () => {
             ) : visibleRows.length ? visibleRows.map((candidate) => (
               <div key={candidate.id} className="p-4">
                 <div className="flex items-start gap-3">
-                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${candidate.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>{candidate.initials}</span>
+                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${candidate.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white shadow-xs`}>
+                    {candidate.initials}
+                  </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <Link to={`/employer/candidateProfile/${candidate.id}`} className="truncate text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{candidate.name}</Link>
+                      <Link to={`/employer/candidateProfile/${candidate.id}`} className="truncate text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">
+                        {candidate.name}
+                      </Link>
+                      {candidate.gender && candidate.gender !== 'Not specified' && (
+                        <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">
+                          {candidate.gender}
+                        </span>
+                      )}
                       {candidate.isApplied && (
-                        <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">Applicant</span>
+                        <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">
+                          Applicant
+                        </span>
                       )}
                     </div>
+                    {(candidate.designation || candidate.role) && (
+                      <p className="text-xs font-bold text-[#6658dd] mt-0.5 truncate">
+                        {candidate.designation || candidate.role}
+                      </p>
+                    )}
                     {candidate.isUnlocked ? (
-                      <p className="mt-0.5 truncate text-xs font-semibold text-slate-500">{[candidate.email, candidate.phone].filter(Boolean).join(' • ') || 'No contact info'}</p>
+                      <p className="mt-0.5 truncate text-xs font-semibold text-slate-500">
+                        {[candidate.email, candidate.phone].filter(Boolean).join(' • ') || 'No contact info'}
+                      </p>
                     ) : (
                       <button
                         type="button"
@@ -628,16 +1159,22 @@ export const EmployerSearchCandidates = () => {
                         <span>{candidate.email || 'Hidden (Unlock to View)'}</span>
                       </button>
                     )}
-                    <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><MapPin className="h-3 w-3 shrink-0" />{candidate.location}</p>
+                    <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400">
+                      <MapPin className="h-3 w-3 shrink-0" />
+                      {candidate.location}
+                    </p>
                   </div>
-                  <span className={`shrink-0 rounded px-2 py-1 text-[11px] font-black ${availabilityTone[candidate.availability] || availabilityTone.Immediate}`}>{candidate.availability}</span>
+                  <div className="shrink-0 text-right">
+                    {renderActivityBadge(candidate.lastActive, candidate.availability)}
+                  </div>
                 </div>
 
                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs font-semibold text-slate-500">
                   <p className="truncate"><span className="text-slate-400">Experience:</span> {candidate.experience}</p>
                   <p className="truncate"><span className="text-slate-400">Qualification:</span> {candidate.qualification || '-'}</p>
+                  <p className="truncate"><span className="text-slate-400">Department:</span> {candidate.industry || candidate.role || '-'}</p>
                   <p className="truncate"><span className="text-slate-400">Current CTC:</span> <span className="font-semibold text-slate-700">{formatInlineSalary(candidate.currentSalary)}</span></p>
-                  <p className="truncate"><span className="text-slate-400">Expected CTC:</span> <span className="font-bold text-[#0047C7]">{formatInlineSalary(candidate.expectedSalary)}</span></p>
+                  <p className="col-span-2 truncate"><span className="text-slate-400">Expected CTC:</span> <span className="font-bold text-[#0047C7]">{formatInlineSalary(candidate.expectedSalary)}</span></p>
                 </div>
 
                 {candidate.skills && candidate.skills.length > 0 && (
@@ -678,41 +1215,70 @@ export const EmployerSearchCandidates = () => {
                 </div>
               </div>
             )) : (
-              <p className="px-4 py-12 text-center text-sm font-bold text-slate-400">No candidates found.</p>
+              <p className="px-4 py-12 text-center text-sm font-bold text-slate-400">No candidates found matching your filter criteria.</p>
             )}
           </div>
 
           {/* Table — sm and up */}
           <div className="hidden overflow-x-auto sm:block">
-            <table className="w-full min-w-[1080px] text-left">
-              <thead className="bg-[#dbe6f6] text-[11px] uppercase text-slate-600"><tr><th className="px-5 py-3">Candidate</th><th className="px-5 py-3">Experience</th><th className="px-5 py-3"><span className="inline-flex items-center gap-1">Qualification <ChevronUp className="h-3 w-3 text-slate-400" /></span></th><th className="px-5 py-3">Current CTC</th><th className="px-5 py-3">Expected CTC</th><th className="px-5 py-3">Availability</th><th className="px-5 py-3 text-center">Action</th></tr></thead>
+            <table className="w-full min-w-[1100px] text-left">
+              <thead className="bg-[#dbe6f6] text-[11px] uppercase text-slate-600">
+                <tr>
+                  <th className="px-5 py-3">Candidate</th>
+                  <th className="px-4 py-3">Experience</th>
+                  <th className="px-4 py-3">Qualification</th>
+                  <th className="px-4 py-3">Department</th>
+                  <th className="px-4 py-3">Current CTC</th>
+                  <th className="px-4 py-3">Expected CTC</th>
+                  <th className="px-4 py-3">Activity & Status</th>
+                  <th className="px-5 py-3 text-center">Action</th>
+                </tr>
+              </thead>
               <tbody className="divide-y divide-slate-100">
                 {loading ? (
                   <tr>
-                    <td colSpan="7" className="px-5 py-16 text-center">
+                    <td colSpan="8" className="px-5 py-16 text-center">
                       <div className="flex flex-col items-center justify-center gap-2">
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-[#6658dd]">
                           <Loader className="h-6 w-6 animate-spin text-[#6658dd]" />
                         </div>
                         <p className="text-sm font-extrabold text-[#3f4254]">Filtering Candidates...</p>
-                        <p className="text-xs font-semibold text-slate-400">Loading candidates matching your criteria</p>
+                        <p className="text-xs font-semibold text-slate-400">Loading candidates matching your filter criteria</p>
                       </div>
                     </td>
                   </tr>
                 ) : visibleRows.length ? visibleRows.map((candidate) => (
                   <tr key={candidate.id} className="transition hover:bg-slate-50">
                     <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-3">
-                        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${candidate.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white`}>{candidate.initials}</span>
+                      <div className="flex items-start gap-3">
+                        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${candidate.avatarTone} text-xs font-black text-slate-700 ring-2 ring-white shadow-xs`}>
+                          {candidate.initials}
+                        </span>
                         <div>
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <Link to={`/employer/candidateProfile/${candidate.id}`} className="text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">{candidate.name}</Link>
+                            <Link to={`/employer/candidateProfile/${candidate.id}`} className="text-sm font-extrabold text-[#3f4254] hover:text-[#6658dd]">
+                              {candidate.name}
+                            </Link>
+                            {candidate.gender && candidate.gender !== 'Not specified' && (
+                              <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">
+                                {candidate.gender}
+                              </span>
+                            )}
                             {candidate.isApplied && (
-                              <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">Applicant</span>
+                              <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">
+                                Applicant
+                              </span>
                             )}
                           </div>
+                          {(candidate.designation || candidate.role) && (
+                            <p className="text-xs font-bold text-[#6658dd] mt-0.5">
+                              {candidate.designation || candidate.role}
+                            </p>
+                          )}
                           {candidate.isUnlocked ? (
-                            <p className="mt-0.5 text-xs font-semibold text-slate-500">{[candidate.email, candidate.phone].filter(Boolean).join(' • ') || 'No contact info'}</p>
+                            <p className="mt-0.5 text-xs font-semibold text-slate-500">
+                              {[candidate.email, candidate.phone].filter(Boolean).join(' • ') || 'No contact info'}
+                            </p>
                           ) : (
                             <button
                               type="button"
@@ -724,7 +1290,10 @@ export const EmployerSearchCandidates = () => {
                               <span>{candidate.email || 'Hidden (Unlock to View)'}</span>
                             </button>
                           )}
-                          <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400"><MapPin className="h-3 w-3" />{candidate.location}</p>
+                          <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-400">
+                            <MapPin className="h-3 w-3" />
+                            {candidate.location}
+                          </p>
                           {candidate.skills && candidate.skills.length > 0 && (
                             <div className="mt-1.5 flex flex-wrap gap-1 max-w-[280px]">
                               {candidate.skills.slice(0, 4).map(skill => {
@@ -752,11 +1321,20 @@ export const EmployerSearchCandidates = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-3.5 text-xs font-semibold text-slate-600">{candidate.experience}</td>
-                    <td className="px-5 py-3.5 text-xs font-semibold text-slate-600">{candidate.qualification || '-'}</td>
-                    <td className="px-5 py-3.5">{renderCandidateSalaryCell(candidate.currentSalary, false)}</td>
-                    <td className="px-5 py-3.5">{renderCandidateSalaryCell(candidate.expectedSalary, true)}</td>
-                    <td className="px-5 py-3.5"><span className={`inline-flex rounded px-2.5 py-1 text-xs font-black ${availabilityTone[candidate.availability] || availabilityTone.Immediate}`}>{candidate.availability}</span></td>
+                    <td className="px-4 py-3.5 text-xs font-semibold text-slate-600 whitespace-nowrap">
+                      {candidate.experience}
+                    </td>
+                    <td className="px-4 py-3.5 text-xs font-semibold text-slate-600">
+                      {candidate.qualification || '-'}
+                    </td>
+                    <td className="px-4 py-3.5 text-xs font-semibold text-slate-600">
+                      {candidate.industry || candidate.role || '-'}
+                    </td>
+                    <td className="px-4 py-3.5">{renderCandidateSalaryCell(candidate.currentSalary, false)}</td>
+                    <td className="px-4 py-3.5">{renderCandidateSalaryCell(candidate.expectedSalary, true)}</td>
+                    <td className="px-4 py-3.5">
+                      {renderActivityBadge(candidate.lastActive, candidate.availability)}
+                    </td>
                     <td className="relative px-5 py-3.5 text-center">
                       <CandidateActions
                         candidate={candidate}
@@ -769,7 +1347,13 @@ export const EmployerSearchCandidates = () => {
                       />
                     </td>
                   </tr>
-                )) : <tr><td colSpan="7" className="px-5 py-12 text-center text-sm font-bold text-slate-400">No candidates found.</td></tr>}
+                )) : (
+                  <tr>
+                    <td colSpan="8" className="px-5 py-12 text-center text-sm font-bold text-slate-400">
+                      No candidates found matching your filter criteria.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
