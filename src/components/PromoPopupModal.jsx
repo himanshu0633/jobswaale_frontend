@@ -72,13 +72,12 @@ export const PromoPopupModal = ({
   const location = useLocation();
   const [activeBanner, setActiveBanner] = useState(previewBanner || null);
   const [isOpen, setIsOpen] = useState(forcePreview);
-  const [imageAspectRatio, setImageAspectRatio] = useState(null);
   const [viewportDims, setViewportDims] = useState({
     w: typeof window !== 'undefined' ? window.innerWidth : 1200,
     h: typeof window !== 'undefined' ? window.innerHeight : 800
   });
 
-  // Track viewport dimensions for responsive edge-to-edge modal wrapping
+  // Track viewport dimensions for responsive padding
   useEffect(() => {
     const handleResize = () => {
       setViewportDims({ w: window.innerWidth, h: window.innerHeight });
@@ -86,11 +85,6 @@ export const PromoPopupModal = ({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  // Reset aspect ratio when the banner image changes
-  useEffect(() => {
-    setImageAspectRatio(null);
-  }, [activeBanner?.image]);
 
   // Handle preview mode or evaluate banner based on current route
   useEffect(() => {
@@ -259,7 +253,7 @@ export const PromoPopupModal = ({
   const handleActionClick = () => {
     handleClose();
     const link = activeBanner?.buttonLink || '/employer/subscription';
-    if (/^https?:\/\//i.test(link)) {
+    if (/^https?:\/\//i.test(link) || forcePreview) {
       window.open(link, '_blank', 'noopener,noreferrer');
     } else {
       navigate(link);
@@ -268,33 +262,22 @@ export const PromoPopupModal = ({
 
   if (!isOpen || !activeBanner?.image) return null;
 
-  // Sizing styles
+  // Sizing styles: respect configured banner width directly without locking to arbitrary px
   const rawWidth = String(activeBanner.width || '850px').trim();
   const rawHeight = String(activeBanner.height || 'auto').trim();
   const parsedWidthNum = parseInt(rawWidth, 10) || 850;
+  const modalWidth = rawWidth.includes('px') || rawWidth.includes('%') || rawWidth.includes('rem') 
+    ? rawWidth 
+    : `${rawWidth}px`;
   const modalMaxHeight = rawHeight === 'auto' ? '85vh' : (rawHeight.includes('px') ? rawHeight : `${rawHeight}px`);
 
   const buttonText = activeBanner.buttonText || 'Upgrade Plan';
   const showButton = activeBanner.buttonEnabled !== false && Boolean(buttonText.trim());
 
-  const handleImageLoad = (e) => {
-    const { naturalWidth, naturalHeight } = e.target;
-    if (naturalWidth && naturalHeight && naturalHeight > 0) {
-      setImageAspectRatio(naturalWidth / naturalHeight);
-    }
-  };
-
   // Compute responsive maximum image height based on viewport
   const maxAvailableImgHeight = Math.max(240, viewportDims.h * 0.86 - (showButton ? 120 : 65));
-
-  // Determine optimal modal width: snugly hugs image aspect ratio so Banner 2/3/etc. look identical to Banner 1
-  const effectiveRatio = imageAspectRatio || (850 / 520);
-  let computedModalWidth = parsedWidthNum;
-  if (rawHeight === 'auto') {
-    const widthConstrainedByHeight = Math.round(maxAvailableImgHeight * effectiveRatio);
-    computedModalWidth = Math.min(parsedWidthNum, widthConstrainedByHeight);
-  }
-  const finalModalWidthPx = Math.min(computedModalWidth, Math.max(280, viewportDims.w - 32));
+  const finalModalWidthPx = Math.min(parsedWidthNum, Math.max(280, viewportDims.w - 32));
+  const finalImgMaxHeight = rawHeight === 'auto' ? `${maxAvailableImgHeight}px` : modalMaxHeight;
 
   return (
     <div 
@@ -325,7 +308,7 @@ export const PromoPopupModal = ({
         {forcePreview && (
           <div className="absolute top-2.5 left-3 z-30 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/80 text-white text-[11px] font-bold backdrop-blur-sm shadow border border-white/20 select-none">
             <Eye className="w-3.5 h-3.5 text-sky-400" />
-            <span>Full Size Preview ({finalModalWidthPx}px × {rawHeight === 'auto' ? 'Auto Fit' : modalMaxHeight})</span>
+            <span>Full Size Preview ({modalWidth} × {rawHeight === 'auto' ? 'Auto' : modalMaxHeight})</span>
           </div>
         )}
 
@@ -341,10 +324,9 @@ export const PromoPopupModal = ({
           <img
             src={resolvePromoImageUrl(activeBanner.image)}
             alt={activeBanner.title || 'Announcement'}
-            onLoad={handleImageLoad}
             className="w-full h-auto max-w-full block select-none rounded-xl mx-auto shadow-2xs"
             style={{ 
-              maxHeight: `${maxAvailableImgHeight}px`,
+              maxHeight: finalImgMaxHeight,
               objectFit: 'contain',
               imageRendering: '-webkit-optimize-contrast'
             }}

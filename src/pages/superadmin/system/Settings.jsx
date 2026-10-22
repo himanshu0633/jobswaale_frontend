@@ -1419,9 +1419,9 @@ export const Settings = () => {
                       </span>
                     </div>
                     <p className="text-xs text-slate-600 leading-relaxed">
-                      • <strong>Recommended Dimensions:</strong> <strong>850 × 500 px</strong> for horizontal plan/promo banners, or <strong>650 × 800 px</strong> for vertical step posters.
+                      • <strong>Recommended Dimensions:</strong> <strong>850 × 520 px</strong> for horizontal banners, or <strong>650 × 800 px</strong> for vertical posters.
                       <br className="hidden sm:inline" />
-                      • <strong>Supported Formats:</strong> PNG, JPG, WebP (Max <strong>5 MB</strong>). Modal includes inner padding and auto-scaling so images never get cut off!
+                      • <strong>Supported Formats:</strong> PNG, JPG, WebP (Max <strong>5 MB</strong>). Clear and responsive display.
                     </p>
                   </div>
                 </div>
@@ -1511,12 +1511,14 @@ export const Settings = () => {
                             )}
 
                             {/* Active Toggle */}
-                            <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 cursor-pointer select-none">
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateBanner(index, 'enabled', banner.enabled === false)}
+                              className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 cursor-pointer select-none"
+                            >
                               <span className="text-[11px]">{banner.enabled !== false ? 'Active' : 'Inactive'}</span>
-                              <button
-                                type="button"
-                                onClick={() => handleUpdateBanner(index, 'enabled', banner.enabled === false)}
-                                className={`relative inline-flex h-4.5 w-8 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                              <span
+                                className={`relative inline-flex h-4.5 w-8 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
                                   banner.enabled !== false ? 'bg-indigo-600' : 'bg-slate-200'
                                 }`}
                               >
@@ -1525,8 +1527,8 @@ export const Settings = () => {
                                     banner.enabled !== false ? 'translate-x-3.5' : 'translate-x-0'
                                   }`}
                                 />
-                              </button>
-                            </label>
+                              </span>
+                            </button>
 
                             {/* Delete Button */}
                             <button
@@ -1630,27 +1632,6 @@ export const Settings = () => {
                               </div>
                             </div>
 
-                            {/* Prominent Image Dimensions & Display Guide (as requested by user) */}
-                            <div className="rounded-xl border border-indigo-200/80 bg-gradient-to-br from-indigo-50/70 to-sky-50/40 p-3 space-y-1.5 shadow-2xs">
-                              <div className="flex items-center justify-between">
-                                <span className="flex items-center gap-1.5 text-xs font-bold text-indigo-950">
-                                  <ImageIcon className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                                  <span>Recommended Image Size:</span>
-                                  <span className="text-indigo-700 font-black">850 × 520 px</span>
-                                </span>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200 shrink-0">
-                                  Ratio 16:10
-                                </span>
-                              </div>
-                              <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
-                                Pop-up modal mein image bina kate (zero cut) aur bina kisi extra blank space ke Banner 1 jaisi perfect fit dikhegi. Kripya <strong className="text-indigo-900 font-bold">850 × 520 px</strong> size ki photo upload karein.
-                              </p>
-                              <div className="flex flex-wrap items-center justify-between gap-1.5 pt-1 border-t border-indigo-100 text-[10px] text-slate-500 font-semibold">
-                                <span>Display Mode: <strong className="text-slate-700">100% Full View (Zero Cut)</strong></span>
-                                <span>Formats: <strong className="text-slate-700">PNG, JPG, WebP (Max 5MB)</strong></span>
-                              </div>
-                            </div>
-
                             {/* Image Upload / Replace / Adjust Crop / Remove buttons */}
                             {banner.image ? (
                               <div className="flex items-center justify-between gap-1.5 pt-0.5">
@@ -1689,10 +1670,10 @@ export const Settings = () => {
                                   className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 border border-dashed border-indigo-300 bg-indigo-50/60 hover:bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg transition cursor-pointer shadow-2xs"
                                 >
                                   <Upload className="w-3.5 h-3.5" />
-                                  Upload Banner Image (850 × 520 px)
+                                  Upload Banner Image
                                 </button>
                                 <p className="text-[10.5px] text-center text-slate-500 font-medium">
-                                  Optimal Size: <strong className="text-slate-700 font-bold">850 × 520 px</strong> • Modal mein bina cut hue full dikhegi
+                                  Recommended: <strong>850 × 520 px</strong> • PNG, JPG, WebP (Max 5MB)
                                 </p>
                               </div>
                             )}
@@ -1931,12 +1912,14 @@ export const Settings = () => {
                               <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
                                 Action Button (Bottom Right of Popup)
                               </label>
-                              <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 cursor-pointer">
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateBanner(index, 'buttonEnabled', banner.buttonEnabled === false)}
+                                className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 cursor-pointer select-none"
+                              >
                                 <span className="text-[11px]">{banner.buttonEnabled !== false ? 'Enabled' : 'Disabled'}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleUpdateBanner(index, 'buttonEnabled', banner.buttonEnabled === false)}
-                                  className={`relative inline-flex h-4 w-7.5 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                                <span
+                                  className={`relative inline-flex h-4 w-7.5 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
                                     banner.buttonEnabled !== false ? 'bg-indigo-600' : 'bg-slate-200'
                                   }`}
                                 >
@@ -1945,8 +1928,8 @@ export const Settings = () => {
                                       banner.buttonEnabled !== false ? 'translate-x-3.5' : 'translate-x-0'
                                     }`}
                                   />
-                                </button>
-                              </label>
+                                </span>
+                              </button>
                             </div>
 
                             {banner.buttonEnabled !== false ? (
