@@ -121,6 +121,7 @@ export const Jobs = () => {
           type: j.jobType?.jobType || j.workMode || 'Full Time',
           category: j.jobCategory?.categoryName || 'IT & Software',
           experience: j.experience,
+          skills: Array.isArray(j.skills) ? j.skills : (typeof j.skills === 'string' ? j.skills.split(',').map(s => s.trim()).filter(Boolean) : []),
           postedAt: j.postingDate || j.createDate || j.createdAt || '',
           logoLetter: j.companyName ? j.companyName.charAt(0).toUpperCase() : 'J',
           logoBg: ['bg-red-500', 'bg-blue-600', 'bg-emerald-500', 'bg-purple-500', 'bg-amber-500'][Math.floor(Math.random() * 5)],
@@ -185,14 +186,19 @@ export const Jobs = () => {
   const filterJobs = () => {
     let result = [...dbJobs];
 
-    // Top search bar filters
+    // Top search bar filters: Search based on 1. Job Title or 2. Skill added by employer (and company, location)
     const activeKeyword = (searchKeyword || querySearch).trim();
     const activeLocation = (searchLoc || queryLocation).trim();
     if (activeKeyword !== '') {
-      result = result.filter(
-        (j) =>
-          matchesSearchText([j.title, j.company, j.category, j.type, j.experience, j.location].join(' '), activeKeyword)
-      );
+      result = result.filter((j) => {
+        // 1. Matches Job Title
+        const matchesTitle = matchesSearchText(j.title, activeKeyword);
+        // 2. Matches Skills added by employer
+        const matchesSkill = Array.isArray(j.skills) && j.skills.some((s) => matchesSearchText(s, activeKeyword));
+        // Also matches company, category, type, experience, location
+        const matchesOther = matchesSearchText([j.company, j.category, j.type, j.experience, j.location].join(' '), activeKeyword);
+        return matchesTitle || matchesSkill || matchesOther;
+      });
     }
     if (tagFilter.trim() !== '') {
       const tag = tagFilter.split('/')[0];
@@ -432,7 +438,7 @@ export const Jobs = () => {
                     <Search className="absolute left-[10px] top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-[#88929b] pointer-events-none" />
                     <input
                       type="text"
-                      placeholder="e.g UI Designer"
+                      placeholder="Search by Job title or Skill (e.g. React, UI Designer)"
                       value={searchKeyword}
                       onChange={(e) => setSearchKeyword(e.target.value)}
                       className="w-full border-0 pl-9 pr-2 py-3 text-slate-900 font-bold placeholder:font-bold placeholder:text-slate-500 text-sm focus:outline-none bg-transparent"
@@ -669,6 +675,25 @@ export const Jobs = () => {
                           <MapPin className="h-3.5 w-3.5 text-[#88929b] shrink-0" />
                           <span>{job.location}</span>
                         </div>
+
+                        {/* Skills added by Employer */}
+                        {Array.isArray(job.skills) && job.skills.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2.5">
+                            {job.skills.slice(0, 3).map((skill, sIdx) => (
+                              <span 
+                                key={sIdx} 
+                                className="inline-block px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-slate-100 text-slate-700 group-hover:bg-indigo-50 group-hover:text-indigo-700 transition-colors"
+                              >
+                                {skill}
+                              </span>
+                            ))}
+                            {job.skills.length > 3 && (
+                              <span className="text-[10px] text-slate-400 font-semibold self-center">
+                                +{job.skills.length - 3} more
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
 

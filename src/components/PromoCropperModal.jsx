@@ -174,15 +174,22 @@ export const PromoCropperModal = ({
     setError('');
 
     try {
-      const targetW = canvasDims.width;
-      const targetH = canvasDims.height;
+      const img = imgRef.current;
+      const naturalW = img.naturalWidth || img.width || 1200;
+      const naturalH = img.naturalHeight || img.height || 800;
+
+      // Maintain high resolution export so banner is crisp and clear
+      const scaleMultiplier = Math.max(1, Math.min(3, naturalW / canvasDims.width));
+      const targetW = Math.round(canvasDims.width * scaleMultiplier);
+      const targetH = Math.round(canvasDims.height * scaleMultiplier);
 
       const exportCanvas = document.createElement('canvas');
       exportCanvas.width = targetW;
       exportCanvas.height = targetH;
       const expCtx = exportCanvas.getContext('2d');
+      expCtx.imageSmoothingEnabled = true;
+      expCtx.imageSmoothingQuality = 'high';
 
-      const img = imgRef.current;
       const imgAspect = img.width / img.height;
       const frameAspect = targetW / targetH;
       let renderW, renderH;
@@ -234,7 +241,7 @@ export const PromoCropperModal = ({
           setError(uploadErr.response?.data?.message || 'Failed to upload cropped photo.');
           setUploading(false);
         }
-      }, 'image/jpeg', 0.90);
+      }, 'image/jpeg', 0.94);
     } catch (err) {
       console.error('Export canvas error:', err);
       setError('Could not process crop. Please try again.');
@@ -272,6 +279,16 @@ export const PromoCropperModal = ({
             <span>{error}</span>
           </div>
         )}
+
+        {/* Size Guide Notice */}
+        <div className="flex items-center gap-2 p-2.5 bg-indigo-50/70 border border-indigo-200/60 rounded-xl text-slate-700 text-xs">
+          <ImageIcon className="w-4 h-4 text-indigo-600 shrink-0" />
+          <div className="flex-1 leading-tight text-[11px]">
+            <span className="font-bold text-indigo-950">Recommended Size: </span>
+            <span className="font-semibold text-slate-600">850 × 500 px (Landscape) or 650 × 800 px (Vertical).</span>
+            <span className="text-indigo-600 ml-1 font-bold">Tip: Click &quot;Keep Full Image&quot; below to use original full photo without cropping.</span>
+          </div>
+        </div>
 
         {/* Aspect Ratio Selector */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">

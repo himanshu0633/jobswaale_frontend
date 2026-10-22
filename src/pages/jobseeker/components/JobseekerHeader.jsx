@@ -49,7 +49,8 @@ export const JobseekerHeader = ({ toggleSidebar, title, isCollapsed }) => {
           id: job.slug || job._id,
           title: job.jobTitle,
           company: job.companyName,
-          category: job.jobCategory?.categoryName || ''
+          category: job.jobCategory?.categoryName || '',
+          skills: Array.isArray(job.skills) ? job.skills : (job.skills ? [String(job.skills)] : [])
         }));
         setAllJobs(mapped);
       } catch {
@@ -73,12 +74,13 @@ export const JobseekerHeader = ({ toggleSidebar, title, isCollapsed }) => {
     if (!searchValue.trim()) return [];
     const kw = searchValue.toLowerCase();
     return allJobs
-      .filter(
-        (job) =>
-          String(job.title || '').toLowerCase().includes(kw) ||
-          String(job.company || '').toLowerCase().includes(kw) ||
-          String(job.category || '').toLowerCase().includes(kw)
-      )
+      .filter((job) => {
+        const matchesTitle = String(job.title || '').toLowerCase().includes(kw);
+        const matchesSkill = Array.isArray(job.skills) && job.skills.some((s) => String(s).toLowerCase().includes(kw));
+        const matchesCompany = String(job.company || '').toLowerCase().includes(kw);
+        const matchesCategory = String(job.category || '').toLowerCase().includes(kw);
+        return matchesTitle || matchesSkill || matchesCompany || matchesCategory;
+      })
       .slice(0, 6);
   }, [searchValue, allJobs]);
 
@@ -142,7 +144,7 @@ export const JobseekerHeader = ({ toggleSidebar, title, isCollapsed }) => {
         <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
         <input
           type="text"
-          placeholder="Quick Search..."
+          placeholder="Quick Search (Job title or Skill)..."
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
           onFocus={() => setSearchFocused(true)}
@@ -177,7 +179,21 @@ export const JobseekerHeader = ({ toggleSidebar, title, isCollapsed }) => {
                     } text-[#0047C7] hover:text-[#0052cc]`}
                   >
                     <div>{job.title}</div>
-                    <div className="text-xs text-slate-400">{job.company}</div>
+                    <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                      <span className="text-xs text-slate-400">{job.company}</span>
+                      {Array.isArray(job.skills) && job.skills.length > 0 && (
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {job.skills.slice(0, 3).map((sk, skIdx) => (
+                            <span
+                              key={skIdx}
+                              className="inline-block px-1.5 py-0.2 rounded text-[10px] font-medium bg-slate-100 text-slate-600"
+                            >
+                              {sk}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </Link>
                 </li>
               ))

@@ -26,6 +26,9 @@ import {
   Megaphone,
   Eye,
   Move,
+  MoveHorizontal,
+  MoveVertical,
+  Info,
   ArrowRight
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
@@ -1399,6 +1402,49 @@ export const Settings = () => {
                 className="hidden"
               />
 
+              {/* Banner Upload Size Guidelines Notice */}
+              <div className="bg-gradient-to-r from-indigo-50/90 via-sky-50/80 to-blue-50/90 p-4 rounded-xl border border-indigo-200/70 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <div className="h-9 w-9 rounded-xl bg-indigo-600/10 text-indigo-600 flex items-center justify-center shrink-0 mt-0.5">
+                    <Info className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h6 className="text-xs sm:text-sm font-extrabold text-indigo-950">
+                        Recommended Banner Image Sizes & Guidelines
+                      </h6>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-bold">
+                        Fit & Clarity Guide
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      • <strong>Recommended Dimensions:</strong> <strong>850 × 500 px</strong> for horizontal plan/promo banners, or <strong>650 × 800 px</strong> for vertical step posters.
+                      <br className="hidden sm:inline" />
+                      • <strong>Supported Formats:</strong> PNG, JPG, WebP (Max <strong>5 MB</strong>). Modal includes inner padding and auto-scaling so images never get cut off!
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center flex-wrap">
+                  {form.popupBanners?.some(b => b.image) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const activeOrFirst = form.popupBanners.find(b => b.enabled !== false && b.image) || form.popupBanners.find(b => b.image);
+                        if (activeOrFirst) setPreviewBannerItem(activeOrFirst);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-200 bg-white hover:bg-indigo-50 text-indigo-700 text-xs font-bold transition shadow-xs cursor-pointer"
+                      title="Preview how the banner popup looks to users in full original size"
+                    >
+                      <Eye className="w-4 h-4 text-indigo-600" />
+                      <span>Preview Banner (Full Size)</span>
+                    </button>
+                  )}
+                  <span className="text-[11px] font-bold text-indigo-700 bg-white/80 px-2.5 py-1 rounded-lg border border-indigo-200/60 shadow-2xs">
+                    Auto-Fit Enabled
+                  </span>
+                </div>
+              </div>
+
               {/* Banners List */}
               {(!form.popupBanners || form.popupBanners.length === 0) ? (
                 <div className="p-8 text-center rounded-xl border border-dashed border-slate-300 bg-slate-50">
@@ -1424,6 +1470,9 @@ export const Settings = () => {
 
                     const rawWidth = String(banner.width || '850px').trim();
                     const rawHeight = String(banner.height || 'auto').trim();
+                    const currentWidthNum = parseInt(rawWidth.replace(/\D/g, ''), 10) || 850;
+                    const isAutoHeight = !rawHeight || rawHeight.toLowerCase() === 'auto';
+                    const currentHeightNum = parseInt(rawHeight.replace(/\D/g, ''), 10) || 500;
 
                     return (
                       <div
@@ -1446,7 +1495,20 @@ export const Settings = () => {
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2.5">
+                          <div className="flex items-center gap-2 sm:gap-2.5">
+                            {/* Full Size Preview Button (as requested by user) */}
+                            {banner.image && (
+                              <button
+                                type="button"
+                                onClick={() => setPreviewBannerItem(banner)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white shadow-xs transition-colors cursor-pointer"
+                                title="See full size preview of how this banner appears to users with cut button"
+                              >
+                                <Eye className="w-3.5 h-3.5 text-white" />
+                                <span>Preview Banner</span>
+                              </button>
+                            )}
+
                             {/* Active Toggle */}
                             <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 cursor-pointer select-none">
                               <span className="text-[11px]">{banner.enabled !== false ? 'Active' : 'Inactive'}</span>
@@ -1487,35 +1549,70 @@ export const Settings = () => {
                                 <Eye className="w-3.5 h-3.5" />
                                 Live Popup Preview
                               </span>
-                              <span className="text-[10px] text-slate-400 font-medium">
-                                Modal: {rawWidth} × {rawHeight}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] text-slate-500 font-medium">
+                                  Size: {currentWidthNum}px × {isAutoHeight ? 'Auto' : `${currentHeightNum}px`}
+                                </span>
+                                {banner.image && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setPreviewBannerItem(banner)}
+                                    className="inline-flex items-center gap-1 text-[10.5px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded border border-indigo-200 transition cursor-pointer"
+                                    title="Open full size popup preview with cut button"
+                                  >
+                                    <Eye className="w-3 h-3 text-indigo-600" />
+                                    <span>Full Size</span>
+                                  </button>
+                                )}
+                              </div>
                             </div>
 
                             {/* Modal Preview Card */}
-                            <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 sm:p-3 flex items-center justify-center">
-                              <div className="relative bg-white rounded-xl shadow-md border border-slate-200/90 flex flex-col overflow-hidden w-full max-w-[340px]">
+                            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 sm:p-4 flex items-center justify-center min-h-[220px]">
+                              <div 
+                                onClick={() => {
+                                  if (banner.image) setPreviewBannerItem(banner);
+                                }}
+                                className={`relative bg-white rounded-xl shadow-md border border-slate-200/90 flex flex-col overflow-hidden transition-all duration-300 mx-auto ${
+                                  banner.image ? 'cursor-pointer hover:ring-2 hover:ring-indigo-400 group' : ''
+                                }`}
+                                style={{
+                                  width: `${Math.min(100, Math.max(50, Math.round((currentWidthNum / 1100) * 100)))}%`,
+                                  maxWidth: '380px'
+                                }}
+                                title={banner.image ? "Click to view full size preview in original dimensions" : undefined}
+                              >
                                 {/* Close Cut Button */}
                                 <div className="absolute top-2 right-2 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-slate-900/60 text-white shadow pointer-events-none backdrop-blur-xs">
                                   <X className="w-2.5 h-2.5 stroke-[2.5]" />
                                 </div>
 
-                                {/* Full Image Container - NO CROPPING OR CUTTING OFF */}
-                                <div className="w-full bg-white flex items-center justify-center p-0.5">
+                                {/* Full Image Container - WITH INNER PADDING & DYNAMIC HEIGHT */}
+                                <div 
+                                  className="w-full bg-white flex items-center justify-center p-3 sm:p-4 overflow-hidden transition-all duration-300"
+                                  style={{
+                                    maxHeight: isAutoHeight 
+                                      ? '260px' 
+                                      : `${Math.min(300, Math.max(130, Math.round((currentHeightNum / 850) * 240)))}px`,
+                                    minHeight: '120px'
+                                  }}
+                                >
                                   {banner.image ? (
                                     <img
                                       src={resolvePromoImageUrl(banner.image)}
                                       alt="Live Banner Preview"
-                                      className="w-full h-auto object-contain block rounded-t-lg select-none"
+                                      className="w-auto h-auto max-w-full max-h-full object-contain block rounded-lg select-none shadow-xs"
+                                      style={{ imageRendering: '-webkit-optimize-contrast' }}
                                     />
                                   ) : (
                                     <div 
                                       onClick={() => triggerBannerUpload(index)}
-                                      className="p-6 w-full text-center text-slate-400 flex flex-col items-center justify-center gap-1.5 cursor-pointer hover:bg-slate-50 transition"
+                                      className="p-5 w-full text-center text-slate-400 flex flex-col items-center justify-center gap-1.5 cursor-pointer hover:bg-slate-50 transition rounded-lg border border-dashed border-slate-200"
                                     >
                                       <Upload className="w-5 h-5 text-indigo-500" />
                                       <span className="text-xs font-semibold text-slate-600">No image uploaded</span>
-                                      <span className="text-[10px] text-indigo-600 font-bold underline">Click to upload</span>
+                                      <span className="text-[10px] text-indigo-600 font-bold underline">Click to upload banner photo</span>
+                                      <span className="text-[9.5px] text-slate-400 mt-1">Recommended: 850×500 px (Max 5MB)</span>
                                     </div>
                                   )}
                                 </div>
@@ -1563,14 +1660,19 @@ export const Settings = () => {
                                 </button>
                               </div>
                             ) : (
-                              <button
-                                type="button"
-                                onClick={() => triggerBannerUpload(index)}
-                                className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 border border-dashed border-indigo-300 bg-indigo-50/50 hover:bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg transition cursor-pointer"
-                              >
-                                <Upload className="w-3.5 h-3.5" />
-                                Upload Banner Image
-                              </button>
+                              <div className="space-y-1">
+                                <button
+                                  type="button"
+                                  onClick={() => triggerBannerUpload(index)}
+                                  className="w-full inline-flex items-center justify-center gap-1.5 py-2 border border-dashed border-indigo-300 bg-indigo-50/50 hover:bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg transition cursor-pointer"
+                                >
+                                  <Upload className="w-3.5 h-3.5" />
+                                  Upload Banner Image
+                                </button>
+                                <p className="text-[10px] text-center text-slate-400">
+                                  Recommended: 850 × 500 px • PNG, JPG, WebP (Max 5MB)
+                                </p>
+                              </div>
                             )}
                           </div>
 
@@ -1668,66 +1770,141 @@ export const Settings = () => {
                           </div>
                         </div>
 
-                        {/* BOTTOM ROW: Modal Dimensions & Action Button Controls */}
+                        {/* BOTTOM ROW: Modal Dimensions Sliders & Action Button Controls */}
                         <div className="border-t border-slate-100 pt-3 grid grid-cols-1 md:grid-cols-12 gap-3.5 items-start">
-                          {/* Modal Dimensions (md:col-span-5) */}
-                          <div className="md:col-span-5 space-y-2">
-                            <label className="text-[11px] font-bold text-slate-700 block uppercase tracking-wider">
-                              Modal Dimensions
-                            </label>
-                            <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Width</label>
+                          {/* Modal Dimensions Sliders (md:col-span-6) */}
+                          <div className="md:col-span-6 space-y-2.5">
+                            <div className="flex items-center justify-between">
+                              <label className="text-[11px] font-bold text-slate-700 block uppercase tracking-wider">
+                                Modal Dimensions (Height & Width)
+                              </label>
+                              <span className="text-[10px] text-slate-500 font-medium">
+                                Current: {currentWidthNum}px × {isAutoHeight ? 'Auto' : `${currentHeightNum}px`}
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                              {/* Width Slider Control */}
+                              <div className="bg-slate-50/80 p-3 rounded-xl border border-slate-200 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                    <MoveHorizontal className="w-3.5 h-3.5 text-indigo-600" />
+                                    Width (px)
+                                  </label>
+                                  <div className="flex items-center gap-1">
+                                    <input
+                                      type="number"
+                                      min="400"
+                                      max="1200"
+                                      step="10"
+                                      value={currentWidthNum}
+                                      onChange={(e) => handleUpdateBanner(index, 'width', `${Math.max(350, Math.min(1200, Number(e.target.value) || 850))}px`)}
+                                      className="w-16 px-1.5 py-0.5 text-xs font-bold font-mono text-right border border-slate-300 rounded-md bg-white focus:border-indigo-600 outline-none"
+                                    />
+                                    <span className="text-xs font-semibold text-slate-500">px</span>
+                                  </div>
+                                </div>
                                 <input
-                                  type="text"
-                                  value={banner.width || '850px'}
-                                  onChange={(e) => handleUpdateBanner(index, 'width', e.target.value)}
-                                  className="w-full px-2.5 py-1 text-xs rounded-md border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white font-medium"
-                                  placeholder="850px"
+                                  type="range"
+                                  min="400"
+                                  max="1100"
+                                  step="10"
+                                  value={currentWidthNum}
+                                  onChange={(e) => handleUpdateBanner(index, 'width', `${e.target.value}px`)}
+                                  className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                                 />
-                                <div className="flex items-center gap-1 mt-1">
-                                  <span className="text-[9px] text-slate-400">Presets:</span>
-                                  {['550px', '650px', '850px'].map((w) => (
-                                    <button
-                                      key={w}
-                                      type="button"
-                                      onClick={() => handleUpdateBanner(index, 'width', w)}
-                                      className="text-[9px] font-bold px-1 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 cursor-pointer"
-                                    >
-                                      {w}
-                                    </button>
-                                  ))}
+                                <div className="flex items-center justify-between text-[10px] text-slate-400 font-medium pt-0.5">
+                                  <span>400px</span>
+                                  <div className="flex gap-1">
+                                    {[550, 650, 850, 1000].map(w => (
+                                      <button
+                                        key={w}
+                                        type="button"
+                                        onClick={() => handleUpdateBanner(index, 'width', `${w}px`)}
+                                        className={`px-1.5 py-0.5 rounded text-[9.5px] font-mono cursor-pointer transition ${
+                                          currentWidthNum === w ? 'bg-indigo-600 text-white font-bold' : 'bg-slate-200/70 hover:bg-slate-300 text-slate-700'
+                                        }`}
+                                      >
+                                        {w}
+                                      </button>
+                                    ))}
+                                  </div>
+                                  <span>1100px</span>
                                 </div>
                               </div>
 
-                              <div>
-                                <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Max Height</label>
+                              {/* Height Slider Control with Auto option */}
+                              <div className="bg-slate-50/80 p-3 rounded-xl border border-slate-200 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                    <MoveVertical className="w-3.5 h-3.5 text-indigo-600" />
+                                    Height (px / Auto)
+                                  </label>
+                                  <div className="flex items-center gap-1">
+                                    {isAutoHeight ? (
+                                      <span className="px-2 py-0.5 text-[11px] font-black rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                        Auto
+                                      </span>
+                                    ) : (
+                                      <>
+                                        <input
+                                          type="number"
+                                          min="300"
+                                          max="900"
+                                          step="10"
+                                          value={currentHeightNum}
+                                          onChange={(e) => handleUpdateBanner(index, 'height', `${Math.max(250, Math.min(900, Number(e.target.value) || 500))}px`)}
+                                          className="w-16 px-1.5 py-0.5 text-xs font-bold font-mono text-right border border-slate-300 rounded-md bg-white focus:border-indigo-600 outline-none"
+                                        />
+                                        <span className="text-xs font-semibold text-slate-500">px</span>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
                                 <input
-                                  type="text"
-                                  value={banner.height || 'auto'}
-                                  onChange={(e) => handleUpdateBanner(index, 'height', e.target.value)}
-                                  className="w-full px-2.5 py-1 text-xs rounded-md border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white font-medium"
-                                  placeholder="auto"
+                                  type="range"
+                                  min="300"
+                                  max="850"
+                                  step="10"
+                                  value={isAutoHeight ? 500 : currentHeightNum}
+                                  onChange={(e) => handleUpdateBanner(index, 'height', `${e.target.value}px`)}
+                                  className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                                 />
-                                <div className="flex items-center gap-1 mt-1">
-                                  <span className="text-[9px] text-slate-400">Presets:</span>
-                                  {['auto', '450px', '600px'].map((h) => (
-                                    <button
-                                      key={h}
-                                      type="button"
-                                      onClick={() => handleUpdateBanner(index, 'height', h)}
-                                      className="text-[9px] font-bold px-1 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 cursor-pointer"
-                                    >
-                                      {h}
-                                    </button>
-                                  ))}
+                                <div className="flex items-center justify-between text-[10px] text-slate-400 font-medium pt-0.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUpdateBanner(index, 'height', 'auto')}
+                                    className={`px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer transition ${
+                                      isAutoHeight 
+                                        ? 'bg-emerald-600 text-white shadow-xs' 
+                                        : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                                    }`}
+                                    title="Auto Height fits the image naturally without any cropping"
+                                  >
+                                    Auto (Fit)
+                                  </button>
+                                  <div className="flex gap-1">
+                                    {[450, 550, 650, 750].map(h => (
+                                      <button
+                                        key={h}
+                                        type="button"
+                                        onClick={() => handleUpdateBanner(index, 'height', `${h}px`)}
+                                        className={`px-1.5 py-0.5 rounded text-[9.5px] font-mono cursor-pointer transition ${
+                                          !isAutoHeight && currentHeightNum === h ? 'bg-indigo-600 text-white font-bold' : 'bg-slate-200/70 hover:bg-slate-300 text-slate-700'
+                                        }`}
+                                      >
+                                        {h}
+                                      </button>
+                                    ))}
+                                  </div>
+                                  <span>850px</span>
                                 </div>
                               </div>
                             </div>
                           </div>
 
-                          {/* Action Button Settings (md:col-span-7) */}
-                          <div className="md:col-span-7 space-y-2">
+                          {/* Action Button Settings (md:col-span-6) */}
+                          <div className="md:col-span-6 space-y-2">
                             <div className="flex items-center justify-between">
                               <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
                                 Action Button (Bottom Right of Popup)

@@ -166,7 +166,7 @@ export const Home = ({ settings: propSettings }) => {
                 <div className="flex-1 relative flex items-center rounded-xl border-2 border-slate-300 bg-slate-50/50 md:border-0 md:bg-transparent focus-within:border-[#FF6B00] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#FF6B00]/20 md:focus-within:ring-0 transition-all">
                   <input
                     type="text"
-                    placeholder="Job title"
+                    placeholder="Job title or Skill"
                     value={searchTitle}
                     onChange={(e) => setSearchTitle(e.target.value)}
                     className="w-full bg-transparent border-0 px-4 py-3 text-slate-900 font-bold placeholder:font-bold placeholder:text-slate-500 text-[0.95rem] focus:outline-none focus:ring-0"

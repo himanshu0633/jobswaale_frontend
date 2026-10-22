@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { X, ArrowRight } from 'lucide-react';
+import { X, ArrowRight, Eye } from 'lucide-react';
 import { getPublicSettings } from '../utils/publicSettings';
 import { BASE_API_URL } from '../context/AuthContext';
 
@@ -269,28 +269,40 @@ export const PromoPopupModal = ({
       }}
     >
       <div 
-        className="relative bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden max-w-full animate-in zoom-in-95 duration-200"
+        className="relative bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden max-w-[calc(100vw-24px)] sm:max-w-[calc(100vw-48px)] animate-in zoom-in-95 duration-200"
         style={{ width: modalWidth }}
       >
-        {/* Close Button */}
+        {/* Close Button (Cut Button) */}
         <button
           type="button"
           onClick={handleClose}
-          className="absolute top-3 right-3 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-slate-900/60 hover:bg-slate-900 text-white shadow-md transition-transform hover:scale-110 cursor-pointer backdrop-blur-sm"
-          title="Close"
+          className="absolute top-2.5 right-2.5 z-30 flex h-8 w-8 items-center justify-center rounded-full bg-slate-900/70 hover:bg-slate-900 text-white shadow-lg transition-transform hover:scale-110 cursor-pointer backdrop-blur-sm"
+          title="Close / Cut"
         >
           <X className="w-4 h-4 stroke-[2.5]" />
         </button>
 
-        {/* Modal Image Display */}
+        {/* Live Preview Indicator for Admin */}
+        {forcePreview && (
+          <div className="absolute top-2.5 left-3 z-30 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/80 text-white text-[11px] font-bold backdrop-blur-sm shadow border border-white/20 select-none">
+            <Eye className="w-3.5 h-3.5 text-sky-400" />
+            <span>Full Size Preview ({modalWidth} × {rawHeight === 'auto' ? 'Auto' : modalMaxHeight})</span>
+          </div>
+        )}
+
+        {/* Modal Image Display - Full image shown with clean padding and no cutting off */}
         <div 
-          className="w-full overflow-hidden bg-white flex items-center justify-center"
-          style={{ maxHeight: modalMaxHeight }}
+          className="w-full bg-white flex items-center justify-center p-3 sm:p-5 overflow-y-auto"
+          style={{ maxHeight: rawHeight === 'auto' ? (showButton ? 'calc(80vh - 75px)' : '82vh') : modalMaxHeight }}
         >
           <img
             src={resolvePromoImageUrl(activeBanner.image)}
             alt={activeBanner.title || 'Announcement'}
-            className="w-full h-auto max-h-full object-contain block select-none"
+            className="w-auto h-auto max-w-full max-h-full object-contain block select-none rounded-xl shadow-xs"
+            style={{ 
+              maxHeight: rawHeight === 'auto' ? (showButton ? 'calc(80vh - 95px)' : 'calc(82vh - 35px)') : modalMaxHeight,
+              imageRendering: '-webkit-optimize-contrast'
+            }}
             loading="eager"
           />
         </div>
