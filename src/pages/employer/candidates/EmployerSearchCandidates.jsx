@@ -127,7 +127,8 @@ const maxSalaryOptions = [
 const genderOptions = [
   { value: '', label: 'Any Gender' },
   { value: 'Male', label: 'Male' },
-  { value: 'Female', label: 'Female' }
+  { value: 'Female', label: 'Female' },
+  { value: 'Other', label: 'Other' }
 ];
 
 const activityOptions = [
@@ -172,14 +173,6 @@ const standardJobCategories = [
   'Human Resources (HR)',
   'Sales & Marketing',
   'Administration'
-];
-
-const statCards = [
-  { key: 'total', title: 'Total', icon: Users, tone: 'bg-violet-50 text-[#6658dd]' },
-  { key: 'availableNow', title: 'Available Now', icon: UserCheck, tone: 'bg-emerald-50 text-emerald-500' },
-  { key: 'newThisWeek', title: 'New This Week', icon: UserPlus, tone: 'bg-sky-50 text-sky-500' },
-  { key: 'premiumProfiles', title: 'Premium Profiles', icon: Star, tone: 'bg-amber-50 text-amber-500' },
-  { key: 'activeToday', title: 'Active Today', icon: Activity, tone: 'bg-blue-50 text-blue-500' }
 ];
 
 const availabilityTone = {
@@ -514,6 +507,7 @@ export const EmployerSearchCandidates = () => {
   const [locationInput, setLocationInput] = useState('');
   const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
   const [masterCities, setMasterCities] = useState([]);
+  const [masterQualifications, setMasterQualifications] = useState([]);
   const locationContainerRef = useRef(null);
   const locationInputRef = useRef(null);
 
@@ -523,6 +517,14 @@ export const EmployerSearchCandidates = () => {
         const list = Array.isArray(res.data) ? res.data : (res.data?.data || res.data?.docs || []);
         const names = list.map(c => typeof c === 'string' ? c : (c.cityName || c.name || c.city || c.ctid || '')).filter(Boolean);
         setMasterCities(names);
+      })
+      .catch(() => {});
+
+    axios.get(`${BASE_API_URL}/masters/qualifications`)
+      .then((res) => {
+        const list = Array.isArray(res.data) ? res.data : (res.data?.data || res.data?.docs || []);
+        const names = list.map(q => typeof q === 'string' ? q : (q.name || q.qualification || '')).filter(Boolean);
+        setMasterQualifications(names);
       })
       .catch(() => {});
   }, []);
@@ -721,9 +723,22 @@ export const EmployerSearchCandidates = () => {
   }, [locationInput, masterCities, optionFilters.locations, filters.locations]);
 
   const qualificationOptions = useMemo(() => {
+    const masterList = masterQualifications
+      .map(q => typeof q === 'string' ? q : (q.name || q.qualification || ''))
+      .map(s => String(s).trim())
+      .filter(Boolean);
+
+    if (masterList.length > 0) {
+      const extraFromFilters = (optionFilters.qualifications || [])
+        .map(q => typeof q === 'string' ? q : (q.name || ''))
+        .map(s => String(s).trim())
+        .filter(Boolean);
+      return Array.from(new Set([...masterList, ...extraFromFilters]));
+    }
+
     const list = [...standardQualifications, ...(optionFilters.qualifications || [])];
-    return Array.from(new Set(list.filter(Boolean)));
-  }, [optionFilters.qualifications]);
+    return Array.from(new Set(list.map(s => String(s).trim()).filter(Boolean)));
+  }, [masterQualifications, optionFilters.qualifications]);
 
   const industryTypeOptions = useMemo(() => {
     const list = [
@@ -782,24 +797,6 @@ export const EmployerSearchCandidates = () => {
       </div>
 
       {error && <div className="rounded-md border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{error}</div>}
-
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-5">
-        {statCards.map((card) => (
-          <section key={card.key} className="rounded-md border border-slate-100 bg-white p-3 shadow-sm sm:p-5">
-            <div className="flex items-center gap-2 sm:gap-4">
-              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${card.tone}`}>
-                <card.icon className="h-4 w-4 sm:h-5 sm:w-5" />
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-xs font-semibold text-slate-400 sm:text-sm">{card.title}</p>
-                <p className="mt-1 text-base font-black text-[#3f4254] sm:text-xl">
-                  {Number(data.stats?.[card.key] || 0).toLocaleString('en-IN')}
-                </p>
-              </div>
-            </div>
-          </section>
-        ))}
-      </div>
 
       <section className="rounded-xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
         {/* Section Header */}
