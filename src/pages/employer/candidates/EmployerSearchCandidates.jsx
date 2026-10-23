@@ -1174,46 +1174,19 @@ export const EmployerSearchCandidates = () => {
               </div>
             </div>
 
-            {/* Immediately underneath: Two checkboxes vertically aligned with 6-8px spacing, and matching scope info */}
-            <div className="mt-2.5 flex flex-col md:flex-row md:items-center justify-between gap-2.5 pt-1">
-              <div className="flex flex-col space-y-1.5 sm:space-y-2">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(filters.includeRelocate)}
-                    onChange={(e) => setFilter('includeRelocate', e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-300 text-[#0047C7] focus:ring-[#0047C7]"
-                  />
-                  <span className="text-xs font-semibold text-slate-700">
-                    Include candidates who prefer to relocate to above locations
-                  </span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(filters.excludeAnywhere)}
-                    onChange={(e) => setFilter('excludeAnywhere', e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-300 text-[#0047C7] focus:ring-[#0047C7]"
-                  />
-                  <span className="text-xs font-semibold text-slate-700 flex items-center gap-1">
-                    <span>Exclude candidates who have mentioned Anywhere in their location preference</span>
-                    <span title="Excludes candidates who selected generic 'Anywhere in India' instead of specific cities.">
-                      <Info className="h-3.5 w-3.5 text-slate-400 inline" />
-                    </span>
-                  </span>
-                </label>
-              </div>
-
-              <div className="flex items-center gap-2 rounded-md bg-[#eef5fc] border border-[#d6e7f7] px-3 py-1.5 text-[11px] font-medium text-slate-700 shrink-0 self-start md:self-center">
-                <Info className="h-3.5 w-3.5 text-[#0047C7] shrink-0" />
-                <div>
-                  Candidates {filters.includeRelocate ? 'currently in OR prefer to relocate to' : 'currently in'}{' '}
-                  <span className="font-bold text-slate-900">
-                    {filters.locations && filters.locations.length > 0 ? filters.locations.join(', ') : 'any location'}
-                  </span>.
-                </div>
-              </div>
+            {/* Immediately underneath: Relocate checkbox */}
+            <div className="mt-2.5 pt-1">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={Boolean(filters.includeRelocate)}
+                  onChange={(e) => setFilter('includeRelocate', e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-[#0047C7] focus:ring-[#0047C7]"
+                />
+                <span className="text-xs font-semibold text-slate-700">
+                  Include candidates willing to relocate to above location
+                </span>
+              </label>
             </div>
           </div>
 
