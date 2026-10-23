@@ -6,6 +6,7 @@ import {
   Camera,
   Check,
   CheckCircle,
+  ChevronDown,
   Coins,
   Download,
   Edit3,
@@ -148,105 +149,218 @@ const SearchableSelect = ({
   label,
   value,
   onChange,
-  options,
+  options = [],
   getOptionValue,
   getOptionLabel,
   placeholder = 'Search and select...',
   disabled = false,
   required = false
 }) => {
-  const [query, setQuery] = useState('');
-  const [open, setOpen] = useState(false);
-  const selected = findByValueOrLabel(options, value, getOptionValue, getOptionLabel);
-  const displayValue = selected ? getOptionLabel(selected) : (isMongoObjectId(value) ? '' : value);
-  const filtered = options.filter(option => getOptionLabel(option).toLowerCase().includes(query.toLowerCase()));
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const containerRef = useRef(null);
+  const inputRef = useRef(null);
+
+  const safeGetLabel = (opt) => {
+    if (!opt) return '';
+    if (typeof opt === 'string') return opt;
+    if (typeof getOptionLabel === 'function') return getOptionLabel(opt) || '';
+    return opt.name || opt.cityName || opt.label || opt.title || String(opt);
+  };
+
+  const safeGetValue = (opt) => {
+    if (!opt) return '';
+    if (typeof opt === 'string') return opt;
+    if (typeof getOptionValue === 'function') return getOptionValue(opt) || '';
+    return opt._id || opt.id || opt.ctid || opt.value || safeGetLabel(opt);
+  };
+
+  const selected = findByValueOrLabel(options, value, safeGetValue, safeGetLabel);
+  const displayValue = selected ? safeGetLabel(selected) : (isMongoObjectId(value) ? '' : (value || ''));
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setIsOpen(false);
+        setIsTyping(false);
+        setSearchQuery('');
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const query = (isTyping ? searchQuery : '').trim().toLowerCase();
+
+  const filtered = useMemo(() => {
+    if (!Array.isArray(options)) return [];
+    if (!query) {
+      return options.slice(0, 100);
+    }
+    const starts = [];
+    const contains = [];
+    for (const opt of options) {
+      const lbl = safeGetLabel(opt);
+      const lower = lbl.toLowerCase();
+      if (lower.startsWith(query)) {
+        starts.push(opt);
+      } else if (lower.includes(query)) {
+        contains.push(opt);
+      }
+    }
+    return [...starts, ...contains].slice(0, 100);
+  }, [options, query]);
+
+  const handleSelect = (opt) => {
+    const optVal = safeGetValue(opt);
+    onChange(optVal, opt);
+    setIsOpen(false);
+    setIsTyping(false);
+    setSearchQuery('');
+  };
+
+  const handleClear = (e) => {
+    e.stopPropagation();
+    onChange('');
+    setSearchQuery('');
+    setIsTyping(false);
+    setIsOpen(false);
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+
+  const handleCustomAdd = () => {
+    const trimmed = searchQuery.trim();
+    if (!trimmed) return;
+    onChange(trimmed);
+    setIsOpen(false);
+    setIsTyping(false);
+    setSearchQuery('');
+  };
+
+  const inputValue = isTyping ? searchQuery : (displayValue || '');
 
   return (
-    <div className="relative">
-      <label className="mb-1.5 block text-sm font-bold text-slate-600">
-        {label} {required && <span className="text-rose-500">*</span>}
-      </label>
+    <div ref={containerRef} className="relative">
+      {label && (
+        <label className="mb-1.5 block text-sm font-bold text-slate-600">
+          {label} {required && <span className="text-rose-500">*</span>}
+        </label>
+      )}
       <div className="relative">
-        <button
-          type="button"
+        <input
+          ref={inputRef}
+          type="text"
           disabled={disabled}
-          onClick={() => {
-            setOpen(prev => !prev);
-            setQuery('');
+          value={inputValue}
+          onFocus={(e) => {
+            if (!disabled) {
+              setIsOpen(true);
+              e.target.select();
+            }
           }}
-          className="flex min-h-[42px] w-full items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-2.5 text-left text-sm text-slate-700 transition focus:border-[#0047C7] focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
-        >
-          <span className={displayValue ? 'truncate font-medium' : 'truncate text-slate-400'}>
-            {displayValue || placeholder}
-          </span>
-          <div className="ml-2 flex items-center gap-1.5 shrink-0">
-            {value && !disabled && (
-              <span
-                role="button"
-                tabIndex={0}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onChange('');
-                }}
-                className="p-0.5 text-slate-400 hover:text-slate-600 rounded transition cursor-pointer"
-                title="Clear"
-              >
-                <X className="h-3.5 w-3.5" />
-              </span>
-            )}
-            <Search className="h-4 w-4 text-slate-400" />
-          </div>
-        </button>
+          onClick={() => {
+            if (!disabled && !isOpen) {
+              setIsOpen(true);
+            }
+          }}
+          onChange={(e) => {
+            setIsTyping(true);
+            setSearchQuery(e.target.value);
+            setIsOpen(true);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setIsOpen(false);
+              setIsTyping(false);
+              setSearchQuery('');
+            } else if (e.key === 'Enter') {
+              e.preventDefault();
+              if (filtered.length > 0) {
+                handleSelect(filtered[0]);
+              } else if (searchQuery.trim()) {
+                handleCustomAdd();
+              }
+            }
+          }}
+          placeholder={displayValue || placeholder}
+          className="flex min-h-[42px] w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 pr-14 text-sm text-slate-700 transition focus:border-[#0047C7] focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 font-medium"
+        />
 
-        {open && !disabled && (
-          <div className="absolute z-30 mt-1 w-full rounded-md border border-slate-200 bg-white shadow-lg">
-            <div className="border-b border-slate-100 p-2">
-              <input
-                autoFocus
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={placeholder}
-                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-[#0047C7]"
-              />
-            </div>
-            <div className="max-h-56 overflow-y-auto py-1">
-              {filtered.length > 0 ? filtered.map(option => {
-                const optionValue = getOptionValue(option);
-                const optionLabel = getOptionLabel(option);
+        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+          {Boolean(displayValue || (isTyping && searchQuery)) && !disabled && (
+            <button
+              type="button"
+              onClick={handleClear}
+              className="p-1 text-slate-400 hover:text-slate-600 rounded transition cursor-pointer"
+              title="Clear"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+          <button
+            type="button"
+            disabled={disabled}
+            tabIndex={-1}
+            onClick={() => {
+              if (!disabled) {
+                setIsOpen(prev => !prev);
+                if (!isOpen) {
+                  inputRef.current?.focus();
+                }
+              }
+            }}
+            className="p-1 text-slate-400 hover:text-slate-600 transition cursor-pointer"
+          >
+            <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isOpen ? 'rotate-180 text-[#0047C7]' : ''}`} />
+          </button>
+        </div>
+
+        {isOpen && !disabled && (
+          <div className="absolute left-0 right-0 top-full z-40 mt-1 max-h-60 overflow-y-auto rounded-md border border-slate-200 bg-white py-1 shadow-xl">
+            {filtered.length > 0 ? (
+              filtered.map((option, idx) => {
+                const optVal = safeGetValue(option);
+                const optLabel = safeGetLabel(option);
+                const isSelected = normalizeText(value) === normalizeText(optVal) || normalizeText(displayValue) === normalizeText(optLabel);
                 return (
                   <button
-                    key={optionValue}
+                    key={`${optVal}_${idx}`}
                     type="button"
-                    onClick={() => {
-                      onChange(optionValue, option);
-                      setOpen(false);
-                      setQuery('');
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      handleSelect(option);
                     }}
-                    className={`block w-full px-3 py-2 text-left text-sm transition hover:bg-blue-50 ${
-                      normalizeText(value) === normalizeText(optionValue) ? 'bg-blue-50 font-bold text-[#0047C7]' : 'text-slate-700'
+                    className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm transition hover:bg-blue-50 cursor-pointer ${
+                      isSelected ? 'bg-blue-50 font-bold text-[#0047C7]' : 'text-slate-700'
                     }`}
                   >
-                    {optionLabel}
+                    <span>{optLabel}</span>
+                    {isSelected && <span className="text-xs text-[#0047C7] font-semibold">✓</span>}
                   </button>
                 );
-              }) : (
-                <div className="px-3 py-2.5 text-sm font-semibold text-slate-400">No matching options found</div>
-              )}
-              {query.trim() && !options.some(opt => normalizeText(getOptionLabel(opt)) === normalizeText(query)) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    onChange(query.trim());
-                    setOpen(false);
-                    setQuery('');
-                  }}
-                  className="block w-full border-t border-slate-100 px-3 py-2 text-left text-sm font-bold text-[#0047C7] transition hover:bg-blue-50 cursor-pointer"
-                >
-                  + Use &quot;{query.trim()}&quot;
-                </button>
-              )}
-            </div>
+              })
+            ) : (
+              <div className="px-3 py-2.5 text-sm font-semibold text-slate-400">
+                {query ? `No matching results for "${query}"` : 'No options available'}
+              </div>
+            )}
+
+            {query && !options.some(opt => normalizeText(safeGetLabel(opt)) === normalizeText(query)) && (
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  handleCustomAdd();
+                }}
+                className="block w-full border-t border-slate-100 px-3 py-2 text-left text-sm font-bold text-[#0047C7] transition hover:bg-blue-50 cursor-pointer"
+              >
+                + Use &quot;{query}&quot;
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -658,7 +772,10 @@ export const JobseekerProfile = () => {
         const fetchedExps = Array.isArray(seeker.experiences) ? seeker.experiences : [];
         setExperiences(fetchedExps.length > 0 ? fetchedExps : [{ ...emptyExperience }]);
         
-        const curJobLoc = seeker.currentJobLocation || (fetchedExps.find(e => e.currentlyWorking)?.location || '');
+        const activeCurExp = fetchedExps.find(e => Boolean(e.currentlyWorking) && !e.endDate);
+        const curJobLoc = activeCurExp
+          ? (activeCurExp.location || activeCurExp.jobLocation || seeker.currentJobLocation || '')
+          : (fetchedExps.length === 0 ? (seeker.currentJobLocation || '') : '');
         setCurrentJobLocation(curJobLoc);
 
         if (seeker.preferredLocation) {
@@ -1003,6 +1120,11 @@ export const JobseekerProfile = () => {
       setBio(computedBio);
       setExperience(computedExperience);
 
+      const activeCurExp = cleanExperiences.find(e => Boolean(e.currentlyWorking) && !e.endDate);
+      const finalCurrentJobLocation = activeCurExp
+        ? (activeCurExp.location || activeCurExp.jobLocation || currentJobLocation || '')
+        : (cleanExperiences.length === 0 ? (currentJobLocation || '') : '');
+
       const token = localStorage.getItem('publicToken');
       const payload = {
         name,
@@ -1015,7 +1137,7 @@ export const JobseekerProfile = () => {
         district,
         address,
         pinCode,
-        currentJobLocation,
+        currentJobLocation: finalCurrentJobLocation,
         designation: computedDesignation,
         relocate,
         experience: computedExperience,
@@ -1430,7 +1552,17 @@ export const JobseekerProfile = () => {
                 <SearchableSelect
                   label="Current Job Location"
                   value={currentJobLocation}
-                  onChange={setCurrentJobLocation}
+                  onChange={(val) => {
+                    setCurrentJobLocation(val);
+                    setExperiences((prevExps) =>
+                      prevExps.map((exp) => {
+                        if (Boolean(exp.currentlyWorking) && !exp.endDate) {
+                          return { ...exp, location: val, jobLocation: val };
+                        }
+                        return exp;
+                      })
+                    );
+                  }}
                   options={cities}
                   getOptionValue={getCityValue}
                   getOptionLabel={getCityLabel}
@@ -1740,7 +1872,12 @@ export const JobseekerProfile = () => {
                         {isEditing && index > 0 && (
                           <button
                             type="button"
-                            onClick={() => setExperiences(experiences.filter((_, itemIndex) => itemIndex !== index))}
+                            onClick={() => {
+                              const filteredExps = experiences.filter((_, itemIndex) => itemIndex !== index);
+                              setExperiences(filteredExps);
+                              const remainingActive = filteredExps.find(e => Boolean(e.currentlyWorking) && !e.endDate);
+                              setCurrentJobLocation(remainingActive?.location || remainingActive?.jobLocation || '');
+                            }}
                             className="text-xs font-extrabold text-rose-600 cursor-pointer"
                           >
                             Remove
@@ -1780,13 +1917,26 @@ export const JobseekerProfile = () => {
                             checked={Boolean(item.currentlyWorking)}
                             onChange={(e) => {
                               const isChecked = e.target.checked;
-                              setExperiences(experiences.map((exp, itemIndex) => itemIndex === index ? {
-                                ...exp,
-                                currentlyWorking: isChecked,
-                                endDate: isChecked ? '' : exp.endDate,
-                                location: isChecked ? (exp.location || currentJobLocation || '') : exp.location,
-                                jobLocation: isChecked ? (exp.jobLocation || currentJobLocation || '') : exp.jobLocation
-                              } : exp));
+                              const updated = experiences.map((exp, itemIndex) => {
+                                if (itemIndex === index) {
+                                  return {
+                                    ...exp,
+                                    currentlyWorking: isChecked,
+                                    endDate: isChecked ? '' : exp.endDate,
+                                    location: isChecked ? (exp.location || currentJobLocation || '') : exp.location,
+                                    jobLocation: isChecked ? (exp.jobLocation || currentJobLocation || '') : exp.jobLocation
+                                  };
+                                }
+                                return isChecked ? { ...exp, currentlyWorking: false } : exp;
+                              });
+                              setExperiences(updated);
+                              if (isChecked) {
+                                const activeLoc = updated[index]?.location || updated[index]?.jobLocation || currentJobLocation || '';
+                                setCurrentJobLocation(activeLoc);
+                              } else {
+                                const remainingActive = updated.find((exp, i) => i !== index && Boolean(exp.currentlyWorking) && !exp.endDate);
+                                setCurrentJobLocation(remainingActive?.location || remainingActive?.jobLocation || '');
+                              }
                             }}
                           />
                           Currently working here
@@ -1795,7 +1945,7 @@ export const JobseekerProfile = () => {
                           <div className="sm:col-span-2">
                             <SearchableSelect
                               label="Current Job Location"
-                              value={item.location || item.jobLocation || ''}
+                              value={item.location || item.jobLocation || currentJobLocation || ''}
                               disabled={!isEditing}
                               onChange={(val) => {
                                 setExperiences(experiences.map((exp, itemIndex) => {
@@ -1804,9 +1954,7 @@ export const JobseekerProfile = () => {
                                   }
                                   return exp;
                                 }));
-                                if (!currentJobLocation) {
-                                  setCurrentJobLocation(val);
-                                }
+                                setCurrentJobLocation(val);
                               }}
                               options={cities}
                               getOptionValue={getCityValue}
@@ -1831,7 +1979,24 @@ export const JobseekerProfile = () => {
                             type="month"
                             value={item.currentlyWorking ? '' : (item.endDate || '')}
                             disabled={!isEditing || Boolean(item.currentlyWorking)}
-                            onChange={(e) => setExperiences(experiences.map((exp, itemIndex) => itemIndex === index ? { ...exp, endDate: e.target.value } : exp))}
+                            onChange={(e) => {
+                              const endVal = e.target.value;
+                              const updated = experiences.map((exp, itemIndex) => {
+                                if (itemIndex === index) {
+                                  return {
+                                    ...exp,
+                                    endDate: endVal,
+                                    currentlyWorking: endVal ? false : exp.currentlyWorking
+                                  };
+                                }
+                                return exp;
+                              });
+                              setExperiences(updated);
+                              if (endVal && item.currentlyWorking) {
+                                const remainingActive = updated.find((exp, i) => i !== index && Boolean(exp.currentlyWorking) && !exp.endDate);
+                                setCurrentJobLocation(remainingActive?.location || remainingActive?.jobLocation || '');
+                              }
+                            }}
                             className="w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-[#0047C7] focus:outline-none disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
                           />
                         </div>
