@@ -125,7 +125,7 @@ const maxSalaryOptions = [
 ];
 
 const genderOptions = [
-  { value: '', label: 'Any Gender' },
+  { value: '', label: 'Select Gender' },
   { value: 'Male', label: 'Male' },
   { value: 'Female', label: 'Female' },
   { value: 'Other', label: 'Other' }
