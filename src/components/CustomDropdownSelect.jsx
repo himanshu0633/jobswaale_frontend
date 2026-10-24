@@ -41,11 +41,23 @@ export const CustomDropdownSelect = ({
   // Normalize options to { value, label, raw }
   const normalizedOptions = useMemo(() => {
     if (!Array.isArray(options)) return [];
-    return options.map((opt) => ({
-      value: getOptionValue(opt),
-      label: getOptionLabel(opt),
-      raw: opt
-    }));
+    const hasSpecialOther = options.some(opt => String(getOptionValue(opt)) === '__other__');
+
+    return options
+      .filter((opt) => {
+        const val = String(getOptionValue(opt));
+        const lbl = String(getOptionLabel(opt) || '').trim().toLowerCase();
+        // Remove plain database 'Other' option when special interactive '__other__' is present
+        if (hasSpecialOther && val !== '__other__' && lbl === 'other') {
+          return false;
+        }
+        return true;
+      })
+      .map((opt) => ({
+        value: getOptionValue(opt),
+        label: getOptionLabel(opt),
+        raw: opt
+      }));
   }, [options, getOptionValue, getOptionLabel]);
 
   // Find currently selected option

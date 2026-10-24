@@ -786,10 +786,12 @@ export const EmployerPostJob = () => {
                         }
                       }}
                       options={[
-                        ...meta.categories.map((item) => ({
-                          value: item.id,
-                          label: item.name
-                        })),
+                        ...meta.categories
+                          .filter(item => String(item.name || item.categoryName || '').trim().toLowerCase() !== 'other')
+                          .map((item) => ({
+                            value: item.id,
+                            label: item.name
+                          })),
                         { value: '__other__', label: 'Other' }
                       ]}
                       placeholder="Select Category"

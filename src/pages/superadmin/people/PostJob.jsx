@@ -326,10 +326,12 @@ export const PostJob = () => {
                         if (val !== '__other__') setValue('customJobCategory', '');
                       }}
                       options={[
-                        ...categories.map((cat) => ({
-                          value: cat._id,
-                          label: cat.categoryName
-                        })),
+                        ...categories
+                          .filter(cat => String(cat.categoryName || cat.name || '').trim().toLowerCase() !== 'other')
+                          .map((cat) => ({
+                            value: cat._id,
+                            label: cat.categoryName
+                          })),
                         { value: '__other__', label: 'Other' }
                       ]}
                       placeholder="Choose Category"

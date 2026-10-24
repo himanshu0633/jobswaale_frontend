@@ -1855,8 +1855,8 @@ export const JobseekerProfile = () => {
                     if (val !== '__other__') setCustomIndustryType('');
                   }}
                   options={useMemo(() => {
-                    const hasOther = industries.some(x => x._id === '__other__' || x.industryType === 'Other');
-                    return hasOther ? industries : [...industries, { _id: '__other__', industryType: 'Other' }];
+                    const cleanIndustries = (industries || []).filter(x => (x.industryType || x.name || '').trim().toLowerCase() !== 'other');
+                    return [...cleanIndustries, { _id: '__other__', industryType: 'Other' }];
                   }, [industries])}
                   getOptionValue={getIndustryValue}
                   getOptionLabel={getIndustryLabel}
@@ -1889,8 +1889,8 @@ export const JobseekerProfile = () => {
                     if (val !== '__other__') setCustomJobCategory('');
                   }}
                   options={useMemo(() => {
-                    const hasOther = jobCategories.some(x => x._id === '__other__' || x.categoryName === 'Other');
-                    return hasOther ? jobCategories : [...jobCategories, { _id: '__other__', categoryName: 'Other' }];
+                    const cleanCategories = (jobCategories || []).filter(x => (x.categoryName || x.name || '').trim().toLowerCase() !== 'other');
+                    return [...cleanCategories, { _id: '__other__', categoryName: 'Other' }];
                   }, [jobCategories])}
                   getOptionValue={getJobCategoryValue}
                   getOptionLabel={getJobCategoryLabel}

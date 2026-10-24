@@ -359,10 +359,12 @@ export const AddJobseeker = () => {
                         });
                       }}
                       options={[
-                        ...industries.map(ind => ({
-                          value: ind._id,
-                          label: ind.industryType
-                        })),
+                        ...industries
+                          .filter(ind => String(ind.industryType || ind.name || '').trim().toLowerCase() !== 'other')
+                          .map(ind => ({
+                            value: ind._id,
+                            label: ind.industryType
+                          })),
                         { value: '__other__', label: 'Other' }
                       ]}
                       placeholder="-- Choose Industry --"
@@ -397,10 +399,12 @@ export const AddJobseeker = () => {
                         });
                       }}
                       options={[
-                        ...categories.map(c => ({
-                          value: c._id,
-                          label: c.categoryName
-                        })),
+                        ...categories
+                          .filter(c => String(c.categoryName || c.name || '').trim().toLowerCase() !== 'other')
+                          .map(c => ({
+                            value: c._id,
+                            label: c.categoryName
+                          })),
                         { value: '__other__', label: 'Other' }
                       ]}
                       placeholder="-- Choose Category --"

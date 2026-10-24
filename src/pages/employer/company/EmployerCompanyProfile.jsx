@@ -773,10 +773,12 @@ export const EmployerCompanyProfile = () => {
                       }
                     }}
                     options={[
-                      ...(profile.industries || []).map((ind) => ({
-                        value: ind._id,
-                        label: ind.industryType
-                      })),
+                      ...(profile.industries || [])
+                        .filter(ind => String(ind.industryType || ind.name || '').trim().toLowerCase() !== 'other')
+                        .map((ind) => ({
+                          value: ind._id,
+                          label: ind.industryType
+                        })),
                       { value: '__other__', label: 'Other' }
                     ]}
                     placeholder="Select Industry"
