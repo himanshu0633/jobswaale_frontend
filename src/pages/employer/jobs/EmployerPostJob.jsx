@@ -41,6 +41,7 @@ const experienceOptions = ['Fresher', ...Array.from({ length: 10 }, (_, index) =
 const emptyForm = {
   jobTitle: '',
   jobCategory: '',
+  customJobCategory: '',
   jobType: '',
   workMode: 'Office',
   country: '',
@@ -216,11 +217,17 @@ export const EmployerPostJob = () => {
         const districtMeta = formData?.districts?.find((item) => item.name === (jobForm?.district || formData?.employer?.district));
 
         if (jobForm) {
+          const rawCatId = String(jobForm.jobCategory?._id || jobForm.jobCategory || '');
+          const catExists = (formData?.categories || []).some(item => String(item.id) === rawCatId);
+          const isOtherCat = rawCatId && !catExists;
+          const customCatVal = isOtherCat ? (jobForm.jobCategory?.categoryName || jobForm.jobCategoryName || rawCatId) : '';
+
           setForm({
             ...emptyForm,
             jobTitle: jobForm.jobTitle || '',
-            jobCategory: String(jobForm.jobCategory || ''),
-             jobType: String(jobForm.jobType || ''),
+            jobCategory: isOtherCat ? '__other__' : rawCatId,
+            customJobCategory: customCatVal,
+            jobType: String(jobForm.jobType || ''),
              workMode: jobForm.workMode || 'Office',
             country: locationMeta?.cid || countryMeta?.cid || '',
             state: locationMeta?.sid || stateMeta?.sid || '',
@@ -439,6 +446,8 @@ export const EmployerPostJob = () => {
       }
       if (!String(form.jobCategory || '').trim()) {
         errors.jobCategory = 'Job Category is required';
+      } else if (form.jobCategory === '__other__' && !String(form.customJobCategory || '').trim()) {
+        errors.customJobCategory = 'Custom Job Category name is required';
       }
       if (!String(form.jobType || '').trim()) {
         errors.jobType = 'Employment Type is required';
@@ -594,8 +603,9 @@ export const EmployerPostJob = () => {
       const employer = meta.employer || {};
       const payload = {
         jobTitle: form.jobTitle,
-         jobCategory: form.jobCategory,
-         jobType: form.jobType,
+        jobCategory: form.jobCategory,
+        customJobCategory: form.jobCategory === '__other__' ? form.customJobCategory.trim() : undefined,
+        jobType: form.jobType,
          vacancies: Number(form.vacancies) || 1,
         workMode: form.workMode,
         jobLocations: form.location,
@@ -766,11 +776,39 @@ export const EmployerPostJob = () => {
                   </div>
                   <div>
                     <label className={labelClass}>Job Category *</label>
-                    <select className={fieldClass('jobCategory')} value={form.jobCategory} onChange={(e) => setValue('jobCategory', e.target.value)}>
+                    <select
+                      className={fieldClass('jobCategory')}
+                      value={form.jobCategory}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setValue('jobCategory', val);
+                        if (val !== '__other__') {
+                          setValue('customJobCategory', '');
+                        }
+                      }}
+                    >
                       <option value="">Select Category</option>
                       {meta.categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                      <option value="__other__">Other</option>
                     </select>
                     {renderFieldError('jobCategory')}
+
+                    {form.jobCategory === '__other__' && (
+                      <div className="mt-2 animate-in fade-in duration-200">
+                        <label className="block text-xs font-bold text-indigo-600 mb-1">
+                          Enter Custom Job Category <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. AI Prompt Engineer, Cyber Security, etc."
+                          value={form.customJobCategory || ''}
+                          onChange={(e) => setValue('customJobCategory', e.target.value)}
+                          className={fieldClass('customJobCategory')}
+                        />
+                        {renderFieldError('customJobCategory')}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className={labelClass}>Employment Type *</label>

@@ -87,6 +87,8 @@ export const EmployerCompanyProfile = () => {
 
   // Modals visibility
   const [showEditModal, setShowEditModal] = useState(false);
+  const [isOtherIndustry, setIsOtherIndustry] = useState(false);
+  const [customIndustryName, setCustomIndustryName] = useState('');
   const [modalError, setModalError] = useState('');
   const [showMemberModal, setShowMemberModal] = useState(false);
 
@@ -138,8 +140,22 @@ export const EmployerCompanyProfile = () => {
       return;
     }
 
+    if (isOtherIndustry) {
+      if (!customIndustryName.trim()) {
+        setModalError('Please enter your custom industry name.');
+        return;
+      }
+    }
+
     try {
-      await axios.put(`${BASE_API_URL}/employer/profile`, editForm, { headers: getTokenHeaders() });
+      const payload = {
+        ...editForm,
+        ...(isOtherIndustry ? {
+          industryType: '__other__',
+          customIndustryType: customIndustryName.trim()
+        } : {})
+      };
+      await axios.put(`${BASE_API_URL}/employer/profile`, payload, { headers: getTokenHeaders() });
       setSuccessMessage('Company profile updated successfully!');
       setShowEditModal(false);
       await loadProfile();
@@ -386,7 +402,17 @@ export const EmployerCompanyProfile = () => {
             </div>
             <button
               onClick={() => {
-                setEditForm({ ...profile });
+                const currentIndId = profile?.industryType?._id || profile?.industryType || '';
+                const existsInList = (profile?.industries || []).some(ind => ind._id === currentIndId);
+                if (currentIndId && !existsInList) {
+                  setIsOtherIndustry(true);
+                  setCustomIndustryName(profile?.industryType?.industryType || '');
+                  setEditForm({ ...profile, industryType: '__other__' });
+                } else {
+                  setIsOtherIndustry(false);
+                  setCustomIndustryName('');
+                  setEditForm({ ...profile });
+                }
                 setModalError('');
                 setShowEditModal(true);
               }}
@@ -735,8 +761,18 @@ export const EmployerCompanyProfile = () => {
                   <label className="block text-xs font-black text-slate-500 mb-1">Industry Type</label>
                   <select
                     className="w-full rounded border border-slate-200 px-3 py-2 text-sm text-[#3f4254] bg-white focus:border-[#6658dd] outline-none"
-                    value={editForm.industryType?._id || editForm.industryType || ''}
-                    onChange={(e) => setEditForm({ ...editForm, industryType: e.target.value })}
+                    value={isOtherIndustry ? '__other__' : (editForm.industryType?._id || editForm.industryType || '')}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '__other__') {
+                        setIsOtherIndustry(true);
+                        setEditForm({ ...editForm, industryType: '__other__' });
+                      } else {
+                        setIsOtherIndustry(false);
+                        setCustomIndustryName('');
+                        setEditForm({ ...editForm, industryType: val });
+                      }
+                    }}
                   >
                     <option value="">Select Industry</option>
                     {(profile.industries || []).map((ind) => (
@@ -744,7 +780,24 @@ export const EmployerCompanyProfile = () => {
                         {ind.industryType}
                       </option>
                     ))}
+                    <option value="__other__">Other</option>
                   </select>
+
+                  {isOtherIndustry && (
+                    <div className="mt-2 animate-in fade-in duration-200">
+                      <label className="block text-[11px] font-extrabold text-indigo-600 mb-1">
+                        Enter Custom Industry Name <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Artificial Intelligence & Robotics"
+                        value={customIndustryName}
+                        onChange={(e) => setCustomIndustryName(e.target.value)}
+                        className="w-full rounded border border-indigo-300 bg-indigo-50/20 px-3 py-2 text-sm text-[#3f4254] focus:border-[#6658dd] focus:bg-white outline-none"
+                      />
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-black text-slate-500 mb-1">Company Size</label>

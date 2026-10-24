@@ -44,7 +44,9 @@ export const AddJobseeker = () => {
     gender: 'Male',
     qualification: '',
     industryType: '',
+    customIndustryType: '',
     jobCategory: '',
+    customJobCategory: '',
     jobType: '',
     experience: 'Fresher',
     currentSalary: '',
@@ -102,6 +104,14 @@ export const AddJobseeker = () => {
       const response = await axios.get(`${BASE_API_URL}/jobseekers`);
       const js = response.data.find(x => x._id === id);
       if (js) {
+        const rawIndId = js.industryType?._id || js.industryType || '';
+        const indExists = (industries || []).some(ind => ind._id === rawIndId);
+        const isOtherInd = rawIndId && !indExists;
+
+        const rawCatId = js.jobCategory?._id || js.jobCategory || '';
+        const catExists = (categories || []).some(cat => cat._id === rawCatId);
+        const isOtherCat = rawCatId && !catExists;
+
         setForm({
           email: js.userId?.email || '',
           password: '',
@@ -109,8 +119,10 @@ export const AddJobseeker = () => {
           phone: js.phone || '',
           gender: js.gender || 'Male',
           qualification: js.qualification?._id || js.qualification || '',
-          industryType: js.industryType?._id || js.industryType || '',
-          jobCategory: js.jobCategory?._id || js.jobCategory || '',
+          industryType: isOtherInd ? '__other__' : rawIndId,
+          customIndustryType: isOtherInd ? (js.industryType?.industryType || rawIndId) : '',
+          jobCategory: isOtherCat ? '__other__' : rawCatId,
+          customJobCategory: isOtherCat ? (js.jobCategory?.categoryName || rawCatId) : '',
           jobType: js.jobType?._id || js.jobType || '',
           experience: js.experience || 'Fresher',
           currentSalary: js.currentSalary || '',
@@ -151,6 +163,14 @@ export const AddJobseeker = () => {
     e.preventDefault();
     if (!form.name || !form.phone || !form.gender || !form.qualification || !form.experience || !form.country || !form.state || !form.district || !form.city || !form.address || !form.pinCode) {
       showMessage('error', 'Please fill in all required profile details.');
+      return;
+    }
+    if (form.industryType === '__other__' && !String(form.customIndustryType || '').trim()) {
+      showMessage('error', 'Please enter custom industry type name.');
+      return;
+    }
+    if (form.jobCategory === '__other__' && !String(form.customJobCategory || '').trim()) {
+      showMessage('error', 'Please enter custom job category name.');
       return;
     }
     if (!id && (!form.email || !form.password)) {
@@ -328,24 +348,78 @@ export const AddJobseeker = () => {
 
                   <div>
                     <label className={labelCls}>Industry Type</label>
-                    <select value={form.industryType}
-                      onChange={(e) => setForm({ ...form, industryType: e.target.value })} className={inputCls}>
+                    <select
+                      value={form.industryType}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setForm({
+                          ...form,
+                          industryType: val,
+                          ...(val !== '__other__' ? { customIndustryType: '' } : {})
+                        });
+                      }}
+                      className={inputCls}
+                    >
                       <option value="">-- Choose Industry --</option>
                       {industries.map(ind => (
                         <option key={ind._id} value={ind._id}>{ind.industryType}</option>
                       ))}
+                      <option value="__other__">Other</option>
                     </select>
+
+                    {form.industryType === '__other__' && (
+                      <div className="mt-2">
+                        <label className="block text-[11px] font-bold text-indigo-600 mb-1">
+                          Enter Custom Industry Name <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Artificial Intelligence & Robotics"
+                          value={form.customIndustryType || ''}
+                          onChange={(e) => setForm({ ...form, customIndustryType: e.target.value })}
+                          className={inputCls}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div>
                     <label className={labelCls}>Job Category</label>
-                    <select value={form.jobCategory}
-                      onChange={(e) => setForm({ ...form, jobCategory: e.target.value })} className={inputCls}>
+                    <select
+                      value={form.jobCategory}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setForm({
+                          ...form,
+                          jobCategory: val,
+                          ...(val !== '__other__' ? { customJobCategory: '' } : {})
+                        });
+                      }}
+                      className={inputCls}
+                    >
                       <option value="">-- Choose Category --</option>
                       {categories.map(c => (
                         <option key={c._id} value={c._id}>{c.categoryName}</option>
                       ))}
+                      <option value="__other__">Other</option>
                     </select>
+
+                    {form.jobCategory === '__other__' && (
+                      <div className="mt-2">
+                        <label className="block text-[11px] font-bold text-indigo-600 mb-1">
+                          Enter Custom Job Category <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. AI Prompt Engineer"
+                          value={form.customJobCategory || ''}
+                          onChange={(e) => setForm({ ...form, customJobCategory: e.target.value })}
+                          className={inputCls}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div>

@@ -40,6 +40,7 @@ export const AddEmployer = () => {
     contactPerson: '',
     phone: '',
     industryType: '',
+    customIndustryType: '',
     website: '',
     description: '',
     country: '',
@@ -88,13 +89,18 @@ export const AddEmployer = () => {
       const response = await axios.get(`${BASE_API_URL}/employers`);
       const emp = response.data.find(x => x._id === id);
       if (emp) {
+        const rawIndId = emp.industryType?._id || emp.industryType || '';
+        const indExists = (industries || []).some((ind) => ind._id === rawIndId);
+        const isOtherInd = rawIndId && !indExists;
+
         setForm({
           email: emp.userId?.email || '',
           password: '',
           companyName: emp.companyName || '',
           contactPerson: emp.contactPerson || '',
           phone: emp.phone || '',
-          industryType: emp.industryType?._id || emp.industryType || '',
+          industryType: isOtherInd ? '__other__' : rawIndId,
+          customIndustryType: isOtherInd ? (emp.industryType?.industryType || rawIndId) : '',
           website: emp.website || '',
           description: emp.description || '',
           country: emp.country || '',
@@ -132,6 +138,10 @@ export const AddEmployer = () => {
     e.preventDefault();
     if (!form.companyName || !form.phone || !form.industryType || !form.country || !form.state || !form.district || !form.city || !form.address || !form.pinCode) {
       showMessage('error', 'Please fill in all required profile details.');
+      return;
+    }
+    if (form.industryType === '__other__' && !String(form.customIndustryType || '').trim()) {
+      showMessage('error', 'Please enter custom industry type name.');
       return;
     }
     if (!id && (!form.email || !form.password)) {
@@ -291,13 +301,41 @@ export const AddEmployer = () => {
 
                   <div>
                     <label className={labelCls}>Industry Type <span className="text-rose-500">*</span></label>
-                    <select required value={form.industryType}
-                      onChange={(e) => setForm({ ...form, industryType: e.target.value })} className={inputCls}>
+                    <select
+                      required
+                      value={form.industryType}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setForm({
+                          ...form,
+                          industryType: val,
+                          ...(val !== '__other__' ? { customIndustryType: '' } : {})
+                        });
+                      }}
+                      className={inputCls}
+                    >
                       <option value="">-- Choose --</option>
                       {industries.map(ind => (
                         <option key={ind._id} value={ind._id}>{ind.industryType}</option>
                       ))}
+                      <option value="__other__">Other</option>
                     </select>
+
+                    {form.industryType === '__other__' && (
+                      <div className="mt-2">
+                        <label className="block text-[11px] font-bold text-indigo-600 mb-1">
+                          Enter Custom Industry Name <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Artificial Intelligence & Robotics"
+                          value={form.customIndustryType || ''}
+                          onChange={(e) => setForm({ ...form, customIndustryType: e.target.value })}
+                          className={inputCls}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="md:col-span-2">

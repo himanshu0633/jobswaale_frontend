@@ -471,7 +471,9 @@ export const JobseekerProfile = () => {
   const [monthlySalary, setMonthlySalary] = useState('');
   const [annualSalary, setAnnualSalary] = useState('');
   const [industryType, setIndustryType] = useState('');
+  const [customIndustryType, setCustomIndustryType] = useState('');
   const [jobCategory, setJobCategory] = useState('');
+  const [customJobCategory, setCustomJobCategory] = useState('');
   const [jobType, setJobType] = useState('');
   const [currentPlan, setCurrentPlan] = useState('');
   const [planValidity, setPlanValidity] = useState('');
@@ -751,8 +753,23 @@ export const JobseekerProfile = () => {
           setAnnualSalary('');
           setExpectedSalary('');
         }
-        setIndustryType(seeker.industryType?._id || getRefLabel(seeker.industryType, ['industryType', 'industryName', 'name']));
-        setJobCategory(seeker.jobCategory?._id || getRefLabel(seeker.jobCategory, ['categoryName', 'name']));
+        const rawIndId = seeker.industryType?._id || getRefLabel(seeker.industryType, ['industryType', 'industryName', 'name']);
+        const indExists = (industryData || []).some(x => x._id === rawIndId || x.industryType === rawIndId);
+        if (rawIndId && !indExists) {
+          setIndustryType('__other__');
+          setCustomIndustryType(getRefLabel(seeker.industryType, ['industryType', 'industryName', 'name']) || rawIndId);
+        } else {
+          setIndustryType(rawIndId);
+        }
+
+        const rawCatId = seeker.jobCategory?._id || getRefLabel(seeker.jobCategory, ['categoryName', 'name']);
+        const catExists = (categoryData || []).some(x => x._id === rawCatId || x.categoryName === rawCatId);
+        if (rawCatId && !catExists) {
+          setJobCategory('__other__');
+          setCustomJobCategory(getRefLabel(seeker.jobCategory, ['categoryName', 'name']) || rawCatId);
+        } else {
+          setJobCategory(rawCatId);
+        }
         setJobType(seeker.jobType?._id || getRefLabel(seeker.jobType, ['jobType', 'name']));
         setCurrentPlan(getRefLabel(seeker.currentPlan, ['planName', 'name']));
         setPlanValidity(seeker.planValidity ? new Date(seeker.planValidity).toISOString().split('T')[0] : '');
@@ -1125,6 +1142,19 @@ export const JobseekerProfile = () => {
         ? (activeCurExp.location || activeCurExp.jobLocation || currentJobLocation || '')
         : (cleanExperiences.length === 0 ? (currentJobLocation || '') : '');
 
+      if (industryType === '__other__' && !customIndustryType.trim()) {
+        setError('Please enter custom industry type name.');
+        setSaving(false);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      if (jobCategory === '__other__' && !customJobCategory.trim()) {
+        setError('Please enter custom job category name.');
+        setSaving(false);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
       const token = localStorage.getItem('publicToken');
       const payload = {
         name,
@@ -1148,8 +1178,10 @@ export const JobseekerProfile = () => {
         expectedSalary,
         monthlySalary: Number(monthlySalary) || 0,
         annualSalary: Number(annualSalary) || 0,
-        industryType: selectedIndustry?._id || industryType,
-        jobCategory: selectedJobCategory?._id || jobCategory,
+        industryType: industryType === '__other__' ? '__other__' : (selectedIndustry?._id || industryType),
+        customIndustryType: industryType === '__other__' ? customIndustryType.trim() : undefined,
+        jobCategory: jobCategory === '__other__' ? '__other__' : (selectedJobCategory?._id || jobCategory),
+        customJobCategory: jobCategory === '__other__' ? customJobCategory.trim() : undefined,
         jobType: selectedJobType?._id || jobType,
         bio: computedBio,
         skills: finalSkills,
@@ -1813,27 +1845,73 @@ export const JobseekerProfile = () => {
                 </select>
               </div>
 
-              <SearchableSelect
-                label="Industry Type"
-                value={industryType}
-                disabled={!isEditing}
-                onChange={setIndustryType}
-                options={industries}
-                getOptionValue={getIndustryValue}
-                getOptionLabel={getIndustryLabel}
-                placeholder="Search industry..."
-              />
+              <div>
+                <SearchableSelect
+                  label="Industry Type"
+                  value={industryType}
+                  disabled={!isEditing}
+                  onChange={(val) => {
+                    setIndustryType(val);
+                    if (val !== '__other__') setCustomIndustryType('');
+                  }}
+                  options={useMemo(() => {
+                    const hasOther = industries.some(x => x._id === '__other__' || x.industryType === 'Other');
+                    return hasOther ? industries : [...industries, { _id: '__other__', industryType: 'Other' }];
+                  }, [industries])}
+                  getOptionValue={getIndustryValue}
+                  getOptionLabel={getIndustryLabel}
+                  placeholder="Search industry..."
+                />
+                {industryType === '__other__' && (
+                  <div className="mt-2 animate-in fade-in duration-200">
+                    <label className="block text-xs font-bold text-indigo-600 mb-1">
+                      Enter Custom Industry Name <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      disabled={!isEditing}
+                      placeholder="e.g. Artificial Intelligence & Robotics"
+                      value={customIndustryType}
+                      onChange={(e) => setCustomIndustryType(e.target.value)}
+                      className="w-full rounded-md border border-indigo-300 bg-indigo-50/20 px-3 py-2 text-sm text-slate-700 focus:border-[#0047C7] focus:bg-white outline-none disabled:bg-slate-50/70 disabled:cursor-not-allowed"
+                    />
+                  </div>
+                )}
+              </div>
 
-              <SearchableSelect
-                label="Job Category"
-                value={jobCategory}
-                disabled={!isEditing}
-                onChange={setJobCategory}
-                options={jobCategories}
-                getOptionValue={getJobCategoryValue}
-                getOptionLabel={getJobCategoryLabel}
-                placeholder="Search job category..."
-              />
+              <div>
+                <SearchableSelect
+                  label="Job Category"
+                  value={jobCategory}
+                  disabled={!isEditing}
+                  onChange={(val) => {
+                    setJobCategory(val);
+                    if (val !== '__other__') setCustomJobCategory('');
+                  }}
+                  options={useMemo(() => {
+                    const hasOther = jobCategories.some(x => x._id === '__other__' || x.categoryName === 'Other');
+                    return hasOther ? jobCategories : [...jobCategories, { _id: '__other__', categoryName: 'Other' }];
+                  }, [jobCategories])}
+                  getOptionValue={getJobCategoryValue}
+                  getOptionLabel={getJobCategoryLabel}
+                  placeholder="Search job category..."
+                />
+                {jobCategory === '__other__' && (
+                  <div className="mt-2 animate-in fade-in duration-200">
+                    <label className="block text-xs font-bold text-indigo-600 mb-1">
+                      Enter Custom Job Category <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      disabled={!isEditing}
+                      placeholder="e.g. AI Prompt Engineer"
+                      value={customJobCategory}
+                      onChange={(e) => setCustomJobCategory(e.target.value)}
+                      className="w-full rounded-md border border-indigo-300 bg-indigo-50/20 px-3 py-2 text-sm text-slate-700 focus:border-[#0047C7] focus:bg-white outline-none disabled:bg-slate-50/70 disabled:cursor-not-allowed"
+                    />
+                  </div>
+                )}
+              </div>
 
               <SearchableSelect
                 label="Job Type"

@@ -26,6 +26,7 @@ const emptyForm = {
   postingDate: today(),
   jobTitle: '',
   jobCategory: '',
+  customJobCategory: '',
   jobType: '',
   vacancies: '',
   workMode: 'Onsite',
@@ -147,10 +148,15 @@ export const PostJob = () => {
     const countryRow = (masters.countries || []).find((item) => item.cid === job.country || item.countryName === job.country);
     const stateRow = (masters.states || []).find((item) => item.sid === job.state || item.stateName === job.state);
     const districtRow = (masters.districts || []).find((item) => item.did === job.district || item.districtName === job.district);
+    const rawCatId = job.jobCategory?._id || job.jobCategory || '';
+    const catExists = (masters.categories || []).some((item) => item._id === rawCatId);
+    const isOtherCat = rawCatId && !catExists;
+
     setForm({
       postingDate: toDateInput(job.postingDate) || today(),
       jobTitle: job.jobTitle || '',
-      jobCategory: job.jobCategory?._id || job.jobCategory || '',
+      jobCategory: isOtherCat ? '__other__' : rawCatId,
+      customJobCategory: isOtherCat ? (job.jobCategory?.categoryName || rawCatId) : '',
       jobType: job.jobType?._id || job.jobType || '',
       vacancies: String(job.vacancies || ''),
       workMode: job.workMode || 'Onsite',
@@ -226,10 +232,16 @@ export const PostJob = () => {
       return;
     }
 
+    if (form.jobCategory === '__other__' && !String(form.customJobCategory || '').trim()) {
+      showMessage('error', 'Please enter custom job category name.');
+      return;
+    }
+
     setSubmitting(true);
     try {
       const payload = {
         ...form,
+        customJobCategory: form.jobCategory === '__other__' ? String(form.customJobCategory || '').trim() : undefined,
         vacancies: Number(form.vacancies) || 0,
         currentPlan: form.currentPlan || null,
         planValidity: form.planValidity || null,
@@ -306,10 +318,35 @@ export const PostJob = () => {
                     <input type="text" value={form.jobTitle} onChange={(e) => setValue('jobTitle', e.target.value)} placeholder="Job Title" className={inputCls} />
                   </Field>
                   <Field className="md:col-span-6" label="Job Category" required>
-                    <select value={form.jobCategory} onChange={(e) => setValue('jobCategory', e.target.value)} className={inputCls}>
+                    <select
+                      value={form.jobCategory}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setValue('jobCategory', val);
+                        if (val !== '__other__') setValue('customJobCategory', '');
+                      }}
+                      className={inputCls}
+                    >
                       <option value="">Choose</option>
                       {categories.map((cat) => <option key={cat._id} value={cat._id}>{cat.categoryName}</option>)}
+                      <option value="__other__">Other</option>
                     </select>
+
+                    {form.jobCategory === '__other__' && (
+                      <div className="mt-2">
+                        <label className="block text-[11px] font-bold text-indigo-600 mb-1">
+                          Enter Custom Job Category <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. AI Prompt Engineer"
+                          value={form.customJobCategory || ''}
+                          onChange={(e) => setValue('customJobCategory', e.target.value)}
+                          className={inputCls}
+                        />
+                      </div>
+                    )}
                   </Field>
                   <Field className="md:col-span-6" label="Job Type" required>
                     <select value={form.jobType} onChange={(e) => setValue('jobType', e.target.value)} className={inputCls}>
