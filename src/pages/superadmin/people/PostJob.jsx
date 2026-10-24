@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
+import CustomDropdownSelect from '../../../components/CustomDropdownSelect';
 import {
   AlertCircle,
   Briefcase,
@@ -318,19 +319,21 @@ export const PostJob = () => {
                     <input type="text" value={form.jobTitle} onChange={(e) => setValue('jobTitle', e.target.value)} placeholder="Job Title" className={inputCls} />
                   </Field>
                   <Field className="md:col-span-6" label="Job Category" required>
-                    <select
+                    <CustomDropdownSelect
                       value={form.jobCategory}
-                      onChange={(e) => {
-                        const val = e.target.value;
+                      onChange={(val) => {
                         setValue('jobCategory', val);
                         if (val !== '__other__') setValue('customJobCategory', '');
                       }}
-                      className={inputCls}
-                    >
-                      <option value="">Choose</option>
-                      {categories.map((cat) => <option key={cat._id} value={cat._id}>{cat.categoryName}</option>)}
-                      <option value="__other__">Other</option>
-                    </select>
+                      options={[
+                        ...categories.map((cat) => ({
+                          value: cat._id,
+                          label: cat.categoryName
+                        })),
+                        { value: '__other__', label: 'Other' }
+                      ]}
+                      placeholder="Choose Category"
+                    />
 
                     {form.jobCategory === '__other__' && (
                       <div className="mt-2">

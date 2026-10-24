@@ -320,7 +320,7 @@ const SearchableSelect = ({
         </div>
 
         {isOpen && !disabled && (
-          <div className="absolute left-0 right-0 top-full z-40 mt-1 max-h-60 overflow-y-auto rounded-md border border-slate-200 bg-white py-1 shadow-xl">
+          <div className="absolute left-0 right-0 top-full z-40 mt-1 max-h-[360px] overflow-y-auto rounded-md border border-slate-200 bg-white py-1 shadow-xl">
             {filtered.length > 0 ? (
               filtered.map((option, idx) => {
                 const optVal = safeGetValue(option);

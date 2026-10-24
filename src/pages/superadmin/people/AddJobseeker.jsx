@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
+import CustomDropdownSelect from '../../../components/CustomDropdownSelect';
 import { cleanPhoneInput } from '../../../utils/phone';
 import {
   User as UserIcon,
@@ -348,24 +349,24 @@ export const AddJobseeker = () => {
 
                   <div>
                     <label className={labelCls}>Industry Type</label>
-                    <select
+                    <CustomDropdownSelect
                       value={form.industryType}
-                      onChange={(e) => {
-                        const val = e.target.value;
+                      onChange={(val) => {
                         setForm({
                           ...form,
                           industryType: val,
                           ...(val !== '__other__' ? { customIndustryType: '' } : {})
                         });
                       }}
-                      className={inputCls}
-                    >
-                      <option value="">-- Choose Industry --</option>
-                      {industries.map(ind => (
-                        <option key={ind._id} value={ind._id}>{ind.industryType}</option>
-                      ))}
-                      <option value="__other__">Other</option>
-                    </select>
+                      options={[
+                        ...industries.map(ind => ({
+                          value: ind._id,
+                          label: ind.industryType
+                        })),
+                        { value: '__other__', label: 'Other' }
+                      ]}
+                      placeholder="-- Choose Industry --"
+                    />
 
                     {form.industryType === '__other__' && (
                       <div className="mt-2">
@@ -386,24 +387,24 @@ export const AddJobseeker = () => {
 
                   <div>
                     <label className={labelCls}>Job Category</label>
-                    <select
+                    <CustomDropdownSelect
                       value={form.jobCategory}
-                      onChange={(e) => {
-                        const val = e.target.value;
+                      onChange={(val) => {
                         setForm({
                           ...form,
                           jobCategory: val,
                           ...(val !== '__other__' ? { customJobCategory: '' } : {})
                         });
                       }}
-                      className={inputCls}
-                    >
-                      <option value="">-- Choose Category --</option>
-                      {categories.map(c => (
-                        <option key={c._id} value={c._id}>{c.categoryName}</option>
-                      ))}
-                      <option value="__other__">Other</option>
-                    </select>
+                      options={[
+                        ...categories.map(c => ({
+                          value: c._id,
+                          label: c.categoryName
+                        })),
+                        { value: '__other__', label: 'Other' }
+                      ]}
+                      placeholder="-- Choose Category --"
+                    />
 
                     {form.jobCategory === '__other__' && (
                       <div className="mt-2">

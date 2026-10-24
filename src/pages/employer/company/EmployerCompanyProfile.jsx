@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
+import CustomDropdownSelect from '../../../components/CustomDropdownSelect';
 import EmployerAutoMail from '../automail/EmployerAutoMail';
 
 const Linkedin = (props) => (
@@ -759,11 +760,9 @@ export const EmployerCompanyProfile = () => {
                 </div>
                 <div>
                   <label className="block text-xs font-black text-slate-500 mb-1">Industry Type</label>
-                  <select
-                    className="w-full rounded border border-slate-200 px-3 py-2 text-sm text-[#3f4254] bg-white focus:border-[#6658dd] outline-none"
+                  <CustomDropdownSelect
                     value={isOtherIndustry ? '__other__' : (editForm.industryType?._id || editForm.industryType || '')}
-                    onChange={(e) => {
-                      const val = e.target.value;
+                    onChange={(val) => {
                       if (val === '__other__') {
                         setIsOtherIndustry(true);
                         setEditForm({ ...editForm, industryType: '__other__' });
@@ -773,15 +772,15 @@ export const EmployerCompanyProfile = () => {
                         setEditForm({ ...editForm, industryType: val });
                       }
                     }}
-                  >
-                    <option value="">Select Industry</option>
-                    {(profile.industries || []).map((ind) => (
-                      <option key={ind._id} value={ind._id}>
-                        {ind.industryType}
-                      </option>
-                    ))}
-                    <option value="__other__">Other</option>
-                  </select>
+                    options={[
+                      ...(profile.industries || []).map((ind) => ({
+                        value: ind._id,
+                        label: ind.industryType
+                      })),
+                      { value: '__other__', label: 'Other' }
+                    ]}
+                    placeholder="Select Industry"
+                  />
 
                   {isOtherIndustry && (
                     <div className="mt-2 animate-in fade-in duration-200">

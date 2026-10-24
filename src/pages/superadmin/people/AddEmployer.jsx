@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
+import CustomDropdownSelect from '../../../components/CustomDropdownSelect';
 import { cleanPhoneInput } from '../../../utils/phone';
 import {
   Briefcase,
@@ -301,25 +302,24 @@ export const AddEmployer = () => {
 
                   <div>
                     <label className={labelCls}>Industry Type <span className="text-rose-500">*</span></label>
-                    <select
-                      required
+                    <CustomDropdownSelect
                       value={form.industryType}
-                      onChange={(e) => {
-                        const val = e.target.value;
+                      onChange={(val) => {
                         setForm({
                           ...form,
                           industryType: val,
                           ...(val !== '__other__' ? { customIndustryType: '' } : {})
                         });
                       }}
-                      className={inputCls}
-                    >
-                      <option value="">-- Choose --</option>
-                      {industries.map(ind => (
-                        <option key={ind._id} value={ind._id}>{ind.industryType}</option>
-                      ))}
-                      <option value="__other__">Other</option>
-                    </select>
+                      options={[
+                        ...industries.map((ind) => ({
+                          value: ind._id,
+                          label: ind.industryType
+                        })),
+                        { value: '__other__', label: 'Other' }
+                      ]}
+                      placeholder="-- Choose Industry --"
+                    />
 
                     {form.industryType === '__other__' && (
                       <div className="mt-2">

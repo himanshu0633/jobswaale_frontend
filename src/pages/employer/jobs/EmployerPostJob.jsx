@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
 import PageSkeleton from '../../../components/SkeletonLoader';
+import CustomDropdownSelect from '../../../components/CustomDropdownSelect';
 
 const today = () => new Date().toISOString().split('T')[0];
 const toDateInput = (value) => {
@@ -776,21 +777,24 @@ export const EmployerPostJob = () => {
                   </div>
                   <div>
                     <label className={labelClass}>Job Category *</label>
-                    <select
-                      className={fieldClass('jobCategory')}
+                    <CustomDropdownSelect
                       value={form.jobCategory}
-                      onChange={(e) => {
-                        const val = e.target.value;
+                      onChange={(val) => {
                         setValue('jobCategory', val);
                         if (val !== '__other__') {
                           setValue('customJobCategory', '');
                         }
                       }}
-                    >
-                      <option value="">Select Category</option>
-                      {meta.categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-                      <option value="__other__">Other</option>
-                    </select>
+                      options={[
+                        ...meta.categories.map((item) => ({
+                          value: item.id,
+                          label: item.name
+                        })),
+                        { value: '__other__', label: 'Other' }
+                      ]}
+                      placeholder="Select Category"
+                      error={Boolean(fieldErrors.jobCategory)}
+                    />
                     {renderFieldError('jobCategory')}
 
                     {form.jobCategory === '__other__' && (
