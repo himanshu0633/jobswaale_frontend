@@ -39,6 +39,7 @@ import {
   X
 } from 'lucide-react';
 import { BASE_API_URL } from '../../../context/AuthContext';
+import { getWithCache } from '../../../utils/apiCache';
 import ClearFilterButton from '../../../components/ClearFilterButton';
 import { downloadBlobResponse, viewBlobResponse } from '../../../utils/downloadFile';
 import SkillMultiSelectFilter from '../../../components/SkillMultiSelectFilter';
@@ -136,10 +137,6 @@ const activityOptions = [
   { value: '3months', label: 'Active within 3 Months' },
   { value: '6months', label: 'Active within 6 Months' },
   { value: '1month', label: 'Active within 30 Days' }
-];
-
-const standardQualifications = [
-  'B.Pharm', 'M.Pharm', 'B.Sc.', 'M.Sc.', 'MBA', 'B.Tech', 'M.Tech', 'B.Com', 'Diploma', 'Ph.D', '12th Pass'
 ];
 
 const standardIndustries = [
@@ -507,7 +504,20 @@ export const EmployerSearchCandidates = () => {
   const [locationInput, setLocationInput] = useState('');
   const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
   const [masterCities, setMasterCities] = useState([]);
-  const [masterQualifications, setMasterQualifications] = useState([]);
+  const [masterQualifications, setMasterQualifications] = useState(() => {
+    try {
+      const cacheKey = `api_cache_${BASE_API_URL}/masters/qualifications`;
+      const cached = localStorage.getItem(cacheKey) || localStorage.getItem('master_qualifications');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        const data = parsed.data !== undefined ? parsed.data : parsed;
+        const list = Array.isArray(data) ? data : (data?.docs || data?.data || []);
+        const names = list.map(q => typeof q === 'string' ? q : (q.name || q.qualification || '')).filter(Boolean);
+        if (names.length > 0) return names;
+      }
+    } catch {}
+    return [];
+  });
   const locationContainerRef = useRef(null);
   const locationInputRef = useRef(null);
 
@@ -520,11 +530,16 @@ export const EmployerSearchCandidates = () => {
       })
       .catch(() => {});
 
-    axios.get(`${BASE_API_URL}/masters/qualifications`)
-      .then((res) => {
-        const list = Array.isArray(res.data) ? res.data : (res.data?.data || res.data?.docs || []);
+    getWithCache(`${BASE_API_URL}/masters/qualifications`, true)
+      .then((data) => {
+        const list = Array.isArray(data) ? data : (data?.docs || data?.data || []);
         const names = list.map(q => typeof q === 'string' ? q : (q.name || q.qualification || '')).filter(Boolean);
-        setMasterQualifications(names);
+        if (names.length > 0) {
+          setMasterQualifications(names);
+          try {
+            localStorage.setItem('master_qualifications', JSON.stringify(names));
+          } catch {}
+        }
       })
       .catch(() => {});
   }, []);
@@ -729,15 +744,15 @@ export const EmployerSearchCandidates = () => {
       .filter(Boolean);
 
     if (masterList.length > 0) {
-      const extraFromFilters = (optionFilters.qualifications || [])
-        .map(q => typeof q === 'string' ? q : (q.name || ''))
-        .map(s => String(s).trim())
-        .filter(Boolean);
-      return Array.from(new Set([...masterList, ...extraFromFilters]));
+      return Array.from(new Set(masterList));
     }
 
-    const list = [...standardQualifications, ...(optionFilters.qualifications || [])];
-    return Array.from(new Set(list.map(s => String(s).trim()).filter(Boolean)));
+    const filterList = (optionFilters.qualifications || [])
+      .map(q => typeof q === 'string' ? q : (q.name || ''))
+      .map(s => String(s).trim())
+      .filter(Boolean);
+
+    return Array.from(new Set(filterList));
   }, [masterQualifications, optionFilters.qualifications]);
 
   const industryTypeOptions = useMemo(() => {
@@ -962,7 +977,7 @@ export const EmployerSearchCandidates = () => {
               </select>
             </div>
 
-            {/* Filter 6: Qualification: B.Pharm, M.Pharm, B.Sc., MBA, etc. */}
+            {/* Filter 6: Qualification */}
             <div>
               <label className={filterLabelClass}>
                 <span className="flex items-center gap-1.5 text-slate-700">
